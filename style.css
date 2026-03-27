@@ -1,0 +1,42 @@
+/*
+Theme Name: Node
+Author: Cybernode Teams
+Description: Material 3 Expressive based WordPress theme for tech & creative blogging.
+Version: 0.1
+*/
+
+:root {
+    /* --- Material 3 Expressive Color Palette (Cyber Blue System) --- */
+    --md-sys-color-primary: #4C5C92;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #DCE1FF;
+    --md-sys-color-on-primary-container: #00154B;
+    --md-sys-color-secondary: #5B5D72;
+    --md-sys-color-surface: #FEFBFF;
+    --md-sys-color-on-surface: #1B1B1F;
+    --md-sys-color-outline: #767680;
+
+    /* --- Typography (Variable Fonts) --- */
+    --font-main: 'Noto Sans JP', sans-serif;
+    --font-english: 'Inter', sans-serif;
+    
+    /* --- Accessibility & Shapes --- */
+    --m3-radius-large: 28px; /* 丸みを帯びた大きな形状 */
+    --touch-target-min: 48px; /* 押しやすさを確保した最小サイズ */
+    --max-width: 1200px;
+}
+
+body {
+    font-family: var(--font-english), var(--font-main);
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--md-sys-color-primary);
+    text-decoration: none;
+    min-height: var(--touch-target-min); /* アクセシビリティ確保 */
+}   
