@@ -1,0 +1,49 @@
+/* スポイラー（目隠し）スタイル */
+.node-spoiler {
+    background-color: var(--md-sys-color-surface-variant);
+    color: transparent;
+    filter: blur(8px);
+    cursor: pointer;
+    transition: filter 0.3s ease, color 0.3s ease;
+    user-select: none;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.node-spoiler.is-revealed {
+    color: inherit;
+    filter: none;
+    background-color: transparent;
+    cursor: default;
+    user-select: text;
+}
+
+/* CERO Z ダイアログ (Material 3 風) */
+.node-dialog {
+    border: none;
+    border-radius: 28px;
+    padding: 24px;
+    background-color: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    max-width: 400px;
+    box-shadow: var(--md-sys-elevation-3);
+}
+
+.node-dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.node-dialog__content h2 {
+    margin-top: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+.node-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+/* Button classes should match your M3 CSS framework */
