@@ -148,6 +148,10 @@ a { color: inherit; text-decoration: none; }
 .m3-icon-button:hover { background: var(--md-sys-color-surface-variant); }
 .m3-icon-button:focus { outline: none; }
 
+/* RSS & Theme Toggle Colors */
+.m3-icon-button[title="RSSフィード"] .material-symbols-outlined { color: #f26522 !important; }
+.m3-icon-button[title="テーマ切り替え"] .material-symbols-outlined { color: var(--md-sys-color-primary) !important; }
+
 /* --- Minimal SPOTLIGHT Section (Abstract Panels) --- */
 .m3-featured-abstract { padding: 3rem 2rem; background: var(--md-sys-color-surface); }
 .m3-featured-abstract__header { margin-bottom: 2rem; }
