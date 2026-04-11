@@ -1,25 +1,25 @@
-# Release Notes - Node Theme
+# リリースノート - Node テーマ
 
 ## [0.1.3(a)] - 2026-04-11
-### Changed
-- **Header Layout:** 
-  - Hamburger menu hidden on desktop.
-  - Title centered, fixed page menu moved below title.
-  - Search bar moved to left of RSS; interactive toggle (expandable) added.
-  - Search bar animation smoothed.
-- **Sponsor Label:**
-  - Redesigned to 'Material 3 Expansive' style (rounded, expressive, high-contrast).
-  - Theme-aware background (Dark/Light mode support).
-  - Moved to top-right of article hero.
-  - Added custom tooltip text support in the post editor.
-- **Article Cards:**
-  - Refined layout with date in the top-right corner.
-  - Added calendar icon from Material Symbols.
-  - Fixed cursor issues on labels.
-- **Semantic HTML:**
-  - Verified `article` usage in post loops.
-  - Confirmed `time` tag usage for dates.
-- **Bug Fixes:**
-  - Resolved syntax error in `single.php` regarding `while` loop control structures.
-  - Removed duplicate category display in individual articles.
-  - Removed unnecessary borders from header buttons.
+### 変更点
+- **ヘッダーレイアウト:** 
+  - PCビューでハンバーガーメニューを非表示化。
+  - タイトルを中央配置し、固定ページメニューをその直下に移動。
+  - 検索窓をRSSの左へ配置し、クリック時に展開されるインタラクティブな仕様に変更。
+  - 検索窓の展開アニメーションを滑らかに調整。
+- **スポンサーラベル:**
+  - Material 3 Expansive スタイルを採用（丸みのある形状、高コントラスト）。
+  - ライト・ダークモード両対応のカラーデザイン。
+  - 記事個別ページの上部ヒーロー画像右上に絶対配置。
+  - 投稿編集画面で、ラベルの表示文言とマウスホバー時の説明文をカスタム入力可能に変更。
+- **記事カード:**
+  - 日付表示を右上に最適化。
+  - Material Symbols のカレンダーアイコンを追加。
+  - ラベル要素のホバー時の挙動を改善し、不要なカーソル表示を削除。
+- **セマンティック HTML:**
+  - 記事ループ内で `article` タグを使用するように構造を統一。
+  - 日付表示に `time` タグを採用。
+- **バグ修正:**
+  - `single.php` における制御構造の構文エラーを解消。
+  - 記事個別ページ内の重複していたカテゴリ表示を削除。
+  - ヘッダーボタンの不要な黒い枠線を削除。
