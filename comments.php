@@ -27,7 +27,9 @@ if ( post_password_required() ) return;
     <?php endif; ?>
 
     <?php
-    // フィールドの定義 (未ログインユーザー用)
+    /**
+     * フィールドの定義 (並び順を制御するため、コメント欄も fields 配列に含めます)
+     */
     $fields = [
         'author' => '<div class="m3-textfield">
                         <label for="author" class="m3-textfield__label">お名前 (任意)</label>
@@ -44,6 +46,18 @@ if ( post_password_required() ) return;
                         <input id="url" name="url" type="url" class="m3-textfield__input" placeholder="https://" value="' . esc_attr( $commenter['comment_author_url'] ) . '">
                         <div class="m3-textfield__indicator"></div>
                     </div>',
+        // コメント欄を最後に配置
+        'comment' => '<div class="m3-textfield m3-textfield--textarea">
+                        <label for="comment" class="m3-textfield__label">コメント</label>
+                        <div class="comment-toolbar">
+                            <button type="button" class="toolbar-button" data-tag="b" title="太字"><span class="material-symbols-outlined">format_bold</span></button>
+                            <button type="button" class="toolbar-button" data-tag="i" title="斜体"><span class="material-symbols-outlined">format_italic</span></button>
+                            <button type="button" class="toolbar-button" data-tag="u" title="下線"><span class="material-symbols-outlined">format_underlined</span></button>
+                            <button type="button" class="toolbar-button" data-tag="a" title="リンク"><span class="material-symbols-outlined">link</span></button>
+                        </div>
+                        <textarea id="comment" name="comment" class="m3-textfield__input" required></textarea>
+                        <div class="m3-textfield__indicator"></div>
+                    </div>',
     ];
 
     comment_form([
@@ -52,17 +66,7 @@ if ( post_password_required() ) return;
         'class_form'     => 'm3-comment-form',
         'format'         => 'html5',
         'fields'         => $fields,
-        'comment_field'  => '<div class="m3-textfield m3-textfield--textarea">
-                                <label for="comment" class="m3-textfield__label">コメント</label>
-                                <div class="comment-toolbar">
-                                    <button type="button" class="toolbar-button" data-tag="b" title="太字"><span class="material-symbols-outlined">format_bold</span></button>
-                                    <button type="button" class="toolbar-button" data-tag="i" title="斜体"><span class="material-symbols-outlined">format_italic</span></button>
-                                    <button type="button" class="toolbar-button" data-tag="u" title="下線"><span class="material-symbols-outlined">format_underlined</span></button>
-                                    <button type="button" class="toolbar-button" data-tag="a" title="リンク"><span class="material-symbols-outlined">link</span></button>
-                                </div>
-                                <textarea id="comment" name="comment" class="m3-textfield__input" required></textarea>
-                                <div class="m3-textfield__indicator"></div>
-                            </div>',
+        'comment_field'  => '', // fields 内で定義したため、ここは空にします
         'submit_button'  => '<button name="%1$s" type="submit" id="%2$s" class="m3-button m3-button--filled"><span class="material-symbols-outlined">send</span>コメントを送信</button>',
     ]);
     ?>
