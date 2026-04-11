@@ -78,9 +78,9 @@ add_action('save_post', 'node_save_custom_meta');
 // 2. アセット読み込み
 function node_enqueue_assets() {
     wp_enqueue_style('material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null);
-    wp_enqueue_style('node-style', get_stylesheet_uri(), array(), '0.1.2');
-    wp_enqueue_style('node-features-style', get_template_directory_uri() . '/features.css', array(), '0.1.2');
-    wp_enqueue_script('node-features-js', get_template_directory_uri() . '/features.js', array(), '0.1.2', true);
+    wp_enqueue_style('node-style', get_stylesheet_uri(), array(), '0.1.3');
+    wp_enqueue_style('node-features-style', get_template_directory_uri() . '/features.css', array(), '0.1.3');
+    wp_enqueue_script('node-features-js', get_template_directory_uri() . '/features.js', array(), '0.1.3', true);
     wp_localize_script('node-features-js', 'nodeData', [
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('node_nonce')
