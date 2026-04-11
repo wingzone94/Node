@@ -1,24 +1,27 @@
-# Node
+# Node Theme
 
-Material 3 Expressive の設計思想に基づいた、テック・クリエイティブ系ブログのための WordPress テーマ。
+Material 3 Expressive (Expansive) デザインを採用した、次世代の WordPress テーマ。
 
-## プロジェクト概要
-- **制作:** Cybernode Teams
-- **バージョン:** 0.1
-- **デザインシステム:** Material Design 3 (Expressive)
-- **タイポグラフィ:** Inter & Noto Sans JP (バリアブルフォント対応)
+## 🚀 リリースノート
 
-## コンセプト
-「Node」は、情報密度の高いテック系記事を、Material 3 のモダンな UI と高いアクセシビリティで提供することを目指しています。大きなタッチターゲットや視認性の高い配色を採用し、誰もが使いやすいインターフェースを追求します。
+### [0.1.3] - 2026-04-11
+#### Added
+- **Complete Comment Fields:** ユーザー名（任意）、メールアドレス（必須）、ウェブサイト（任意）の各フィールドを Material 3 スタイルで完全実装。
+- **High Contrast Dark Mode:** ダークモード時の背景色をより深くし、テキストの視認性とカードの境界線のコントラストを大幅に改良。
 
-## 実装予定の機能
-- **AI生成ラベル**: Gemini API 等を活用した記事内容の自動判別・ラベル表示
-- **目隠し（スポイラー）機能**: クリックで解除されるネタバレ防止エリア
-- **しおり（Bookmark）機能**: 読了位置を保存し、再開できる読書体験の向上
-- **CERO Z 警告アラート**: 閲覧前の確認ダイアログ
-- **投票機能**: 読者が参加できるインタラクティブな統計表示
+#### Changed
+- **SPONSORED Label:** スポンサーラベルの表記を国際的な「SPONSORED」に統一。
+- **Minimal Spotlight:** SPOTLIGHT セクションをアイコンなしの純粋なカラーパネルデザインへ最終調整。
 
-## 開発環境
-- WordPress 6.x 以上
-- PHP 8.0 以上
-- Google Fonts (Variable Fonts)
+#### Fixed
+- **Category Hiding:** Spotlight カテゴリとそのすべての子カテゴリが、一覧や個別記事から確実に非表示になるようロジックを強化。
+- **Version bump:** 全アセットのバージョンを 0.1.3 へ更新し、キャッシュ問題を完全に解消。
+
+---
+
+## 🛠 開発者・管理者向け
+- **技術仕様:** PHP 8.0+, WordPress 6.0+, Material Design 3 (Expressive) 準拠
+- **GitHub:** 最新の変更はメインブランチへプッシュ済み。
+
+**Cybernode Teams**
+*Expansive Digital Experience*

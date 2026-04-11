@@ -1,3 +1,8 @@
+/* Node Features Styles */
+.hidden {
+    display: none !important;
+}
+
 /* スポイラー（目隠し）スタイル */
 .node-spoiler {
     background-color: var(--md-sys-color-surface-variant);
@@ -45,5 +50,3 @@
     gap: 8px;
     margin-top: 24px;
 }
-
-/* Button classes should match your M3 CSS framework */
