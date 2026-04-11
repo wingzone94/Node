@@ -62,35 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. コメントツールバー機能
-    const commentTextarea = document.getElementById('comment');
-    const toolbarButtons = document.querySelectorAll('.toolbar-button');
-
-    if (commentTextarea && toolbarButtons.length > 0) {
-        toolbarButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tag = button.dataset.tag;
-                const start = commentTextarea.selectionStart;
-                const end = commentTextarea.selectionEnd;
-                const text = commentTextarea.value;
-                const selectedText = text.substring(start, end);
-                
-                let replacement = '';
-                if (tag === 'a') {
-                    const url = prompt('リンク先のURLを入力してください:', 'https://');
-                    if (url === null) return; // キャンセル時
-                    replacement = `<a href="${url}" target="_blank" rel="noopener noreferrer">${selectedText || 'リンクテキスト'}</a>`;
-                } else {
-                    replacement = `<${tag}>${selectedText}</${tag}>`;
-                }
-
-                commentTextarea.value = text.substring(0, start) + replacement + text.substring(end);
-                
-                // カーソル位置の調整
-                const newCursorPos = start + replacement.length;
-                commentTextarea.focus();
-                commentTextarea.setSelectionRange(newCursorPos, newCursorPos);
-            });
+    // 5. 検索トグル
+    const searchToggle = document.getElementById('search-toggle');
+    const searchBar = document.querySelector('.m3-search-bar');
+    if (searchToggle && searchBar) {
+        searchToggle.addEventListener('click', () => {
+            searchBar.classList.toggle('is-active');
+            if (searchBar.classList.contains('is-active')) {
+                searchBar.querySelector('input').focus();
+            }
         });
     }
 });

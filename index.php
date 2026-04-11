@@ -55,46 +55,49 @@
 
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>
-            <div class="m3-post-grid__header">
-                <h2 class="m3-post-grid__title">LATEST STORIES</h2>
-            </div>
             <div class="m3-post-grid__container">
                 <?php while (have_posts()) : the_post(); ?>
-                    <article id="post-<?php the_ID(); ?>" <?php post_class('m3-card m3-card--article'); ?>>
-                        <a href="<?php the_permalink(); ?>" class="m3-card__image-link">
-                            <?php if (has_post_thumbnail()) : the_post_thumbnail('medium_large'); 
-                                  else : echo '<div class="m3-card__placeholder"></div>'; endif; ?>
+                    <article id="post-<?php the_ID(); ?>" <?php post_class('m3-card ' . (has_post_thumbnail() ? 'm3-card--has-image' : 'm3-card--no-image')); ?>>
+                        <?php if (has_post_thumbnail()) : ?>
+                            <div class="m3-card__background">
+                                <?php the_post_thumbnail('large'); ?>
+                            </div>
+                            <div class="m3-card__overlay"></div>
+                        <?php endif; ?>
+
+                        <div class="m3-card__content">
+                            <span class="m3-label--date">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">calendar_today</span>
+                                <?php echo node_get_relative_date(get_the_ID()); ?>
+                            </span>
+
+                            <h3 class="m3-card__title">
+                                <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+                            </h3>
                             
-                            <div class="m3-card__labels">
-                                <?php if (get_post_meta(get_the_ID(), '_node_is_ai_generated', true)) : ?>
-                                    <span class="m3-label m3-label--ai">
-                                        <span class="material-symbols-outlined">auto_awesome</span>
+                            <div class="m3-card__meta-info">
+                                <?php
+                                $categories = get_the_category();
+                                if (!empty($categories)) : ?>
+                                    <span class="m3-label m3-label--category">
+                                        <?php echo esc_html($categories[0]->name); ?>
+                                    </span>
+                                <?php endif; ?>
+
+                                <?php if (get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1') : ?>
+                                    <span class="m3-label m3-label--ai" data-tooltip-text="一部にAIで生成された画像・動画を含みます">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">auto_awesome</span>
                                         生成されたメディアを含む
                                     </span>
                                 <?php endif; ?>
-                                <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true)) : ?>
-                                    <span class="m3-label m3-label--sponsor">SPONSORED</span>
-                                <?php endif; ?>
-                            </div>
-                        </a>
 
-                        <div class="m3-card__content">
-                            <div class="m3-card__meta">
-                                <span class="m3-card__date"><?php echo get_the_date(); ?></span>
-                            </div>
-                            <h3 class="m3-card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                            <div class="m3-card__excerpt">
-                                <?php echo wp_trim_words(get_the_excerpt(), 20); ?>
-                            </div>
-                            <div class="m3-card__footer">
-                                <div class="m3-card__category">
-                                    <?php
-                                    $categories = get_the_category();
-                                    if (!empty($categories)) {
-                                        echo esc_html($categories[0]->name);
-                                    }
-                                    ?>
-                                </div>
+
+                                <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
+                                    <span class="m3-label m3-label--sponsor">
+                                        <span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
+                                        SPONSOR
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </article>

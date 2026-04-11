@@ -27,8 +27,12 @@ function node_cero_z_meta_box_callback($post) {
 function node_post_labels_callback($post) {
     $is_ai = get_post_meta($post->ID, '_node_is_ai_generated', true);
     $is_sponsor = get_post_meta($post->ID, '_node_is_sponsor', true);
+    $sponsor_text = get_post_meta($post->ID, '_node_sponsor_text', true) ?: 'SPONSORED';
+    $sponsor_tooltip = get_post_meta($post->ID, '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
     echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> AI生成メディアを含む</label></p>';
     echo '<p><label><input type="checkbox" name="node_is_sponsor" value="1" '.checked($is_sponsor, '1', false).'> スポンサー記事（案件）</label></p>';
+    echo '<p><label>スポンサーラベル文言:<br><input type="text" name="node_sponsor_text" value="'.esc_attr($sponsor_text).'" style="width:100%"></label></p>';
+    echo '<p><label>スポンサー説明文 (ホバー時):<br><input type="text" name="node_sponsor_tooltip" value="'.esc_attr($sponsor_tooltip).'" style="width:100%"></label></p>';
 }
 
 function node_ai_summary_callback($post) {
@@ -59,7 +63,9 @@ function node_save_custom_meta($post_id) {
         '_node_is_cero_z' => 'node_is_cero_z',
         '_node_is_ai_generated' => 'node_is_ai_generated',
         '_node_is_sponsor' => 'node_is_sponsor',
-        '_node_ai_summary' => 'node_ai_summary'
+        '_node_ai_summary' => 'node_ai_summary',
+        '_node_sponsor_text' => 'node_sponsor_text',
+        '_node_sponsor_tooltip' => 'node_sponsor_tooltip'
     ];
     foreach ($fields as $meta_key => $post_key) {
         if (isset($_POST[$post_key])) update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$post_key]));
@@ -138,21 +144,14 @@ function node_optional_comment_author($commentdata) {
 }
 add_filter('preprocess_comment', 'node_optional_comment_author');
 
-// 6. 特殊カテゴリ「Spotlight」とその子カテゴリの隠蔽
-function node_hide_special_categories($terms, $post_id, $taxonomy) {
-    if (!is_admin() && $taxonomy === 'category' && !empty($terms)) {
-        $parent_cat = get_category_by_slug('spotlight');
-        if ($parent_cat) {
-            $special_cat_ids = get_term_children($parent_cat->term_id, 'category');
-            $special_cat_ids[] = $parent_cat->term_id;
+// 7. 日付の相対表示フォーマット
+function node_get_relative_date($post_id) {
+    $post_time = get_post_time('U', false, $post_id);
+    $diff = current_time('timestamp') - $post_time;
 
-            foreach ($terms as $key => $term) {
-                if (in_array($term->term_id, $special_cat_ids)) {
-                    unset($terms[$key]);
-                }
-            }
-        }
+    if ($diff < 86400) {
+        $hours = floor($diff / 3600);
+        return get_the_date('Y年n月j日', $post_id) . ' (' . ($hours > 0 ? $hours : 1) . '時間前)';
     }
-    return $terms;
+    return get_the_date('Y年n月j日', $post_id);
 }
-add_filter('get_the_terms', 'node_hide_special_categories', 10, 3);

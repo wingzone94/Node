@@ -25,21 +25,23 @@
         </h1>
     </div>
 
-    <div class="m3-header__center">
-        <form role="search" method="get" class="m3-search-bar" action="<?php echo esc_url(home_url('/')); ?>">
-            <span class="material-symbols-outlined m3-search-bar__icon">search</span>
-            <input type="search" class="m3-search-bar__input" placeholder="記事やトピックを検索" value="<?php echo get_search_query(); ?>" name="s" />
-        </form>
-    </div>
-
     <div class="m3-header__end">
         <div class="m3-header__actions">
+            <!-- 検索アイコン -->
+            <button id="search-toggle" class="m3-icon-button" title="検索">
+                <span class="material-symbols-outlined">search</span>
+            </button>
+            <!-- 検索窓 (非表示からトグル) -->
+            <form role="search" method="get" class="m3-search-bar" action="<?php echo esc_url(home_url('/')); ?>">
+                <input type="search" class="m3-search-bar__input" placeholder="検索..." value="<?php echo get_search_query(); ?>" name="s" />
+            </form>
+
             <a href="<?php bloginfo('rss2_url'); ?>" class="m3-icon-button" title="RSSフィード">
                 <span class="material-symbols-outlined">rss_feed</span>
             </a>
             <button id="theme-toggle" class="m3-icon-button" title="テーマ切り替え">
-                <span id="theme-toggle-dark-icon" class="material-symbols-outlined hidden">dark_mode</span>
-                <span id="theme-toggle-light-icon" class="material-symbols-outlined hidden">light_mode</span>
+                <span id="theme-toggle-dark-icon" class="material-symbols-outlined">dark_mode</span>
+                <span id="theme-toggle-light-icon" class="material-symbols-outlined">light_mode</span>
             </button>
             <?php if (is_user_logged_in()) : ?>
                 <a href="<?php echo admin_url(); ?>" class="m3-icon-button m3-icon-button--filled-tonal" title="管理画面">
@@ -49,3 +51,6 @@
         </div>
     </div>
 </header>
+<nav class="m3-header__nav">
+    <?php wp_nav_menu(['theme_location' => 'primary', 'container' => false]); ?>
+</nav>

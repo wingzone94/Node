@@ -10,18 +10,16 @@
                 <div class="m3-article__hero">
                     <?php the_post_thumbnail('full'); ?>
                     <div class="m3-article__hero-overlay"></div>
-                    
-                    <div class="m3-article__hero-labels">
-                        <?php if (get_post_meta(get_the_ID(), '_node_is_ai_generated', true)) : ?>
-                            <span class="m3-label m3-label--ai">
-                                <span class="material-symbols-outlined">auto_awesome</span>
-                                生成されたメディアを含む
-                            </span>
-                        <?php endif; ?>
-                        <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true)) : ?>
-                            <span class="m3-label m3-label--sponsor">SPONSORED</span>
-                        <?php endif; ?>
-                    </div>
+                    <?php 
+                    $is_sponsor = get_post_meta(get_the_ID(), '_node_is_sponsor', true);
+                    if ($is_sponsor === '1') : 
+                        $text = get_post_meta(get_the_ID(), '_node_sponsor_text', true) ?: 'SPONSORED';
+                        $tooltip = get_post_meta(get_the_ID(), '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
+                    ?>
+                        <span class="m3-label--sponsor-rtx" data-tooltip-text="<?php echo esc_attr($tooltip); ?>">
+                            <?php echo esc_html($text); ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
 
@@ -34,11 +32,18 @@
                 
                 <h1 class="m3-article__title"><?php the_title(); ?></h1>
 
+                <div class="m3-card__meta-info" style="justify-content: center; margin-bottom: 2rem;">
+                    <?php if (get_the_category()) : ?>
+                        <span class="m3-label m3-label--category">
+                            <?php echo esc_html(get_the_category()[0]->name); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+
                 <div class="m3-article__tags">
                     <?php the_tags('', ''); ?>
                 </div>
 
-                <!-- ゲーム・アプリ情報エリア (タイトル下) -->
                 <?php $game_info = get_post_meta(get_the_ID(), '_node_game_info', true); ?>
                 <?php if (!empty($game_info['title'])) : ?>
                     <div class="m3-article__game-info-brief">
@@ -65,7 +70,6 @@
                 <?php endif; ?>
             </header>
 
-            <!-- Nexus Abstract (AI要約) -->
             <?php $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary', true); ?>
             <?php if (!empty($ai_summary)) : ?>
                 <aside class="m3-nexus-abstract">
@@ -82,7 +86,6 @@
             <div class="m3-article__body entry-content">
                 <?php the_content(); ?>
                 
-                <!-- 複数ページ機能 -->
                 <?php wp_link_pages([
                     'before' => '<div class="m3-pagination">' . esc_html__( 'Pages:', 'node' ),
                     'after'  => '</div>',
@@ -90,21 +93,6 @@
             </div>
 
             <footer class="m3-article__footer">
-                <!-- 記事下のカテゴリ表示 -->
-                <div class="m3-article__categories">
-                    <span class="m3-article__categories-label">CATEGORIES:</span>
-                    <?php 
-                    $categories = get_the_category();
-                    if (!empty($categories)) :
-                        foreach ($categories as $category) : ?>
-                            <a href="<?php echo esc_url(get_category_link($category->term_id)); ?>" class="m3-chip m3-chip--category">
-                                <?php echo esc_html($category->name); ?>
-                            </a>
-                        <?php endforeach;
-                    endif; ?>
-                </div>
-
-                <!-- ゲーム・アプリ情報エリア (最下部) -->
                 <?php if (!empty($game_info['title'])) : ?>
                     <section class="m3-game-card">
                         <div class="m3-game-card__header">
