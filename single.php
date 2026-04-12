@@ -92,6 +92,28 @@
                 ]); ?>
             </div>
 
+            <!-- ソーシャルシェアボタン -->
+            <div class="m3-share-section">
+                <h3 class="m3-share-title">SHARE</h3>
+                <div class="m3-share-buttons">
+                    <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode(get_permalink()); ?>&text=<?php echo urlencode(get_the_title()); ?>" class="m3-share-btn m3-share-btn--x" target="_blank">
+                        <i class="fa-brands fa-x-twitter"></i> X
+                    </a>
+                    <a href="https://b.hatena.ne.jp/add?mode=confirm&url=<?php echo urlencode(get_permalink()); ?>" class="m3-share-btn m3-share-btn--hatebu" target="_blank">
+                        B!
+                    </a>
+                    <a href="https://www.threads.net/intent/post?text=<?php echo urlencode(get_permalink()); ?>" class="m3-share-btn m3-share-btn--threads" target="_blank">
+                        <i class="fa-brands fa-threads"></i> Threads
+                    </a>
+                    <button class="m3-share-btn m3-share-btn--copy">
+                        <i class="fa-solid fa-link"></i> Copy
+                    </button>
+                    <button class="m3-share-btn m3-share-btn--native" onclick="if(navigator.share){navigator.share({url:'<?php echo get_permalink(); ?>'})}">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
+                </div>
+            </div>
+
             <footer class="m3-article__footer">
                 <?php if (!empty($game_info['title'])) : ?>
                     <section class="m3-game-card">

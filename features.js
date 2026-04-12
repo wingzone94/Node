@@ -62,15 +62,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. 検索トグル
-    const searchToggle = document.getElementById('search-toggle');
-    const searchBar = document.querySelector('.m3-search-bar');
-    if (searchToggle && searchBar) {
-        searchToggle.addEventListener('click', () => {
-            searchBar.classList.toggle('is-active');
-            if (searchBar.classList.contains('is-active')) {
-                searchBar.querySelector('input').focus();
-            }
+    // 6. シェア機能 (URLコピー)
+    const copyBtn = document.querySelector('.m3-share-btn--copy');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(window.location.href);
+            const originalText = copyBtn.innerText;
+            copyBtn.innerText = 'Copied!';
+            setTimeout(() => { copyBtn.innerText = originalText; }, 2000);
         });
     }
 });
