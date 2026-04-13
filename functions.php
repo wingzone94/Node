@@ -130,6 +130,28 @@ function node_modify_comment_fields($fields) {
 }
 add_filter('comment_form_default_fields', 'node_modify_comment_fields');
 
+// コメント入力エリアの HTML を Material 3 スタイルに上書き
+function node_modify_comment_field($comment_field) {
+    $comment_field = '<div class="m3-textfield m3-textfield--textarea">
+                        <label for="comment" class="m3-textfield__label">' . _x( 'コメント内容', 'noun', 'node' ) . ' *</label>
+                        <div class="comment-toolbar">
+                            <button type="button" class="toolbar-button" data-tag="bold" title="太字"><span class="material-symbols-outlined">format_bold</span></button>
+                            <button type="button" class="toolbar-button" data-tag="italic" title="斜体"><span class="material-symbols-outlined">format_italic</span></button>
+                            <button type="button" class="toolbar-button" data-tag="underline" title="下線"><span class="material-symbols-outlined">format_underlined</span></button>
+                            <button type="button" class="toolbar-button" data-tag="link" title="リンク"><span class="material-symbols-outlined">link</span></button>
+                        </div>
+                        <textarea id="comment" name="comment" class="m3-textfield__input" placeholder="温かいコメントをお待ちしております..." required aria-required="true" minlength="2" maxlength="5000"></textarea>
+                    </div>';
+    return $comment_field;
+}
+add_filter('comment_form_field_comment', 'node_modify_comment_field');
+
+// 送信ボタンに Material 3 スタイルを適用
+function node_modify_submit_button($submit_button) {
+    return '<button name="submit" type="submit" id="submit" class="m3-button m3-button--filled"><span class="material-symbols-outlined">send</span>' . esc_html__( '送信', 'node' ) . '</button>';
+}
+add_filter('comment_form_submit_button', 'node_modify_submit_button');
+
 // 必須属性自体をサーバーサイドで無視する設定（WordPressの設定に依存する場合があるため）
 add_filter('allow_empty_comment_email', '__return_true');
 
