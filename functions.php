@@ -84,9 +84,9 @@ add_action('save_post', 'node_save_custom_meta');
 // 2. アセット読み込み
 function node_enqueue_assets() {
     wp_enqueue_style('material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null);
-    wp_enqueue_style('node-style', get_stylesheet_uri(), array(), '0.1.3');
-    wp_enqueue_style('node-features-style', get_template_directory_uri() . '/features.css', array(), '0.1.3');
-    wp_enqueue_script('node-features-js', get_template_directory_uri() . '/features.js', array(), '0.1.3', true);
+    wp_enqueue_style('node-style', get_stylesheet_uri(), array(), '0.1.4');
+    wp_enqueue_style('node-features-style', get_template_directory_uri() . '/features.css', array(), '0.1.4');
+    wp_enqueue_script('node-features-js', get_template_directory_uri() . '/features.js', array(), '0.1.4', true);
     wp_localize_script('node-features-js', 'nodeData', [
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('node_nonce')
@@ -118,6 +118,21 @@ add_theme_support('post-thumbnails');
 set_post_thumbnail_size(800, 450, true);
 
 // 5. コメント機能の拡張
+// クッキー保存チェックボックスを削除し、メールアドレスの必須を解除
+function node_modify_comment_fields($fields) {
+    unset($fields['cookies']);
+    if (isset($fields['email'])) {
+        $fields['email'] = str_replace('aria-required="true"', '', $fields['email']);
+        $fields['email'] = str_replace('required="required"', '', $fields['email']);
+        $fields['email'] = str_replace('<span class="required">*</span>', '(任意)', $fields['email']);
+    }
+    return $fields;
+}
+add_filter('comment_form_default_fields', 'node_modify_comment_fields');
+
+// 必須属性自体をサーバーサイドで無視する設定（WordPressの設定に依存する場合があるため）
+add_filter('allow_empty_comment_email', '__return_true');
+
 // 下線 (u) と リンク (a) タグを許可
 function node_allow_extra_comment_tags($allowedtags) {
     if (!isset($allowedtags['u'])) {
@@ -147,11 +162,17 @@ add_filter('preprocess_comment', 'node_optional_comment_author');
 // 7. 日付の相対表示フォーマット
 function node_get_relative_date($post_id) {
     $post_time = get_post_time('U', false, $post_id);
-    $diff = current_time('timestamp') - $post_time;
+    $current_time = current_time('timestamp');
+    $diff = $current_time - $post_time;
 
-    if ($diff < 86400) {
+    $date_str = get_the_date('Y年n月j日', $post_id);
+
+    if ($diff > 0 && $diff < 86400) {
         $hours = floor($diff / 3600);
-        return get_the_date('Y年n月j日', $post_id) . ' (' . ($hours > 0 ? $hours : 1) . '時間前)';
+        if ($hours < 1) {
+            return $date_str . ' (1時間以内)';
+        }
+        return $date_str . ' (' . $hours . '時間前)';
     }
-    return get_the_date('Y年n月j日', $post_id);
+    return $date_str;
 }

@@ -25,49 +25,23 @@
 
             <header class="m3-article__header">
                 <div class="m3-article__meta">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle; margin-right: 4px; opacity: 0.7;">
+                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
+                    </svg>
                     <time class="m3-article__date" datetime="<?php echo get_the_date('c'); ?>">
-                        <?php echo get_the_date(); ?>
+                        <?php echo node_get_relative_date(get_the_ID()); ?>
                     </time>
                 </div>
                 
                 <h1 class="m3-article__title"><?php the_title(); ?></h1>
 
-                <div class="m3-card__meta-info" style="justify-content: center; margin-bottom: 2rem;">
+                <div class="m3-article__meta-info">
                     <?php if (get_the_category()) : ?>
                         <span class="m3-label m3-label--category">
                             <?php echo esc_html(get_the_category()[0]->name); ?>
                         </span>
                     <?php endif; ?>
                 </div>
-
-                <div class="m3-article__tags">
-                    <?php the_tags('', ''); ?>
-                </div>
-
-                <?php $game_info = get_post_meta(get_the_ID(), '_node_game_info', true); ?>
-                <?php if (!empty($game_info['title'])) : ?>
-                    <div class="m3-article__game-info-brief">
-                        <details class="m3-details-chip">
-                            <summary class="m3-button m3-button--tonal">
-                                <span class="material-symbols-outlined">info</span>
-                                <?php echo esc_html($game_info['title']); ?> 情報
-                            </summary>
-                            <div class="m3-details-content">
-                                <p><?php echo esc_html($game_info['summary']); ?></p>
-                                <?php if (!empty($game_info['links'])) : ?>
-                                    <div class="m3-article__store-links">
-                                        <?php foreach ($game_info['links'] as $link) : ?>
-                                            <a href="<?php echo esc_url($link['url']); ?>" class="m3-button m3-button--text" target="_blank">
-                                                <span class="material-symbols-outlined">open_in_new</span>
-                                                <?php echo esc_html($link['platform']); ?>
-                                            </a>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </details>
-                    </div>
-                <?php endif; ?>
             </header>
 
             <?php $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary', true); ?>
@@ -92,27 +66,26 @@
                 ]); ?>
             </div>
 
-            <!-- ソーシャルシェアボタン -->
-            <div class="m3-share-section">
-                <h3 class="m3-share-title">SHARE</h3>
-                <div class="m3-share-buttons">
-                    <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode(get_permalink()); ?>&text=<?php echo urlencode(get_the_title()); ?>" class="m3-share-btn m3-share-btn--x" target="_blank">
-                        <i class="fa-brands fa-x-twitter"></i> X
-                    </a>
-                    <a href="https://b.hatena.ne.jp/add?mode=confirm&url=<?php echo urlencode(get_permalink()); ?>" class="m3-share-btn m3-share-btn--hatebu" target="_blank">
-                        B!
-                    </a>
-                    <a href="https://www.threads.net/intent/post?text=<?php echo urlencode(get_permalink()); ?>" class="m3-share-btn m3-share-btn--threads" target="_blank">
-                        <i class="fa-brands fa-threads"></i> Threads
-                    </a>
-                    <button class="m3-share-btn m3-share-btn--copy">
-                        <i class="fa-solid fa-link"></i> Copy
-                    </button>
-                    <button class="m3-share-btn m3-share-btn--native" onclick="if(navigator.share){navigator.share({url:'<?php echo get_permalink(); ?>'})}">
-                        <i class="fa-solid fa-share-nodes"></i> Share
-                    </button>
+            <!-- ソーシャルシェアセクション -->
+            <?php get_template_part('social-share'); ?>
+
+            <!-- ライター情報 -->
+            <section class="m3-writer-card">
+                <div class="m3-writer-card__header">
+                    <h3 class="m3-writer-card__title">WRITER INFO</h3>
                 </div>
-            </div>
+                <div class="m3-writer-card__body">
+                    <div class="m3-writer-card__avatar">
+                        <?php echo get_avatar(get_the_author_meta('ID'), 100); ?>
+                    </div>
+                    <div class="m3-writer-card__info">
+                        <h4 class="m3-writer-card__name"><?php the_author(); ?></h4>
+                        <div class="m3-writer-card__bio">
+                            <?php the_author_meta('description'); ?>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <footer class="m3-article__footer">
                 <?php if (!empty($game_info['title'])) : ?>
@@ -139,6 +112,25 @@
             </footer>
 
         </article>
+
+        <!-- 追従式ナビゲーション (目次) -->
+        <aside class="m3-sticky-navigation hidden">
+            <nav class="m3-sticky-toc">
+                <div class="m3-sticky-toc__header">
+                    <span class="material-symbols-outlined">list</span>
+                    <span class="m3-sticky-toc__title">CONTENTS</span>
+                </div>
+                <div id="m3-toc-container"></div>
+            </nav>
+        </aside>
+
+        <!-- 追従式コメントボタン (FAB) -->
+        <a href="#comments" id="m3-sticky-comments" class="m3-fab-comment">
+            <span class="material-symbols-outlined">comment</span>
+            <?php if (get_comments_number() > 0) : ?>
+                <span class="m3-fab-comment__badge"><?php echo get_comments_number(); ?></span>
+            <?php endif; ?>
+        </a>
 
         <?php if (comments_open() || get_comments_number()) :
             comments_template();
