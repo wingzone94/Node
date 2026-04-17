@@ -197,4 +197,47 @@ function node_get_relative_date($post_id) {
         return $date_str . ' (' . $hours . '時間前)';
     }
     return $date_str;
-}
+    }
+
+    /**
+    * 8. カテゴリー・ラベル表示のモジュール化
+    */
+    function node_the_category_labels($post_id = null, $max = 4) {
+    if (!$post_id) $post_id = get_the_ID();
+    $categories = get_the_category($post_id);
+    if (empty($categories)) return;
+
+    $count = count($categories);
+    $display_cats = array_slice($categories, 0, $max);
+
+    echo '<div class="m3-card__categories-top">';
+    foreach ($display_cats as $cat) {
+        echo '<span class="m3-label m3-label--category">';
+        echo '<span class="material-symbols-outlined">folder</span>';
+        echo esc_html($cat->name);
+        echo '</span>';
+    }
+    if ($count > $max) {
+        echo '<span class="m3-label m3-label--category-more">+' . ($count - $max) . '</span>';
+    }
+    echo '</div>';
+    }
+
+    function node_the_post_badges($post_id = null) {
+    if (!$post_id) $post_id = get_the_ID();
+    echo '<div class="m3-card__badges-top">';
+    if (get_post_meta($post_id, '_node_is_ai_generated', true) === '1') {
+        echo '<span class="m3-label m3-label--ai" data-tooltip-text="一部にAIで生成された画像・動画を含みます">';
+        echo '<span class="material-symbols-outlined" style="font-size: 14px;">auto_awesome</span>';
+        echo '生成されたメディアを含みます';
+        echo '</span>';
+    }
+    if (get_post_meta($post_id, '_node_is_sponsor', true) === '1') {
+        $sponsor_text = get_post_meta($post_id, '_node_sponsor_text', true) ?: 'SPONSOR';
+        echo '<span class="m3-label m3-label--sponsor">';
+        echo '<span class="material-symbols-outlined" style="font-size: 14px;">verified</span>';
+        echo esc_html($sponsor_text);
+        echo '</span>';
+    }
+    echo '</div>';
+    }

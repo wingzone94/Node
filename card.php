@@ -15,38 +15,12 @@
         <span><?php echo node_get_relative_date(get_the_ID()); ?></span>
     </div>
 
-    <!-- 右上バッジ -->
-    <div class="m3-card__badges-top">
-        <?php if (get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1') : ?>
-            <span class="m3-label m3-label--ai" data-tooltip-text="一部にAIで生成された画像・動画を含みます">
-                <span class="material-symbols-outlined" style="font-size: 14px;">auto_awesome</span>
-                生成されたメディアを含みます
-            </span>
-        <?php endif; ?>
-        <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
-            <span class="m3-label m3-label--sponsor">
-                <span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
-                SPONSOR
-            </span>
-        <?php endif; ?>
-    </div>
+    <!-- 右上バッジ (AI / SPONSOR) -->
+    <?php node_the_post_badges(); ?>
 
     <div class="m3-card__content">
         <!-- カテゴリ表示 -->
-        <div class="m3-card__categories-top">
-            <?php
-            $categories = get_the_category();
-            if (!empty($categories)) :
-                $count = count($categories);
-                $display_cats = array_slice($categories, 0, 4);
-                foreach ($display_cats as $cat) : ?>
-                    <span class="m3-label m3-label--category"><?php echo esc_html($cat->name); ?></span>
-                <?php endforeach;
-                if ($count > 4) : ?>
-                    <span class="m3-label m3-label--category-more">+<?php echo ($count - 4); ?></span>
-                <?php endif;
-            endif; ?>
-        </div>
+        <?php node_the_category_labels(); ?>
 
         <h3 class="m3-card__title">
             <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>

@@ -36,26 +36,11 @@
                 <h1 class="m3-article__title"><?php the_title(); ?></h1>
 
                 <div class="m3-article__meta-info">
-                    <?php if (get_the_category()) : ?>
-                        <span class="m3-label m3-label--category">
-                            <?php echo esc_html(get_the_category()[0]->name); ?>
-                        </span>
-                    <?php endif; ?>
+                    <?php node_the_category_labels(get_the_ID(), 1); ?>
                 </div>
             </header>
 
-            <?php $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary', true); ?>
-            <?php if (!empty($ai_summary)) : ?>
-                <aside class="m3-nexus-abstract">
-                    <div class="m3-nexus-abstract__badge">
-                        <span class="material-symbols-outlined">psychology</span>
-                        NEXUS ABSTRACT
-                    </div>
-                    <div class="m3-nexus-abstract__content">
-                        <?php echo nl2br(esc_html($ai_summary)); ?>
-                    </div>
-                </aside>
-            <?php endif; ?>
+            <?php get_template_part('template-parts/card', 'nexus'); ?>
 
             <div class="m3-article__body entry-content">
                 <?php the_content(); ?>
@@ -70,45 +55,10 @@
             <?php get_template_part('social-share'); ?>
 
             <!-- ライター情報 -->
-            <section class="m3-writer-card">
-                <div class="m3-writer-card__header">
-                    <h3 class="m3-writer-card__title">WRITER INFO</h3>
-                </div>
-                <div class="m3-writer-card__body">
-                    <div class="m3-writer-card__avatar">
-                        <?php echo get_avatar(get_the_author_meta('ID'), 100); ?>
-                    </div>
-                    <div class="m3-writer-card__info">
-                        <h4 class="m3-writer-card__name"><?php the_author(); ?></h4>
-                        <div class="m3-writer-card__bio">
-                            <?php the_author_meta('description'); ?>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <?php get_template_part('template-parts/card', 'writer'); ?>
 
             <footer class="m3-article__footer">
-                <?php if (!empty($game_info['title'])) : ?>
-                    <section class="m3-game-card">
-                        <div class="m3-game-card__header">
-                            <span class="material-symbols-outlined">videogame_asset</span>
-                            <h3>GAME INFO</h3>
-                        </div>
-                        <div class="m3-game-card__body">
-                            <h4><?php echo esc_html($game_info['title']); ?></h4>
-                            <p><?php echo esc_html($game_info['summary']); ?></p>
-                            <?php if (!empty($game_info['links'])) : ?>
-                                <div class="m3-game-card__actions">
-                                    <?php foreach ($game_info['links'] as $link) : ?>
-                                        <a href="<?php echo esc_url($link['url']); ?>" class="m3-button m3-button--filled" target="_blank">
-                                            <?php echo esc_html($link['platform']); ?>でチェック
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </section>
-                <?php endif; ?>
+                <?php get_template_part('template-parts/card', 'game'); ?>
             </footer>
 
         </article>

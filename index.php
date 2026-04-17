@@ -6,7 +6,7 @@
         <!-- ミニマルな SPOTLIGHT セクション -->
         <section class="m3-featured-abstract">
             <div class="m3-featured-abstract__header">
-                <h2 class="m3-featured-abstract__title">SPOTLIGHT</h2>
+                <h2 class="m3-featured-abstract__title">🔥SPOTLIGHT</h2>
             </div>
             <div class="m3-featured-abstract__container">
                 <?php
