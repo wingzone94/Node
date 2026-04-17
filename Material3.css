@@ -1,0 +1,240 @@
+/* --- Material 3 Expressive Tokens & Base --- */
+:root {
+    --m3-surface: #fefcf3;
+    --m3-surface-variant: #e9eadf;
+    --m3-on-surface: #1a1c19;
+    --m3-on-surface-variant: #43483e;
+    --m3-outline: #74796e; /* 境界線の視認性を確保 */
+    --m3-outline-variant: #c4c8ba;
+    --m3-primary: #2d6b26;
+    --m3-on-primary: #ffffff;
+    --m3-primary-container: #b0f4a0;
+    --m3-on-primary-container: #002200;
+    --m3-secondary-container: #dce5d8;
+    --m3-on-secondary-container: #131f12;
+
+    --font-main: "Inter", "Noto Sans JP", sans-serif;
+    --radius-m: 16px;
+    --radius-l: 28px;
+    --radius-xl: 36px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --m3-surface: #111411;
+        --m3-surface-variant: #2a2b26;
+        --m3-on-surface: #e2e3dd;
+        --m3-on-surface-variant: #c4c8ba;
+        --m3-outline: #8e9286;
+        --m3-outline-variant: #43483e;
+        --m3-primary: #95d786;
+        --m3-on-primary: #003a00;
+        --m3-primary-container: #11520e;
+        --m3-on-primary-container: #b0f4a0;
+        --m3-secondary-container: #3f4a3d;
+        --m3-on-secondary-container: #dce5d8;
+    }
+}
+
+/* --- Variable Font Enforcement --- */
+* { font-family: inherit; }
+html { font-family: var(--font-main); }
+body { 
+    font-family: var(--font-main) !important; 
+    background-color: var(--m3-surface); 
+    color: var(--m3-on-surface); 
+    margin: 0; 
+    -webkit-font-smoothing: antialiased; 
+    line-height: 1.6;
+}
+
+/* --- Form Reset & Safari Compatibility --- */
+input, textarea, button, select {
+    font-family: var(--font-main) !important;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    background: none;
+    color: inherit;
+    border-radius: 0;
+}
+
+/* Material Symbols Overwrite */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined' !important;
+    font-weight: normal;
+    font-style: normal;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+}
+
+/* --- Layout --- */
+.m3-article { max-width: 800px; margin: 0 auto; padding: 48px 24px; }
+
+/* --- Comments Section --- */
+.m3-comments-section {
+    max-width: 800px;
+    margin: 64px auto;
+    padding: 0 24px;
+}
+
+.comments-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-bottom: 32px;
+}
+
+.m3-comment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* --- Balloon (吹き出し) Styling --- */
+.m3-comment-item { margin: 0; }
+
+.m3-comment-bubble-container {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.m3-comment-avatar-wrap { flex-shrink: 0; }
+.m3-comment-avatar-wrap img { border-radius: 50%; background: var(--m3-surface-variant); }
+
+.m3-comment-bubble {
+    position: relative;
+    background: var(--m3-surface-variant);
+    color: var(--m3-on-surface);
+    padding: 16px 24px;
+    border-radius: 24px;
+    border-top-left-radius: 4px; /* 吹き出しの起点を強調 */
+    flex-grow: 1;
+    border: 1px solid var(--m3-outline-variant);
+}
+
+/* 吹き出しの「しっぽ」 (高コントラスト境界線対応) */
+.m3-comment-bubble::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -12px;
+    width: 12px;
+    height: 12px;
+    background: var(--m3-surface-variant);
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+    border-top: 1px solid var(--m3-outline-variant);
+    border-left: 1px solid var(--m3-outline-variant);
+}
+
+.m3-comment-bubble__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.m3-comment-bubble__author { font-weight: 900; color: var(--m3-primary); }
+.m3-comment-bubble__author a { color: inherit; text-decoration: none; }
+.m3-comment-bubble__date { font-size: 0.75rem; font-weight: 700; opacity: 0.7; }
+
+.m3-comment-bubble__content { font-size: 1rem; line-height: 1.8; word-break: break-word; }
+.m3-comment-bubble__content p { margin: 0 0 12px; }
+.m3-comment-bubble__content p:last-child { margin: 0; }
+
+.m3-comment-bubble__actions { margin-top: 16px; display: flex; justify-content: flex-end; }
+.comment-reply-link {
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: var(--m3-on-primary-container);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 100px;
+    background: var(--m3-primary-container);
+    transition: opacity 0.2s;
+}
+
+/* --- Comment Form & Visibility Fix --- */
+.m3-comment-form {
+    background: var(--m3-surface);
+    border: 1px solid var(--m3-outline); /* 高コントラスト境界線 */
+    padding: 32px;
+    border-radius: var(--radius-l);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.m3-title-medium { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+
+.m3-textfield { display: flex; flex-direction: column; gap: 8px; }
+.m3-textfield__label { font-size: 0.9rem; font-weight: 900; color: var(--m3-on-surface-variant); }
+
+.m3-textfield__input {
+    background: var(--m3-surface-variant) !important;
+    border: 2px solid var(--m3-outline) !important; /* 同化を防ぐための強い境界線 */
+    border-radius: 12px !important;
+    padding: 12px 16px !important;
+    color: var(--m3-on-surface) !important;
+    font-size: 1rem !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.m3-textfield__input:focus {
+    outline: none;
+    border-color: var(--m3-primary) !important;
+    box-shadow: 0 0 0 2px var(--m3-primary-container);
+}
+
+.m3-textfield--textarea .m3-textfield__input { min-height: 150px; resize: vertical; }
+
+/* Form Toolbar */
+.comment-toolbar { display: flex; gap: 8px; margin-bottom: -4px; }
+.toolbar-button {
+    background: var(--m3-surface-variant);
+    border: 1px solid var(--m3-outline-variant);
+    color: var(--m3-on-surface-variant);
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+.toolbar-button:hover { background: var(--m3-secondary-container); }
+.toolbar-button .material-symbols-outlined { font-size: 20px; }
+
+/* Primary Button */
+.m3-button--filled {
+    background: var(--m3-primary) !important;
+    color: var(--m3-on-primary) !important;
+    border: none !important;
+    padding: 16px 32px !important;
+    border-radius: 100px !important;
+    font-weight: 900 !important;
+    font-size: 1rem !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.m3-button--filled:active { transform: scale(0.98); }
+.m3-button--filled:hover { opacity: 0.9; }
+.m3-button--filled .material-symbols-outlined { font-size: 22px; }
