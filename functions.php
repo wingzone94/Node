@@ -3,6 +3,9 @@
  * Node Theme Functions
  */
 
+// フォント読み込み設定の追加
+require_once get_template_directory() . '/functions_fonts.php';
+
 // 1. 各種メタボックスの追加
 function node_add_custom_meta_boxes() {
     add_meta_box('node_content_rating', 'コンテンツ評価設定', 'node_cero_z_meta_box_callback', 'post', 'side');
