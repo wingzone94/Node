@@ -1,0 +1,17 @@
+{
+  "name": "node-material-you-theme",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@material/material-color-utilities": "^0.2.7",
+    "colorthief": "^2.4.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
