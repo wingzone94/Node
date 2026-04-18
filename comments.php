@@ -45,7 +45,7 @@ function node_comment_callback($comment, $args, $depth) {
 
 // comment_form_fields フィルターで表示順を強制する
 function node_reorder_comment_fields( $fields ) {
-    $order = array( 'author', 'email', 'url', 'comment' );
+    $order = array( 'author', 'email', 'url' );
     $reordered = array();
 
     foreach ( $order as $key ) {
@@ -105,6 +105,9 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
     $node_req       = get_option( 'require_name_email' );
     $node_html_req  = ( $node_req ? " required='required'" : '' );
 
+    // 補助フィールド（author / email / url）
+    // comment_form() は fields → comment_field の順で出力するため、
+    // ここには 'comment' を含めない
     $node_fields = array(
         'author' => '<div class="m3-textfield">
                         <label for="author" class="m3-textfield__label">' . esc_html__( 'お名前', 'node' ) . ( $node_req ? ' *' : ' (任意)' ) . '</label>
@@ -118,18 +121,20 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
                         <label for="url" class="m3-textfield__label">' . esc_html__( 'ウェブサイト', 'node' ) . '</label>
                         <input id="url" name="url" type="url" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author_url'] ) . '" placeholder="https://..." maxlength="200">
                     </div>',
-        'comment' => '
-            <div class="m3-textfield m3-textfield--textarea">
-                <label for="comment" class="m3-textfield__label">' . _x( 'コメント内容', 'noun', 'node' ) . ' *</label>
-                <div class="comment-toolbar">
-                    <button type="button" class="toolbar-button" data-tag="bold" title="太字"><span class="material-symbols-outlined">format_bold</span></button>
-                    <button type="button" class="toolbar-button" data-tag="italic" title="斜体"><span class="material-symbols-outlined">format_italic</span></button>
-                    <button type="button" class="toolbar-button" data-tag="underline" title="下線"><span class="material-symbols-outlined">format_underlined</span></button>
-                    <button type="button" class="toolbar-button" data-tag="link" title="リンク"><span class="material-symbols-outlined">link</span></button>
-                </div>
-                <textarea id="comment" name="comment" class="m3-textfield__input" placeholder="温かいコメントをお待ちしております..." required aria-required="true" minlength="2" maxlength="5000"></textarea>
-            </div>',
     );
+
+    // コメント本文フィールドは comment_field パラメータで渡す
+    $node_comment_field = '
+        <div class="m3-textfield m3-textfield--textarea">
+            <label for="comment" class="m3-textfield__label">' . _x( 'コメント内容', 'noun', 'node' ) . ' *</label>
+            <div class="comment-toolbar">
+                <button type="button" class="toolbar-button" data-tag="bold" title="太字"><span class="material-symbols-outlined">format_bold</span></button>
+                <button type="button" class="toolbar-button" data-tag="italic" title="斜体"><span class="material-symbols-outlined">format_italic</span></button>
+                <button type="button" class="toolbar-button" data-tag="underline" title="下線"><span class="material-symbols-outlined">format_underlined</span></button>
+                <button type="button" class="toolbar-button" data-tag="link" title="リンク"><span class="material-symbols-outlined">link</span></button>
+            </div>
+            <textarea id="comment" name="comment" class="m3-textfield__input" placeholder="温かいコメントをお待ちしております..." required aria-required="true" minlength="2" maxlength="5000"></textarea>
+        </div>';
 
     comment_form( array(
         'title_reply'          => esc_html__( 'コメントを投稿する', 'node' ),
@@ -137,7 +142,7 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
         'cancel_reply_link'    => esc_html__( 'キャンセル', 'node' ),
         'label_submit'         => esc_html__( '送信する', 'node' ),
         'fields'               => $node_fields,
-        'comment_field'        => '',
+        'comment_field'        => $node_comment_field,
         'class_form'           => 'm3-comment-form',
         'submit_button'        => '<button name="%1$s" type="submit" id="%2$s" class="m3-button m3-button--filled"><span class="material-symbols-outlined">send</span>%4$s</button>',
         'title_reply_before'   => '<h3 id="reply-title" class="comment-reply-title m3-title-medium">',
@@ -145,4 +150,4 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
     ) );
     ?>
 
-</div>
+</div>  
