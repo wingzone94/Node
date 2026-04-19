@@ -29,14 +29,14 @@
                         <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
                     </svg>
                     <time class="m3-article__date" datetime="<?php echo get_the_date('c'); ?>">
-                        <?php echo node_get_relative_date(get_the_ID()); ?>
+                        <?php echo esc_html(node_get_relative_date(get_the_ID())); ?>
                     </time>
                 </div>
                 
                 <h1 class="m3-article__title"><?php the_title(); ?></h1>
 
                 <div class="m3-article__meta-info">
-                    <?php node_the_category_labels(get_the_ID(), 1); ?>
+                    <?php node_the_category_labels(get_the_ID(), 99); ?>
                 </div>
             </header>
 

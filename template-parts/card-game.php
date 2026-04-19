@@ -1,6 +1,6 @@
 <?php
 $game_info = get_post_meta(get_the_ID(), '_node_game_info', true);
-if (!empty($game_info['title'])) : ?>
+if (is_array($game_info) && !empty($game_info['title'])) : ?>
     <section class="m3-game-card">
         <div class="m3-game-card__header">
             <span class="material-symbols-outlined">videogame_asset</span>

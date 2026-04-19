@@ -10,6 +10,7 @@ require_once get_template_directory() . '/functions_fonts.php';
 function node_add_custom_meta_boxes() {
     add_meta_box('node_content_rating', 'コンテンツ評価設定', 'node_cero_z_meta_box_callback', 'post', 'side');
     add_meta_box('node_post_labels', '記事ラベル設定', 'node_post_labels_callback', 'post', 'side');
+    add_meta_box('node_m3_color', 'Material You カラー設定', 'node_m3_color_meta_box_callback', 'post', 'side');
     add_meta_box('node_ai_summary', 'Nexus Abstract (AI要約)', 'node_ai_summary_callback', 'post', 'normal', 'high');
     add_meta_box('node_game_info', 'ゲーム・アプリ情報', 'node_game_info_callback', 'post', 'normal');
 }
@@ -28,10 +29,17 @@ function node_post_labels_callback($post) {
     $is_sponsor = get_post_meta($post->ID, '_node_is_sponsor', true);
     $sponsor_text = get_post_meta($post->ID, '_node_sponsor_text', true) ?: 'SPONSORED';
     $sponsor_tooltip = get_post_meta($post->ID, '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
-    echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> AI生成メディアを含む</label></p>';
-    echo '<p><label><input type="checkbox" name="node_is_sponsor" value="1" '.checked($is_sponsor, '1', false).'> スポンサー記事（案件）</label></p>';
+    echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> 生成されたメディアを含みます</label></p>';
+    echo '<p><label><input type="checkbox" name="node_is_sponsor" value="1" '.checked($is_sponsor, '1', false).'> スポンサー記事（案件 ）</label></p>';
     echo '<p><label>スポンサーラベル文言:<br><input type="text" name="node_sponsor_text" value="'.esc_attr($sponsor_text).'" style="width:100%"></label></p>';
     echo '<p><label>スポンサー説明文 (ホバー時):<br><input type="text" name="node_sponsor_tooltip" value="'.esc_attr($sponsor_tooltip).'" style="width:100%"></label></p>';
+}
+
+function node_m3_color_meta_box_callback($post) {
+    $color = get_post_meta($post->ID, '_m3_primary_color', true);
+    echo '<p><label>投稿個別カラー（Material You）:<br>';
+    echo '<input type="text" name="m3_primary_color" value="' . esc_attr($color) . '" class="node-color-picker"></label></p>';
+    echo '<p class="description">未設定の場合はカテゴリ設定またはアイキャッチ画像から自動生成されます。</p>';
 }
 
 function node_ai_summary_callback($post) {
@@ -41,7 +49,10 @@ function node_ai_summary_callback($post) {
 }
 
 function node_game_info_callback($post) {
-    $info = get_post_meta($post->ID, '_node_game_info', true) ?: ['title' => '', 'summary' => '', 'links' => []];
+    $info = get_post_meta($post->ID, '_node_game_info', true);
+    if (!is_array($info)) {
+        $info = ['title' => '', 'summary' => '', 'links' => []];
+    }
     ?>
     <p><label>タイトル: <input type="text" name="node_game_title" value="<?php echo esc_attr($info['title']); ?>" style="width:100%"></label></p>
     <p><label>要約: <textarea name="node_game_summary" style="width:100%"><?php echo esc_textarea($info['summary']); ?></textarea></label></p>
@@ -49,7 +60,33 @@ function node_game_info_callback($post) {
     <?php
 }
 
-// 保存処理（修正済み）
+// カテゴリメタ追加
+function node_add_category_fields($term) {
+    $color = get_term_meta($term->term_id, '_m3_color', true);
+    ?>
+    <tr class="form-field">
+        <th scope="row"><label for="m3_color">カテゴリカラー</label></th>
+        <td>
+            <input name="m3_color" id="m3_color" type="text" value="<?php echo esc_attr($color); ?>" class="node-color-picker" data-default-color="#6750A4">
+            <p class="description">このカテゴリのデフォルトMaterial Youシードカラー。</p>
+        </td>
+    </tr>
+    <?php
+}
+add_action('category_edit_form_fields', 'node_add_category_fields');
+
+function node_add_category_fields_new($taxonomy) {
+    ?>
+    <div class="form-field">
+        <label for="m3_color">カテゴリカラー</label>
+        <input name="m3_color" id="m3_color" type="text" value="" class="node-color-picker" data-default-color="#6750A4">
+        <p>このカテゴリのデフォルトMaterial Youシードカラー。</p>
+    </div>
+    <?php
+}
+add_action('category_add_form_fields', 'node_add_category_fields_new');
+
+// 保存処理
 function node_save_custom_meta($post_id) {
     if (!isset($_POST['node_meta_box_nonce']) || !wp_verify_nonce($_POST['node_meta_box_nonce'], 'node_save_meta_box')) return;
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
@@ -60,7 +97,8 @@ function node_save_custom_meta($post_id) {
         '_node_is_sponsor' => 'node_is_sponsor',
         '_node_ai_summary' => 'node_ai_summary',
         '_node_sponsor_text' => 'node_sponsor_text',
-        '_node_sponsor_tooltip' => 'node_sponsor_tooltip'
+        '_node_sponsor_tooltip' => 'node_sponsor_tooltip',
+        '_m3_primary_color' => 'm3_primary_color'
     ];
 
     foreach ($fields as $meta_key => $post_key) {
@@ -71,7 +109,6 @@ function node_save_custom_meta($post_id) {
         }
     }
 
-    // 🔥 修正ポイント（安全化）
     $game_info = [
         'title' => isset($_POST['node_game_title']) ? sanitize_text_field($_POST['node_game_title']) : '',
         'summary' => isset($_POST['node_game_summary']) ? sanitize_textarea_field($_POST['node_game_summary']) : '',
@@ -82,32 +119,144 @@ function node_save_custom_meta($post_id) {
 }
 add_action('save_post', 'node_save_custom_meta');
 
+function node_save_category_meta($term_id) {
+    if (isset($_POST['m3_color'])) {
+        update_term_meta($term_id, '_m3_color', sanitize_text_field($_POST['m3_color']));
+    }
+}
+add_action('edited_category', 'node_save_category_meta');
+add_action('create_category', 'node_save_category_meta');
+
 // アセット
 function node_enqueue_assets() {
     wp_enqueue_style('node-style', get_stylesheet_uri());
     wp_enqueue_style('node-features-style', get_template_directory_uri() . '/features.css');
+    // ViteでビルドされたメインJSを読み込む
+    wp_enqueue_script('node-main-js', get_template_directory_uri() . '/assets/js/main.js', [], null, true);
+    // テーマ固有の機能（ダークモード等）を読み込む
     wp_enqueue_script('node-features-js', get_template_directory_uri() . '/features.js', [], null, true);
 }
 add_action('wp_enqueue_scripts', 'node_enqueue_assets');
 
+function node_enqueue_admin_assets($hook) {
+    if (!in_array($hook, ['post.php', 'post-new.php', 'term.php', 'edit-tags.php'])) return;
+    wp_enqueue_style('wp-color-picker');
+    wp_enqueue_script('node-admin-js', get_template_directory_uri() . '/assets/js/editor.js', ['wp-color-picker'], null, true);
+    wp_add_inline_script('node-admin-js', 'jQuery(function($){ $(".node-color-picker").wpColorPicker(); });');
+}
+add_action('admin_enqueue_scripts', 'node_enqueue_admin_assets');
+
 // サムネ
 add_theme_support('post-thumbnails');
 
-// 🔥 日付関数（これが今回の主役）
-function node_get_relative_date($post_id) {
-    $post_time = get_post_time('U', false, $post_id);
-    $current_time = current_time('timestamp');
-    $diff = $current_time - $post_time;
+// --- ユーティリティ ---
 
-    $date_str = get_the_date('Y年n月j日', $post_id);
+/**
+ * 投稿日時を相対表示（◯時間前など）にする
+ */
+if (!function_exists('node_get_relative_date')) {
+    function node_get_relative_date($post_id = null) {
+        $post_id = $post_id ?: get_the_ID();
+        if (!$post_id) return '';
 
-    if ($diff > 0 && $diff < 86400) {
-        $hours = floor($diff / 3600);
-        if ($hours < 1) return $date_str . ' (1時間以内)';
-        return $date_str . ' (' . $hours . '時間前)';
+        $post_time = get_the_time('U', $post_id);
+        $current_time = current_time('timestamp');
+        $diff = $current_time - $post_time;
+
+        if ($diff < 3600) {
+            // 1時間以内
+            if ($diff < 60) {
+                return 'たった今';
+            }
+            return floor($diff / 60) . '分前';
+        } elseif ($diff < 86400) {
+            // 1日以内（◯時間◯分前）
+            $hours = floor($diff / 3600);
+            $minutes = floor(($diff % 3600) / 60);
+            return $hours . '時間' . $minutes . '分前';
+        } elseif ($diff < 604800) {
+            // 7日以内
+            return floor($diff / 86400) . '日前';
+        } else {
+            // それ以降
+            return get_the_date('', $post_id);
+        }
     }
-    return $date_str;
-}// カテゴリーラベル表示
+}
+// --- ユーティリティ ---
+
+/**
+ * 画像からシードカラー（主色）を抽出する（PHP GD使用）
+ */
+function node_get_image_seed_color($attachment_id) {
+    if (!$attachment_id) return null;
+
+    // キャッシュを確認
+    $cached = get_post_meta($attachment_id, '_node_seed_color', true);
+    if ($cached) return $cached;
+
+    $file_path = get_attached_file($attachment_id);
+    if (!$file_path || !file_exists($file_path)) return null;
+
+    // 画像サイズ情報を取得
+    $info = getimagesize($file_path);
+    if (!$info) return null;
+
+    // 画像を読み込み（JPEG, PNG, WEBPに対応）
+    $image = null;
+    switch ($info[2]) {
+        case IMAGETYPE_JPEG: $image = imagecreatefromjpeg($file_path); break;
+        case IMAGETYPE_PNG:  $image = imagecreatefrompng($file_path); break;
+        case IMAGETYPE_WEBP: $image = imagecreatefromwebp($file_path); break;
+        case IMAGETYPE_GIF:  $image = imagecreatefromgif($file_path); break;
+    }
+
+    if (!$image) return null;
+
+    // 1x1ピクセルにリサイズして平均色を抽出
+    $pixel = imagecreatetruecolor(1, 1);
+    imagecopyresampled($pixel, $image, 0, 0, 0, 0, 1, 1, imagesx($image), imagesy($image));
+
+    $rgb = imagecolorat($pixel, 0, 0);
+    $r = ($rgb >> 16) & 0xFF;
+    $g = ($rgb >> 8) & 0xFF;
+    $b = $rgb & 0xFF;
+
+    $hex = sprintf("#%02x%02x%02x", $r, $g, $b);
+
+    // 次回からの高速化のためにメタデータに保存
+    update_post_meta($attachment_id, '_node_seed_color', $hex);
+
+    imagedestroy($image);
+    imagedestroy($pixel);
+
+    return $hex;
+}
+
+function node_get_category_color($cat_id, $post_id = null) {
+    // 1. 投稿個別カラー
+    if ($post_id) {
+        $post_color = get_post_meta($post_id, '_m3_primary_color', true);
+        if ($post_color) return $post_color;
+    }
+
+    // 2. カテゴリ個別カラー
+    $cat_color = get_term_meta($cat_id, '_m3_color', true);
+    if ($cat_color) return $cat_color;
+
+    // 3. アイキャッチからの自動抽出 (PHP)
+    if ($post_id && has_post_thumbnail($post_id)) {
+        $thumb_id = get_post_thumbnail_id($post_id);
+        $seed_color = node_get_image_seed_color($thumb_id);
+        if ($seed_color) return $seed_color;
+    }
+
+    // 4. フォールバック
+    return '#6750A4';
+}
+
+
+// カテゴリーラベル表示
 function node_the_category_labels($post_id = null, $max = 4) {
     if (!$post_id) $post_id = get_the_ID();
     $categories = get_the_category($post_id);
@@ -116,9 +265,12 @@ function node_the_category_labels($post_id = null, $max = 4) {
     $count = count($categories);
     $display_cats = array_slice($categories, 0, $max);
 
+    $thumb_url = has_post_thumbnail($post_id) ? get_the_post_thumbnail_url($post_id, 'medium') : '';
+
     echo '<div class="m3-card__categories-top">';
     foreach ($display_cats as $cat) {
-        echo '<span class="m3-label m3-label--category">';
+        $color = node_get_category_color($cat->term_id, $post_id);
+        echo '<span class="m3-label m3-label--category" data-color="' . esc_attr($color) . '" data-thumb="' . esc_attr($thumb_url) . '">';
         echo '<span class="material-symbols-outlined">folder</span>';
         echo esc_html($cat->name);
         echo '</span>';
@@ -136,7 +288,8 @@ function node_the_post_badges($post_id = null) {
 
     if (get_post_meta($post_id, '_node_is_ai_generated', true) === '1') {
         echo '<span class="m3-label m3-label--ai">';
-        echo 'AI生成';
+        echo '<span class="material-symbols-outlined">auto_awesome</span>';
+        echo '生成されたメディアを含みます';
         echo '</span>';
     }
 

@@ -2,7 +2,7 @@
 Theme Name: Node
 Author: Cybernode Teams
 Description: Material 3 Expansive with Optimized Dark Mode and Abstract Spotlight navigation.
-Version: 0.1.7
+Version: 0.1.8
 */
 
 :root {
@@ -74,11 +74,25 @@ a { color: inherit; text-decoration: none; }
 .m3-search-bar__input { width: 0; opacity: 0; border: none; background: var(--md-sys-color-surface-container-high); border-radius: 20px; transition: all var(--m3-motion-duration) var(--m3-motion-easing); outline: none; }
 .m3-search-bar.is-active .m3-search-bar__input { width: 200px; opacity: 1; padding: var(--m3-spacing-s) var(--m3-spacing-m); margin-left: var(--m3-spacing-s); }
 
-.m3-icon-button { width: var(--m3-spacing-xxl); height: var(--m3-spacing-xxl); display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); }
+.m3-icon-button { width: var(--m3-spacing-xxl); height: var(--m3-spacing-xxl); display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); position: relative; }
 .m3-icon-button:hover { background: var(--md-sys-color-surface-variant); }
 
-.m3-header__nav { text-align: center; padding: var(--m3-spacing-s) var(--m3-spacing-m); border-bottom: 1px solid var(--md-sys-color-outline-variant); }
-.m3-header__nav ul { display: flex; justify-content: center; gap: var(--m3-spacing-l); list-style: none; margin: 0; padding: 0; }
+/* テーマ切り替えボタンのアイコン制御 */
+#theme-toggle .material-symbols-outlined {
+    position: absolute;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* ライトモード時: 太陽を表示、月を隠す */
+#theme-toggle-light-icon { opacity: 1; transform: scale(1); }
+#theme-toggle-dark-icon { opacity: 0; transform: scale(0.5); pointer-events: none; }
+
+/* ダークモード時: 月を表示、太陽を隠す */
+[data-theme="dark"] #theme-toggle-light-icon { opacity: 0; transform: scale(0.5); pointer-events: none; }
+[data-theme="dark"] #theme-toggle-dark-icon { opacity: 1; transform: scale(1); pointer-events: none; }
+
+/* JSで追加される .hidden クラスも念のため維持 */
+.hidden { display: none !important; }
 
 /* --- Post Grid & Cards --- */
 .m3-post-grid { padding: var(--m3-spacing-xxxl) var(--m3-spacing-m); }
@@ -124,7 +138,19 @@ a { color: inherit; text-decoration: none; }
 .m3-card__comment-count { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 800; opacity: 0.9; }
 
 .m3-label { padding: 6px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
-.m3-label--category { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border: 1px solid var(--md-sys-color-outline-variant); box-shadow: none; }
+.m3-label--category {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: none;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: default;
+}
+.m3-label--category:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    filter: brightness(1.05);
+}
 .m3-label--category .material-symbols-outlined { font-size: 14px; opacity: 0.8; }
 
 /* --- Article View (Single) --- */
@@ -354,7 +380,15 @@ a { color: inherit; text-decoration: none; }
 .m3-toast { position: fixed; bottom: var(--m3-spacing-xl); left: 50%; transform: translateX(-50%) translateY(100px); background: #313033; color: #f4f0ef; padding: var(--m3-spacing-m) var(--m3-spacing-l); border-radius: 16px; box-shadow: 0 12px 48px rgba(0,0,0,0.4); z-index: 99999; transition: transform var(--m3-motion-duration) var(--m3-motion-easing), opacity 0.2s; opacity: 0; display: flex; align-items: center; gap: var(--m3-spacing-s); pointer-events: none; }
 .m3-toast.is-visible { transform: translateX(-50%) translateY(0); opacity: 1; }
 
+.hidden { display: none !important; }
 .hidden-element { display: none; }
+
+/* RSS Button Hover */
+.m3-icon-button[title="RSSフィード"]:hover {
+    color: #ff6600;
+    background: rgba(255, 102, 0, 0.1);
+}
+
 @media (max-width: 1000px) { .m3-sticky-navigation, .m3-fab-comment { right: var(--m3-spacing-s); } }
 
 /* Sponsor Label (Single Page Hero) */

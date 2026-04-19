@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const darkIcon = document.getElementById('theme-toggle-dark-icon');
         const lightIcon = document.getElementById('theme-toggle-light-icon');
         if (theme === 'dark') {
-            if (darkIcon) darkIcon.classList.add('hidden');
-            if (lightIcon) lightIcon.classList.remove('hidden');
-        } else {
-            if (lightIcon) lightIcon.classList.add('hidden');
+            // ダークモード時は月を表示、太陽を隠す
             if (darkIcon) darkIcon.classList.remove('hidden');
+            if (lightIcon) lightIcon.classList.add('hidden');
+        } else {
+            // ライトモード時は太陽を表示、月を隠す
+            if (lightIcon) lightIcon.classList.remove('hidden');
+            if (darkIcon) darkIcon.classList.add('hidden');
         }
     };
 
