@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="30 45 140 140" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="leaf-shape" d="M0,0 C-20,-10 -35,-40 0,-70 C35,-40 20,-10 0,0 Z" />
+  </defs>
+
+  <g transform="translate(100, 100)">
+    
+    <use href="#leaf-shape" fill="#F44336" transform="rotate(180)" />
+    
+    <use href="#leaf-shape" fill="#2196F3" transform="rotate(300)" />
+    
+    <use href="#leaf-shape" fill="#4CAF50" transform="rotate(60)" />
+
+    <circle r="2" fill="#333" opacity="0.1" />
+  </g>
+</svg>  
