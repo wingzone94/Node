@@ -1,0 +1,160 @@
+/**
+ * Luminous Core v0.4 - Hegemony Blocks & Responsive Optimization
+ */
+
+:root {
+    --m3-radius-card: 16px; /* M3 Standard */
+    --m3-sanctuary: 24px;
+}
+
+/* 24px Sanctuary & Container Control */
+.m3-block-container {
+    max-width: 800px;
+    margin: 24px auto;
+    padding-left: 24px;
+    padding-right: var(--m3-sanctuary); /* 聖域の死守 */
+    box-sizing: border-box;
+}
+
+/* 1. Smart Sort Table */
+.m3-sort-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--m3-radius-card);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface);
+    margin-bottom: 24px;
+}
+
+.m3-sort-table {
+    width: 100%;
+    border-collapse: collapse;
+    font: var(--m3-font-body-medium);
+}
+
+.m3-sort-table th {
+    background: var(--md-sys-color-surface-container-high);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 900;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.m3-sort-table th:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.m3-sort-table th.is-sorting {
+    color: var(--md-sys-color-primary);
+}
+
+.m3-sort-table th::after {
+    content: 'expand_more';
+    font-family: 'Material Symbols Outlined';
+    font-size: 18px;
+    vertical-align: middle;
+    margin-left: 8px;
+    opacity: 0.3;
+}
+
+.m3-sort-table th.sort-asc::after { content: 'arrow_upward'; opacity: 1; }
+.m3-sort-table th.sort-desc::after { content: 'arrow_downward'; opacity: 1; }
+
+.m3-sort-table td {
+    padding: 12px 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* 2. Media Card & Label (Interactive) */
+.m3-media-container {
+    position: relative;
+    border-radius: var(--m3-radius-card);
+    overflow: hidden;
+    box-shadow: var(--m3-elevation-1);
+    transition: transform 0.3s var(--m3-motion-easing);
+}
+
+.m3-media-container:hover {
+    transform: scale(1.01);
+    box-shadow: var(--m3-elevation-2);
+}
+
+.m3-media-checkbox {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    accent-color: var(--md-sys-color-primary);
+}
+
+.m3-media-label {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    padding: 8px 16px;
+    border-radius: var(--m3-radius-full);
+    font: var(--m3-font-label-large);
+    font-weight: 800;
+    box-shadow: var(--m3-elevation-3);
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.8);
+    z-index: 5;
+}
+
+/* 3. Voting Block (Refined) */
+.m3-voting-card {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: var(--m3-radius-card);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--m3-elevation-1);
+}
+
+.m3-voting-result-container {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-radius: var(--m3-radius-medium);
+    padding: 16px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 900;
+}
+
+/* 4. Responsive Optimization (Device Specific) */
+
+/* iPhone 5 / Xperia acro (320px) */
+@media (max-width: 359px) {
+    :root { --m3-sanctuary: 16px; } /* 極小画面では聖域を少し詰めつつ確保 */
+    .m3-block-container { padding-left: 12px; padding-right: 16px; }
+    .m3-voting-title { font-size: 1.2rem; }
+    .m3-product-info { padding: 12px; }
+}
+
+/* iPhone 6 / iPhone X / iPhone 12 mini (375px) */
+@media (min-width: 360px) and (max-width: 399px) {
+    .m3-block-container { padding-left: 20px; padding-right: 24px; }
+}
+
+/* iPhone 11 / iPhone 14 Plus / Xperia Z Ultra (414px - 600px) */
+@media (min-width: 400px) {
+    .m3-sort-table { font-size: 1rem; }
+}
+
+/* 16px Elevated Card Design for Bridges */
+.m3-embed-container {
+    border-radius: var(--m3-radius-card) !important;
+    box-shadow: var(--m3-elevation-2);
+    border: none !important;
+}

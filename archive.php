@@ -2,47 +2,13 @@
 
 <main id="primary" class="site-main">
 
-    <?php if (is_home() && !is_paged()) : ?>
-        <!-- ミニマルな SPOTLIGHT セクション -->
-        <section class="m3-featured-abstract">
-            <div class="m3-featured-abstract__header">
-                <h2 class="m3-featured-abstract__title">🔥SPOTLIGHT</h2>
-            </div>
-            <div class="m3-featured-abstract__container">
-                <?php
-                $parent_cat = get_category_by_slug('spotlight') ?: get_category_by_slug('Spotlight');
-                if ($parent_cat) {
-                    $sub_cats = get_categories(['parent' => $parent_cat->term_id]);
-                    $sub_cat_ids = wp_list_pluck($sub_cats, 'term_id');
-                    if (!empty($sub_cat_ids)) {
-                        $featured_query = new WP_Query([
-                            'category__in' => $sub_cat_ids,
-                            'posts_per_page' => 4,
-                            'orderby' => 'date',
-                            'order' => 'DESC'
-                        ]);
-                        $m3_colors = ['var(--md-sys-color-primary)', '#6750A4', '#006A6A', '#914C00'];
-                        $color_index = 0;
-                        if ($featured_query->have_posts()) :
-                            while ($featured_query->have_posts()) : $featured_query->the_post(); 
-                                $color = $m3_colors[$color_index % count($m3_colors)];
-                                ?>
-                                <a href="<?php the_permalink(); ?>" class="m3-spotlight-item" style="--spotlight-color: <?php echo $color; ?>">
-                                    <div class="m3-spotlight-item__content">
-                                        <h3 class="m3-spotlight-item__title"><?php the_title(); ?></h3>
-                                    </div>
-                                </a>
-                                <?php 
-                                $color_index++;
-                            endwhile;
-                            wp_reset_postdata();
-                        endif;
-                    }
-                }
-                ?>
-            </div>
-        </section>
-    <?php endif; ?>
+    <header class="m3-archive-header" style="text-align: center; padding: var(--m3-spacing-xxxl) var(--m3-spacing-m) var(--m3-spacing-xl);">
+        <h1 class="m3-archive-title" style="display: flex; align-items: center; justify-content: center; gap: var(--m3-spacing-m); flex-wrap: wrap; font-size: 2.2rem; font-weight: 900; color: var(--md-sys-color-on-surface);">
+            <?php the_archive_title(); ?>
+            <span class="m3-badge">全 <?php echo $wp_query->found_posts; ?> 件</span>
+        </h1>
+        <?php the_archive_description('<div class="m3-archive-description" style="font-size: 1.1rem; color: var(--md-sys-color-outline); margin-top: var(--m3-spacing-m);">', '</div>'); ?>
+    </header>
 
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>

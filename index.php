@@ -3,42 +3,35 @@
 <main id="primary" class="site-main">
 
     <?php if (is_home() && !is_paged()) : ?>
-        <!-- ミニマルな SPOTLIGHT セクション -->
-        <section class="m3-featured-abstract">
-            <div class="m3-featured-abstract__header">
-                <h2 class="m3-featured-abstract__title">🔥SPOTLIGHT</h2>
+        <!-- リファクタリングされた SPOTLIGHT セクション -->
+        <section class="special-features">
+            <div class="special-features__header">
+                <h2 class="special-features__title">🔥SPOTLIGHT</h2>
             </div>
-            <div class="m3-featured-abstract__container">
+            <div class="special-features__grid">
                 <?php
-                $parent_cat = get_category_by_slug('spotlight') ?: get_category_by_slug('Spotlight');
-                if ($parent_cat) {
-                    $sub_cats = get_categories(['parent' => $parent_cat->term_id]);
-                    $sub_cat_ids = wp_list_pluck($sub_cats, 'term_id');
-                    if (!empty($sub_cat_ids)) {
-                        $featured_query = new WP_Query([
-                            'category__in' => $sub_cat_ids,
-                            'posts_per_page' => 4,
-                            'orderby' => 'date',
-                            'order' => 'DESC'
-                        ]);
-                        $m3_colors = ['var(--md-sys-color-primary)', '#6750A4', '#006A6A', '#914C00'];
-                        $color_index = 0;
-                        if ($featured_query->have_posts()) :
-                            while ($featured_query->have_posts()) : $featured_query->the_post(); 
-                                $color = $m3_colors[$color_index % count($m3_colors)];
-                                ?>
-                                <a href="<?php the_permalink(); ?>" class="m3-spotlight-item" style="--spotlight-color: <?php echo $color; ?>">
-                                    <div class="m3-spotlight-item__content">
-                                        <h3 class="m3-spotlight-item__title"><?php the_title(); ?></h3>
-                                    </div>
-                                </a>
-                                <?php 
-                                $color_index++;
-                            endwhile;
-                            wp_reset_postdata();
-                        endif;
-                    }
-                }
+                $spotlight_posts = node_get_spotlight_posts(6);
+                $m3_colors = ['var(--md-sys-color-primary)', '#6750A4', '#006A6A', '#914C00', '#BF360C', '#311B92'];
+                $index = 0;
+                foreach ($spotlight_posts as $item) : 
+                    $color = $m3_colors[$index % count($m3_colors)];
+                    ?>
+                    <a href="<?php echo esc_url($item['url']); ?>" 
+                       class="special-features__item <?php echo $item['thumbnail'] ? 'has-image' : ''; ?>" 
+                       style="--spotlight-color: <?php echo $color; ?>;">
+                        <?php if ($item['thumbnail']) : ?>
+                            <div class="special-features__image">
+                                <img src="<?php echo esc_url($item['thumbnail']); ?>" alt="">
+                            </div>
+                            <div class="special-features__overlay"></div>
+                        <?php endif; ?>
+                        <div class="special-features__content">
+                            <h3 class="special-features__item-title"><?php echo esc_html($item['title']); ?></h3>
+                        </div>
+                    </a>
+                <?php 
+                    $index++;
+                endforeach; 
                 ?>
             </div>
         </section>

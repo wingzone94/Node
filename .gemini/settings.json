@@ -1,0 +1,21 @@
+{
+  "general": {
+    "approvalMode": "auto_edit",
+    "notifyOnAutoEdit": true
+  },
+  "model": {
+    "default": "gemini-3.1-pro-preview",
+    "routing": {
+      "type": "priority",
+      "priorityList": [
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-flash"
+      ],
+      "fallbackOnQuotaError": true
+    }
+  },
+  "billing": {
+    "planMode": "auto-switch",
+    "notifyOnFallback": true
+  }
+}

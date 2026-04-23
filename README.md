@@ -1,3 +1,37 @@
+# Luminous Core
+
+![Version](https://img.shields.io/badge/version-0.3.0-orange?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
+![WordPress](https://img.shields.io/badge/WordPress-6.0+-21759b?style=for-the-badge&logo=wordpress)
+
+Material Design 3 (Expressive) の哲学を WordPress テーマに昇華させた、次世代のクリエイティブ・プラットフォーム。
+
+## v0.3 "Evolution" - 2026.4.23
+
+### 🌌 ユニバーサル・レスポンシブ・エンジン
+- **Fluid Scaling:** `clamp()` を用いた宇宙規模のスケーリング。iPhone 5 (320px) から 8K プロディスプレイまで破綻なくカバー。
+- **24px Sanctuary:** 右端の余白を「聖域」として全解像度で死守。
+
+### 🏎️ 240Hz / 8K "Overdrive" 最適化
+- **GPU Acceleration:** GSAP に `force3D: true` を適用し、GPU レイヤーへ強制転送。
+- **Adaptive Visuals:** 高DPI環境を自動検知し、`backdrop-filter` の強度を動的に調整。
+- **Low Latency:** `requestAnimationFrame` によるイベントデバウンスで、入力ラグを最小化。
+
+### 🧩 Hegemony (覇権) カスタムブロック
+- **スマート・ソートテーブル:** 文字列・数値を自動判別する軽量 Vanilla JS ソート機能。
+- **演出付き投票ユニット:** 投票時に Canvas パーティクルが弾ける視覚体験。
+- **チェック連動型メディアラベル:** GSAP による Chips 形式の滑らかな出現演出。
+- **万能メディア・ブリッジ:** Apple Music, Spotify, Steam, ニコニコ動画を M3 秩序（角丸 16px, Elevated）へ統合。
+
+## インストール
+1. `wp-content/themes/node` に配置。
+2. 管理画面より有効化。
+3. 必要に応じて `functions.php` に Gemini API キーを設定。
+
+---
+**Luminous Core Teams**
+*Evolution through Light and Logic.*
+\n\n
 # リリースノート - Node テーマ
 
 ## [0.2.0] - 2026.4.22

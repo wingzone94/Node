@@ -42,6 +42,34 @@
 
             <?php get_template_part('template-parts/card', 'nexus'); ?>
 
+            
+            <?php
+            $reading_time = get_post_meta(get_the_ID(), '_node_reading_time', true);
+            $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary_auto', true);
+            
+            if ($ai_summary) :
+            ?>
+            <div class="m3-ai-summary">
+                <div class="m3-ai-summary__header">
+                    <h3 class="m3-ai-summary__title"><span class="material-symbols-outlined">auto_awesome</span> AI Summary</h3>
+                    <?php if ($reading_time) : ?>
+                    <span class="m3-filter-chip"><span class="material-symbols-outlined">schedule</span> <?php echo esc_html($reading_time); ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="m3-ai-summary__content">
+                    <div class="m3-ai-shimmer">
+                        <div class="m3-ai-shimmer__line"></div>
+                        <div class="m3-ai-shimmer__line"></div>
+                        <div class="m3-ai-shimmer__line" style="width: 70%;"></div>
+                    </div>
+                    <p class="m3-ai-summary__text hidden" data-summary="<?php echo esc_attr($ai_summary); ?>"></p>
+                </div>
+                <div class="m3-ai-summary__footer hidden">
+                    <span class="m3-badge">AI Generated</span>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="m3-article__body entry-content">
                 <?php the_content(); ?>
                 
@@ -54,11 +82,89 @@
             <!-- ソーシャルシェアセクション -->
             <?php get_template_part('social-share'); ?>
 
+            <div class="m3-article__taxonomies" style="margin-top: 48px;">
+                <?php
+                $categories = get_the_category();
+                if ($categories) :
+                ?>
+                <div class="m3-article__taxonomy-section" style="margin-bottom: 32px; padding: 24px; background: var(--md-sys-color-surface-container-low); border-radius: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
+                    <h4 class="m3-article__taxonomy-title" style="display: flex; align-items: center; gap: 12px; font-weight: 900; color: var(--md-sys-color-primary); margin: 0 0 16px 0; font-size: 1.2rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="m415-120-302-302q-18-18-28-42.5T75-515v-285q0-33 23.5-56.5T155-880h285q26 0 50.5 10t42.5 28l302 302q35 35 35 86t-35 86L587-120q-35 35-86 35t-86-35ZM155-800v285l346 346 248-248-346-346H155Zm115 160q21 0 35.5-14.5T320-690q0-21-14.5-35.5T270-740q-21 0-35.5 14.5T220-690q0 21 14.5 35.5T270-640Zm-115-160v285-285Z"/></svg>
+                        TAGS
+                    </h4>
+                    <div class="m3-article__taxonomy-list" style="display: flex; flex-wrap: wrap; gap: 12px;">
+                        <?php foreach ($categories as $cat) : ?>
+                            <a href="<?php echo esc_url(get_category_link($cat->term_id)); ?>" class="m3-filter-chip">
+                                <?php echo esc_html($cat->name); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php
+                $post_tags = get_the_tags();
+                if ($post_tags) :
+                ?>
+                <div class="m3-article__taxonomy-section" style="padding: 24px; background: var(--md-sys-color-surface-container-low); border-radius: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
+                    <h4 class="m3-article__taxonomy-title" style="display: flex; align-items: center; gap: 12px; font-weight: 900; color: var(--md-sys-color-primary); margin: 0 0 16px 0; font-size: 1.2rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H440l40-160H320l-40 160h-80Zm140-240h160l40-160H320l-40 160Z"/></svg>
+                        登録されているタグ
+                    </h4>
+                    <div class="m3-article__taxonomy-list" style="display: flex; flex-wrap: wrap; gap: 12px;">
+                        <?php foreach ($post_tags as $tag) : ?>
+                            <a href="<?php echo esc_url(get_tag_link($tag->term_id)); ?>" class="m3-filter-chip">
+                                <?php echo esc_html($tag->name); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
             <!-- ライター情報 -->
             <?php get_template_part('template-parts/card', 'writer'); ?>
 
             <footer class="m3-article__footer">
                 <?php get_template_part('template-parts/card', 'game'); ?>
+                
+                <?php
+                $prev_post = get_previous_post();
+                $next_post = get_next_post();
+                if ($prev_post || $next_post) :
+                ?>
+                <nav class="m3-post-navigation">
+                    <?php if ($prev_post) : 
+                        $prev_thumb = get_the_post_thumbnail_url($prev_post->ID, 'medium_large');
+                    ?>
+                    <a href="<?php echo get_permalink($prev_post->ID); ?>" class="m3-elevated-nav-card m3-ripple-host">
+                        <?php if ($prev_thumb) : ?>
+                            <div class="m3-elevated-nav-card__bg" style="background-image: url('<?php echo esc_url($prev_thumb); ?>');"></div>
+                        <?php endif; ?>
+                        <div class="m3-elevated-nav-card__overlay"></div>
+                        <div class="m3-elevated-nav-card__content">
+                            <span class="m3-elevated-nav-card__label"><span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span> PREVIOUS</span>
+                            <h4 class="m3-elevated-nav-card__title"><?php echo esc_html(get_the_title($prev_post->ID)); ?></h4>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if ($next_post) : 
+                        $next_thumb = get_the_post_thumbnail_url($next_post->ID, 'medium_large');
+                    ?>
+                    <a href="<?php echo get_permalink($next_post->ID); ?>" class="m3-elevated-nav-card m3-ripple-host" style="text-align: right;">
+                        <?php if ($next_thumb) : ?>
+                            <div class="m3-elevated-nav-card__bg" style="background-image: url('<?php echo esc_url($next_thumb); ?>');"></div>
+                        <?php endif; ?>
+                        <div class="m3-elevated-nav-card__overlay"></div>
+                        <div class="m3-elevated-nav-card__content" style="align-items: flex-end;">
+                            <span class="m3-elevated-nav-card__label">NEXT <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span></span>
+                            <h4 class="m3-elevated-nav-card__title"><?php echo esc_html(get_the_title($next_post->ID)); ?></h4>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+                </nav>
+                <?php endif; ?>
             </footer>
 
         </article>

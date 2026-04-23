@@ -1,10 +1,18 @@
 <?php
 /**
- * Node Theme Functions
+ * Luminous Core Theme Functions
  */
+
+// サイト名を強制的に Luminous Core に変更
+add_filter('pre_option_blogname', function() {
+    return 'Luminous Core';
+});
 
 // フォント読み込み設定の追加
 require_once get_template_directory() . '/functions_fonts.php';
+
+// カスタムブロックとメディアブリッジの追加
+require_once get_template_directory() . '/functions-blocks.php';
 
 // 1. 各種メタボックスの追加
 function node_add_custom_meta_boxes() {
@@ -119,7 +127,279 @@ function node_save_custom_meta($post_id) {
 }
 add_action('save_post', 'node_save_custom_meta');
 
+/**
+ * SPOTLIGHT記事を取得する (スラッグ 'spotlight' のカテゴリとその子)
+ */
+function node_get_spotlight_posts($limit = 6) {
+    $cat = get_category_by_slug('spotlight');
+    if (!$cat) return [];
+
+    $args = [
+        'category_name' => 'spotlight',
+        'posts_per_page' => $limit,
+        'orderby' => 'date',
+        'order' => 'DESC'
+    ];
+
+    $query = new WP_Query($args);
+    $posts = [];
+
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            $posts[] = [
+                'title' => get_the_title(),
+                'url' => get_permalink(),
+                'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'large'),
+                'id' => get_the_ID()
+            ];
+        }
+        wp_reset_postdata();
+    }
+
+    return $posts;
+}
+
+/**
+ * 管理画面の投稿一覧に『SPOTLIGHT』列を追加
+ */
+function node_add_spotlight_column($columns) {
+    $new_columns = [];
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        if ($key === 'title') {
+            $new_columns['node_spotlight'] = 'SPOTLIGHT';
+        }
+    }
+    return $new_columns;
+}
+add_filter('manage_post_posts_columns', 'node_add_spotlight_column');
+
+/**
+ * 管理画面の『SPOTLIGHT』列の内容を表示
+ */
+function node_render_spotlight_column($column, $post_id) {
+    if ($column === 'node_spotlight') {
+        if (has_category('spotlight', $post_id)) {
+            echo '<span class="dashicons dashicons-star-filled" style="color: #FF9900;" title="SPOTLIGHTカテゴリに属しています"></span>';
+        } else {
+            echo '<span class="dashicons dashicons-star-empty" style="color: #ccc; opacity: 0.3;"></span>';
+        }
+    }
+}
+add_action('manage_post_posts_custom_column', 'node_render_spotlight_column', 10, 2);
+
+/**
+ * 管理画面の列幅を調整
+ */
+function node_admin_spotlight_style() {
+    echo '<style>.column-node_spotlight { width: 100px; text-align: center; }</style>';
+}
+add_action('admin_head', 'node_admin_spotlight_style');
+
+/**
+ * 商品リンクのURLを生成（将来的にアフィリエイトIDを付与しやすいよう独立）
+ */
+function node_generate_product_link($url, $type = 'amazon') {
+    if (empty($url)) return '';
+    // ここでアフィリエイトIDの付与ロジックなどを追加可能
+    return esc_url($url);
+}
+
+/**
+ * 商品リンク ショートコード [m3_product]
+ */
+function node_m3_product_shortcode($atts) {
+    $atts = shortcode_atts([
+        'title'       => '商品名未設定',
+        'price'       => '',
+        'image_url'   => '',
+        'amazon_url'  => '',
+        'rakuten_url' => '',
+    ], $atts);
+
+    $amazon_link = node_generate_product_link($atts['amazon_url'], 'amazon');
+    $rakuten_link = node_generate_product_link($atts['rakuten_url'], 'rakuten');
+
+    if (empty($amazon_link) && empty($rakuten_link)) return '';
+
+    ob_start();
+    ?>
+    <div class="m3-product-card">
+        <?php if ($atts['image_url']) : ?>
+            <div class="m3-product-card__image">
+                <img src="<?php echo esc_url($atts['image_url']); ?>" alt="<?php echo esc_attr($atts['title']); ?>" loading="lazy">
+            </div>
+        <?php endif; ?>
+        <div class="m3-product-card__info">
+            <h4 class="m3-product-card__title"><?php echo esc_html($atts['title']); ?></h4>
+            <?php if ($atts['price']) : ?>
+                <p class="m3-product-card__price"><?php echo esc_html($atts['price']); ?></p>
+            <?php endif; ?>
+            <div class="m3-product-card__buttons">
+                <?php if ($amazon_link) : ?>
+                    <a href="<?php echo $amazon_link; ?>" class="m3-product-btn m3-product-btn--amazon" target="_blank" rel="noopener noreferrer">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        Amazonで見る
+                    </a>
+                <?php endif; ?>
+                <?php if ($rakuten_link) : ?>
+                    <a href="<?php echo $rakuten_link; ?>" class="m3-product-btn m3-product-btn--rakuten" target="_blank" rel="noopener noreferrer">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        楽天で見る
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('m3_product', 'node_m3_product_shortcode');
+
+// メニュー登録
+function node_register_menus() {
+    register_nav_menus([
+        'primary' => 'ヘッダーメニュー',
+        'drawer'  => 'サイドドロワーメニュー（カテゴリ等）'
+    ]);
+}
+add_action('after_setup_theme', 'node_register_menus');
+
+// --- Blog Card ---
+
+/**
+ * URLからOGP情報を取得する
+ */
+function node_get_ogp_data($url) {
+    // キャッシュを確認 (1週間)
+    $transient_key = 'node_ogp_' . md5($url);
+    $cached = get_transient($transient_key);
+    if ($cached !== false) return $cached;
+
+    $ogp = [
+        'title'       => '',
+        'description' => '',
+        'image'       => '',
+        'favicon'     => '',
+        'site_name'   => '',
+        'is_internal' => false,
+    ];
+
+    // 内部リンクかチェック
+    $home_url = home_url();
+    if (str_contains($url, $home_url)) {
+        $post_id = url_to_postid($url);
+        if ($post_id) {
+            $ogp['title']       = get_the_title($post_id);
+            $ogp['description'] = get_the_excerpt($post_id);
+            $ogp['image']       = get_the_post_thumbnail_url($post_id, 'large');
+            $ogp['site_name']   = get_bloginfo('name');
+            $ogp['is_internal'] = true;
+            $ogp['favicon']     = get_site_icon_url(32);
+            set_transient($transient_key, $ogp, WEEK_IN_SECONDS);
+            return $ogp;
+        }
+    }
+
+    // 外部リンク
+    $response = wp_safe_remote_get($url, ['timeout' => 10, 'sslverify' => false]);
+    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+        return false;
+    }
+
+    $html = wp_remote_retrieve_body($response);
+    if (empty($html)) return false;
+
+    // DOMDocument等でパース (マルチバイト対応のため mb_convert_encoding)
+    $dom = new DOMDocument();
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $html);
+    $xpath = new DOMXPath($dom);
+
+    $ogp['title']       = $xpath->evaluate('string(//meta[@property="og:title"]/@content)') ?: $xpath->evaluate('string(//title)');
+    $ogp['description'] = $xpath->evaluate('string(//meta[@property="og:description"]/@content)') ?: $xpath->evaluate('string(//meta[@name="description"]/@content)');
+    $ogp['image']       = $xpath->evaluate('string(//meta[@property="og:image"]/@content)');
+    $ogp['site_name']   = $xpath->evaluate('string(//meta[@property="og:site_name"]/@content)') ?: parse_url($url, PHP_URL_HOST);
+    
+    // Favicon (簡易)
+    $ogp['favicon'] = 'https://www.google.com/s2/favicons?domain=' . parse_url($url, PHP_URL_HOST) . '&sz=64';
+
+    set_transient($transient_key, $ogp, WEEK_IN_SECONDS);
+    return $ogp;
+}
+
+/**
+ * ブログカード ショートコード [blogcard url="..."]
+ */
+function node_blogcard_shortcode($atts) {
+    $atts = shortcode_atts(['url' => ''], $atts);
+    if (empty($atts['url'])) return '';
+
+    $ogp = node_get_ogp_data($atts['url']);
+    if (!$ogp) return '<a href="' . esc_url($atts['url']) . '">' . esc_html($atts['url']) . '</a>';
+
+    ob_start();
+    ?>
+    <div class="m3-blogcard" onclick="window.open('<?php echo esc_url($atts['url']); ?>', '_blank')">
+        <div class="m3-blogcard__content">
+            <div class="m3-blogcard__text">
+                <h4 class="m3-blogcard__title"><?php echo esc_html($ogp['title']); ?></h4>
+                <p class="m3-blogcard__description"><?php echo esc_html(wp_trim_words($ogp['description'], 60)); ?></p>
+                <div class="m3-blogcard__footer">
+                    <?php if ($ogp['favicon']) : ?>
+                        <img src="<?php echo esc_url($ogp['favicon']); ?>" class="m3-blogcard__favicon" alt="" loading="lazy">
+                    <?php endif; ?>
+                    <span class="m3-blogcard__sitename"><?php echo esc_html($ogp['site_name']); ?></span>
+                    <?php if ($ogp['is_internal']) : ?>
+                        <span class="m3-blogcard__internal-badge">内部記事</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php if ($ogp['image']) : ?>
+                <div class="m3-blogcard__image">
+                    <img src="<?php echo esc_url($ogp['image']); ?>" alt="" loading="lazy">
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('blogcard', 'node_blogcard_shortcode');
+
+/**
+ * 本文中のURL（単独行）をブログカードに自動置換
+ */
+function node_auto_blogcard($content) {
+    // リンク済みのものは除外
+    $pattern = '/^(<p>)?(https?:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)(<\/p>)?$/im';
+    return preg_replace_callback($pattern, function($matches) {
+        return node_blogcard_shortcode(['url' => $matches[2]]);
+    }, $content);
+}
+add_filter('the_content', 'node_auto_blogcard', 11);
+
 function node_save_category_meta($term_id) {
+    $term = get_term($term_id, 'category');
+    if ($term && !is_wp_error($term)) {
+        $slug = $term->slug;
+        $hash = abs(crc32($slug));
+        
+        $palettes = [
+            ['container' => 'var(--md-sys-color-primary-container, #ffdcbe)', 'on_container' => 'var(--md-sys-color-on-primary-container, #2c1600)'],
+            ['container' => 'var(--md-sys-color-secondary-container, #fedcbe)', 'on_container' => 'var(--md-sys-color-on-secondary-container, #2a1700)'],
+            ['container' => 'var(--md-sys-color-tertiary-container, #ffdcc1)', 'on_container' => 'var(--md-sys-color-on-tertiary-container, #2e1500)'],
+            ['container' => 'var(--md-sys-color-error-container, #ffdad6)', 'on_container' => 'var(--md-sys-color-on-error-container, #410002)'],
+            ['container' => 'var(--md-sys-color-custom-orange-container, #ffdbca)', 'on_container' => 'var(--md-sys-color-on-custom-orange-container, #331200)']
+        ];
+        
+        $index = $hash % count($palettes);
+        $selected = $palettes[$index];
+        
+        update_term_meta($term_id, '_m3_color_container', $selected['container']);
+        update_term_meta($term_id, '_m3_color_on_container', $selected['on_container']);
+    }
+
     if (isset($_POST['m3_color'])) {
         update_term_meta($term_id, '_m3_color', sanitize_text_field($_POST['m3_color']));
     }
@@ -132,7 +412,8 @@ function node_enqueue_assets() {
     wp_enqueue_style('node-style', get_stylesheet_uri());
     wp_enqueue_style('node-features-style', get_template_directory_uri() . '/features.css');
     // ViteでビルドされたメインJSを読み込む
-    wp_enqueue_script('node-main-js', get_template_directory_uri() . '/assets/js/main.js', [], null, true);
+    wp_enqueue_script('gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js', [], null, true);
+    wp_enqueue_script('node-main-js', get_template_directory_uri() . '/assets/js/main.js', ['gsap'], null, true);
     // テーマ固有の機能（ダークモード等）を読み込む
     wp_enqueue_script('node-features-js', get_template_directory_uri() . '/features.js', [], null, true);
 }
@@ -252,8 +533,48 @@ function node_get_category_color($cat_id, $post_id = null) {
     }
 
     // 4. フォールバック
-    return '#6750A4';
+    return '#FF9900';
 }
+
+/**
+ * Material 3 パレットを生成してCSS変数として出力する
+ */
+function node_generate_m3_colors() {
+    $primary = '#FF9900';
+    $surface = '#FFF8F0';
+    
+    // M3の原則に基づいたパレット（近似値）
+    ?>
+    <style id="m3-dynamic-colors">
+        :root {
+            --md-sys-color-primary: <?php echo $primary; ?>;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #ffdcbe;
+            --md-sys-color-on-primary-container: #2c1600;
+            
+            --md-sys-color-surface: <?php echo $surface; ?>;
+            --md-sys-color-on-surface: #201b16;
+            --md-sys-color-surface-container-low: #fff5e9;
+            --md-sys-color-surface-container: #ffebcc;
+            --md-sys-color-surface-container-high: #ffe5b8;
+            
+            --md-sys-color-outline: #817567;
+            --md-sys-color-outline-variant: #d3c4b4;
+        }
+        
+        [data-theme="dark"] {
+            --md-sys-color-primary: #ffb85d;
+            --md-sys-color-on-primary: #4a2800;
+            --md-sys-color-surface: #1e1b16;
+            --md-sys-color-on-surface: #ebe0d9;
+            --md-sys-color-surface-container-low: #25221b;
+            --md-sys-color-surface-container: #2a2720;
+            --md-sys-color-surface-container-high: #322f28;
+        }
+    </style>
+    <?php
+}
+add_action('wp_head', 'node_generate_m3_colors');
 
 
 // カテゴリーラベル表示
@@ -265,15 +586,24 @@ function node_the_category_labels($post_id = null, $max = 4) {
     $count = count($categories);
     $display_cats = array_slice($categories, 0, $max);
 
-    $thumb_url = has_post_thumbnail($post_id) ? get_the_post_thumbnail_url($post_id, 'medium') : '';
-
     echo '<div class="m3-card__categories-top">';
     foreach ($display_cats as $cat) {
-        $color = node_get_category_color($cat->term_id, $post_id);
-        echo '<span class="m3-label m3-label--category" data-color="' . esc_attr($color) . '" data-thumb="' . esc_attr($thumb_url) . '">';
+        $container = get_term_meta($cat->term_id, '_m3_color_container', true);
+        $on_container = get_term_meta($cat->term_id, '_m3_color_on_container', true);
+        
+        // 保存された静的カラーがない場合は従来のフォールバック
+        if (!$container) {
+            $fallback_color = node_get_category_color($cat->term_id, $post_id);
+            $style = 'background-color: ' . esc_attr($fallback_color) . ';';
+        } else {
+            $style = 'background-color: ' . esc_attr($container) . '; color: ' . esc_attr($on_container) . ';';
+        }
+
+        $link = get_category_link($cat->term_id);
+        echo '<a href="' . esc_url($link) . '" class="m3-label m3-label--category" style="' . $style . '">';
         echo '<span class="material-symbols-outlined">folder</span>';
         echo esc_html($cat->name);
-        echo '</span>';
+        echo '</a>';
     }
     if ($count > $max) {
         echo '<span class="m3-label m3-label--category-more">+' . ($count - $max) . '</span>';
@@ -302,3 +632,70 @@ function node_the_post_badges($post_id = null) {
 
     echo '</div>';
 }
+/**
+ * 記事保存時に AI 要約と読了時間を生成・保存
+ */
+function node_generate_ai_metadata($post_id, $post, $update) {
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if ($post->post_type !== 'post') return;
+    if ($post->post_status !== 'publish') return;
+
+    $content = strip_shortcodes(strip_tags($post->post_content));
+    $hash = md5($content);
+    $old_hash = get_post_meta($post_id, '_node_content_hash', true);
+
+    if ($hash !== $old_hash) {
+        // 1. 精密読了時間 (800文字 = 1分換算)
+        $char_count = mb_strlen(preg_replace('/\s+/', '', $content));
+        $total_seconds = ceil(($char_count / 800) * 60);
+        $minutes = floor($total_seconds / 60);
+        $seconds = $total_seconds % 60;
+        
+        $reading_time = '';
+        if ($minutes > 0) {
+            $reading_time .= $minutes . '分';
+        }
+        $reading_time .= sprintf('%02d', $seconds) . '秒';
+        
+        update_post_meta($post_id, '_node_reading_time', $reading_time);
+
+        // 2. AI 要約
+        $api_key = defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '';
+        if (!empty($api_key)) {
+            $prompt = "以下の記事本文を100文字程度で簡潔に要約してください。\n\n" . mb_substr($content, 0, 3000);
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=' . $api_key;
+            $body = json_encode([
+                'contents' => [
+                    ['parts' => [['text' => $prompt]]]
+                ],
+                'generationConfig' => [
+                    'maxOutputTokens' => 150,
+                    'temperature' => 0.3,
+                ]
+            ]);
+
+            $response = wp_remote_post($url, [
+                'headers' => ['Content-Type' => 'application/json'],
+                'body' => $body,
+                'timeout' => 15
+            ]);
+
+            if (!is_wp_error($response)) {
+                $body = wp_remote_retrieve_body($response);
+                $data = json_decode($body, true);
+                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                    $summary = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                    $summary = str_replace(["\r\n", "\r", "\n"], ' ', $summary);
+                    update_post_meta($post_id, '_node_ai_summary_auto', $summary);
+                }
+            }
+        } else {
+            // プレースホルダー (APIキーがない場合)
+            $summary = "この記事は、指定されたトピックについて詳細な考察を行い、読者に対して有用な情報や独自の視点を提供しています。具体的な事例や分析を通じて、テーマの深い理解を促進することを目的としています。";
+            update_post_meta($post_id, '_node_ai_summary_auto', $summary);
+        }
+
+        update_post_meta($post_id, '_node_content_hash', $hash);
+    }
+}
+add_action('save_post', 'node_generate_ai_metadata', 20, 3);

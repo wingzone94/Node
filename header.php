@@ -19,12 +19,13 @@
             <button class="m3-icon-button m3-header__menu" aria-label="メニュー">
                 <span class="material-symbols-outlined">menu</span>
             </button>
-            <h1 class="m3-header__logo">
-                <a href="<?php echo esc_url(home_url('/')); ?>" rel="home">
-                    <span class="m3-logo-text"><?php bloginfo('name'); ?></span>
-                </a>
-            </h1>
         </div>
+
+        <h1 class="m3-header__logo">
+            <a href="<?php echo esc_url(home_url('/')); ?>" rel="home">
+                <span class="m3-logo-text"><?php bloginfo('name'); ?></span>
+            </a>
+        </h1>
 
         <div class="m3-header__end">
             <div class="m3-header__actions">
@@ -51,6 +52,36 @@
         </div>
     </div>
 </header>
+
+<!-- Material 3 Navigation Drawer -->
+<aside id="m3-drawer" class="m3-drawer">
+    <div class="m3-drawer__header">
+        <h2 class="m3-drawer__title">Luminous Core</h2>
+        <p class="m3-drawer__subtitle">Menu & Categories</p>
+    </div>
+    <nav class="m3-drawer__content">
+        <?php 
+        if (has_nav_menu('drawer')) {
+            wp_nav_menu([
+                'theme_location' => 'drawer',
+                'container' => false,
+                'menu_class' => 'm3-drawer__list',
+                'fallback_cb' => false,
+            ]);
+        } else {
+            // メニュー未設定時のフォールバック: カテゴリ一覧を表示
+            echo '<ul class="m3-drawer__list">';
+            $categories = get_categories();
+            foreach ($categories as $cat) {
+                echo '<li class="menu-item"><a href="' . get_category_link($cat->term_id) . '"><span class="material-symbols-outlined">folder</span>' . esc_html($cat->name) . '</a></li>';
+            }
+            echo '</ul>';
+        }
+        ?>
+    </nav>
+</aside>
+<div id="m3-drawer-scrim" class="m3-drawer-scrim"></div>
+
 <nav class="m3-header__nav">
     <?php wp_nav_menu(['theme_location' => 'primary', 'container' => false]); ?>
 </nav>
