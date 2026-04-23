@@ -40,9 +40,13 @@
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>
             <div class="m3-post-grid__container">
-                <?php while (have_posts()) : the_post(); ?>
-                    <?php get_template_part('card'); ?>
-                <?php endwhile; ?>
+                <?php
+                global $wp_query;
+                while (have_posts()) : the_post();
+                    $is_hero = (is_home() && !is_paged() && $wp_query->current_post === 0);
+                    get_template_part('card', null, ['is_hero' => $is_hero]);
+                endwhile;
+                ?>
             </div>
         <?php endif; ?>
     </div>

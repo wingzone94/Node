@@ -578,36 +578,23 @@ add_action('wp_head', 'node_generate_m3_colors');
 
 
 // カテゴリーラベル表示
-function node_the_category_labels($post_id = null, $max = 4) {
+function node_the_category_labels($post_id = null, $max = 1) {
     if (!$post_id) $post_id = get_the_ID();
     $categories = get_the_category($post_id);
     if (empty($categories)) return;
 
-    $count = count($categories);
-    $display_cats = array_slice($categories, 0, $max);
+    $cat = $categories[0];
 
     echo '<div class="m3-card__categories-top">';
-    foreach ($display_cats as $cat) {
-        $container = get_term_meta($cat->term_id, '_m3_color_container', true);
-        $on_container = get_term_meta($cat->term_id, '_m3_color_on_container', true);
-        
-        // 保存された静的カラーがない場合は従来のフォールバック
-        if (!$container) {
-            $fallback_color = node_get_category_color($cat->term_id, $post_id);
-            $style = 'background-color: ' . esc_attr($fallback_color) . ';';
-        } else {
-            $style = 'background-color: ' . esc_attr($container) . '; color: ' . esc_attr($on_container) . ';';
-        }
-
-        $link = get_category_link($cat->term_id);
-        echo '<a href="' . esc_url($link) . '" class="m3-label m3-label--category" style="' . $style . '">';
-        echo '<span class="material-symbols-outlined">folder</span>';
-        echo esc_html($cat->name);
-        echo '</a>';
-    }
-    if ($count > $max) {
-        echo '<span class="m3-label m3-label--category-more">+' . ($count - $max) . '</span>';
-    }
+    
+    $style = 'background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);';
+    $link = get_category_link($cat->term_id);
+    
+    echo '<a href="' . esc_url($link) . '" class="m3-label m3-label--category" style="' . $style . '">';
+    echo '<span class="material-symbols-outlined">folder</span>';
+    echo esc_html($cat->name);
+    echo '</a>';
+    
     echo '</div>';
 }
 
@@ -699,3 +686,12 @@ function node_generate_ai_metadata($post_id, $post, $update) {
     }
 }
 add_action('save_post', 'node_generate_ai_metadata', 20, 3);
+
+// トップページの表示件数を最大2行分 (6件) に制限する
+function node_limit_home_posts($query) {
+    if (!is_admin() && $query->is_main_query() && $query->is_home()) {
+        $query->set('posts_per_page', 6);
+    }
+}
+add_action('pre_get_posts', 'node_limit_home_posts');
+

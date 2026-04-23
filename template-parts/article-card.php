@@ -3,20 +3,30 @@
     <?php if (has_post_thumbnail()) : ?>
         <div class="m3-card__background">
             <?php the_post_thumbnail('large'); ?>
+            
+            <!-- 左上日付ラベル (画像上に配置) -->
+            <div class="m3-label--date">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
+                </svg>
+                <span><?php echo esc_html(node_get_relative_date(get_the_ID())); ?></span>
+            </div>
+
+            <!-- 右上バッジ (AI / SPONSOR) -->
+            <?php node_the_post_badges(); ?>
         </div>
-        <div class="m3-card__overlay"></div>
+    <?php else: ?>
+        <!-- 画像がない場合の日付・バッジ -->
+        <div class="m3-label--date m3-label--no-image" style="position: relative; top: auto; left: auto; padding: 20px 20px 0; color: var(--md-sys-color-outline); text-shadow: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
+            </svg>
+            <span><?php echo esc_html(node_get_relative_date(get_the_ID())); ?></span>
+        </div>
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <?php node_the_post_badges(); ?>
+        </div>
     <?php endif; ?>
-
-    <!-- 左上日付ラベル -->
-    <div class="m3-label--date">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
-        </svg>
-        <span><?php echo esc_html(node_get_relative_date(get_the_ID())); ?></span>
-    </div>
-
-    <!-- 右上バッジ (AI / SPONSOR) -->
-    <?php node_the_post_badges(); ?>
 
     <div class="m3-card__content">
         <!-- カテゴリ表示 -->

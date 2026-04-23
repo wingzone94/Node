@@ -12,7 +12,7 @@
         <?php if (have_posts()) : ?>
             <div class="m3-post-grid__container">
                 <?php while (have_posts()) : the_post(); ?>
-                    <?php get_template_part('template-parts/article-card'); ?>
+                    <?php get_template_part('card'); ?>
                 <?php endwhile; ?>
             </div>
             <div class="m3-navigation">

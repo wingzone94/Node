@@ -5,4 +5,4 @@
  * @package Node
  */
 
-get_template_part('template-parts/article-card');
+get_template_part('template-parts/article-card', null, $args);

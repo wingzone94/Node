@@ -10,16 +10,6 @@
                 <div class="m3-article__hero">
                     <?php the_post_thumbnail('full'); ?>
                     <div class="m3-article__hero-overlay"></div>
-                    <?php 
-                    $is_sponsor = get_post_meta(get_the_ID(), '_node_is_sponsor', true);
-                    if ($is_sponsor === '1') : 
-                        $text = get_post_meta(get_the_ID(), '_node_sponsor_text', true) ?: 'SPONSORED';
-                        $tooltip = get_post_meta(get_the_ID(), '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
-                    ?>
-                        <span class="m3-label--sponsor-rtx" data-tooltip-text="<?php echo esc_attr($tooltip); ?>">
-                            <?php echo esc_html($text); ?>
-                        </span>
-                    <?php endif; ?>
                 </div>
             <?php endif; ?>
 
@@ -32,14 +22,24 @@
                         <?php echo esc_html(node_get_relative_date(get_the_ID())); ?>
                     </time>
                 </div>
-                
+
                 <h1 class="m3-article__title"><?php the_title(); ?></h1>
 
-                <div class="m3-article__meta-info">
+                <div class="m3-article__meta-info" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--m3-spacing-s);">
                     <?php node_the_category_labels(get_the_ID(), 99); ?>
+                    <?php
+                    $is_sponsor = get_post_meta(get_the_ID(), '_node_is_sponsor', true);
+                    if ($is_sponsor === '1') :
+                        $text = get_post_meta(get_the_ID(), '_node_sponsor_text', true) ?: 'SPONSORED';
+                        $tooltip = get_post_meta(get_the_ID(), '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
+                    ?>
+                        <span class="m3-label m3-label--sponsor" style="background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); margin-left: 8px;" title="<?php echo esc_attr($tooltip); ?>">
+                            <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">volunteer_activism</span>
+                            <?php echo esc_html($text); ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
             </header>
-
             <?php get_template_part('template-parts/card', 'nexus'); ?>
 
             
@@ -82,34 +82,15 @@
             <!-- ソーシャルシェアセクション -->
             <?php get_template_part('social-share'); ?>
 
+            <?php
+            $post_tags = get_the_tags();
+            if ($post_tags) :
+            ?>
             <div class="m3-article__taxonomies" style="margin-top: 48px;">
-                <?php
-                $categories = get_the_category();
-                if ($categories) :
-                ?>
-                <div class="m3-article__taxonomy-section" style="margin-bottom: 32px; padding: 24px; background: var(--md-sys-color-surface-container-low); border-radius: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
+                <div class="m3-article__taxonomy-section" style="padding: 24px; background: var(--md-sys-color-surface-container-low); border-radius: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
                     <h4 class="m3-article__taxonomy-title" style="display: flex; align-items: center; gap: 12px; font-weight: 900; color: var(--md-sys-color-primary); margin: 0 0 16px 0; font-size: 1.2rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="m415-120-302-302q-18-18-28-42.5T75-515v-285q0-33 23.5-56.5T155-880h285q26 0 50.5 10t42.5 28l302 302q35 35 35 86t-35 86L587-120q-35 35-86 35t-86-35ZM155-800v285l346 346 248-248-346-346H155Zm115 160q21 0 35.5-14.5T320-690q0-21-14.5-35.5T270-740q-21 0-35.5 14.5T220-690q0 21 14.5 35.5T270-640Zm-115-160v285-285Z"/></svg>
                         TAGS
-                    </h4>
-                    <div class="m3-article__taxonomy-list" style="display: flex; flex-wrap: wrap; gap: 12px;">
-                        <?php foreach ($categories as $cat) : ?>
-                            <a href="<?php echo esc_url(get_category_link($cat->term_id)); ?>" class="m3-filter-chip">
-                                <?php echo esc_html($cat->name); ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                <?php
-                $post_tags = get_the_tags();
-                if ($post_tags) :
-                ?>
-                <div class="m3-article__taxonomy-section" style="padding: 24px; background: var(--md-sys-color-surface-container-low); border-radius: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
-                    <h4 class="m3-article__taxonomy-title" style="display: flex; align-items: center; gap: 12px; font-weight: 900; color: var(--md-sys-color-primary); margin: 0 0 16px 0; font-size: 1.2rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H440l40-160H320l-40 160h-80Zm140-240h160l40-160H320l-40 160Z"/></svg>
-                        登録されているタグ
                     </h4>
                     <div class="m3-article__taxonomy-list" style="display: flex; flex-wrap: wrap; gap: 12px;">
                         <?php foreach ($post_tags as $tag) : ?>
@@ -119,8 +100,8 @@
                         <?php endforeach; ?>
                     </div>
                 </div>
-                <?php endif; ?>
             </div>
+            <?php endif; ?>
 
             <!-- ライター情報 -->
             <?php get_template_part('template-parts/card', 'writer'); ?>
