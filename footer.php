@@ -81,6 +81,46 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <?php endif; ?>
 
+<script>
+/**
+ * System Share & Action Logic
+ * ビルド環境に依存せず確実に動作させるためのホットパッチ
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const shareBtns = document.querySelectorAll('.m3-share-btn');
+    const pageUrl = window.location.href;
+    const pageTitle = document.title;
+
+    shareBtns.forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const urlToShare = btn.dataset.url || pageUrl;
+
+            // システムシェアボタンの処理
+            if (btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system')) {
+                if (navigator.share) {
+                    e.preventDefault();
+                    try {
+                        await navigator.share({
+                            title: pageTitle,
+                            url: urlToShare
+                        });
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            console.error('Share failed:', err);
+                        }
+                    }
+                } else {
+                    // Fallback to Copy for devices without navigator.share
+                    e.preventDefault();
+                    const copyTrigger = document.getElementById('m3-copy-trigger');
+                    if (copyTrigger) copyTrigger.click();
+                }
+            }
+        });
+    });
+});
+</script>
+
 <?php wp_footer(); ?>
 </body>
 </html>
