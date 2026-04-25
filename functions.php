@@ -500,8 +500,8 @@ function node_generate_m3_colors() {
     $seed_color      = '';
     $seed_color_dark = '';
 
-    // 個別記事ページ: 投稿メタ → カテゴリメタ → アイキャッチ抽出色 の順に解決
-    if (is_singular('post')) {
+    // 個別記事ページおよび固定ページ: 投稿メタ → カテゴリメタ → アイキャッチ抽出色 の順に解決
+    if (is_singular(['post', 'page'])) {
         $post_id = get_the_ID();
 
         // 1. 投稿個別カラー
