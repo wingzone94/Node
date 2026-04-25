@@ -1036,51 +1036,62 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     display: inline !important; 
 }
 
-/* Mobile Grid for Share Buttons */
+/* Mobile Share Buttons - Aggressive Fix */
 @media (max-width: 599px) {
-    .m3-share-buttons {
-        display: grid !important;
-        grid-template-columns: repeat(4, 48px) !important;
-        gap: 16px !important;
+    .m3-share-buttons.m3-share-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
         justify-content: center !important;
+        align-items: center !important;
+        gap: 12px !important;
         width: 100% !important;
-        margin: 16px auto !important;
-        padding: 0 !important;
+        max-width: 100% !important;
+        margin: 24px auto !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
     }
-    .m3-share-buttons .m3-share-btn {
+    .m3-share-buttons .m3-share-btn.m3-share-btn {
+        display: flex !important;
         width: 48px !important;
         height: 48px !important;
+        min-width: 48px !important;
         padding: 0 !important;
+        margin: 0 !important;
         border-radius: 50% !important;
         border: none !important;
         box-shadow: none !important;
-        display: flex !important;
-        align-items: center !important;
         justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
     }
     
-    /* モバイル時はラベルを完全に除去 */
-    .m3-share-btn__label { 
-        display: none !important; 
+    /* 文字ラベルを完全に消去 */
+    .m3-share-buttons .m3-share-btn .m3-share-btn__label { 
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        visibility: hidden !important;
     }
     
-    /* アイコンを中心に固定 */
-    .m3-share-buttons .m3-share-btn i, 
+    /* アイコンを強制的に中央へ */
+    .m3-share-buttons .m3-share-btn i.fa-brands, 
     .m3-share-buttons .m3-share-btn .material-symbols-outlined,
     .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
         margin: 0 !important;
         padding: 0 !important;
-        font-size: 20px !important; 
+        font-size: 22px !important; 
+        line-height: 1 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
-    /* コピーボタンも他と揃える */
-    .m3-share-btn--copy {
-        background-color: var(--md-sys-color-primary-container) !important;
-        color: var(--md-sys-color-on-primary-container) !important;
-        border: none !important;
+    /* コピーボタンの背景をブランドトーンに合わせる */
+    .m3-share-buttons .m3-share-btn--copy {
+        background-color: var(--md-sys-color-primary) !important;
+        color: #ffffff !important;
     }
 }
 
