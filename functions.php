@@ -205,9 +205,9 @@ add_action('save_post', 'node_save_custom_meta');
 function node_modify_posts_per_page($query) {
     if (!is_admin() && $query->is_main_query() && (is_home() || is_archive() || is_search())) {
         if (wp_is_mobile()) {
-            $query->set('posts_per_page', 16);
+            $query->set('posts_per_page', 8);   // Mobile: 1列×8件 - スクロール負荷を軽減
         } else {
-            $query->set('posts_per_page', 32);
+            $query->set('posts_per_page', 16);  // PC: 4列×4行 - グリッドに最適
         }
     }
 }
