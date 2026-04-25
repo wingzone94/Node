@@ -11,8 +11,8 @@ get_header(); ?>
         <article id="post-<?php the_ID(); ?>" <?php post_class('m3-article m3-page-template'); ?>>
             
             <?php if (has_post_thumbnail()) : ?>
-                <div class="m3-article__hero" style="border-radius: var(--m3-radius-medium); overflow: hidden; margin-bottom: 24px;">
-                    <?php the_post_thumbnail('full', ['style' => 'width: 100%; height: auto; display: block;']); ?>
+                <div class="m3-article__hero">
+                    <?php the_post_thumbnail('full'); ?>
                     <div class="m3-article__hero-overlay"></div>
                 </div>
             <?php endif; ?>
