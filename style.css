@@ -735,7 +735,29 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     color: var(--md-sys-color-on-surface); 
 }
 
-.m3-card__title { font-size: 1.4rem; font-weight: 900; line-height: 1.4; margin: 0 0 var(--m3-spacing-m); transition: color 0.25s cubic-bezier(0.2, 0, 0, 1); }
+.m3-card__title { 
+    font-size: 1.4rem; 
+    font-weight: 900; 
+    line-height: 1.5; 
+    margin: 0 0 var(--m3-spacing-m); 
+    transition: color 0.25s cubic-bezier(0.2, 0, 0, 1);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    max-width: 20ch; /* PCでは約20文字で改行 */
+}
+
+@media (max-width: 1000px) {
+    .m3-card__title {
+        max-width: 16ch; /* タブレット案 */
+    }
+}
+
+@media (max-width: 599px) {
+    .m3-card__title {
+        max-width: 12ch; /* モバイル：最大12文字で改行 */
+    }
+}
+
 .m3-card__title a { color: var(--md-sys-color-on-surface); text-decoration: none; display: block; }
  
 .m3-card__footer-meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; }
