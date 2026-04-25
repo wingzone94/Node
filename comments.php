@@ -69,7 +69,6 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
 
     <?php if ( have_comments() ) : ?>
         <h2 class="comments-title">
-            <span class="material-symbols-outlined">forum</span>
             <?php
             $node_comment_count = get_comments_number();
             printf(
@@ -106,8 +105,6 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
     $node_html_req  = ( $node_req ? " required='required'" : '' );
 
     // 補助フィールド（author / email / url）
-    // comment_form() は fields → comment_field の順で出力するため、
-    // ここには 'comment' を含めない
     $node_fields = array(
         'author' => '<div class="m3-textfield">
                         <label for="author" class="m3-textfield__label">' . esc_html__( 'お名前', 'node' ) . ( $node_req ? ' *' : ' (任意)' ) . '</label>
@@ -123,16 +120,11 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
                     </div>',
     );
 
-    // コメント本文フィールドは comment_field パラメータで渡す
+    // コメント本文フィールド
     $node_comment_field = '
         <div class="m3-textfield m3-textfield--textarea">
             <label for="comment" class="m3-textfield__label">' . _x( 'コメント内容', 'noun', 'node' ) . ' *</label>
-            <div class="comment-toolbar">
-                <button type="button" class="toolbar-button" data-tag="bold" title="太字"><span class="material-symbols-outlined">format_bold</span></button>
-                <button type="button" class="toolbar-button" data-tag="italic" title="斜体"><span class="material-symbols-outlined">format_italic</span></button>
-                <button type="button" class="toolbar-button" data-tag="underline" title="下線"><span class="material-symbols-outlined">format_underlined</span></button>
-                <button type="button" class="toolbar-button" data-tag="link" title="リンク"><span class="material-symbols-outlined">link</span></button>
-            </div>
+
             <textarea id="comment" name="comment" class="m3-textfield__input" placeholder="温かいコメントをお待ちしております..." required aria-required="true" minlength="2" maxlength="5000"></textarea>
         </div>';
 
@@ -144,7 +136,7 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
         'fields'               => $node_fields,
         'comment_field'        => $node_comment_field,
         'class_form'           => 'm3-comment-form',
-        'submit_button'        => '<button name="%1$s" type="submit" id="%2$s" class="m3-button m3-button--filled"><span class="material-symbols-outlined">send</span>%4$s</button>',
+        'submit_button'        => '<button name="%1$s" type="submit" id="%2$s" class="m3-button m3-button--filled">%4$s</button>',
         'title_reply_before'   => '<h3 id="reply-title" class="comment-reply-title m3-title-medium">',
         'title_reply_after'    => '</h3>',
     ) );

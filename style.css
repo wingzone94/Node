@@ -2,33 +2,27 @@
 Theme Name: Luminous Core
 Author: Luminous Core
 Description: Material 3 Expansive with Optimized Dark Mode and Abstract Spotlight navigation.
-Version: 0.3.2
+Version: 0.4.0
 */
  
 :root {
     /* --- Material 3 Palette (Light) --- */
     --md-sys-color-primary: #FF9900;
     --md-sys-color-on-primary: #ffffff;
-    --md-sys-color-primary-container: #ffdcbe;
-    --md-sys-color-on-primary-container: #2c1600;
+    --md-sys-color-primary-container: #fedcbe;
+    --md-sys-color-on-primary-container: #2b1700;
+    --md-sys-color-secondary: #FF9900;
+    --md-sys-color-on-secondary: #ffffff;
     --md-sys-color-secondary-container: #fedcbe;
-    --md-sys-color-on-secondary-container: #291806;
-    --md-sys-color-surface: #FFF8F0;
-    --md-sys-color-on-surface: #201b16;
-    --md-sys-color-surface-container-low: #fff5e9;
-    --md-sys-color-surface-container: #ffebcc;
-    --md-sys-color-surface-container-high: #ffe5b8;
-    --md-sys-color-outline: #817567;
-    --md-sys-color-outline-variant: #d3c4b4;
-    
-    --font-main: "Inter", "Noto Sans JP", sans-serif;
-    --font-heading: "Barlow", "Inter", "Noto Sans JP", sans-serif;
     --m3-radius-small: 12px;
     --m3-radius-medium: 16px;
     --m3-radius-large: 28px;
     --m3-radius-extra-large: 32px;
     --m3-radius-full: 1000px;
- 
+
+    --font-main: "Inter", "Noto Sans JP", sans-serif;
+    --font-heading: "Inter", "Noto Sans JP", sans-serif;
+
     /* --- Material 3 Spacing --- */
     --m3-spacing-xs: 4px;
     --m3-spacing-s: 8px;
@@ -61,7 +55,15 @@ Version: 0.3.2
  
 /* --- Base --- */
 * { box-sizing: border-box; }
-body { font-family: var(--font-main); background-color: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); margin: 0; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body { 
+    font-family: var(--font-main); 
+    background-color: var(--md-sys-color-surface); 
+    color: var(--md-sys-color-on-surface); 
+    margin: 0; 
+    -webkit-font-smoothing: antialiased; 
+    overflow-x: hidden;
+    letter-spacing: -0.01em; /* 全体的にわずかにカーニングを詰める */
+}
 .m3-page-container { 
     max-width: 1440px; 
     margin: 0 auto; 
@@ -91,7 +93,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     text-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 .m3-header__inner { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; }
-.m3-logo-text { font-size: 1.35rem; font-weight: 900; color: var(--md-sys-color-primary); }
+.m3-logo-text { font-size: 1.35rem; font-weight: 900; color: var(--md-sys-color-on-surface); }
 .m3-header__actions { display: flex; align-items: center; gap: var(--m3-spacing-s); }
  
 .m3-search-bar { position: relative; display: flex; align-items: center; overflow: visible; }
@@ -256,7 +258,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .hidden { display: none !important; }
  
 /* --- Special Features Section (Abstract Panels) --- */
-.special-features { padding: 3rem 2rem; background: var(--md-sys-color-surface); margin-top: clamp(24px, 5vh, 40px); }
+.special-features { padding: 3rem 2rem 1.5rem; background: var(--md-sys-color-surface); margin-top: clamp(24px, 5vh, 40px); }
 .special-features__header { margin-bottom: 2rem; }
 .special-features__title { font-size: 1rem; font-weight: 900; letter-spacing: 0.15em; color: var(--md-sys-color-outline); margin: 0; text-transform: uppercase; }
  
@@ -436,7 +438,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.05em;
-    color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-surface-variant);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -659,6 +661,12 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     -webkit-backdrop-filter: none;
 }
 
+.m3-label--ai {
+    background: #FF9900 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
 /* Icon Only Mode (Card Upper) */
 .m3-label--icon-only {
     width: 34px;
@@ -692,8 +700,9 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     opacity: 0;
     transform: scale(0.9);
     box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    max-width: 260px;
-    line-height: 1.5;
+    max-width: none; /* 1行で収めるために制限を解除 */
+    white-space: nowrap; /* 強制的に1行にする */
+    line-height: 1;
     text-align: center;
 }
 
@@ -701,16 +710,17 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-card__category-tag {
     display: inline-flex;
 }
-.m3-card__category-tag .m3-label--category {
+.m3-article__meta-info .m3-label--category {
     background: var(--md-sys-color-secondary-container);
     color: var(--md-sys-color-on-secondary-container);
-    border-radius: 8px;
-    padding: 2px 8px;
-}
-.m3-card__meta-right {
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    border: 1px solid rgba(255, 153, 0, 0.1);
 }
 
 /* Date Badge specific */
@@ -746,12 +756,14 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-card__title { 
     font-size: 1.4rem; 
     font-weight: 900; 
-    line-height: 1.5; 
+    line-height: 1.4; 
     margin: 0 0 var(--m3-spacing-m); 
     transition: color 0.25s cubic-bezier(0.2, 0, 0, 1);
     word-break: break-all;
     overflow-wrap: anywhere;
-    max-width: 20em; /* PCでは約20文字で改行 */
+    max-width: 22em; /* カーニング調整分、少し余裕を持たせる */
+    letter-spacing: -0.04em; /* カーニングを詰める */
+    font-feature-settings: "palt"; /* 日本語プロポーショナルメトリクス有効化 */
 }
 
 @media (max-width: 1000px) {
@@ -839,15 +851,23 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface);
-    font-size: 0.8rem;
+    padding: 6px 14px;
+    border-radius: 12px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px solid rgba(255, 153, 0, 0.1);
+    font-size: 0.85rem;
     font-weight: 800;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
-.m3-filter-chip .material-symbols-outlined { font-size: 16px; }
+.m3-filter-chip:hover {
+    background: #FF9900;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.2);
+}
+.m3-filter-chip .material-symbols-outlined { font-size: 18px; }
 .m3-ai-summary__content {
     font-size: 1rem;
     line-height: 1.8;
@@ -908,14 +928,15 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 }
 
 .m3-article__top-badges {
-    position: relative;
+    position: absolute;
+    top: 24px;
+    right: 24px;
     z-index: 10;
     display: flex;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: -12px;
-    margin-bottom: 24px;
+    margin: 0;
 }
 
 /* --- Spotlight Badges --- */
@@ -997,12 +1018,14 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-article__title { 
     font-size: clamp(2.2rem, 6vw, 3.8rem); 
     font-weight: 900; 
-    line-height: 1.25; 
+    line-height: 1.2; 
     margin: var(--m3-spacing-m) auto; 
     color: var(--md-sys-color-on-surface);
     overflow-wrap: anywhere;
     word-break: break-all;
-    max-width: 20em;
+    max-width: 22em;
+    letter-spacing: -0.03em;
+    font-feature-settings: "palt";
 }
 
 @media (max-width: 599px) {
@@ -1014,25 +1037,96 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-article__title.is-long { font-size: clamp(1.5rem, 4vw, 2.6rem); }
 .m3-article__meta { display: flex; align-items: center; justify-content: center; gap: var(--m3-spacing-s); font-size: 1rem; font-weight: 700; color: var(--md-sys-color-outline); margin-bottom: var(--m3-spacing-m); }
  
-.m3-article__body { font-size: 1.15rem; line-height: 1.9; color: var(--md-sys-color-on-surface); }
-.m3-article__body h2 { font-size: 1.8rem; font-weight: 900; margin: var(--m3-spacing-xxxl) 0 var(--m3-spacing-m); border-bottom: 4px solid var(--md-sys-color-primary-container); display: inline-block; }
-.m3-article__body h3 { font-size: 1.4rem; font-weight: 800; margin: var(--m3-spacing-xl) 0 var(--m3-spacing-m); color: var(--md-sys-color-primary); }
+.m3-article__body { 
+    font-size: 1.1rem; 
+    line-height: 1.75; 
+    letter-spacing: -0.015em; 
+    color: var(--md-sys-color-on-surface); 
+}
+.m3-article__body blockquote {
+    margin: var(--m3-spacing-xl) 0;
+    padding: var(--m3-spacing-l) var(--m3-spacing-xl) var(--m3-spacing-l) var(--m3-spacing-xxl);
+    background-color: var(--md-sys-color-surface-container-low);
+    border-left: 6px solid #FF9900; /* オレンジに統一 */
+    border-radius: 4px var(--m3-radius-medium) var(--m3-radius-medium) 4px;
+    font-style: italic;
+    position: relative;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.m3-article__body blockquote::before {
+    content: 'format_quote';
+    font-family: 'Material Symbols Outlined';
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 32px;
+    color: #FF9900; /* オレンジに統一 */
+    opacity: 0.15;
+}
+.m3-article__body blockquote p {
+    margin-bottom: 0 !important;
+    line-height: 1.6;
+}
+.m3-article__body blockquote cite {
+    display: block;
+    margin-top: var(--m3-spacing-m);
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-style: normal;
+    color: var(--md-sys-color-outline);
+}
+.m3-article__body blockquote cite::before {
+    content: '— ';
+}
+
+.m3-article__body h2 { 
+    font-size: 1.8rem; 
+    font-weight: 900; 
+    margin: var(--m3-spacing-xxxl) 0 var(--m3-spacing-m); 
+    border-bottom: 4px solid var(--md-sys-color-primary-container); 
+    display: inline-block;
+    letter-spacing: -0.02em;
+}
+.m3-article__body h3 { 
+    font-size: 1.4rem; 
+    font-weight: 800; 
+    margin: var(--m3-spacing-xl) 0 var(--m3-spacing-m); 
+    color: var(--md-sys-color-primary);
+    letter-spacing: -0.015em;
+}
 .m3-article__body p { margin-bottom: var(--m3-spacing-l); }
-.m3-article__body li { line-height: 1.8; margin-bottom: var(--m3-spacing-s); }
+.m3-article__body li { line-height: 1.7; margin-bottom: var(--m3-spacing-s); }
 
 /* --- Emphasized Category Card Design --- */
 .m3-article__category-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     margin-top: 16px;
+}
+.m3-article__category-group.is-card {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 0;
+    gap: 6px;
 }
 .m3-article__category-label {
     font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.1em;
-    color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-surface-variant);
+}
+.m3-label--category-more {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--md-sys-color-on-secondary-container);
+    background: var(--md-sys-color-secondary-container);
+    padding: 2px 8px;
+    border-radius: 6px;
     opacity: 0.8;
 }
 
@@ -1133,8 +1227,9 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     align-items: center !important; 
     justify-content: center !important;
     height: 48px !important; 
-    width: 100% !important;
-    padding: 0 12px !important; 
+    min-width: 100px !important; /* コンテンツに合わせて広がるように最小幅を設定 */
+    width: auto !important; /* 固定幅ではなく自動幅に */
+    padding: 0 20px !important; 
     border-radius: 24px !important; 
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), filter 0.2s, box-shadow 0.2s;
     border: none; 
@@ -1144,6 +1239,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     text-decoration: none !important;
     flex-shrink: 0;
     overflow: visible !important;
+    white-space: nowrap !important; /* 改行を禁止 */
 }
 .m3-share-btn__label { 
     font-weight: 800 !important; 
@@ -1243,7 +1339,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     border: 1px solid var(--md-sys-color-outline-variant) !important;
 }
 .m3-share-btn--copy.is-success {
-    background-color: #4CAF50 !important;
+    background-color: #FF9900 !important; /* オレンジに統一 */
     color: #ffffff !important;
     border-color: transparent !important;
 }
@@ -1263,6 +1359,8 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     font-size: 14px !important; 
     opacity: 1 !important;
     display: inline !important;
+    white-space: nowrap !important; /* 改行を禁止 */
+}
 }
  
 /* --- Comments (Card design) --- */
@@ -1418,7 +1516,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.m3-toc-icon { color: var(--md-sys-color-primary); }
+.m3-toc-icon { color: var(--md-sys-color-on-surface); }
 .m3-sticky-toc__title { font-weight: 900; font-size: 0.95rem; flex-grow: 1; color: var(--md-sys-color-on-surface); }
 
 .m3-toc-close-btn {
@@ -1443,7 +1541,8 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-toc-body ul { list-style: none; padding: 0; margin: 0; }
 .m3-toc-body li { margin-bottom: 12px; line-height: 1.4; }
 .m3-toc-body a { 
-    color: var(--md-sys-color-on-surface-variant);
+    color: var(--md-sys-color-primary); 
+    text-decoration: none; 
     transition: color 0.2s ease, padding-left 0.2s ease;
     display: block;
 }
@@ -1493,7 +1592,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 }
 .m3-fab--tertiary {
     background-color: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-surface);
     border: 1px solid var(--md-sys-color-outline-variant);
 }
 
@@ -1934,4 +2033,206 @@ figure.aligncenter iframe {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+}
+
+.m3-section-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 32px 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--md-sys-color-on-surface);
+    letter-spacing: -0.02em;
+}
+/* 最初のセクションタイトルの上部余白をさらに抑制 */
+.m3-post-grid > .m3-section-title:first-child {
+    margin-top: 8px;
+}
+.m3-section-divider {
+    border: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    margin: 80px 0 48px;
+    opacity: 0.3;
+}
+
+/* --- Comments Blue Removal & Orange Unification --- */
+.m3-comments-section a {
+    color: var(--md-sys-color-primary);
+}
+.m3-comments-section a:hover {
+    color: #ff6600;
+}
+.comment-reply-link,
+#cancel-reply-link,
+.m3-comment-card__actions a {
+    color: var(--md-sys-color-primary) !important;
+    font-weight: 800;
+    text-decoration: none;
+}
+.m3-comment-form .m3-button {
+    background-color: var(--md-sys-color-primary) !important;
+    color: #ffffff !important;
+}
+.m3-comment-form .m3-button:hover {
+    filter: brightness(1.1);
+}
+.m3-comment-card__author a {
+    color: var(--md-sys-color-primary) !important;
+    text-decoration: none;
+}
+
+/* --- Global Utilities & Components --- */
+.m3-archive-header {
+    text-align: center;
+    padding: 64px 24px 48px;
+}
+.m3-archive-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 16px;
+}
+.m3-archive-description {
+    font-size: 1.1rem;
+    color: var(--md-sys-color-outline);
+    max-width: 600px;
+    margin: 0 auto;
+}
+.m3-badge {
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* --- Empty States & 404 --- */
+.m3-empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+.m3-empty-icon {
+    font-size: 80px !important;
+    color: var(--md-sys-color-outline-variant);
+}
+.m3-empty-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface);
+}
+.m3-empty-description {
+    color: var(--md-sys-color-outline);
+    font-size: 1.1rem;
+    max-width: 480px;
+}
+
+/* 404 specific */
+.m3-404-visual {
+    position: relative;
+    margin-bottom: 32px;
+}
+.m3-404-number {
+    font-size: 120px;
+    font-weight: 900;
+    opacity: 0.1;
+    line-height: 1;
+}
+.m3-404-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 64px !important;
+    color: var(--md-sys-color-primary);
+}
+.m3-404-search {
+    margin-top: 48px;
+    width: 100%;
+    max-width: 400px;
+}
+.m3-404-search p {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    opacity: 0.7;
+}
+
+/* --- Misc Fixes --- */
+.m3-search-bar__input {
+    background: var(--md-sys-color-surface-container-high) !important;
+}
+.justify-center { justify-content: center !important; }
+
+/* Sticky Nav Blue Removal */
+.m3-sticky-toc__header .material-symbols-outlined {
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+/* --- Final Visual Polish --- */
+body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.m3-logo-text {
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, var(--md-sys-color-primary), #ff6600);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.m3-article__title {
+    line-height: 1.25 !important;
+}
+
+.m3-article__body {
+    line-height: 1.8 !important;
+    letter-spacing: 0.01em !important; /* 文中のカーニングを微調整 */
+}
+
+/* Pagination consistency */
+.m3-navigation .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 48px;
+}
+.m3-navigation .page-numbers {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: var(--md-sys-color-on-surface);
+    transition: all 0.2s;
+}
+.m3-navigation .page-numbers.current {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-weight: 800;
+}
+.m3-navigation .page-numbers:hover:not(.current) {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+/* Safari address bar color fix */
+html {
+    background-color: #FF9900 !important;
+}
+body {
+    background-color: var(--md-sys-color-surface) !important;
 }

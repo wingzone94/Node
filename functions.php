@@ -257,6 +257,17 @@ function node_save_attachment_ai_field($post, $attachment) {
 }
 add_filter('attachment_fields_to_save', 'node_save_attachment_ai_field', 10, 2);
 
+// REST APIでアタッチメントのメタデータを操作可能にする
+function node_register_attachment_meta() {
+    register_meta('post', '_node_is_ai_media', [
+        'object_subtype' => 'attachment',
+        'type'           => 'boolean',
+        'single'         => true,
+        'show_in_rest'   => true,
+    ]);
+}
+add_action('init', 'node_register_attachment_meta');
+
 // 表示件数の動的制御 (Mobile: 16, PC: 32)
 function node_modify_posts_per_page($query) {
     if (!is_admin() && $query->is_main_query() && (is_home() || is_archive() || is_search())) {
@@ -472,6 +483,157 @@ add_filter('oembed_providers', function($providers) {
     return $providers;
 });
 
+/**
+ * ==========================================================================
+ * OGP自動生成機能 (Gemini APIなし、GDライブラリ使用)
+ * アイキャッチがない場合に、タイトル入りの画像を動的に生成してSNSシェアに対応する。
+ * ==========================================================================
+ */
+
+/**
+ * 1. OGPタグの自動出力
+ */
+function node_ogp_head_output() {
+    if (!is_singular()) return;
+
+    $post_id = get_the_ID();
+    $title   = get_the_title();
+    $excerpt = has_excerpt() ? get_the_excerpt() : wp_trim_words(get_the_content(), 60);
+    $url     = get_permalink();
+    $image   = node_get_dynamic_og_image_url($post_id);
+
+    echo "\n<!-- Luminous Core Dynamic OGP -->\n";
+    echo '<meta property="og:title" content="' . esc_attr($title) . '">' . "\n";
+    echo '<meta property="og:description" content="' . esc_attr($excerpt) . '">' . "\n";
+    echo '<meta property="og:type" content="article">' . "\n";
+    echo '<meta property="og:url" content="' . esc_url($url) . '">' . "\n";
+    echo '<meta property="og:image" content="' . esc_url($image) . '">' . "\n";
+    echo '<meta property="og:site_name" content="' . esc_attr(get_bloginfo('name')) . '">' . "\n";
+    echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+    echo '<meta name="twitter:title" content="' . esc_attr($title) . '">' . "\n";
+    echo '<meta name="twitter:description" content="' . esc_attr($excerpt) . '">' . "\n";
+    echo '<meta name="twitter:image" content="' . esc_url($image) . '">' . "\n";
+    echo "<!-- /Luminous Core Dynamic OGP -->\n\n";
+}
+add_action('wp_head', 'node_ogp_head_output', 5);
+
+/**
+ * 2. OGP画像のURL取得（未生成なら生成）
+ */
+function node_get_dynamic_og_image_url($post_id) {
+    // アイキャッチがあればそれを使用
+    if (has_post_thumbnail($post_id)) {
+        return get_the_post_thumbnail_url($post_id, 'large');
+    }
+
+    $upload_dir = wp_upload_dir();
+    $cache_dir  = $upload_dir['basedir'] . '/ogp-cache';
+    $cache_url  = $upload_dir['baseurl'] . '/ogp-cache';
+    $filename   = 'ogp-' . $post_id . '.png';
+    $filepath   = $cache_dir . '/' . $filename;
+
+    // キャッシュが存在すればそのURLを返す
+    if (file_exists($filepath)) {
+        return $cache_url . '/' . $filename . '?v=' . filemtime($filepath);
+    }
+
+    // なければ画像を生成してURLを返す
+    return node_create_dynamic_ogp($post_id, $cache_dir, $cache_url, $filename);
+}
+
+/**
+ * 3. GDライブラリによる画像生成コアロジック
+ */
+function node_create_dynamic_ogp($post_id, $cache_dir, $cache_url, $filename) {
+    if (!extension_loaded('gd')) return '';
+
+    if (!file_exists($cache_dir)) {
+        wp_mkdir_p($cache_dir);
+    }
+
+    $width  = 1200;
+    $height = 630;
+    $image  = imagecreatetruecolor($width, $height);
+
+    // 背景色（記事のテーマカラーまたはデフォルトのオレンジ）
+    $seed_color = '#FF9900';
+    $category_color = null;
+    $categories = get_the_category($post_id);
+    if (!empty($categories)) {
+        $category_color = get_term_meta($categories[0]->term_id, '_m3_color', true);
+    }
+    $seed_color = get_post_meta($post_id, '_m3_primary_color', true) ?: ($category_color ?: '#FF9900');
+
+    list($r, $g, $b) = sscanf($seed_color, "#%02x%02x%02x");
+    $bg_color = imagecolorallocate($image, $r, $g, $b);
+    imagefill($image, 0, 0, $bg_color);
+
+    // 文字色（白）
+    $text_color = imagecolorallocate($image, 255, 255, 255);
+
+    // タイトル描画
+    $title = get_the_title($post_id);
+    
+    // システムフォントの探索 (日本語対応)
+    $font = '';
+    $possible_fonts = [
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansJP-Bold.otf',
+        '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf',
+        '/System/Library/Fonts/AppleSDGothicNeo.ttc', // Mac
+        '/System/Library/Fonts/Hiragino Sans GB.ttc', // Mac
+        '/Library/Fonts/Arial Unicode.ttf',
+        '/usr/share/fonts/truetype/ipafont/ipag.ttf', // Linux
+    ];
+    foreach ($possible_fonts as $f) {
+        if (file_exists($f)) { $font = $f; break; }
+    }
+
+    if ($font && function_exists('imagettftext')) {
+        // タイトル描画（折り返し）
+        $wrapped_title = node_mb_wordwrap($title, 18);
+        imagettftext($image, 45, 0, 100, 200, $text_color, $font, $wrapped_title);
+        
+        // サイト名を描画
+        imagettftext($image, 25, 0, 100, 550, $text_color, $font, get_bloginfo('name'));
+    } else {
+        // Fallback: 日本語不可の場合は英数字のみ
+        imagestring($image, 5, 100, 100, "Luminous Core Article", $text_color);
+        imagestring($image, 5, 100, 130, "OGP Image Generated", $text_color);
+    }
+
+    $dest = $cache_dir . '/' . $filename;
+    imagepng($image, $dest);
+    imagedestroy($image);
+
+    return $cache_url . '/' . $filename;
+}
+
+/**
+ * 日本語マルチバイト対応の簡易Wordwrap
+ */
+function node_mb_wordwrap($str, $width = 18) {
+    $lines = [];
+    $len = mb_strlen($str);
+    for ($i = 0; $i < $len; $i += $width) {
+        $lines[] = mb_substr($str, $i, $width);
+    }
+    return implode("\n", $lines);
+}
+
+/**
+ * 記事更新時にOGPキャッシュをクリア
+ */
+function node_clear_ogp_cache($post_id) {
+    $upload_dir = wp_upload_dir();
+    $filepath   = $upload_dir['basedir'] . '/ogp-cache/ogp-' . $post_id . '.png';
+    if (file_exists($filepath)) {
+        unlink($filepath);
+    }
+}
+add_action('save_post', 'node_clear_ogp_cache');
+
 function node_save_category_meta($term_id) {
     if (isset($_POST['m3_color'])) {
         update_term_meta($term_id, '_m3_color', sanitize_text_field($_POST['m3_color']));
@@ -480,9 +642,33 @@ function node_save_category_meta($term_id) {
 add_action('edited_category', 'node_save_category_meta');
 add_action('create_category', 'node_save_category_meta');
 
+function node_category_add_form_fields() {
+    ?>
+    <div class="form-field">
+        <label for="m3_color">テーマカラー (Hex)</label>
+        <input name="m3_color" id="m3_color" type="text" value="" class="node-color-picker" data-default-color="#FF9900">
+        <p>カテゴリのベースカラーを16進数で指定します（例: #FF9900）。空欄または「auto」の場合はアイキャッチ画像から自動抽出します。</p>
+    </div>
+    <?php
+}
+add_action('category_add_form_fields', 'node_category_add_form_fields');
+
+function node_category_edit_form_fields($term) {
+    $color = get_term_meta($term->term_id, '_m3_color', true) ?: '#FF9900';
+    ?>
+    <tr class="form-field">
+        <th scope="row"><label for="m3_color">テーマカラー (Hex)</label></th>
+        <td>
+            <input name="m3_color" id="m3_color" type="text" value="<?php echo esc_attr($color); ?>" class="node-color-picker" data-default-color="#FF9900">
+            <p class="description">カテゴリのベースカラー（例: #FF9900）。</p>
+        </td>
+    </tr>
+    <?php
+}
+
 // アセット
 function node_enqueue_assets() {
-    $version = '0.3.2';
+    $version = '0.4.0';
     wp_enqueue_style('node-style', get_stylesheet_uri(), [], $version);
     wp_enqueue_style('node-assets-style', get_template_directory_uri() . '/assets/css/style.css', [], $version);
     wp_enqueue_style('node-blocks-style', get_template_directory_uri() . '/assets/css/blocks.css', [], $version);
@@ -494,10 +680,72 @@ function node_enqueue_assets() {
 }
 add_action('wp_enqueue_scripts', 'node_enqueue_assets');
 
+/**
+ * アーカイブのタイトルから「カテゴリー: 」などを削除
+ */
+add_filter('get_the_archive_title', function ($title) {
+    if (is_category()) {
+        $title = single_cat_title('', false);
+    } elseif (is_tag()) {
+        $title = single_tag_title('', false);
+    } elseif (is_author()) {
+        $title = get_the_author();
+    } elseif (is_post_type_archive()) {
+        $title = post_type_archive_title('', false);
+    } elseif (is_tax()) {
+        $title = single_term_title('', false);
+    }
+    return $title;
+});
+
+/**
+ * SEO/AMP: 構造化データ (JSON-LD) の追加
+ */
+function node_add_json_ld() {
+    if (is_single()) {
+        global $post;
+        $json = [
+            "@context" => "https://schema.org",
+            "@type" => "BlogPosting",
+            "headline" => get_the_title(),
+            "image" => [get_the_post_thumbnail_url($post->ID, 'full')],
+            "datePublished" => get_the_date('c'),
+            "dateModified" => get_the_modified_date('c'),
+            "author" => [
+                "@type" => "Person",
+                "name" => get_the_author(),
+                "url" => get_author_posts_url(get_the_author_meta('ID'))
+            ],
+            "publisher" => [
+                "@type" => "Organization",
+                "name" => get_bloginfo('name'),
+                "logo" => [
+                    "@type" => "ImageObject",
+                    "url" => get_template_directory_uri() . '/pwa-icon.png'
+                ]
+            ],
+            "description" => get_the_excerpt()
+        ];
+        echo "\n" . '<script type="application/ld+json">' . json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>' . "\n";
+    }
+}
+add_action('wp_head', 'node_add_json_ld');
+
+/**
+ * Safari/Chrome用テーマカラーの強制出力 (最優先)
+ */
+function node_force_theme_color_meta() {
+    echo '<meta name="theme-color" content="#FF9900">' . "\n";
+    echo '<meta name="msapplication-TileColor" content="#FF9900">' . "\n";
+    // Safariのレンダリングエンジン向けに、最上部の背景色を認識させるためのスクリプト
+    echo '<script>document.documentElement.style.backgroundColor = "#FF9900";</script>' . "\n";
+}
+add_action('wp_head', 'node_force_theme_color_meta', 9999);
+
 function node_enqueue_admin_assets($hook) {
     if (!in_array($hook, ['post.php', 'post-new.php', 'term.php', 'edit-tags.php'])) return;
     wp_enqueue_style('wp-color-picker');
-    wp_enqueue_script('node-admin-js', get_template_directory_uri() . '/assets/js/editor.js', ['wp-color-picker'], null, true);
+    wp_enqueue_script('node-admin-js', get_template_directory_uri() . '/assets/js/editor.js', ['wp-color-picker', 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post'], null, true);
     wp_add_inline_script('node-admin-js', 'jQuery(function($){ $(".node-color-picker").wpColorPicker(); });');
 }
 add_action('admin_enqueue_scripts', 'node_enqueue_admin_assets');
@@ -682,19 +930,34 @@ function node_the_category_labels($post_id = null) {
     if (!$post_id) $post_id = get_the_ID();
     $categories = get_the_category($post_id);
     if (empty($categories)) return;
-    $cat = $categories[0];
     
     // JSのカラー抽出用にアイキャッチURLを取得
     $thumb_url = get_the_post_thumbnail_url($post_id, 'thumbnail') ?: '';
     
-    echo '<div class="m3-article__category-group">';
-    echo '<span class="m3-article__category-label">CATEGORY</span>';
-    echo '<a href="' . esc_url(get_category_link($cat->term_id)) . '" ';
-    echo 'class="m3-label--category" ';
-    echo 'data-color="auto" ';
-    echo 'data-thumb="' . esc_url($thumb_url) . '"';
-    echo '>';
-    echo '<span class="material-symbols-outlined">folder</span>' . esc_html($cat->name) . '</a>';
+    $is_card = !is_single();
+    // カード表示なら3つ、シングルページならすべて（999個）表示
+    $limit = $is_card ? 3 : 999;
+    $count = count($categories);
+    $display_cats = array_slice($categories, 0, $limit);
+
+    echo '<div class="m3-article__category-group' . ($is_card ? ' is-card' : '') . '">';
+    if (!$is_card) {
+        echo '<span class="m3-article__category-label">CATEGORY</span>';
+    }
+    
+    foreach ($display_cats as $cat) {
+        echo '<a href="' . esc_url(get_category_link($cat->term_id)) . '" ';
+        echo 'class="m3-label--category" ';
+        echo 'data-color="auto" ';
+        echo 'data-thumb="' . esc_url($thumb_url) . '"';
+        echo '>';
+        echo '<span class="material-symbols-outlined">folder</span>' . esc_html($cat->name) . '</a>';
+    }
+    
+    if ($count > $limit) {
+        $remaining = $count - $limit;
+        echo '<span class="m3-label--category-more" title="さらに ' . $remaining . ' 件のカテゴリがあります">+' . $remaining . '</span>';
+    }
     echo '</div>';
 }
 
@@ -703,7 +966,7 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
     
     // AI生成ラベル
     if (get_post_meta($post_id, '_node_is_ai_generated', true) === '1') {
-        $ai_tooltip = 'この記事にはAIで生成されたメディアを含みます。';
+        $ai_tooltip = 'AI生成されたメディアを含みます';
         $ai_class = 'm3-label--ai m3-tooltip-target';
         if ($mode === 'compact') $ai_class .= ' m3-label--icon-only';
 

@@ -93,23 +93,58 @@ document.addEventListener('DOMContentLoaded', () => {
 (function() {
     // コピー処理の共通関数
     const executeCopy = async (btn, url) => {
+        if (btn.classList.contains('is-success')) return;
+
+        const targetUrl = url || window.location.href;
+        let success = false;
+
         try {
-            await navigator.clipboard.writeText(url);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(targetUrl);
+                success = true;
+            } else {
+                throw new Error("Clipboard API unsupported");
+            }
+        } catch (err) {
+            // フォールバック: textareaを使用したコピー
+            const textarea = document.createElement('textarea');
+            textarea.value = targetUrl;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                success = document.execCommand('copy');
+            } catch (e) {
+                success = false;
+            }
+            document.body.removeChild(textarea);
+        }
+
+        if (success) {
             btn.classList.add('is-success');
+
+            const copyIcon = btn.querySelector('.m3-copy-icon') || btn.querySelector('.material-symbols-outlined');
+            const copyLabel = btn.querySelector('.m3-copy-label') || btn.querySelector('.m3-share-btn__label');
             
-            // 現在のアイコン内容を保存
-            const originalHTML = btn.innerHTML;
-            
-            // チェックマークに差し替え
-            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px;">check</span>';
+            const originalIcon = copyIcon ? copyIcon.textContent : null;
+            const originalLabel = copyLabel ? copyLabel.textContent : null;
+
+            if (copyIcon) copyIcon.textContent = 'check';
+            if (copyLabel) copyLabel.textContent = 'コピーしました！';
+
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(btn, { scale: 0.92 }, { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+            }
 
             setTimeout(() => {
                 btn.classList.remove('is-success');
-                // 元の内容に戻す
-                btn.innerHTML = originalHTML;
-            }, 2000);
-        } catch (err) {
-            console.error('Copy failed:', err);
+                if (copyIcon && originalIcon) copyIcon.textContent = originalIcon;
+                if (copyLabel && originalLabel) copyLabel.textContent = originalLabel;
+            }, 2500);
+        } else {
+            console.error('Copy failed');
         }
     };
 

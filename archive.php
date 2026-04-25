@@ -2,26 +2,36 @@
 
 <main id="primary" class="site-main">
 
-    <header class="m3-archive-header" style="text-align: center; padding: var(--m3-spacing-xxxl) var(--m3-spacing-m) var(--m3-spacing-xl);">
-        <h1 class="m3-archive-title" style="display: flex; align-items: center; justify-content: center; gap: var(--m3-spacing-m); flex-wrap: wrap; font-size: 2.2rem; font-weight: 900; color: var(--md-sys-color-on-surface);">
+    <header class="m3-archive-header">
+        <h1 class="m3-archive-title">
             <?php the_archive_title(); ?>
             <span class="m3-badge">全 <?php echo $wp_query->found_posts; ?> 件</span>
         </h1>
-        <?php the_archive_description('<div class="m3-archive-description" style="font-size: 1.1rem; color: var(--md-sys-color-outline); margin-top: var(--m3-spacing-m);">', '</div>'); ?>
+        <?php the_archive_description('<div class="m3-archive-description">', '</div>'); ?>
     </header>
 
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>
             <div class="m3-post-grid__container">
-                <?php while (have_posts()) : the_post(); ?>
-                    <?php get_template_part('card'); ?>
-                <?php endwhile; ?>
+                <?php
+                while (have_posts()) : the_post();
+                    // Homeと同様に最初の4件を Featured 扱いにする (Paged でない場合)
+                    $card_class = ($wp_query->current_post < 4 && !is_paged()) ? 'card-featured' : 'card-standard';
+                    get_template_part('card', null, ['card_class' => $card_class]);
+                endwhile;
+                ?>
             </div>
         <?php endif; ?>
     </div>
 
     <div class="m3-navigation">
-        <?php the_posts_pagination(['mid_size' => 2]); ?>
+        <?php 
+        the_posts_pagination([
+            'mid_size'  => 2,
+            'prev_text' => '<span class="material-symbols-outlined">chevron_left</span>',
+            'next_text' => '<span class="material-symbols-outlined">chevron_right</span>',
+        ]); 
+        ?>
     </div>
 
 </main>

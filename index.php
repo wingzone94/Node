@@ -30,10 +30,24 @@
 
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>
+            <?php
+            $is_first_page = (is_home() && !is_paged());
+            if ($is_first_page) {
+                echo '<h2 class="m3-section-title">⚡ LATEST</h2>';
+            }
+            ?>
             <div class="m3-post-grid__container">
                 <?php
+                global $wp_query;
                 while (have_posts()) : the_post();
-                    $card_class = ($wp_query->current_post < 4 && !is_paged()) ? 'card-featured' : 'card-standard';
+                    if ($is_first_page && $wp_query->current_post === 4) {
+                        echo '</div>'; // Close latest container
+                        echo '<hr class="m3-section-divider">';
+                        echo '<h2 class="m3-section-title">🕒 ARTICLES</h2>';
+                        echo '<div class="m3-post-grid__container">'; // Open standard container
+                    }
+                    
+                    $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
                     get_template_part('card', null, ['card_class' => $card_class]);
                 endwhile;
                 ?>

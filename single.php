@@ -6,10 +6,6 @@
 
         <article id="post-<?php the_ID(); ?>" <?php post_class('m3-article'); ?>>
             
-            <div class="m3-article__top-badges">
-                <?php node_the_post_badges(get_the_ID(), 'full'); ?>
-            </div>
-
             <?php if (has_post_thumbnail()) : ?>
                 <div class="m3-article__hero">
                     <?php the_post_thumbnail('full'); ?>
@@ -19,6 +15,9 @@
 
             <div class="m3-article__header-card">
                 <header class="m3-article__header">
+                    <div class="m3-article__top-badges">
+                        <?php node_the_post_badges(get_the_ID(), 'full'); ?>
+                    </div>
                     <div class="m3-article__meta">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle; margin-right: 4px; opacity: 0.7;">
                             <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
@@ -102,14 +101,14 @@
             ?>
             <div class="m3-article__taxonomies" style="margin-top: 48px;">
                 <div class="m3-article__taxonomy-section" style="padding: 24px; background: var(--md-sys-color-surface-container-low); border-radius: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
-                    <h4 class="m3-article__taxonomy-title" style="display: flex; align-items: center; gap: 12px; font-weight: 900; color: var(--md-sys-color-primary); margin: 0 0 16px 0; font-size: 1.2rem;">
+                    <h4 class="m3-article__taxonomy-title" style="display: flex; align-items: center; gap: 12px; font-weight: 900; color: var(--md-sys-color-on-surface-variant); margin: 0 0 16px 0; font-size: 1.2rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="m415-120-302-302q-18-18-28-42.5T75-515v-285q0-33 23.5-56.5T155-880h285q26 0 50.5 10t42.5 28l302 302q35 35 35 86t-35 86L587-120q-35 35-86 35t-86-35ZM155-800v285l346 346 248-248-346-346H155Zm115 160q21 0 35.5-14.5T320-690q0-21-14.5-35.5T270-740q-21 0-35.5 14.5T220-690q0 21 14.5 35.5T270-640Zm-115-160v285-285Z"/></svg>
                         TAGS
                     </h4>
                     <div class="m3-article__taxonomy-list" style="display: flex; flex-wrap: wrap; gap: 12px;">
                         <?php foreach ($post_tags as $tag) : ?>
                             <a href="<?php echo esc_url(get_tag_link($tag->term_id)); ?>" class="m3-filter-chip">
-                                <?php echo esc_html($tag->name); ?>
+                                #<?php echo esc_html($tag->name); ?>
                             </a>
                         <?php endforeach; ?>
                     </div>

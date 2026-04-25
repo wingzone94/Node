@@ -1,0 +1,31 @@
+{
+  "name": "Luminous Core",
+  "short_name": "Luminous",
+  "description": "Powerful Material Design 3 WordPress Theme",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FF9900",
+  "theme_color": "#FF9900",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "pwa-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "Luminouscore.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "最新記事",
+      "url": "./",
+      "description": "最新の記事をチェックします"
+    }
+  ]
+}

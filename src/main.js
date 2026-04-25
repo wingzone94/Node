@@ -80,11 +80,11 @@ async function initColorExtraction() {
                 storage.set(cacheId, colors);
                 label.style.opacity = '1';
             } else {
-                const colors = generateM3Colors('#6750A4');
+                const colors = generateM3Colors('#FF9900');
                 applyM3Colors(label, colors);
             }
         } catch (err) {
-            const colors = generateM3Colors('#6750A4');
+            const colors = generateM3Colors('#FF9900');
             applyM3Colors(label, colors);
         }
     }
@@ -308,10 +308,11 @@ function initShareFeatures() {
     const title = document.title;
 
     const executeCopyFallback = async (btn, urlToCopy) => {
-        const copyBtn = btn;
+        if (btn.classList.contains('is-success')) return;
+
         const targetUrl = urlToCopy || pageUrl;
-        const copyIcon = copyBtn.querySelector('.m3-copy-icon');
-        const copyLabel = copyBtn.querySelector('.m3-copy-label');
+        const copyIcon = btn.querySelector('.m3-copy-icon') || btn.querySelector('.material-symbols-outlined');
+        const copyLabel = btn.querySelector('.m3-copy-label') || btn.querySelector('.m3-share-btn__label');
         let success = false;
 
         try {
@@ -338,24 +339,24 @@ function initShareFeatures() {
         }
 
         if (success) {
-            copyBtn.classList.add('is-success');
-            const originalText = copyLabel ? (copyLabel.dataset.original || copyLabel.textContent) : 'リンクをコピー';
-            if (copyLabel && !copyLabel.dataset.original) copyLabel.dataset.original = originalText;
+            btn.classList.add('is-success');
+            const originalIcon = copyIcon ? copyIcon.textContent : 'content_copy';
+            const originalLabel = copyLabel ? copyLabel.textContent : 'コピー';
             
             if (copyIcon) copyIcon.textContent = 'check';
             if (copyLabel) copyLabel.textContent = 'コピーしました！'; 
             
             if (typeof gsap !== 'undefined') {
-                gsap.fromTo(copyBtn, { scale: 0.95 }, { scale: 1, duration: 0.3, ease: "back.out(2, 0.5)" });
+                gsap.fromTo(btn, { scale: 0.92 }, { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.3)" });
             }
 
             setTimeout(() => {
-                copyBtn.classList.remove('is-success');
-                if (copyIcon) copyIcon.textContent = 'content_copy';
-                if (copyLabel) copyLabel.textContent = originalText;
+                btn.classList.remove('is-success');
+                if (copyIcon) copyIcon.textContent = originalIcon;
+                if (copyLabel) copyLabel.textContent = originalLabel;
             }, 2500); 
         } else {
-            alert('コピーに失敗しました。');
+            console.error('Copy failed');
         }
     };
 
