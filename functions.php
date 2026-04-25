@@ -406,6 +406,13 @@ function node_auto_blogcard($content) {
 }
 add_filter('the_content', 'node_auto_blogcard', 11);
 
+// AmazonのデフォルトoEmbed（Get Book / Read Sample などのKindle電子書籍専用プレビュー）を無効化する
+function node_remove_amazon_oembed() {
+    wp_oembed_remove_provider('#https?://([a-z0-9-]+\.)?amazon\.(com|com\.mx|com\.br|ca)/.*#i');
+    wp_oembed_remove_provider('#https?://([a-z0-9-]+\.)?amazon\.(co\.uk|de|fr|it|es|in|nl|ru|co\.jp)/.*#i');
+}
+add_action('init', 'node_remove_amazon_oembed');
+
 function node_save_category_meta($term_id) {
     if (isset($_POST['m3_color'])) {
         update_term_meta($term_id, '_m3_color', sanitize_text_field($_POST['m3_color']));
