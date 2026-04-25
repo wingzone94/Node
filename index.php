@@ -2,49 +2,39 @@
 
 <main id="primary" class="site-main">
 
-    <?php if (is_home() && !is_paged()) : ?>
+    <?php 
+    if (is_home() && !is_paged()) : 
+        $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
+        if (!empty($spotlight_cats)) :
+    ?>
         <!-- リファクタリングされた SPOTLIGHT セクション -->
         <section class="special-features">
             <div class="special-features__header">
                 <h2 class="special-features__title">🔥SPOTLIGHT</h2>
             </div>
-            <div class="special-features__grid">
-                <?php
-                $spotlight_posts = node_get_spotlight_posts(6);
-                $m3_colors = ['var(--md-sys-color-primary)', '#6750A4', '#006A6A', '#914C00', '#BF360C', '#311B92'];
-                $index = 0;
-                foreach ($spotlight_posts as $item) : 
-                    $color = $m3_colors[$index % count($m3_colors)];
-                    ?>
-                    <a href="<?php echo esc_url($item['url']); ?>" 
-                       class="special-features__item <?php echo $item['thumbnail'] ? 'has-image' : ''; ?>" 
-                       style="--spotlight-color: <?php echo $color; ?>;">
-                        <?php if ($item['thumbnail']) : ?>
-                            <div class="special-features__image">
-                                <img src="<?php echo esc_url($item['thumbnail']); ?>" alt="">
-                            </div>
-                            <div class="special-features__overlay"></div>
-                        <?php endif; ?>
-                        <div class="special-features__content">
-                            <h3 class="special-features__item-title"><?php echo esc_html($item['title']); ?></h3>
-                        </div>
+            <div class="special-features__pills" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px;">
+                <?php foreach ($spotlight_cats as $cat) : ?>
+                    <a href="<?php echo esc_url($cat['url']); ?>" 
+                       class="m3-spotlight-badge" 
+                       style="background-color: <?php echo esc_attr($cat['color']); ?>; color: #ffffff;">
+                       <span class="material-symbols-outlined" style="font-size: 1.2rem;">auto_awesome</span> 
+                       <?php echo esc_html($cat['name']); ?>
                     </a>
-                <?php 
-                    $index++;
-                endforeach; 
-                ?>
+                <?php endforeach; ?>
             </div>
         </section>
-    <?php endif; ?>
+    <?php 
+        endif; // !empty
+    endif; // is_home
+    ?>
 
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>
             <div class="m3-post-grid__container">
                 <?php
-                global $wp_query;
                 while (have_posts()) : the_post();
-                    $is_hero = (is_home() && !is_paged() && $wp_query->current_post === 0);
-                    get_template_part('card', null, ['is_hero' => $is_hero]);
+                    $card_class = ($wp_query->current_post < 4 && !is_paged()) ? 'card-featured' : 'card-standard';
+                    get_template_part('card', null, ['card_class' => $card_class]);
                 endwhile;
                 ?>
             </div>
@@ -52,7 +42,13 @@
     </div>
 
     <div class="m3-navigation">
-        <?php the_posts_pagination(['mid_size' => 2]); ?>
+        <?php 
+        the_posts_pagination([
+            'mid_size'  => 2,
+            'prev_text' => '<span class="material-symbols-outlined">chevron_left</span>',
+            'next_text' => '<span class="material-symbols-outlined">chevron_right</span>',
+        ]); 
+        ?>
     </div>
 
 </main>

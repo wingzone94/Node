@@ -216,34 +216,34 @@ add_action('pre_get_posts', 'node_modify_posts_per_page');
 /**
  * SPOTLIGHT記事を取得する (スラッグ 'spotlight' のカテゴリとその子)
  */
-function node_get_spotlight_posts($limit = 6) {
-    $cat = get_category_by_slug('spotlight');
-    if (!$cat) return [];
+function node_get_spotlight_categories() {
+    $parent = get_category_by_slug('spotlight');
+    if (!$parent) return [];
 
     $args = [
-        'category_name' => 'spotlight',
-        'posts_per_page' => $limit,
-        'orderby' => 'date',
-        'order' => 'DESC'
+        'parent' => $parent->term_id,
+        'hide_empty' => true // 記事がない特集カテゴリは非表示
     ];
 
-    $query = new WP_Query($args);
-    $posts = [];
+    $categories = get_terms('category', $args);
+    $result = [];
 
-    if ($query->have_posts()) {
-        while ($query->have_posts()) {
-            $query->the_post();
-            $posts[] = [
-                'title' => get_the_title(),
-                'url' => get_permalink(),
-                'thumbnail' => get_the_post_thumbnail_url(get_the_ID(), 'large'),
-                'id' => get_the_ID()
+    if (!is_wp_error($categories) && !empty($categories)) {
+        foreach ($categories as $cat) {
+            $color = get_term_meta($cat->term_id, '_m3_color', true);
+            if (!$color) {
+                $color = 'var(--md-sys-color-primary)';
+            }
+            $result[] = [
+                // 「文字の設定等は禁止」の要件通り、自動で「カテゴリ名＋特集」を生成
+                'name' => $cat->name . '特集',
+                'url' => get_category_link($cat->term_id),
+                'color' => $color
             ];
         }
-        wp_reset_postdata();
     }
 
-    return $posts;
+    return $result;
 }
 
 /**
