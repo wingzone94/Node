@@ -58,6 +58,29 @@
     </div>
 <?php endif; ?>
 
+<?php if (is_home() || is_archive() || is_search()) : ?>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof gsap === 'undefined') return;
+    const cards = document.querySelectorAll('.m3-post-grid .card-standard, .m3-post-grid .card-featured, .m3-spotlight-badge, .special-features__item');
+    if (!cards.length) return;
+    
+    // 初期状態として非表示＆少し下に下げておく
+    gsap.set(cards, { autoAlpha: 0, y: 40, scale: 0.95 });
+    
+    // Material Design らしい Stagger (ずらし) アニメーションを再生
+    gsap.to(cards, {
+        autoAlpha: 1, 
+        y: 0, 
+        scale: 1, 
+        duration: 0.6, 
+        stagger: 0.08, 
+        ease: "back.out(1.2)"
+    });
+});
+</script>
+<?php endif; ?>
+
 <?php wp_footer(); ?>
 </body>
 </html>
