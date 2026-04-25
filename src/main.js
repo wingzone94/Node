@@ -373,14 +373,21 @@ function initShareFeatures() {
             // システムシェアボタン または モバイルでの代替処理
             const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
             
-            if (isSystemShare && navigator.share) {
-                e.preventDefault();
-                try {
-                    await navigator.share({ title: title, url: urlToShare });
-                } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        executeCopyFallback(btn, urlToShare);
+            if (isSystemShare) {
+                if (navigator.share) {
+                    e.preventDefault();
+                    try {
+                        await navigator.share({ title: title, url: urlToShare });
+                    } catch (err) {
+                        // ユーザーによるキャンセル時は何もしない
+                        if (err.name !== 'AbortError') {
+                            console.error('System share failed:', err);
+                        }
                     }
+                } else {
+                    // システムシェア非対応時のみコピーを試行
+                    e.preventDefault();
+                    executeCopyFallback(btn, urlToShare);
                 }
             }
         });

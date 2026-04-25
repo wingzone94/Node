@@ -86,39 +86,47 @@ document.addEventListener('DOMContentLoaded', () => {
  * System Share & Action Logic
  * ビルド環境に依存せず確実に動作させるためのホットパッチ
  */
-document.addEventListener('DOMContentLoaded', () => {
-    const shareBtns = document.querySelectorAll('.m3-share-btn');
-    const pageUrl = window.location.href;
-    const pageTitle = document.title;
+/**
+ * Share Logic Hotfix
+ * 既存の built main.js の挙動をオーバーライドして正常化する
+ */
+(function() {
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.m3-share-btn');
+        if (!btn) return;
 
-    shareBtns.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const urlToShare = btn.dataset.url || pageUrl;
+        const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
+        const isCopyBtn = btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy');
 
-            // システムシェアボタンの処理
-            if (btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system')) {
-                if (navigator.share) {
-                    e.preventDefault();
-                    try {
-                        await navigator.share({
-                            title: pageTitle,
-                            url: urlToShare
-                        });
-                    } catch (err) {
-                        if (err.name !== 'AbortError') {
-                            console.error('Share failed:', err);
-                        }
+        // システムシェアボタンの場合
+        if (isSystemShare) {
+            // 他のスクリプト（assets/js/main.js等）にイベントを渡さない
+            e.stopImmediatePropagation();
+            e.preventDefault();
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: document.title,
+                        url: btn.dataset.url || window.location.href
+                    });
+                } catch (err) {
+                    // ユーザーによるキャンセル（AbortError）時は何もしない
+                    // それ以外のエラー時のみコンソール出力
+                    if (err.name !== 'AbortError') {
+                        console.error('System share failed:', err);
                     }
-                } else {
-                    // Fallback to Copy for devices without navigator.share
-                    e.preventDefault();
-                    const copyTrigger = document.getElementById('m3-copy-trigger');
-                    if (copyTrigger) copyTrigger.click();
+                }
+            } else {
+                // システムシェア非対応環境のみ、コピーボタンの動作をシミュレート
+                const copyBtn = document.getElementById('m3-copy-trigger') || document.querySelector('.m3-share-btn--copy');
+                if (copyBtn && copyBtn !== btn) {
+                   copyBtn.click();
                 }
             }
-        });
-    });
-});
+        }
+    }, { capture: true }); 
+})();
 </script>
 
 <?php wp_footer(); ?>
