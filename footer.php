@@ -91,38 +91,56 @@ document.addEventListener('DOMContentLoaded', () => {
  * 既存の built main.js の挙動をオーバーライドして正常化する
  */
 (function() {
+    // コピー処理の共通関数
+    const executeCopy = async (btn, url) => {
+        try {
+            await navigator.clipboard.writeText(url);
+            btn.classList.add('is-success');
+            const label = btn.querySelector('.m3-share-btn__label');
+            const icon = btn.querySelector('span.material-symbols-outlined, i');
+            const originalText = label ? label.textContent : '';
+            const originalIcon = icon ? icon.textContent : '';
+
+            if (label) label.textContent = 'コピーしました！';
+            if (icon && icon.classList.contains('material-symbols-outlined')) icon.textContent = 'check';
+
+            setTimeout(() => {
+                btn.classList.remove('is-success');
+                if (label) label.textContent = originalText;
+                if (icon && icon.classList.contains('material-symbols-outlined')) icon.textContent = originalIcon;
+            }, 2000);
+        } catch (err) {
+            console.error('Copy failed:', err);
+        }
+    };
+
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('.m3-share-btn');
         if (!btn) return;
 
         const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
-        const isCopyBtn = btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy');
 
-        // システムシェアボタンの場合
         if (isSystemShare) {
-            // 他のスクリプト（assets/js/main.js等）にイベントを渡さない
             e.stopImmediatePropagation();
             e.preventDefault();
+
+            const urlToShare = btn.dataset.url || window.location.href;
 
             if (navigator.share) {
                 try {
                     await navigator.share({
                         title: document.title,
-                        url: btn.dataset.url || window.location.href
+                        url: urlToShare
                     });
                 } catch (err) {
-                    // ユーザーによるキャンセル（AbortError）時は何もしない
-                    // それ以外のエラー時のみコンソール出力
                     if (err.name !== 'AbortError') {
-                        console.error('System share failed:', err);
+                        // シェアに失敗した場合はコピーへフォールバック（自分自身をコピー状態にする）
+                        executeCopy(btn, urlToShare);
                     }
                 }
             } else {
-                // システムシェア非対応環境のみ、コピーボタンの動作をシミュレート
-                const copyBtn = document.getElementById('m3-copy-trigger') || document.querySelector('.m3-share-btn--copy');
-                if (copyBtn && copyBtn !== btn) {
-                   copyBtn.click();
-                }
+                // システムシェア非対応時は、他のボタンをクリックせず、このボタン自体でコピーを実行
+                executeCopy(btn, urlToShare);
             }
         }
     }, { capture: true }); 
