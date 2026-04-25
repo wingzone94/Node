@@ -10,7 +10,7 @@ function node_enqueue_fonts() {
     // Material Symbols Outlined (opsz, wght, FILL, GRAD をサポート)
     wp_enqueue_style( 'material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), null );
 
-    // Font Awesome 6.5.1
-    wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1' );
+    // Font Awesome 6.7.2 (BlueSkyサポート)
+    wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', array(), '6.7.2' );
 }
 add_action( 'wp_enqueue_scripts', 'node_enqueue_fonts' );

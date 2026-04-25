@@ -363,13 +363,17 @@ function initShareFeatures() {
         btn.addEventListener('click', async (e) => {
             const urlToShare = btn.dataset.url || pageUrl;
 
+            // コピーボタンの処理
             if (btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy')) {
                 e.preventDefault();
                 executeCopyFallback(btn, urlToShare);
                 return;
             }
 
-            if (navigator.share) {
+            // システムシェアボタン または モバイルでの代替処理
+            const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
+            
+            if (isSystemShare && navigator.share) {
                 e.preventDefault();
                 try {
                     await navigator.share({ title: title, url: urlToShare });

@@ -1013,99 +1013,61 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 }
  
 .m3-share-buttons .m3-share-btn { 
-    display: inline-flex !important; 
+    display: flex !important; 
     align-items: center !important; 
     justify-content: center !important;
+    width: 48px !important; 
     height: 48px !important; 
-    padding: 0 20px !important; 
-    border-radius: 24px !important; 
-    transition: filter 0.2s ease, transform 0.2s ease, background-color 0.3s ease;
+    padding: 0 !important; 
+    border-radius: 50% !important; 
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), filter 0.2s, box-shadow 0.2s;
     border: none; 
-    overflow: hidden; 
-    white-space: nowrap !important; 
     position: relative;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     cursor: pointer;
     text-decoration: none !important;
     flex-shrink: 0;
-    background-color: var(--md-sys-color-surface-container-high); /* Fallback */
-    color: var(--md-sys-color-on-surface);
+    overflow: visible !important;
 }
+.m3-share-btn__label { display: none !important; }
 
-/* Mobile: Force Icon Buttons Grid */
-@media (max-width: 599px) {
-    .m3-share-section {
-        padding: var(--m3-spacing-l) var(--m3-spacing-s) !important;
-    }
-    .m3-share-section .m3-share-buttons {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 10px !important;
-        width: 100% !important;
-    }
-    .m3-share-section .m3-share-buttons .m3-share-btn {
-        width: 100% !important;
-        height: 56px !important;
-        padding: 0 !important;
-        border-radius: 16px !important;
-        margin: 0 !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-    .m3-share-section .m3-share-buttons .m3-share-btn .m3-share-btn__label {
-        display: none !important;
-    }
-    .m3-share-section .m3-share-buttons .m3-share-btn i, 
-    .m3-share-section .m3-share-buttons .m3-share-btn .material-symbols-outlined,
-    .m3-share-section .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
-        margin-right: 0 !important;
-        font-size: 24px !important;
-    }
-}
-
+/* Mobile Grid for Share Buttons */
 @media (max-width: 599px) {
     .m3-share-buttons {
         display: grid !important;
-        grid-template-columns: repeat(3, 1fr); /* 3列配置 (6個なら2行) */
-        gap: 12px;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 16px !important;
+        width: fit-content !important;
+        margin: 0 auto !important;
     }
     .m3-share-buttons .m3-share-btn {
-        width: 100% !important;
-        height: 56px !important; /* M3 Large FAB size */
-        padding: 0 !important;
-        border-radius: 16px !important; /* Squircle */
-        justify-content: center !important;
-    }
-    .m3-share-btn__label {
-        display: none !important; /* テキストを完全に隠す */
-    }
-    .m3-share-buttons .m3-share-btn i, 
-    .m3-share-buttons .m3-share-btn .material-symbols-outlined,
-    .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
-        margin-right: 0 !important; /* アイコンを中央に寄せる */
-        font-size: 24px !important;
+        width: 52px !important;
+        height: 52px !important;
+        border-radius: 50% !important;
     }
 }
 
 .m3-share-buttons .m3-share-btn:hover {
     filter: brightness(1.1);
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-/* Brand Colors - Mandatory Restore */
+/* Brand Colors */
 .m3-share-btn--x { background-color: #000000 !important; color: #ffffff !important; }
 .m3-share-btn--facebook { background-color: #1877F2 !important; color: #ffffff !important; }
 .m3-share-btn--line { background-color: #06C755 !important; color: #ffffff !important; }
 .m3-share-btn--hatebu { background-color: #00A4DE !important; color: #ffffff !important; }
 .m3-share-btn--threads { background-color: #000000 !important; color: #ffffff !important; }
+.m3-share-btn--bluesky { background-color: #0085ff !important; color: #ffffff !important; }
+.m3-share-btn--system { background-color: var(--md-sys-color-secondary) !important; color: var(--md-sys-color-on-secondary) !important; }
 .m3-share-btn--copy { 
     background-color: var(--md-sys-color-surface-container-high) !important; 
     color: var(--md-sys-color-on-surface) !important; 
     border: 1px solid var(--md-sys-color-outline-variant) !important;
 }
 .m3-share-btn--copy.is-success {
-    background-color: #4CAF50 !important; /* Success Green */
+    background-color: #4CAF50 !important;
     color: #ffffff !important;
     border-color: transparent !important;
 }
@@ -1113,8 +1075,8 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-share-buttons .m3-share-btn i, 
 .m3-share-buttons .m3-share-btn .material-symbols-outlined,
 .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
-    font-size: 20px !important; 
-    margin-right: 8px !important;
+    font-size: 22px !important; 
+    margin-right: 0 !important;
     display: flex !important; 
     align-items: center !important; 
     justify-content: center !important; 
