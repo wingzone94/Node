@@ -1316,14 +1316,14 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-action-stack {
     display: flex;
     flex-direction: column;
-    gap: var(--m3-spacing-s);
+    gap: var(--m3-spacing-m);
 }
 
 /* FAB Base */
 .m3-fab {
     width: 56px;
     height: 56px;
-    border-radius: 16px;
+    border-radius: 50%; /* サークル形状に変更 */
     border: none;
     cursor: pointer;
     display: flex;
