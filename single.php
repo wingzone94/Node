@@ -6,6 +6,10 @@
 
         <article id="post-<?php the_ID(); ?>" <?php post_class('m3-article'); ?>>
             
+            <div class="m3-article__top-badges">
+                <?php node_the_post_badges(get_the_ID(), 'full'); ?>
+            </div>
+
             <?php if (has_post_thumbnail()) : ?>
                 <div class="m3-article__hero">
                     <?php the_post_thumbnail('full'); ?>
@@ -25,19 +29,8 @@
 
                 <h1 class="m3-article__title"><?php the_title(); ?></h1>
 
-                <div class="m3-article__meta-info" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--m3-spacing-s);">
-                    <?php node_the_category_labels(get_the_ID(), 99); ?>
-                    <?php
-                    $is_sponsor = get_post_meta(get_the_ID(), '_node_is_sponsor', true);
-                    if ($is_sponsor === '1') :
-                        $text = get_post_meta(get_the_ID(), '_node_sponsor_text', true) ?: 'SPONSORED';
-                        $tooltip = get_post_meta(get_the_ID(), '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
-                    ?>
-                        <span class="m3-label m3-label--sponsor" style="background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); margin-left: 8px;" title="<?php echo esc_attr($tooltip); ?>">
-                            <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">volunteer_activism</span>
-                            <?php echo esc_html($text); ?>
-                        </span>
-                    <?php endif; ?>
+                <div class="m3-article__meta-info">
+                    <?php node_the_category_labels(); ?>
                 </div>
             </header>
             <?php get_template_part('template-parts/card', 'nexus'); ?>
@@ -45,7 +38,8 @@
             
             <?php
             $reading_time = get_post_meta(get_the_ID(), '_node_reading_time', true);
-            $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary_auto', true);
+            // AI要約: 管理画面で生成・保存済みのデータをDBから読み込む（API不使用）
+            $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary', true);
             
             if ($ai_summary) :
             ?>
@@ -74,8 +68,11 @@
                 <?php the_content(); ?>
                 
                 <?php wp_link_pages([
-                    'before' => '<div class="m3-pagination">' . esc_html__( 'Pages:', 'node' ),
-                    'after'  => '</div>',
+                    'before'      => '<nav class="m3-navigation split-post-navigation"><div class="nav-links">',
+                    'after'       => '</div></nav>',
+                    'link_before' => '<span class="page-numbers">',
+                    'link_after'  => '</span>',
+                    'separator'   => '',
                 ]); ?>
             </div>
 
@@ -149,25 +146,6 @@
             </footer>
 
         </article>
-
-        <!-- 追従式ナビゲーション (目次) -->
-        <aside class="m3-sticky-navigation hidden">
-            <nav class="m3-sticky-toc">
-                <div class="m3-sticky-toc__header">
-                    <span class="material-symbols-outlined">list</span>
-                    <span class="m3-sticky-toc__title">CONTENTS</span>
-                </div>
-                <div id="m3-toc-container"></div>
-            </nav>
-        </aside>
-
-        <!-- 追従式コメントボタン (FAB) -->
-        <a href="#comments" id="m3-sticky-comments" class="m3-fab-comment">
-            <span class="material-symbols-outlined">comment</span>
-            <?php if (get_comments_number() > 0) : ?>
-                <span class="m3-fab-comment__badge"><?php echo get_comments_number(); ?></span>
-            <?php endif; ?>
-        </a>
 
         <?php if (comments_open() || get_comments_number()) :
             comments_template();
