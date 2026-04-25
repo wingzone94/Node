@@ -17,40 +17,124 @@ if (!defined('ABSPATH')) exit;
 
 /**
  * 指定されたURLが許可ドメインに属するか検証する
- *
- * @param string $url       検証するURL
- * @param array  $allowed   許可するホスト名の配列（先頭一致または完全一致）
- * @return bool
  */
 function node_validate_embed_url(string $url, array $allowed): bool {
-    $parsed = wp_parse_url(esc_url_raw($url));
-    if (empty($parsed['host']) || empty($parsed['scheme'])) return false;
-    if ($parsed['scheme'] !== 'https') return false;
+    $url = trim($url);
+    if (empty($url)) return false;
 
-    foreach ($allowed as $host) {
-        if ($parsed['host'] === $host || str_ends_with($parsed['host'], '.' . $host)) {
+    // iframeタグが丸ごと貼り付けられた場合に src を抽出する試み
+    if (str_starts_with($url, '<iframe') || str_contains($url, ' src=')) {
+        if (preg_match('/src=["\']([^"\']+)["\']/', $url, $match)) {
+            $url = $match[1];
+        }
+    }
+
+    // プロトコルがない場合は補完 (wp_parse_url対策)
+    if (!str_contains($url, '://') && !str_starts_with($url, '//')) {
+        $url = 'https://' . $url;
+    }
+
+    $parsed = wp_parse_url($url); 
+    if (empty($parsed['host'])) return false;
+
+    $host = strtolower($parsed['host']);
+
+    foreach ($allowed as $allowed_host) {
+        $allowed_host = strtolower($allowed_host);
+        if ($host === $allowed_host || str_ends_with($host, '.' . $allowed_host)) {
             return true;
         }
     }
     return false;
 }
 
+/**
+ * 入力から src URL を安全に抽出する
+ */
+function node_extract_src_from_input($input) {
+    $input = trim($input);
+    if (empty($input)) return '';
+    
+    // タグ形式なら中身を抽出
+    if (str_starts_with($input, '<iframe') || str_contains($input, ' src=')) {
+        if (preg_match('/src=["\']([^"\']+)["\']/', $input, $match)) {
+            return $match[1];
+        }
+    }
+    
+    // プロトコル補完
+    if (!str_contains($input, '://') && !str_starts_with($input, '//')) {
+        return 'https://' . $input;
+    }
+    
+    return $input;
+}
+
 /* ==========================================================================
-   1. Smart Sort Table Block
+   Gutenberg ブロック登録
    ========================================================================== */
-register_block_type('node/sort-table', [
-    'render_callback' => 'node_render_sort_table_block',
-    'attributes' => [
-        'enable_sort' => ['type' => 'boolean', 'default' => true],
-        'headers'     => ['type' => 'array', 'default' => ['項目', '値', '備考']],
-        'rows'        => ['type' => 'array', 'default' => [['Apple', '100', 'Red'], ['Banana', '50', 'Yellow']]]
-    ]
-]);
+
+function node_register_m3_blocks() {
+    // 1. Smart Sort Table
+    register_block_type('node/sort-table', [
+        'render_callback' => 'node_render_sort_table_block',
+        'attributes' => [
+            'enable_sort' => ['type' => 'boolean', 'default' => true],
+            'headers'     => ['type' => 'array', 'default' => ['項目', '値', '備考']],
+            'rows'        => ['type' => 'array', 'default' => [['Apple', '100', 'Red'], ['Banana', '50', 'Yellow']]]
+        ]
+    ]);
+
+    // 2. Apple Music
+    register_block_type('node/apple-music', [
+        'render_callback' => function($attr) { return node_apple_music_shortcode($attr); },
+        'attributes' => [
+            'url'    => ['type' => 'string', 'default' => ''],
+            'height' => ['type' => 'string', 'default' => '175']
+        ]
+    ]);
+
+    // 3. Google Map
+    register_block_type('node/google-map', [
+        'render_callback' => function($attr) { return node_google_map_shortcode($attr); },
+        'attributes' => [
+            'src'    => ['type' => 'string', 'default' => ''],
+            'height' => ['type' => 'string', 'default' => '450']
+        ]
+    ]);
+
+    // 4. Spotify
+    register_block_type('node/spotify', [
+        'render_callback' => function($attr) { return node_spotify_shortcode($attr); },
+        'attributes' => [
+            'url'    => ['type' => 'string', 'default' => ''],
+            'height' => ['type' => 'string', 'default' => '352']
+        ]
+    ]);
+
+    // 5. Product Card
+    register_block_type('node/product-card', [
+        'render_callback' => function($attr) { return node_product_card_shortcode($attr); },
+        'attributes' => [
+            'title'       => ['type' => 'string', 'default' => ''],
+            'price'       => ['type' => 'string', 'default' => ''],
+            'image_url'   => ['type' => 'string', 'default' => ''],
+            'amazon_url'  => ['type' => 'string', 'default' => ''],
+            'rakuten_url' => ['type' => 'string', 'default' => '']
+        ]
+    ]);
+}
+add_action('init', 'node_register_m3_blocks');
+
+/* ==========================================================================
+   ブロックレンダリング
+   ========================================================================== */
 
 function node_render_sort_table_block($attributes) {
     ob_start();
     ?>
     <div class="m3-block-container">
+[diff_block_end]
         <div class="m3-sort-table-wrapper">
             <table class="m3-sort-table" data-sort-enabled="<?php echo $attributes['enable_sort'] ? 'true' : 'false'; ?>">
                 <thead><tr>
@@ -145,11 +229,18 @@ function node_apple_music_shortcode(array $atts): string {
         'height' => '175',
     ], $atts, 'apple_music');
 
-    if (empty($atts['url'])) return '';
+    $url = node_extract_src_from_input($atts['url']);
+
+    if (empty($url)) return '';
+
+    // 通常の共有URL(music.apple.com)が貼られた場合、埋め込み用URL(embed.music.apple.com)に自動変換する
+    if (str_contains($url, 'music.apple.com') && !str_contains($url, 'embed.music.apple.com')) {
+        $url = str_replace('music.apple.com', 'embed.music.apple.com', $url);
+    }
 
     // embed.music.apple.com のみ許可
-    if (!node_validate_embed_url($atts['url'], ['embed.music.apple.com'])) {
-        return '';
+    if (!node_validate_embed_url($url, ['embed.music.apple.com', 'music.apple.com'])) {
+        return '<!-- Invalid Apple Music URL -->';
     }
 
     $height = absint($atts['height']);
@@ -175,7 +266,7 @@ function node_apple_music_shortcode(array $atts): string {
                 height="<?php echo esc_attr($height); ?>"
                 style="width:100%;max-width:660px;overflow:hidden;border-radius:10px;display:block;"
                 sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
-                src="<?php echo esc_url($atts['url']); ?>"
+                src="<?php echo esc_url($url); ?>"
                 title="Apple Music"
             ></iframe>
         </div>
@@ -205,15 +296,18 @@ function node_google_map_shortcode(array $atts): string {
         'height' => '450',
     ], $atts, 'google_map');
 
-    if (empty($atts['src'])) return '';
+    $src = node_extract_src_from_input($atts['src']);
 
-    // www.google.com かつ /maps/embed パスのみ許可
-    if (!node_validate_embed_url($atts['src'], ['www.google.com', 'maps.google.com'])) {
-        return '';
+    if (empty($src)) return '';
+
+    // バリデーション (日本・グローバルのマップドメインを許可)
+    if (!node_validate_embed_url($src, ['google.com', 'google.co.jp', 'maps.google.com', 'maps.google.co.jp'])) {
+        return '<!-- Invalid Google Maps URL -->';
     }
-    $parsed = wp_parse_url($atts['src']);
-    if (!str_starts_with($parsed['path'] ?? '', '/maps/embed')) {
-        return '';
+
+    // パスチェック (埋め込み用 URL であることを確認)
+    if (!str_contains($src, '/maps/') || (!str_contains($src, 'embed') && !str_contains($src, 'pb='))) {
+        return '<!-- Google Maps URL must be an embed URL (src from iframe) -->';
     }
 
     $height = absint($atts['height']);
@@ -235,7 +329,7 @@ function node_google_map_shortcode(array $atts): string {
             </div>
             <div style="height:<?php echo esc_attr($height); ?>px; position:relative; overflow:hidden; border-radius:0 0 var(--m3-radius-medium) var(--m3-radius-medium);">
                 <iframe
-                    src="<?php echo esc_url($atts['src']); ?>"
+                    src="<?php echo esc_url($src); ?>"
                     width="100%"
                     height="100%"
                     style="border:0; position:absolute; inset:0;"
@@ -272,15 +366,19 @@ function node_spotify_shortcode(array $atts): string {
         'height' => '352',
     ], $atts, 'spotify');
 
-    if (empty($atts['url'])) return '';
+    $url = node_extract_src_from_input($atts['url']);
 
-    // open.spotify.com/embed パスのみ許可
-    if (!node_validate_embed_url($atts['url'], ['open.spotify.com'])) {
-        return '';
+    if (empty($url)) return '';
+
+    // open.spotify.com のみ許可
+    if (!node_validate_embed_url($url, ['open.spotify.com'])) {
+        return '<!-- Invalid Spotify URL -->';
     }
-    $parsed = wp_parse_url($atts['url']);
+
+    $parsed = wp_parse_url($url);
+    // 通常の共有URL ( /track/xxx 等 ) が貼られた場合、 /embed/track/xxx に自動変換する
     if (!str_starts_with($parsed['path'] ?? '', '/embed')) {
-        return '';
+        $url = str_replace('open.spotify.com/', 'open.spotify.com/embed/', $url);
     }
 
     $height = absint($atts['height']);
@@ -303,7 +401,7 @@ function node_spotify_shortcode(array $atts): string {
             </div>
             <iframe
                 style="border-radius:0 0 12px 12px; display:block;"
-                src="<?php echo esc_url($atts['url']); ?>"
+                src="<?php echo esc_url($url); ?>"
                 width="100%"
                 height="<?php echo esc_attr($height); ?>"
                 frameBorder="0"
@@ -351,10 +449,15 @@ function node_product_card_shortcode(array $atts): string {
     if (!$has_amazon && !$has_rakuten) return '';
 
     // 各ストアURLのドメイン検証
-    if ($has_amazon  && !node_validate_embed_url($atts['amazon_url'],  ['www.amazon.co.jp', 'amazon.co.jp', 'www.amazon.com', 'amzn.to'])) $has_amazon  = false;
-    if ($has_rakuten && !node_validate_embed_url($atts['rakuten_url'], ['item.rakuten.co.jp', 'hb.afl.rakuten.co.jp', 'search.rakuten.co.jp'])) $has_rakuten = false;
+    $allowed_amazon  = ['amazon.co.jp', 'amazon.com', 'amazon.jp', 'amzn.to', 'amzn.asia', 'amzn.jp', 'a.co', 'amazon-adsystem.com'];
+    $allowed_rakuten = ['rakuten.co.jp', 'rakuten.ne.jp', 'a.r10.to', 'hb.afl.rakuten.co.jp', 'rakuten.co.jp'];
 
-    if (!$has_amazon && !$has_rakuten) return '';
+    if ($has_amazon  && !node_validate_embed_url($atts['amazon_url'],  $allowed_amazon))  $has_amazon  = false;
+    if ($has_rakuten && !node_validate_embed_url($atts['rakuten_url'], $allowed_rakuten)) $has_rakuten = false;
+
+    if (!$has_amazon && !$has_rakuten) {
+        return '<!-- Product Card: No valid Store URLs found among ' . esc_html($atts['amazon_url'] . ' ' . $atts['rakuten_url']) . ' -->';
+    }
 
     ob_start();
     ?>
