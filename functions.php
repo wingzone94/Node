@@ -165,6 +165,35 @@ function node_save_custom_meta($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!current_user_can('edit_post', $post_id)) return;
 
+    // --- AI生成メディアの自動判別 ---
+    $has_ai_media = false;
+    
+    // 1. サムネイル画像（アイキャッチ）のチェック
+    $thumbnail_id = get_post_thumbnail_id($post_id);
+    if ($thumbnail_id && get_post_meta($thumbnail_id, '_node_is_ai_media', true) === '1') {
+        $has_ai_media = true;
+    }
+    
+    // 2. 本文内の画像のチェック (Gutenbergの wp-image-{id} クラスからIDを抽出)
+    if (!$has_ai_media) {
+        $post_content = get_post_field('post_content', $post_id);
+        preg_match_all('/wp-image-([0-9]+)/', $post_content, $matches);
+        if (!empty($matches[1])) {
+            foreach ($matches[1] as $att_id) {
+                if (get_post_meta($att_id, '_node_is_ai_media', true) === '1') {
+                    $has_ai_media = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    // AI生成メディアが含まれている場合、投稿自体の「生成されたメディアを含む」ラベルを強制的にONにする
+    if ($has_ai_media) {
+        $_POST['node_is_ai_generated'] = '1';
+    }
+    // -----------------------------
+
     // 通常のテキストフィールド（1行）
     $text_fields = [
         '_node_is_cero_z'       => 'node_is_cero_z',
@@ -200,6 +229,33 @@ function node_save_custom_meta($post_id) {
     }
 }
 add_action('save_post', 'node_save_custom_meta');
+
+// ==========================================================================
+// 4. メディアライブラリ: AI生成メディアのメタデータ追加
+// ==========================================================================
+
+// メディアライブラリの編集画面にAI生成チェックボックスを追加
+function node_add_attachment_ai_field($form_fields, $post) {
+    $is_ai = get_post_meta($post->ID, '_node_is_ai_media', true);
+    $form_fields['node_is_ai_media'] = array(
+        'label' => 'AI生成メディア',
+        'input' => 'html',
+        'html'  => '<label><input type="checkbox" name="attachments[' . $post->ID . '][node_is_ai_media]" value="1" ' . checked($is_ai, '1', false) . ' /> この画像/動画はAIによって生成された</label>',
+    );
+    return $form_fields;
+}
+add_filter('attachment_fields_to_edit', 'node_add_attachment_ai_field', 10, 2);
+
+// メディアライブラリでのAI生成チェックボックスの保存
+function node_save_attachment_ai_field($post, $attachment) {
+    if (isset($attachment['node_is_ai_media'])) {
+        update_post_meta($post['ID'], '_node_is_ai_media', '1');
+    } else {
+        delete_post_meta($post['ID'], '_node_is_ai_media');
+    }
+    return $post;
+}
+add_filter('attachment_fields_to_save', 'node_save_attachment_ai_field', 10, 2);
 
 // 表示件数の動的制御 (Mobile: 16, PC: 32)
 function node_modify_posts_per_page($query) {
