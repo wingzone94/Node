@@ -154,7 +154,135 @@
 
 /* 16px Elevated Card Design for Bridges */
 .m3-embed-container {
-    border-radius: var(--m3-radius-card) !important;
+    border-radius: var(--m3-radius-card);
     box-shadow: var(--m3-elevation-2);
-    border: none !important;
+    border: none;
+    overflow: hidden;
 }
+
+/* ==========================================================================
+   5 & 6. 埋め込みブロック共通 — サービスヘッダー
+   ========================================================================== */
+
+/* 埋め込みカード外枠 */
+.m3-embed-apple-music,
+.m3-embed-google-map {
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--m3-radius-medium);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s var(--m3-motion-easing);
+}
+
+.m3-embed-apple-music:hover,
+.m3-embed-google-map:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* サービス名ヘッダーバー */
+.m3-embed-service-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--md-sys-color-surface-container);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-embed-service-header__icon {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+/* Apple Music: ブランドカラー (#FC3C44) 適用 */
+.m3-embed-apple-music .m3-embed-service-header__icon {
+    color: #FC3C44;
+}
+
+/* Google Maps: ブランドカラー (#4285F4) 適用 */
+.m3-embed-service-header__icon--maps {
+    color: #EA4335;
+}
+
+.m3-embed-service-header__label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--md-sys-color-on-surface);
+    letter-spacing: 0.02em;
+}
+
+/* Apple Music iframe ラッパー */
+.m3-embed-apple-music iframe {
+    display: block;
+    border-radius: 0;
+}
+
+/* ==========================================================================
+   6. Google Maps 固有スタイル
+   ========================================================================== */
+
+.m3-embed-google-map__frame-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.m3-embed-google-map__frame-wrapper iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.m3-embed-google-map__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 16px;
+    background: var(--md-sys-color-surface-container);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* 「Google マップで開く」リンクボタン */
+.m3-embed-map-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--md-sys-color-primary);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s var(--m3-motion-easing);
+    min-height: 36px;
+}
+
+.m3-embed-map-link:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+}
+
+.m3-embed-map-link .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* ダークモード調整 */
+[data-theme="dark"] .m3-embed-apple-music,
+[data-theme="dark"] .m3-embed-google-map {
+    background: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .m3-embed-service-header {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+/* モバイル対応 */
+@media (max-width: 599px) {
+    .m3-embed-google-map__frame-wrapper {
+        height: 280px;
+    }
+}
+
