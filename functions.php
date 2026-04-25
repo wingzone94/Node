@@ -406,12 +406,15 @@ function node_auto_blogcard($content) {
 }
 add_filter('the_content', 'node_auto_blogcard', 11);
 
-// AmazonのデフォルトoEmbed（Get Book / Read Sample などのKindle電子書籍専用プレビュー）を無効化する
-function node_remove_amazon_oembed() {
-    wp_oembed_remove_provider('#https?://([a-z0-9-]+\.)?amazon\.(com|com\.mx|com\.br|ca)/.*#i');
-    wp_oembed_remove_provider('#https?://([a-z0-9-]+\.)?amazon\.(co\.uk|de|fr|it|es|in|nl|ru|co\.jp)/.*#i');
-}
-add_action('init', 'node_remove_amazon_oembed');
+// AmazonのデフォルトoEmbed（Get Book / Read Sample などのKindle電子書籍専用プレビュー）を確実に無効化する
+add_filter('oembed_providers', function($providers) {
+    foreach ($providers as $url => $provider) {
+        if (strpos($url, 'amazon') !== false) {
+            unset($providers[$url]);
+        }
+    }
+    return $providers;
+});
 
 function node_save_category_meta($term_id) {
     if (isset($_POST['m3_color'])) {
