@@ -96,18 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await navigator.clipboard.writeText(url);
             btn.classList.add('is-success');
-            const label = btn.querySelector('.m3-share-btn__label');
-            const icon = btn.querySelector('span.material-symbols-outlined, i');
-            const originalText = label ? label.textContent : '';
-            const originalIcon = icon ? icon.textContent : '';
-
-            if (label) label.textContent = 'コピーしました！';
-            if (icon && icon.classList.contains('material-symbols-outlined')) icon.textContent = 'check';
+            
+            // 現在のアイコン内容を保存
+            const originalHTML = btn.innerHTML;
+            
+            // チェックマークに差し替え
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px;">check</span>';
 
             setTimeout(() => {
                 btn.classList.remove('is-success');
-                if (label) label.textContent = originalText;
-                if (icon && icon.classList.contains('material-symbols-outlined')) icon.textContent = originalIcon;
+                // 元の内容に戻す
+                btn.innerHTML = originalHTML;
             }, 2000);
         } catch (err) {
             console.error('Copy failed:', err);
@@ -166,14 +165,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!btn) return;
 
         const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
+        const isCopyBtn = btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy');
 
-        if (isSystemShare) {
+        // システムシェア または コピーボタンの場合
+        if (isSystemShare || isCopyBtn) {
             e.stopImmediatePropagation();
             e.preventDefault();
 
             const urlToShare = btn.dataset.url || window.location.href;
 
-            if (navigator.share) {
+            if (isSystemShare && navigator.share) {
                 try {
                     await navigator.share({
                         title: document.title,
@@ -181,12 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } catch (err) {
                     if (err.name !== 'AbortError') {
-                        // シェアに失敗した場合はコピーへフォールバック（自分自身をコピー状態にする）
                         executeCopy(btn, urlToShare);
                     }
                 }
             } else {
-                // システムシェア非対応時は、他のボタンをクリックせず、このボタン自体でコピーを実行
+                // コピーボタン、またはシステムシェア非対応時
                 executeCopy(btn, urlToShare);
             }
         }
