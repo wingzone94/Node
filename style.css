@@ -962,21 +962,23 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     margin-bottom: var(--m3-spacing-xl);
 }
 
-.m3-article__content-card {
+.m3-article__header-card {
     background-color: var(--md-sys-color-surface-container-low);
     border-radius: 32px;
-    padding: 32px;
-    margin: 0 auto 48px;
+    padding: 48px 32px;
+    margin: -40px auto 48px;
     border: 1px solid var(--md-sys-color-outline-variant);
-    max-width: 900px;
+    max-width: 860px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 @media (max-width: 599px) {
-    .m3-article__content-card {
-        padding: 20px;
-        border-radius: 20px;
-        margin-left: -4px;
-        margin-right: -4px;
+    .m3-article__header-card {
+        padding: 32px 20px;
+        border-radius: 24px;
+        margin: -20px 12px 32px;
+        max-width: calc(100% - 24px);
     }
 }
 .m3-article__meta-info .m3-label--category {

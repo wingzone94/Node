@@ -17,34 +17,36 @@
                 </div>
             <?php endif; ?>
 
-            <header class="m3-article__header">
-                <div class="m3-article__meta">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle; margin-right: 4px; opacity: 0.7;">
-                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
-                    </svg>
-                    <time class="m3-article__date" datetime="<?php echo get_the_date('c'); ?>">
-                        <?php echo esc_html(node_get_relative_date(get_the_ID())); ?>
-                    </time>
-                </div>
+            <div class="m3-article__header-card">
+                <header class="m3-article__header">
+                    <div class="m3-article__meta">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle; margin-right: 4px; opacity: 0.7;">
+                            <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
+                        </svg>
+                        <time class="m3-article__date" datetime="<?php echo get_the_date('c'); ?>">
+                            <?php echo esc_html(node_get_relative_date(get_the_ID())); ?>
+                        </time>
+                    </div>
 
-                <?php
-                $title_len = mb_strlen(get_the_title());
-                $title_class = 'm3-article__title';
-                if ($title_len > 40) {
-                    $title_class .= ' is-long';
-                } elseif ($title_len > 25) {
-                    $title_class .= ' is-medium';
-                }
-                ?>
-                <h1 class="<?php echo esc_attr($title_class); ?>"><?php the_title(); ?></h1>
+                    <?php
+                    $title_len = mb_strlen(get_the_title());
+                    $title_class = 'm3-article__title';
+                    if ($title_len > 40) {
+                        $title_class .= ' is-long';
+                    } elseif ($title_len > 25) {
+                        $title_class .= ' is-medium';
+                    }
+                    ?>
+                    <h1 class="<?php echo esc_attr($title_class); ?>"><?php the_title(); ?></h1>
 
-                <div class="m3-article__meta-info">
-                    <?php node_the_category_labels(); ?>
-                </div>
-            </header>
+                    <div class="m3-article__meta-info">
+                        <?php node_the_category_labels(); ?>
+                    </div>
+                </header>
+            </div>
+
             <?php get_template_part('template-parts/card', 'nexus'); ?>
 
-            
             <?php
             $reading_time = get_post_meta(get_the_ID(), '_node_reading_time', true);
             // AI要約: 管理画面で生成・保存済みのデータをDBから読み込む（API不使用）
@@ -73,24 +75,22 @@
             </div>
             <?php endif; ?>
 
-            <div class="m3-article__content-card">
-                <div class="m3-article__body entry-content">
-                    <!-- 広告表示エリア (Top) -->
-                    <?php if (function_exists('node_the_ad_area')) node_the_ad_area('top'); ?>
+            <div class="m3-article__body entry-content">
+                <!-- 広告表示エリア (Top) -->
+                <?php if (function_exists('node_the_ad_area')) node_the_ad_area('top'); ?>
 
-                    <?php the_content(); ?>
-                    
-                    <?php wp_link_pages([
-                        'before'      => '<nav class="m3-navigation split-post-navigation"><div class="nav-links">',
-                        'after'       => '</div></nav>',
-                        'link_before' => '<span class="page-numbers">',
-                        'link_after'  => '</span>',
-                        'separator'   => '',
-                    ]); ?>
+                <?php the_content(); ?>
+                
+                <?php wp_link_pages([
+                    'before'      => '<nav class="m3-navigation split-post-navigation"><div class="nav-links">',
+                    'after'       => '</div></nav>',
+                    'link_before' => '<span class="page-numbers">',
+                    'link_after'  => '</span>',
+                    'separator'   => '',
+                ]); ?>
 
-                    <!-- 広告表示エリア (Bottom) -->
-                    <?php if (function_exists('node_the_ad_area')) node_the_ad_area('bottom'); ?>
-                </div>
+                <!-- 広告表示エリア (Bottom) -->
+                <?php if (function_exists('node_the_ad_area')) node_the_ad_area('bottom'); ?>
             </div>
 
             <!-- ソーシャルシェアセクション -->

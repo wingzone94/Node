@@ -457,16 +457,22 @@ function node_get_relative_date($post_id = null) {
     $post_id = $post_id ?: get_the_ID();
     $post_time = get_the_time('U', $post_id);
     $current_time = current_time('timestamp');
-    $diff = $current_time - $post_time;
+    $diff = intval($current_time) - intval($post_time);
 
-    if ($diff < 3600) {
-        return ($diff < 60) ? 'たった今' : floor($diff / 60) . '分前';
-    } elseif ($diff < 86400) {
-        return floor($diff / 3600) . '時間' . floor(($diff % 3600) / 60) . '分前';
-    } elseif ($diff < 604800) {
-        return floor($diff / 86400) . '日前';
+    $full_date = get_the_date('Y年n月j日', $post_id);
+
+    // 24時間（86400秒）以内の場合のみカッコ書きを入れる
+    if ($diff > 0 && $diff < 86400) {
+        $relative = '';
+        if ($diff < 3600) {
+            $relative = ($diff < 60) ? 'たった今' : floor($diff / 60) . '分前';
+        } else {
+            $relative = floor($diff / 3600) . '時間前';
+        }
+        return $full_date . ' （' . $relative . '）';
     }
-    return get_the_date('', $post_id);
+
+    return $full_date;
 }
 
 function node_get_image_seed_color($attachment_id) {
