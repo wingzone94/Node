@@ -447,6 +447,7 @@ add_action('admin_enqueue_scripts', 'node_enqueue_admin_assets');
 
 // テーマサポート
 add_theme_support('post-thumbnails');
+add_theme_support('responsive-embeds');
 
 // --- ユーティリティ ---
 
