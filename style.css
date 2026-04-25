@@ -1141,7 +1141,20 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-share-btn--hatebu { background-color: #00A4DE !important; color: #ffffff !important; }
 .m3-share-btn--threads { background-color: #000000 !important; color: #ffffff !important; }
 .m3-share-btn--bluesky { background-color: #0085ff !important; color: #ffffff !important; }
-.m3-share-btn--system { background-color: var(--md-sys-color-secondary) !important; color: var(--md-sys-color-on-secondary) !important; }
+.m3-share-btn--system { 
+    display: none !important; /* PCビューでは非表示 */
+}
+
+@media (max-width: 599px) {
+    .m3-share-buttons .m3-share-btn--system {
+        display: flex !important; /* モバイルでは表示 */
+    }
+}
+
+.m3-share-btn--system { 
+    background-color: var(--md-sys-color-secondary) !important; 
+    color: var(--md-sys-color-on-secondary) !important; 
+}
 .m3-share-btn--copy { 
     background-color: var(--md-sys-color-surface-container-high) !important; 
     color: var(--md-sys-color-on-surface) !important; 
