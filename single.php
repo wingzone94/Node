@@ -65,6 +65,9 @@
             <?php endif; ?>
 
             <div class="m3-article__body entry-content">
+                <!-- 広告表示エリア (Top) -->
+                <div class="m3-ad-area m3-ad-area--top"></div>
+
                 <?php the_content(); ?>
                 
                 <?php wp_link_pages([
@@ -74,6 +77,9 @@
                     'link_after'  => '</span>',
                     'separator'   => '',
                 ]); ?>
+
+                <!-- 広告表示エリア (Bottom) -->
+                <div class="m3-ad-area m3-ad-area--bottom"></div>
             </div>
 
             <!-- ソーシャルシェアセクション -->
