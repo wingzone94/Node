@@ -759,6 +759,41 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 }
 
 .m3-card__title a { color: var(--md-sys-color-on-surface); text-decoration: none; display: block; }
+.m3-card__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1; /* Stretch link over the whole card */
+}
+
+/* Ensure interactive elements stay clickable above the stretched link */
+.m3-card__ai-accordion,
+.m3-card__writer a {
+    position: relative;
+    z-index: 2;
+}
+
+/* Let clicks on date and category pass through to the stretched link */
+.badge-date,
+.m3-card__category-tag {
+    pointer-events: none !important;
+}
+
+/* --- No Image Card Adjustments --- */
+.m3-card--no-image {
+    min-height: auto;
+}
+.m3-card--no-image .m3-card__background {
+    display: none;
+}
+.m3-card--no-image .m3-card__content {
+    padding-top: 64px; /* Space for overlay badges */
+}
+.m3-card--no-image .badge-date {
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    border-color: transparent;
+}
  
 .m3-card__footer-meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; }
 .m3-card__writer { display: flex; align-items: center; gap: 10px; }
