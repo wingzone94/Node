@@ -1,9 +1,6 @@
 <footer class="m3-footer">
     <div class="m3-footer__content">
-        <div class="m3-footer__brand">
-            <h2 class="m3-logo-text"><?php bloginfo('name'); ?></h2>
-            <p class="m3-footer__tagline">Expansive Digital Experience</p>
-        </div>
+
 
         <nav class="m3-footer__nav" aria-label="フッターナビゲーション">
             <ul class="m3-footer__links">
