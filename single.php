@@ -27,7 +27,16 @@
                     </time>
                 </div>
 
-                <h1 class="m3-article__title"><?php the_title(); ?></h1>
+                <?php
+                $title_len = mb_strlen(get_the_title());
+                $title_class = 'm3-article__title';
+                if ($title_len > 40) {
+                    $title_class .= ' is-long';
+                } elseif ($title_len > 25) {
+                    $title_class .= ' is-medium';
+                }
+                ?>
+                <h1 class="<?php echo esc_attr($title_class); ?>"><?php the_title(); ?></h1>
 
                 <div class="m3-article__meta-info">
                     <?php node_the_category_labels(); ?>
@@ -66,7 +75,7 @@
 
             <div class="m3-article__body entry-content">
                 <!-- 広告表示エリア (Top) -->
-                <div class="m3-ad-area m3-ad-area--top"></div>
+                <?php if (function_exists('node_the_ad_area')) node_the_ad_area('top'); ?>
 
                 <?php the_content(); ?>
                 
@@ -79,7 +88,7 @@
                 ]); ?>
 
                 <!-- 広告表示エリア (Bottom) -->
-                <div class="m3-ad-area m3-ad-area--bottom"></div>
+                <?php if (function_exists('node_the_ad_area')) node_the_ad_area('bottom'); ?>
             </div>
 
             <!-- ソーシャルシェアセクション -->

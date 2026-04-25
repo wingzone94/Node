@@ -684,3 +684,18 @@ function node_generate_ai_metadata($post_id, $post, $update) {
     }
 }
 add_action('save_post', 'node_generate_ai_metadata', 20, 3);
+
+/* ==========================================================================
+   広告エリアの制御
+   ========================================================================== */
+function node_the_ad_area($position) {
+    // 広告コードは将来的に設定画面等から取得できるようにオプション設定を使用
+    $ad_code = get_option('node_ad_code_' . $position, '');
+    
+    // 広告タグが設定されていない場合は非表示（出力しない）
+    if (empty(trim($ad_code))) {
+        return;
+    }
+    
+    echo '<div class="m3-ad-area m3-ad-area--' . esc_attr($position) . '">' . do_shortcode($ad_code) . '</div>';
+}
