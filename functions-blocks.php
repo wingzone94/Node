@@ -255,23 +255,15 @@ function node_apple_music_shortcode(array $atts): string {
     ob_start();
     ?>
     <div class="m3-block-container">
-        <div class="m3-embed-wrapper m3-embed-wrapper--apple-music">
-            <div class="m3-embed-service-header">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16" style="color:#FC3C44; flex-shrink:0;">
-                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.5 6.5v5.25a2.25 2.25 0 1 1-1.5-2.12V9.5l-4 .667V15a2.25 2.25 0 1 1-1.5-2.12V8.333L15.5 7.5v1z"/>
-                </svg>
-                <span class="m3-embed-service-header__label">Apple Music</span>
-            </div>
-            <iframe
-                allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
-                frameborder="0"
-                height="<?php echo esc_attr($height); ?>"
-                style="width:100%;max-width:660px;overflow:hidden;border-radius:10px;display:block;"
-                sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
-                src="<?php echo esc_url($url); ?>"
-                title="Apple Music"
-            ></iframe>
-        </div>
+        <iframe
+            allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
+            frameborder="0"
+            height="<?php echo esc_attr($height); ?>"
+            style="width:100%;max-width:100%;overflow:hidden;border-radius:12px;display:block;"
+            sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+            src="<?php echo esc_url($url); ?>"
+            title="Apple Music"
+        ></iframe>
     </div>
     <?php
     return ob_get_clean();
@@ -322,25 +314,17 @@ function node_google_map_shortcode(array $atts): string {
     ob_start();
     ?>
     <div class="m3-block-container">
-        <div class="m3-embed-wrapper m3-embed-wrapper--google-map">
-            <div class="m3-embed-service-header">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16" style="color:#EA4335; flex-shrink:0;">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>
-                <span class="m3-embed-service-header__label">Google マップ</span>
-            </div>
-            <div style="height:<?php echo esc_attr($height); ?>px; position:relative; overflow:hidden; border-radius:0 0 var(--m3-radius-medium) var(--m3-radius-medium);">
-                <iframe
-                    src="<?php echo esc_url($src); ?>"
-                    width="100%"
-                    height="100%"
-                    style="border:0; position:absolute; inset:0;"
-                    allowfullscreen=""
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    title="Google マップ"
-                ></iframe>
-            </div>
+        <div style="height:<?php echo esc_attr($height); ?>px; position:relative; overflow:hidden; border-radius:12px;">
+            <iframe
+                src="<?php echo esc_url($src); ?>"
+                width="100%"
+                height="100%"
+                style="border:0; position:absolute; inset:0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Google マップ"
+            ></iframe>
         </div>
     </div>
     <?php
@@ -394,25 +378,17 @@ function node_spotify_shortcode(array $atts): string {
     ob_start();
     ?>
     <div class="m3-block-container">
-        <div class="m3-embed-wrapper m3-embed-wrapper--spotify">
-            <div class="m3-embed-service-header">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16" style="color:#1DB954; flex-shrink:0;">
-                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-                </svg>
-                <span class="m3-embed-service-header__label">Spotify</span>
-            </div>
-            <iframe
-                style="border-radius:0 0 12px 12px; display:block;"
-                src="<?php echo esc_url($url); ?>"
-                width="100%"
-                height="<?php echo esc_attr($height); ?>"
-                frameBorder="0"
-                allowfullscreen=""
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-                title="Spotify"
-            ></iframe>
-        </div>
+        <iframe
+            style="border-radius:12px; display:block;"
+            src="<?php echo esc_url($url); ?>"
+            width="100%"
+            height="<?php echo esc_attr($height); ?>"
+            frameBorder="0"
+            allowfullscreen=""
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            title="Spotify"
+        ></iframe>
     </div>
     <?php
     return ob_get_clean();
