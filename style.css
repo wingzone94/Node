@@ -1016,10 +1016,9 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     display: flex !important; 
     align-items: center !important; 
     justify-content: center !important;
-    width: 48px !important; 
     height: 48px !important; 
-    padding: 0 !important; 
-    border-radius: 50% !important; 
+    padding: 0 20px !important; 
+    border-radius: 24px !important; 
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), filter 0.2s, box-shadow 0.2s;
     border: none; 
     position: relative;
@@ -1029,7 +1028,11 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     flex-shrink: 0;
     overflow: visible !important;
 }
-.m3-share-btn__label { display: none !important; }
+.m3-share-btn__label { 
+    font-weight: 800 !important; 
+    font-size: 14px !important;
+    display: inline !important; 
+}
 
 /* Mobile Grid for Share Buttons */
 @media (max-width: 599px) {
@@ -1043,8 +1046,15 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     .m3-share-buttons .m3-share-btn {
         width: 52px !important;
         height: 52px !important;
+        padding: 0 !important;
         border-radius: 50% !important;
     }
+    .m3-share-buttons .m3-share-btn i, 
+    .m3-share-buttons .m3-share-btn .material-symbols-outlined,
+    .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
+        margin-right: 0 !important; 
+    }
+    .m3-share-btn__label { display: none !important; }
 }
 
 .m3-share-buttons .m3-share-btn:hover {
@@ -1076,7 +1086,7 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-share-buttons .m3-share-btn .material-symbols-outlined,
 .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
     font-size: 22px !important; 
-    margin-right: 0 !important;
+    margin-right: 8px !important;
     display: flex !important; 
     align-items: center !important; 
     justify-content: center !important; 
