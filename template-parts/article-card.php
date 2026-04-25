@@ -56,6 +56,10 @@ $extra_class = $has_ai ? ' m3-card--has-ai' : '';
             <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
         </h3>
 
+        <div class="m3-card__category-tag" style="margin-bottom: 12px;">
+            <?php node_the_category_labels(); ?>
+        </div>
+
         <?php if ($has_ai) : ?>
         <!-- AI要約 折りたたみアコーディオン (プログレッシブエンハンスメント: <details>を基盤に使用) -->
         <details class="m3-card__ai-accordion" id="ai-accordion-<?php echo esc_attr($post_id); ?>">
@@ -85,11 +89,6 @@ $extra_class = $has_ai ? ' m3-card--has-ai' : '';
             </div>
 
             <div class="m3-card__meta-right">
-                <!-- カテゴリを右下へ移動 -->
-                <div class="m3-card__category-tag">
-                    <?php node_the_category_labels(); ?>
-                </div>
-
                 <?php if (get_comments_number() > 0) : ?>
                     <div class="m3-card__comment-count">
                         <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
