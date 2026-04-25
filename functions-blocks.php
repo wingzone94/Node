@@ -118,15 +118,12 @@ function node_render_voting_refined($attributes) {
 }
 
 /* ==========================================================================
-   4. oEmbed ラッパー（M3スタイル適用）
-   ========================================================================== */
-function node_m3_oembed_bridge_v4($html, $url, $attr, $post_ID) {
-    if (preg_match('/(apple\.com|spotify\.com|steampowered\.com|nicovideo\.jp|google\.com\/maps)/', $url)) {
-        return '<div class="m3-block-container"><div class="m3-embed-container">' . $html . '</div></div>';
-    }
-    return $html;
-}
-add_filter('embed_oembed_html', 'node_m3_oembed_bridge_v4', 20, 4);
+   4. oEmbed パススルー
+   各サービスの埋め込みHTMLは改変せずそのまま出力します（利用規約準拠）。
+   WordPressデフォルトの oEmbed 出力をそのまま使用します。
+ */
+// oEmbed ラッパーは適用しない（各サービス利用規約準拠のため）
+// add_filter('embed_oembed_html', 'node_m3_oembed_bridge_v4', 20, 4);
 
 /* ==========================================================================
    5. Apple Music 埋め込みショートコード
@@ -345,22 +342,19 @@ function node_product_card_shortcode(array $atts): string {
         'image_url'   => '',
         'amazon_url'  => '',
         'rakuten_url' => '',
-        'yahoo_url'   => '',
     ], $atts, 'product_card');
 
     // 少なくとも1つのリンクが必要
     $has_amazon  = !empty($atts['amazon_url']);
     $has_rakuten = !empty($atts['rakuten_url']);
-    $has_yahoo   = !empty($atts['yahoo_url']);
 
-    if (!$has_amazon && !$has_rakuten && !$has_yahoo) return '';
+    if (!$has_amazon && !$has_rakuten) return '';
 
     // 各ストアURLのドメイン検証
     if ($has_amazon  && !node_validate_embed_url($atts['amazon_url'],  ['www.amazon.co.jp', 'amazon.co.jp', 'www.amazon.com', 'amzn.to'])) $has_amazon  = false;
     if ($has_rakuten && !node_validate_embed_url($atts['rakuten_url'], ['item.rakuten.co.jp', 'hb.afl.rakuten.co.jp', 'search.rakuten.co.jp'])) $has_rakuten = false;
-    if ($has_yahoo   && !node_validate_embed_url($atts['yahoo_url'],   ['shopping.yahoo.co.jp', 'ck.jp.ap.valuecommerce.com'])) $has_yahoo   = false;
 
-    if (!$has_amazon && !$has_rakuten && !$has_yahoo) return '';
+    if (!$has_amazon && !$has_rakuten) return '';
 
     ob_start();
     ?>
@@ -410,17 +404,6 @@ function node_product_card_shortcode(array $atts): string {
                     </a>
                     <?php endif; ?>
 
-                    <?php if ($has_yahoo) : ?>
-                    <a href="<?php echo esc_url($atts['yahoo_url']); ?>"
-                       class="m3-product-btn m3-product-btn--yahoo"
-                       target="_blank"
-                       rel="noopener noreferrer">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true">
-                            <path d="M12.001.007C5.359.007.001 5.365.001 12.007c0 6.641 5.358 12 12 12s12-5.359 12-12c0-6.642-5.358-12-12-12zm0 21.6c-5.294 0-9.6-4.306-9.6-9.6S6.707 2.408 12.001 2.408s9.6 4.305 9.6 9.6-4.306 9.6-9.6 9.6zm.72-10.849l3.433-6.126h-2.857L12.001 8.5 10.704 4.632H7.848l3.433 6.126v5.61h1.44v-5.61z"/>
-                        </svg>
-                        Yahoo!ショッピング
-                    </a>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>

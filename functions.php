@@ -293,54 +293,11 @@ function node_generate_product_link($url, $type = 'amazon') {
 
 /**
  * 商品リンク ショートコード [m3_product]
+ * [product_card] へ一本化済み。後方互換性のためエイリアスとして維持。
+ * 既存記事で [m3_product] を使用していても正常に動作します。
  */
-function node_m3_product_shortcode($atts) {
-    $atts = shortcode_atts([
-        'title'       => '商品名未設定',
-        'price'       => '',
-        'image_url'   => '',
-        'amazon_url'  => '',
-        'rakuten_url' => '',
-    ], $atts);
+add_shortcode('m3_product', 'node_product_card_shortcode');
 
-    $amazon_link = node_generate_product_link($atts['amazon_url'], 'amazon');
-    $rakuten_link = node_generate_product_link($atts['rakuten_url'], 'rakuten');
-
-    if (empty($amazon_link) && empty($rakuten_link)) return '';
-
-    ob_start();
-    ?>
-    <div class="m3-product-card">
-        <?php if ($atts['image_url']) : ?>
-            <div class="m3-product-card__image">
-                <img src="<?php echo esc_url($atts['image_url']); ?>" alt="<?php echo esc_attr($atts['title']); ?>" loading="lazy">
-            </div>
-        <?php endif; ?>
-        <div class="m3-product-card__info">
-            <h4 class="m3-product-card__title"><?php echo esc_html($atts['title']); ?></h4>
-            <?php if ($atts['price']) : ?>
-                <p class="m3-product-card__price"><?php echo esc_html($atts['price']); ?></p>
-            <?php endif; ?>
-            <div class="m3-product-card__buttons">
-                <?php if ($amazon_link) : ?>
-                    <a href="<?php echo $amazon_link; ?>" class="m3-product-btn m3-product-btn--amazon" target="_blank" rel="noopener noreferrer">
-                        <span class="material-symbols-outlined">shopping_cart</span>
-                        Amazonで見る
-                    </a>
-                <?php endif; ?>
-                <?php if ($rakuten_link) : ?>
-                    <a href="<?php echo $rakuten_link; ?>" class="m3-product-btn m3-product-btn--rakuten" target="_blank" rel="noopener noreferrer">
-                        <span class="material-symbols-outlined">shopping_cart</span>
-                        楽天で見る
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
-}
-add_shortcode('m3_product', 'node_m3_product_shortcode');
 
 // メニュー登録
 function node_register_menus() {

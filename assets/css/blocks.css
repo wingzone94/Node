@@ -327,14 +327,6 @@
 
 .m3-product-btn--rakuten:hover { background: #D40000; }
 
-/* Yahoo!ショッピング */
-.m3-product-btn--yahoo {
-    background: #FF0033;
-    color: #ffffff;
-}
-
-.m3-product-btn--yahoo:hover { background: #E6002E; }
-
 /* モバイル: 商品カードを縦並びに */
 @media (max-width: 599px) {
     .m3-product-card {
