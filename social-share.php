@@ -82,7 +82,8 @@ $title = urlencode(get_the_title());
             <span class="m3-share-btn__label">BlueSky</span>
         </a>
 
-        <!-- システムシェア -->
+        <!-- システムシェア (モバイルのみ) -->
+        <?php if (wp_is_mobile()) : ?>
         <button class="m3-share-btn m3-share-btn--system" 
                 id="m3-system-share-trigger" 
                 data-url="<?php echo esc_url($permalink); ?>"
@@ -91,6 +92,7 @@ $title = urlencode(get_the_title());
             <span class="material-symbols-outlined" aria-hidden="true">share</span>
             <span class="m3-share-btn__label">シェア</span>
         </button>
+        <?php endif; ?>
 
         <!-- リンクをコピー -->
         <button class="m3-share-btn m3-share-btn--copy" 

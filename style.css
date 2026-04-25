@@ -651,6 +651,14 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
     transition: all 0.2s var(--m3-motion-easing);
 }
 
+.badge-date {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    border: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
 /* Icon Only Mode (Card Upper) */
 .m3-label--icon-only {
     width: 34px;
