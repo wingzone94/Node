@@ -73,22 +73,24 @@
             </div>
             <?php endif; ?>
 
-            <div class="m3-article__body entry-content">
-                <!-- 広告表示エリア (Top) -->
-                <?php if (function_exists('node_the_ad_area')) node_the_ad_area('top'); ?>
+            <div class="m3-article__content-card">
+                <div class="m3-article__body entry-content">
+                    <!-- 広告表示エリア (Top) -->
+                    <?php if (function_exists('node_the_ad_area')) node_the_ad_area('top'); ?>
 
-                <?php the_content(); ?>
-                
-                <?php wp_link_pages([
-                    'before'      => '<nav class="m3-navigation split-post-navigation"><div class="nav-links">',
-                    'after'       => '</div></nav>',
-                    'link_before' => '<span class="page-numbers">',
-                    'link_after'  => '</span>',
-                    'separator'   => '',
-                ]); ?>
+                    <?php the_content(); ?>
+                    
+                    <?php wp_link_pages([
+                        'before'      => '<nav class="m3-navigation split-post-navigation"><div class="nav-links">',
+                        'after'       => '</div></nav>',
+                        'link_before' => '<span class="page-numbers">',
+                        'link_after'  => '</span>',
+                        'separator'   => '',
+                    ]); ?>
 
-                <!-- 広告表示エリア (Bottom) -->
-                <?php if (function_exists('node_the_ad_area')) node_the_ad_area('bottom'); ?>
+                    <!-- 広告表示エリア (Bottom) -->
+                    <?php if (function_exists('node_the_ad_area')) node_the_ad_area('bottom'); ?>
+                </div>
             </div>
 
             <!-- ソーシャルシェアセクション -->

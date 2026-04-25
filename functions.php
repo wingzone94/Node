@@ -625,12 +625,15 @@ function node_the_category_labels($post_id = null) {
     // JSのカラー抽出用にアイキャッチURLを取得
     $thumb_url = get_the_post_thumbnail_url($post_id, 'thumbnail') ?: '';
     
+    echo '<div class="m3-article__category-group">';
+    echo '<span class="m3-article__category-label">CATEGORY</span>';
     echo '<a href="' . esc_url(get_category_link($cat->term_id)) . '" ';
     echo 'class="m3-label--category" ';
     echo 'data-color="auto" ';
     echo 'data-thumb="' . esc_url($thumb_url) . '"';
     echo '>';
     echo '<span class="material-symbols-outlined">folder</span>' . esc_html($cat->name) . '</a>';
+    echo '</div>';
 }
 
 function node_the_post_badges($post_id = null, $mode = 'compact') {

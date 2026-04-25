@@ -941,10 +941,43 @@ h1, h2, h3, h4, h5, h6, .m3-logo-text { font-family: var(--font-heading); }
 .m3-article__body li { line-height: 1.8; margin-bottom: var(--m3-spacing-s); }
 
 /* --- Emphasized Category Card Design --- */
+.m3-article__category-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+.m3-article__category-label {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: var(--md-sys-color-primary);
+    opacity: 0.8;
+}
+
 .m3-article__meta-info {
     display: flex;
     justify-content: center;
     margin-bottom: var(--m3-spacing-xl);
+}
+
+.m3-article__content-card {
+    background-color: var(--md-sys-color-surface-container-low);
+    border-radius: 32px;
+    padding: 32px;
+    margin: 0 auto 48px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    max-width: 900px;
+}
+
+@media (max-width: 599px) {
+    .m3-article__content-card {
+        padding: 20px;
+        border-radius: 20px;
+        margin-left: -4px;
+        margin-right: -4px;
+    }
 }
 .m3-article__meta-info .m3-label--category {
     display: inline-flex;
