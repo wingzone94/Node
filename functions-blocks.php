@@ -88,6 +88,7 @@ function node_register_m3_blocks() {
     // 2. Apple Music
     register_block_type('node/apple-music', [
         'render_callback' => function($attr) { return node_apple_music_shortcode($attr); },
+        'supports' => ['align' => true],
         'attributes' => [
             'url'    => ['type' => 'string', 'default' => ''],
             'height' => ['type' => 'string', 'default' => '175']
@@ -97,6 +98,7 @@ function node_register_m3_blocks() {
     // 3. Google Map
     register_block_type('node/google-map', [
         'render_callback' => function($attr) { return node_google_map_shortcode($attr); },
+        'supports' => ['align' => true],
         'attributes' => [
             'src'    => ['type' => 'string', 'default' => ''],
             'height' => ['type' => 'string', 'default' => '450']
@@ -106,6 +108,7 @@ function node_register_m3_blocks() {
     // 4. Spotify
     register_block_type('node/spotify', [
         'render_callback' => function($attr) { return node_spotify_shortcode($attr); },
+        'supports' => ['align' => true],
         'attributes' => [
             'url'    => ['type' => 'string', 'default' => ''],
             'height' => ['type' => 'string', 'default' => '352']
@@ -134,7 +137,6 @@ function node_render_sort_table_block($attributes) {
     ob_start();
     ?>
     <div class="m3-block-container">
-[diff_block_end]
         <div class="m3-sort-table-wrapper">
             <table class="m3-sort-table" data-sort-enabled="<?php echo $attributes['enable_sort'] ? 'true' : 'false'; ?>">
                 <thead><tr>
@@ -515,3 +517,37 @@ function node_product_card_shortcode(array $atts): string {
     return ob_get_clean();
 }
 add_shortcode('product_card', 'node_product_card_shortcode');
+
+/* ==========================================================================
+   oEmbed ハンドラー (URL直貼りで自動的にM3ブロック化)
+   ========================================================================== */
+
+function node_register_oembed_handlers() {
+    // 1. Apple Music (music.apple.com または embed.music.apple.com)
+    wp_embed_register_handler(
+        'node_apple_music',
+        '#^https?://(embed\.)?music\.apple\.com/.*#i',
+        function($matches, $attr, $url, $rawattr) {
+            return node_apple_music_shortcode(['url' => $url]);
+        }
+    );
+
+    // 2. Spotify (open.spotify.com)
+    wp_embed_register_handler(
+        'node_spotify',
+        '#^https?://open\.spotify\.com/.*#i',
+        function($matches, $attr, $url, $rawattr) {
+            return node_spotify_shortcode(['url' => $url]);
+        }
+    );
+
+    // 3. Google Maps (/maps/embed パスが含まれる場合のみ)
+    wp_embed_register_handler(
+        'node_google_map',
+        '#^https?://(www\.)?google\.(com|co\.jp)/maps/embed.*#i',
+        function($matches, $attr, $url, $rawattr) {
+            return node_google_map_shortcode(['src' => $url]);
+        }
+    );
+}
+add_action('init', 'node_register_oembed_handlers');

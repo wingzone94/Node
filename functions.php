@@ -448,6 +448,7 @@ add_action('admin_enqueue_scripts', 'node_enqueue_admin_assets');
 // テーマサポート
 add_theme_support('post-thumbnails');
 add_theme_support('responsive-embeds');
+add_theme_support('align-wide'); // YouTube等のブロックで「幅広」「全幅」や配置ポップアップを表示するために必須
 
 // --- ユーティリティ ---
 
