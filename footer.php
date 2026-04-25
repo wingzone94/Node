@@ -114,6 +114,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // 最上部へ戻る & コメントへ移動のスクロール処理
+    const backToTopBtn = document.getElementById('m3-back-to-top');
+    const scrollToCommentsBtn = document.getElementById('m3-scroll-to-comments');
+    const commentsArea = document.getElementById('comments');
+
+    if (backToTopBtn) {
+        backToTopBtn.addEventListener('click', () => {
+            if (typeof gsap !== 'undefined') {
+                gsap.to(window, { duration: 0.8, scrollTo: 0, ease: "power3.inOut" });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }
+
+    if (scrollToCommentsBtn && commentsArea) {
+        scrollToCommentsBtn.addEventListener('click', () => {
+            if (typeof gsap !== 'undefined') {
+                gsap.to(window, { duration: 0.8, scrollTo: { y: commentsArea, offsetY: 20 }, ease: "power3.inOut" });
+            } else {
+                commentsArea.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+
+    // スクロールに応じたFABの表示・非表示
+    const handleActionStackVisibility = () => {
+        const scrollY = window.scrollY;
+        if (backToTopBtn) {
+            if (scrollY > 400) backToTopBtn.classList.add('is-visible');
+            else backToTopBtn.classList.remove('is-visible');
+        }
+
+        if (scrollToCommentsBtn && commentsArea) {
+            const rect = commentsArea.getBoundingClientRect();
+            // コメントエリアが画面外にある場合のみ移動ボタンを表示
+            if (scrollY > 400 && rect.top > window.innerHeight) {
+                scrollToCommentsBtn.classList.add('is-visible');
+            } else {
+                scrollToCommentsBtn.classList.remove('is-visible');
+            }
+        }
+    };
+
+    window.addEventListener('scroll', handleActionStackVisibility, { passive: true });
+    handleActionStackVisibility(); // 初期実行
+
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('.m3-share-btn');
         if (!btn) return;
