@@ -1,0 +1,107 @@
+<?php
+/**
+ * Plugin Name:  Luminous Blocks
+ * Plugin URI:   https://github.com/wingzone94/Node
+ * Description:  Gutenberg カスタムブロック（Smart Sort Table, Voting）および外部サービス埋め込み（Apple Music, Spotify, Google Maps）。
+ * Version:      1.0.0
+ * Author:       Luminous Core Teams
+ * Author URI:   https://github.com/wingzone94
+ * License:      MIT
+ * Text Domain:  luminous-blocks
+ * Requires PHP: 8.0
+ *
+ * @package Luminous_Blocks
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'LUMINOUS_BLOCKS_VERSION', '1.0.0' );
+define( 'LUMINOUS_BLOCKS_DIR', plugin_dir_path( __FILE__ ) );
+define( 'LUMINOUS_BLOCKS_URL', plugin_dir_url( __FILE__ ) );
+
+/**
+ * プラグイン初期化
+ */
+final class Luminous_Blocks {
+
+	private static ?self $instance = null;
+
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	private function __construct() {
+		$this->load_dependencies();
+		$this->register_hooks();
+	}
+
+	private function load_dependencies(): void {
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/utils.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/sort-table.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/apple-music.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/google-map.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/spotify.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/media-label.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/voting.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/oembed-handlers.php';
+	}
+
+	private function register_hooks(): void {
+		// ブロック登録
+		add_action( 'init', [ $this, 'register_blocks' ] );
+
+		// oEmbed ハンドラー登録
+		add_action( 'init', [ $this, 'register_oembed_handlers' ] );
+
+		// フロントエンド / エディタ用アセット
+		add_action( 'luminous_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_assets' ] );
+	}
+
+	public function register_blocks(): void {
+		luminous_blocks_register_all();
+	}
+
+	public function register_oembed_handlers(): void {
+		luminous_blocks_register_oembed_handlers();
+	}
+
+	public function enqueue_frontend_assets(): void {
+		wp_enqueue_style(
+			'luminous-blocks',
+			LUMINOUS_BLOCKS_URL . 'assets/css/blocks.css',
+			[],
+			LUMINOUS_BLOCKS_VERSION
+		);
+		wp_enqueue_script(
+			'luminous-blocks',
+			LUMINOUS_BLOCKS_URL . 'assets/js/blocks.js',
+			[ 'gsap' ],
+			LUMINOUS_BLOCKS_VERSION,
+			true
+		);
+	}
+
+	public function enqueue_editor_assets(): void {
+		wp_enqueue_script(
+			'luminous-blocks-editor',
+			LUMINOUS_BLOCKS_URL . 'assets/js/editor.js',
+			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post' ],
+			LUMINOUS_BLOCKS_VERSION,
+			true
+		);
+	}
+}
+
+/**
+ * プラグイン起動
+ */
+function luminous_blocks_init(): void {
+	Luminous_Blocks::instance();
+}
+add_action( 'plugins_loaded', 'luminous_blocks_init' );

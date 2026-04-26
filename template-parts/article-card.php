@@ -8,8 +8,11 @@
  */
 
 $post_id    = get_the_ID();
-$ai_summary = get_post_meta($post_id, '_node_ai_summary', true);
-$has_ai     = !empty(trim($ai_summary));
+// Hook 経由で AI 要約を取得 (プラグイン無効時はフォールバック)
+$ai_summary = function_exists( 'luminous_get_ai_summary' )
+    ? luminous_get_ai_summary( $post_id )
+    : get_post_meta( $post_id, '_node_ai_summary', true );
+$has_ai     = ! empty( trim( $ai_summary ) );
 $card_class = $args['card_class'] ?? '';
 $extra_class = $has_ai ? ' m3-card--has-ai' : '';
 ?>
@@ -30,14 +33,6 @@ $extra_class = $has_ai ? ' m3-card--has-ai' : '';
             <?php endif; ?>
         </div>
 
-        <!-- 【右上】日付表示 -->
-        <div class="badge-group-right">
-            <div class="badge-date">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zM7 12h5v5H7z"/>
-                </svg>
-                <span><?php echo esc_html(node_get_relative_date($post_id)); ?></span>
-            </div>
         </div>
     </div>
 
@@ -89,6 +84,10 @@ $extra_class = $has_ai ? ' m3-card--has-ai' : '';
             </div>
 
             <div class="m3-card__meta-right">
+                <div class="m3-card__date-footer">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>
+                    <span><?php echo esc_html(node_get_relative_date($post_id)); ?></span>
+                </div>
                 <?php if (get_comments_number() > 0) : ?>
                     <div class="m3-card__comment-count">
                         <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>

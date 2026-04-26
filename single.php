@@ -44,12 +44,23 @@
                 </header>
             </div>
 
-            <?php get_template_part('template-parts/card', 'nexus'); ?>
+            <?php
+            // Hook: プラグインによるヘッダー直後の拡張ポイント (Nexus カード等)
+            if ( function_exists( 'luminous_after_article_header' ) ) {
+                luminous_after_article_header( get_the_ID() );
+            } else {
+                get_template_part( 'template-parts/card', 'nexus' );
+            }
+            ?>
 
             <?php
-            $reading_time = get_post_meta(get_the_ID(), '_node_reading_time', true);
-            // AI要約: 管理画面で生成・保存済みのデータをDBから読み込む（API不使用）
-            $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary', true);
+            // Hook 経由で AI 要約・読了時間を取得 (プラグイン無効時はフォールバック)
+            $reading_time = function_exists( 'luminous_get_reading_time' )
+                ? luminous_get_reading_time( get_the_ID() )
+                : get_post_meta( get_the_ID(), '_node_reading_time', true );
+            $ai_summary = function_exists( 'luminous_get_ai_summary' )
+                ? luminous_get_ai_summary( get_the_ID() )
+                : get_post_meta( get_the_ID(), '_node_ai_summary', true );
             
             if ($ai_summary) :
             ?>
@@ -74,9 +85,23 @@
             </div>
             <?php endif; ?>
 
+            <?php
+            // Hook: CERO Z 年齢確認ゲート
+            if ( function_exists( 'luminous_requires_age_gate' ) && luminous_requires_age_gate( get_the_ID() ) ) {
+                luminous_render_age_gate( get_the_ID() );
+            }
+            ?>
+
             <div class="m3-article__body entry-content">
                 <!-- 広告表示エリア (Top) -->
                 <?php if (function_exists('node_the_ad_area')) node_the_ad_area('top'); ?>
+
+                <?php
+                // Hook: 記事本文の前に挿入
+                if ( function_exists( 'luminous_before_content' ) ) {
+                    luminous_before_content( get_the_ID() );
+                }
+                ?>
 
                 <?php the_content(); ?>
                 
@@ -87,6 +112,13 @@
                     'link_after'  => '</span>',
                     'separator'   => '',
                 ]); ?>
+
+                <?php
+                // Hook: 記事本文の後に挿入
+                if ( function_exists( 'luminous_after_content' ) ) {
+                    luminous_after_content( get_the_ID() );
+                }
+                ?>
 
                 <!-- 広告表示エリア (Bottom) -->
                 <?php if (function_exists('node_the_ad_area')) node_the_ad_area('bottom'); ?>
