@@ -1,0 +1,48 @@
+:root {
+    /* --- Material 3 Palette (Light) --- */
+    --md-sys-color-primary: #FF9900;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #fedcbe;
+    --md-sys-color-on-primary-container: #2b1700;
+    --md-sys-color-secondary: #FF9900;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #fedcbe;
+    --m3-radius-small: 12px;
+    --m3-radius-medium: 16px;
+    --m3-radius-large: 28px;
+    --m3-radius-extra-large: 32px;
+    --m3-radius-full: 1000px;
+
+    --font-main: "Inter", "Noto Sans JP", sans-serif;
+    --font-heading: "Inter", "Noto Sans JP", sans-serif;
+
+    /* --- Material 3 Spacing --- */
+    --m3-spacing-xs: 4px;
+    --m3-spacing-s: 8px;
+    --m3-spacing-m: 16px;
+    --m3-spacing-l: 24px;
+    --m3-spacing-xl: 32px;
+    --m3-spacing-xxl: 48px;
+    --m3-spacing-xxxl: 64px;
+ 
+    /* --- Material 3 Motion --- */
+    --m3-motion-duration: 500ms;
+    --m3-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+}
+ 
+[data-theme="dark"] {
+    --md-sys-color-primary: #ffb85d;
+    --md-sys-color-on-primary: #4a2800;
+    --md-sys-color-primary-container: #6a3c00;
+    --md-sys-color-on-primary-container: #ffdcbe;
+    --md-sys-color-secondary-container: #59422c;
+    --md-sys-color-on-secondary-container: #fedcbe;
+    --md-sys-color-surface: #1e1b16; 
+    --md-sys-color-on-surface: #ebe0d9; 
+    --md-sys-color-surface-container-low: #25221b;
+    --md-sys-color-surface-container: #2a2720;
+    --md-sys-color-surface-container-high: #322f28;
+    --md-sys-color-outline: #9c8e80;
+    --md-sys-color-outline-variant: #4f4539;
+}
+ 

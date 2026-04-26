@@ -1,0 +1,365 @@
+/* --- Post Grid & Cards (Dynamic Hierarchical Grid) --- */
+.m3-post-grid {
+    padding: clamp(16px, 4vw, var(--m3-spacing-xxxl)) var(--m3-spacing-m);
+    padding-right: 24px !important; /* 24px Sanctuary - Absolute Guarantee */
+    width: 100%;
+    /* overflow: hidden; Removed to prevent clipping of shadows/ripples and sanctuary erosion */
+}
+
+.m3-post-grid__container { 
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    grid-auto-flow: dense; /* Fill gaps created by featured cards */
+    gap: clamp(12px, 2vw, 24px); /* Fluid density */
+    margin: 0 auto;
+    width: 100%;
+    max-width: 2800px;
+}
+
+/* Mobile Small specific */
+@media (max-width: 599px) {
+    .m3-post-grid__container {
+        grid-template-columns: 1fr; /* 1 column for mobile */
+        gap: 16px;
+    }
+    .m3-card {
+        min-height: auto !important;
+    }
+    .m3-card__content {
+        padding: 16px !important;
+    }
+    .m3-card__title {
+        font-size: 1.2rem !important;
+        margin: 0 0 12px !important;
+    }
+    /* Mobile Label adjustment: give more space for dates */
+    .badge-group-left { max-width: 55%; }
+}
+
+/* Tablet Large & PC Standard */
+@media (min-width: 1024px) {
+    .m3-post-grid__container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .card-featured {
+        grid-column: span 2;
+        grid-row: span 2;
+    }
+
+    .card-featured .m3-card__title {
+        font-size: clamp(1.4rem, 2.5vw, 2rem);
+        line-height: 1.3;
+    }
+}
+
+/* Ultra Wide (4K / 8K) Adaptation */
+@media (min-width: 1920px) {
+    .m3-post-grid__container {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+@media (min-width: 2560px) {
+    .m3-post-grid__container {
+        grid-template-columns: repeat(8, 1fr);
+    }
+    
+    .card-featured {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+}
+
+/* Ultra Tall (Xperia 1 VI / 21:9 Portrait) Adaptation */
+@media (max-aspect-ratio: 1/2), (height > 900px) and (width < 600px) {
+    .card-featured {
+        max-height: 70vh;
+        overflow: hidden;
+    }
+    .m3-header {
+        height: 56px;
+    }
+    .m3-card__background {
+        aspect-ratio: 4 / 3;
+    }
+}
+
+/* Touch Interface Optimization (Pointer: Coarse) */
+@media (pointer: coarse) {
+    .m3-icon-button, 
+    .m3-button, 
+    .m3-share-btn,
+    .page-numbers,
+    .m3-label--category {
+        min-width: 48px !important;
+        min-height: 48px !important;
+    }
+
+    .m3-header {
+        height: 72px;
+    }
+
+    .m3-card {
+        cursor: default;
+    }
+
+    .m3-card:hover {
+        transform: none;
+    }
+    .m3-card:active {
+        transform: scale(0.98) translateZ(0);
+        transition: transform 0.1s var(--m3-motion-easing);
+    }
+}
+
+.m3-card {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 24px; 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column;
+    transition: transform 0.4s var(--m3-motion-easing), box-shadow 0.4s var(--m3-motion-easing);
+    box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15);
+    position: relative;
+    min-height: 320px;
+    backface-visibility: hidden; /* Fix font blur */
+    transform: translateZ(0); /* Hardware acceleration */
+}
+
+.m3-card:hover { 
+    transform: translateY(-8px) scale(1.01) translateZ(0); 
+    box-shadow: var(--m3-elevation-3); 
+    z-index: 2; /* Prevent overlaps on hover */
+}
+
+.m3-card__background { 
+    position: relative; 
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.card-featured .m3-card__background {
+    aspect-ratio: 16 / 10;
+}
+
+.m3-card__background img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    transition: transform 0.8s var(--m3-motion-easing); 
+    will-change: transform;
+}
+
+.m3-card:hover .m3-card__background img {
+    transform: scale(1.05) translateZ(0);
+}
+
+/* --- Card Meta Zoning (Overlay) --- */
+.card-overlay {
+    position: absolute;
+    inset: 12px;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    gap: 8px;
+}
+
+.card-overlay > * {
+    pointer-events: auto;
+}
+
+/* Badge Base Style */
+.badge-date,
+.m3-label--category,
+.m3-label--ai,
+.m3-label--sponsor {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: all 0.2s var(--m3-motion-easing);
+}
+
+.badge-date {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    border: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.m3-label--ai {
+    background: #FF9900 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+/* Icon Only Mode (Card Upper) */
+.m3-label--icon-only {
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 50% !important;
+    cursor: help;
+}
+.m3-label--icon-only .material-symbols-outlined {
+    margin: 0 !important;
+    font-size: 20px;
+}
+.m3-label--icon-only:hover {
+    transform: scale(1.1);
+    background-color: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+}
+
+/* Tooltip Polish */
+.m3-dynamic-tooltip {
+    position: fixed;
+    background: var(--md-sys-color-on-surface);
+    color: var(--md-sys-color-surface);
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    pointer-events: none;
+    z-index: 4000 !important; /* Force to front */
+    opacity: 0;
+    transform: scale(0.9);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    max-width: none; /* 1行で収めるために制限を解除 */
+    white-space: nowrap; /* 強制的に1行にする */
+    line-height: 1;
+    text-align: center;
+}
+
+/* Category Label in Content (Card Lower) */
+.m3-card__category-tag {
+    display: inline-flex;
+}
+.m3-article__meta-info .m3-label--category {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 153, 0, 0.1);
+}
+
+/* Date Badge specific */
+.badge-date svg { width: 16px; height: 16px; opacity: 0.8; }
+
+/* Make category label interactive */
+.m3-label--category {
+    cursor: pointer;
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    border: none !important;
+    transition: transform 0.2s var(--m3-motion-easing), box-shadow 0.2s var(--m3-motion-easing);
+}
+.m3-label--category:hover {
+    background: #ff6600 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    transform: translateY(-1px);
+}
+.m3-label--category .material-symbols-outlined { font-size: 14px; opacity: 0.8; }
+
+/* Clear old wrapper restrictions & positions */
+.m3-card .m3-card__badges-top { display: contents; }
+.m3-card__categories-top { display: contents; }
+.badge-category-wrapper { display: contents; }
+.m3-card .m3-label--date { display: none; } /* Clear old hardcoded date label if exists */
+
+.m3-card__content { 
+    position: relative; 
+    z-index: 2; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    flex-grow: 1;
+    color: var(--md-sys-color-on-surface); 
+}
+
+.m3-card__title { 
+    font-size: 1.4rem; 
+    font-weight: 900; 
+    line-height: 1.4; 
+    margin: 0 0 var(--m3-spacing-m); 
+    transition: color 0.25s cubic-bezier(0.2, 0, 0, 1);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    max-width: 22em; /* カーニング調整分、少し余裕を持たせる */
+    letter-spacing: -0.04em; /* カーニングを詰める */
+    font-feature-settings: "palt"; /* 日本語プロポーショナルメトリクス有効化 */
+}
+
+@media (max-width: 1000px) {
+    .m3-card__title {
+        max-width: 16em;
+    }
+}
+
+@media (max-width: 599px) {
+    .m3-card__title {
+        max-width: 12em; /* モバイル：最大12文字で改行 */
+    }
+}
+
+.m3-card__title a { color: var(--md-sys-color-on-surface); text-decoration: none; display: block; }
+.m3-card__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1; /* Stretch link over the whole card */
+}
+
+/* Ensure interactive elements stay clickable above the stretched link */
+.m3-card__ai-accordion,
+.m3-card__writer a {
+    position: relative;
+    z-index: 2;
+}
+
+/* Let clicks on date and category pass through to the stretched link */
+.badge-date,
+.m3-card__category-tag {
+    pointer-events: none !important;
+}
+
+/* --- No Image Card Adjustments --- */
+.m3-card--no-image {
+    min-height: auto;
+}
+.m3-card--no-image .m3-card__background {
+    display: none;
+}
+.m3-card--no-image .m3-card__content {
+    padding-top: 64px; /* Space for overlay badges */
+}
+.m3-card--no-image .badge-date {
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    border-color: transparent;
+}
+
+.m3-card__footer-meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; }
+.m3-card__writer { display: flex; align-items: center; gap: 10px; }
+.m3-card__writer img { border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); width: 24px; height: 24px; }
+.m3-card__comment-count { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 800; opacity: 0.9; }

@@ -1,0 +1,436 @@
+/* ==========================================================================
+   Footer (Material 3 Expressive)
+   ========================================================================== */
+
+.m3-footer {
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    margin-top: var(--m3-spacing-xxl, 64px);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    flex-direction: column;
+}
+
+.m3-footer__brand {
+    padding: 48px var(--m3-spacing-m) 32px;
+    text-align: center;
+}
+
+.m3-footer__brand .m3-logo-text {
+    margin: 0 0 8px;
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+.m3-footer__tagline {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+
+/* 色を分けて強調したナビゲーションエリア */
+.m3-footer__nav {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    padding: 32px var(--m3-spacing-m);
+}
+
+.m3-footer__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px 40px;
+}
+
+.m3-footer__links a {
+    color: var(--md-sys-color-on-secondary-container);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.95rem;
+    position: relative;
+    padding: 4px 0;
+    transition: opacity 0.3s var(--m3-motion-easing);
+}
+
+.m3-footer__links a:hover {
+    opacity: 0.7;
+}
+
+.m3-footer__links a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--md-sys-color-on-secondary-container);
+    transition: width 0.3s var(--m3-motion-easing);
+    opacity: 0.5;
+}
+
+.m3-footer__links a:hover::after {
+    width: 100%;
+}
+
+.m3-footer__meta {
+    background-color: var(--md-sys-color-surface-container-low);
+    text-align: center;
+    padding: 24px var(--m3-spacing-m);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ==========================================================================
+   Gutenberg Alignment System
+   ========================================================================== */
+.aligncenter {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+.alignleft {
+    float: left;
+    margin-right: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.alignright {
+    float: right;
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+figure.aligncenter {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+figure.aligncenter iframe {
+    max-width: 100%;
+}
+.wp-block-embed.aligncenter {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.m3-section-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 32px 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--md-sys-color-on-surface);
+    letter-spacing: -0.02em;
+}
+/* 最初のセクションタイトルの上部余白をさらに抑制 */
+.m3-post-grid > .m3-section-title:first-child {
+    margin-top: 8px;
+}
+.m3-section-divider {
+    border: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    margin: 80px 0 48px;
+    opacity: 0.3;
+}
+
+/* --- Comments Blue Removal & Orange Unification --- */
+.m3-comments-section a {
+    color: var(--md-sys-color-primary);
+}
+.m3-comments-section a:hover {
+    color: #ff6600;
+}
+.comment-reply-link,
+#cancel-reply-link,
+.m3-comment-card__actions a {
+    color: var(--md-sys-color-primary) !important;
+    font-weight: 800;
+    text-decoration: none;
+}
+.m3-comment-form .m3-button {
+    background-color: var(--md-sys-color-primary) !important;
+    color: #ffffff !important;
+}
+.m3-comment-form .m3-button:hover {
+    filter: brightness(1.1);
+}
+.m3-comment-card__author a {
+    color: var(--md-sys-color-primary) !important;
+    text-decoration: none;
+}
+
+/* --- Global Utilities & Components --- */
+.m3-archive-header {
+    text-align: center;
+    padding: 64px 24px 48px;
+}
+.m3-archive-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 16px;
+}
+.m3-archive-description {
+    font-size: 1.1rem;
+    color: var(--md-sys-color-outline);
+    max-width: 600px;
+    margin: 0 auto;
+}
+.m3-badge {
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* --- Empty States & 404 --- */
+.m3-empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+.m3-empty-icon {
+    font-size: 80px !important;
+    color: var(--md-sys-color-outline-variant);
+}
+.m3-empty-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface);
+}
+.m3-empty-description {
+    color: var(--md-sys-color-outline);
+    font-size: 1.1rem;
+    max-width: 480px;
+}
+
+/* 404 specific */
+.m3-404-visual {
+    position: relative;
+    margin-bottom: 32px;
+}
+.m3-404-number {
+    font-size: 120px;
+    font-weight: 900;
+    opacity: 0.1;
+    line-height: 1;
+}
+.m3-404-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 64px !important;
+    color: var(--md-sys-color-primary);
+}
+.m3-404-search {
+    margin-top: 48px;
+    width: 100%;
+    max-width: 400px;
+}
+.m3-404-search p {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    opacity: 0.7;
+}
+
+/* --- Misc Fixes --- */
+.m3-search-bar__input {
+    background: var(--md-sys-color-surface-container-high) !important;
+}
+.justify-center { justify-content: center !important; }
+
+/* Sticky Nav Blue Removal */
+.m3-sticky-toc__header .material-symbols-outlined {
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+/* --- Final Visual Polish --- */
+body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.m3-logo-text {
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, var(--md-sys-color-primary), #ff6600);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.m3-article__title {
+    line-height: 1.25 !important;
+}
+
+.m3-article__body {
+    line-height: 1.8 !important;
+    letter-spacing: 0.01em !important; /* 文中のカーニングを微調整 */
+}
+
+/* Pagination consistency */
+.m3-navigation .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 48px;
+}
+.m3-navigation .page-numbers {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: var(--md-sys-color-on-surface);
+    transition: all 0.2s;
+}
+.m3-navigation .page-numbers.current {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-weight: 800;
+}
+.m3-navigation .page-numbers:hover:not(.current) {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+/* Safari address bar color fix */
+html {
+    background-color: #FF9900 !important;
+}
+body {
+    background-color: var(--md-sys-color-surface) !important;
+}
+
+/* --- Mobile Optimization Suite --- */
+
+/* 1. Header Navigation (Horizontal Scroll on Mobile) */
+.m3-header__nav {
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    padding: 8px 16px;
+    scrollbar-width: none; /* Hide scrollbar for clean M3 look */
+}
+.m3-header__nav::-webkit-scrollbar { display: none; }
+
+.m3-header__nav ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 8px;
+}
+.m3-header__nav a {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: all 0.2s;
+}
+.m3-header__nav a:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+/* 2. Responsive Content (Article Body) */
+.m3-article__body img,
+.m3-article__body iframe,
+.m3-article__body video,
+.m3-article__body embed {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 12px;
+}
+
+.m3-article__body table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-collapse: collapse;
+    margin-bottom: var(--m3-spacing-l);
+}
+
+.m3-article__body pre {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--md-sys-color-surface-container-high);
+}
+
+/* 3. Category Labels Wrap (Single View) */
+.m3-article__meta-info {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* 4. Footer Touch Targets */
+.m3-footer__links a {
+    padding: 12px 16px;
+    display: inline-block;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.m3-footer__links a:hover {
+    background: rgba(255, 153, 0, 0.1);
+}
+
+/* 5. Mobile Title Adjustment (Prevent extremely long titles from breaking layout) */
+@media (max-width: 599px) {
+    .m3-article__title {
+        font-size: clamp(1.4rem, 8vw, 2.2rem) !important;
+        line-height: 1.25;
+        hyphens: auto;
+    }
+    .m3-article__header-card {
+        padding: 24px 16px;
+    }
+}
+
+/* --- Card Date Relocation (Footer Right) --- */
+.m3-card__meta-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.m3-card__date-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--md-sys-color-outline);
+    white-space: nowrap;
+}
+.m3-card__date-footer .material-symbols-outlined {
+    font-size: 14px;
+    opacity: 0.7;
+}

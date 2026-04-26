@@ -1,0 +1,168 @@
+/* --- Share Buttons --- */
+.m3-share-section { 
+    margin: var(--m3-spacing-xxxl) 0; 
+    padding: var(--m3-spacing-xl); 
+    border-top: 1px solid var(--md-sys-color-outline-variant); 
+    text-align: center; 
+}
+.m3-share-title {
+    font-size: 1.2rem;
+    font-weight: 900;
+    margin-bottom: var(--m3-spacing-l);
+    color: var(--md-sys-color-on-surface);
+}
+.m3-share-buttons { 
+    display: grid !important; 
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important; 
+    width: 100% !important;
+    max-width: 680px !important;
+    margin: 0 auto !important;
+}
+ 
+.m3-share-buttons .m3-share-btn { 
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: center !important;
+    height: 48px !important; 
+    min-width: 100px !important; /* コンテンツに合わせて広がるように最小幅を設定 */
+    width: auto !important; /* 固定幅ではなく自動幅に */
+    padding: 0 20px !important; 
+    border-radius: 24px !important; 
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), filter 0.2s, box-shadow 0.2s;
+    border: none; 
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    text-decoration: none !important;
+    flex-shrink: 0;
+    overflow: visible !important;
+    white-space: nowrap !important; /* 改行を禁止 */
+}
+.m3-share-btn__label { 
+    font-weight: 800 !important; 
+    font-size: 13px !important;
+    display: inline !important; 
+}
+
+/* Mobile Share Buttons - Aggressive Fix */
+@media (max-width: 599px) {
+    .m3-share-buttons.m3-share-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 24px auto !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
+    }
+    .m3-share-buttons .m3-share-btn.m3-share-btn {
+        display: flex !important;
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 50% !important;
+        border: none !important;
+        box-shadow: none !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+    }
+    
+    /* 文字ラベルを完全に消去 */
+    .m3-share-buttons .m3-share-btn .m3-share-btn__label { 
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        visibility: hidden !important;
+    }
+    
+    /* アイコンを強制的に中央へ */
+    .m3-share-buttons .m3-share-btn i.fa-brands, 
+    .m3-share-buttons .m3-share-btn .material-symbols-outlined,
+    .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 20px !important; 
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        text-align: center !important;
+        text-indent: 0 !important;
+    }
+    /* 個別アイコンの微調整 (Facebook Fなどは重心がずれているため) */
+    .m3-share-buttons .m3-share-btn--facebook i {
+        margin-left: 2px !important;
+    }
+
+    /* コピーボタンの背景をブランドトーンに合わせる */
+    .m3-share-buttons .m3-share-btn--copy {
+        background-color: var(--md-sys-color-primary) !important;
+        color: #ffffff !important;
+    }
+}
+
+.m3-share-buttons .m3-share-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Brand Colors */
+.m3-share-btn--x { background-color: #000000 !important; color: #ffffff !important; }
+.m3-share-btn--facebook { background-color: #1877F2 !important; color: #ffffff !important; }
+.m3-share-btn--line { background-color: #06C755 !important; color: #ffffff !important; }
+.m3-share-btn--hatebu { background-color: #00A4DE !important; color: #ffffff !important; }
+.m3-share-btn--threads { background-color: #000000 !important; color: #ffffff !important; }
+.m3-share-btn--bluesky { background-color: #0085ff !important; color: #ffffff !important; }
+.m3-share-btn--system { 
+    display: none !important; /* PCビューでは非表示 */
+}
+
+@media (max-width: 599px) {
+    .m3-share-buttons .m3-share-btn--system {
+        display: flex !important; /* モバイルでは表示 */
+    }
+}
+
+.m3-share-btn--system { 
+    background-color: var(--md-sys-color-secondary) !important; 
+    color: var(--md-sys-color-on-secondary) !important; 
+}
+.m3-share-btn--copy { 
+    background-color: var(--md-sys-color-surface-container-high) !important; 
+    color: var(--md-sys-color-on-surface) !important; 
+    border: 1px solid var(--md-sys-color-outline-variant) !important;
+}
+.m3-share-btn--copy.is-success {
+    background-color: #FF9900 !important; /* オレンジに統一 */
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+ 
+.m3-share-buttons .m3-share-btn i, 
+.m3-share-buttons .m3-share-btn .material-symbols-outlined,
+.m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
+    font-size: 22px !important; 
+    margin-right: 8px !important;
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: center !important; 
+}
+ 
+.m3-share-btn__label { 
+    font-weight: 800 !important; 
+    font-size: 14px !important; 
+    opacity: 1 !important;
+    display: inline !important;
+    white-space: nowrap !important; /* 改行を禁止 */
+}
+ 

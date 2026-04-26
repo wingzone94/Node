@@ -1,0 +1,94 @@
+/* --- Header --- */
+.m3-header { 
+    height: var(--m3-spacing-xxxl); 
+    background: transparent; 
+    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(20px); 
+    box-shadow: none; 
+    position: sticky; top: 0; z-index: 1000; padding: 0 24px 0 var(--m3-spacing-l) !important; 
+    display: flex; align-items: center; 
+    transition: background-color 0.4s var(--m3-motion-easing), box-shadow 0.4s var(--m3-motion-easing), border-color 0.4s var(--m3-motion-easing); 
+    border-bottom: 1px solid transparent;
+}
+.m3-header .m3-logo-text, .m3-header .material-symbols-outlined {
+    text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.m3-header__inner { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; }
+.m3-logo-text { font-size: 1.35rem; font-weight: 900; color: var(--md-sys-color-on-surface); }
+.m3-header__actions { display: flex; align-items: center; gap: var(--m3-spacing-s); }
+ 
+.m3-search-bar { position: relative; display: flex; align-items: center; overflow: visible; }
+.m3-search-bar__input { 
+    position: absolute; right: 100%; top: 50%; transform: translateY(-50%) scaleX(0.8); opacity: 0;
+    width: 240px; padding: var(--m3-spacing-s) var(--m3-spacing-m);
+    border: none; background: var(--md-sys-color-surface-container-highest, #ece6f0); border-radius: 20px; outline: none;
+    z-index: 1001; transform-origin: right center; color: var(--md-sys-color-on-surface); pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: inherit;
+}
+.m3-search-bar.is-active .m3-search-bar__input { pointer-events: auto; }
+[data-theme="dark"] .m3-search-bar__input { background: var(--md-sys-color-surface-container-high); }
+
+/* --- M3 Ripple Effect --- */
+.m3-ripple-host {
+    position: relative;
+    overflow: hidden;
+}
+.m3-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background-color: var(--md-sys-color-on-surface);
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.12;
+    z-index: 10;
+}
+.m3-card .m3-ripple { z-index: 1; }
+ 
+.m3-icon-button { width: var(--m3-spacing-xxl); height: var(--m3-spacing-xxl); display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); position: relative; }
+.m3-icon-button:hover { background: var(--md-sys-color-surface-variant); }
+ 
+/* --- Theme Controls & Popover --- */
+.m3-theme-controls {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.m3-theme-popover {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: -12px; /* 右側に少し余裕を持たせて配置 */
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 20px; /* より丸みのあるデザインへ */
+    padding: 16px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 1002;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s var(--m3-motion-easing);
+    transform: translateY(12px) scale(0.95);
+    min-width: 240px;
+    transform-origin: top right;
+}
+
+.m3-theme-popover.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.m3-theme-popover__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.m3-theme-popover__label {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+}
+
