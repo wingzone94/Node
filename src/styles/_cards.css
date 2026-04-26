@@ -8,66 +8,26 @@
 
 .m3-post-grid__container { 
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-    grid-auto-flow: dense; /* Fill gaps created by featured cards */
-    gap: clamp(12px, 2vw, 24px); /* Fluid density */
+    /* PCビューで確実に横並びにするため、最小幅を300pxに調整 */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    grid-auto-flow: dense; 
+    gap: clamp(20px, 2.5vw, 40px); 
     margin: 0 auto;
     width: 100%;
-    max-width: 2800px;
 }
 
-/* Mobile Small specific */
-@media (max-width: 599px) {
-    .m3-post-grid__container {
-        grid-template-columns: 1fr; /* 1 column for mobile */
-        gap: 16px;
-    }
-    .m3-card {
-        min-height: auto !important;
-    }
-    .m3-card__content {
-        padding: 16px !important;
-    }
-    .m3-card__title {
-        font-size: 1.2rem !important;
-        margin: 0 0 12px !important;
-    }
-    /* Mobile Label adjustment: give more space for dates */
-    .badge-group-left { max-width: 55%; }
-}
-
-/* Tablet Large & PC Standard */
-@media (min-width: 1024px) {
-    .m3-post-grid__container {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
+/* Featured Card Adjustment for larger screens */
+@media (min-width: 1200px) {
     .card-featured {
         grid-column: span 2;
         grid-row: span 2;
     }
-
-    .card-featured .m3-card__title {
-        font-size: clamp(1.4rem, 2.5vw, 2rem);
-        line-height: 1.3;
-    }
 }
 
-/* Ultra Wide (4K / 8K) Adaptation */
+/* Extra Wide Screen Polish */
 @media (min-width: 1920px) {
     .m3-post-grid__container {
-        grid-template-columns: repeat(6, 1fr);
-    }
-}
-
-@media (min-width: 2560px) {
-    .m3-post-grid__container {
-        grid-template-columns: repeat(8, 1fr);
-    }
-    
-    .card-featured {
-        max-width: 1200px;
-        margin: 0 auto;
+        gap: 40px;
     }
 }
 
@@ -113,24 +73,48 @@
     }
 }
 
+/* Animation Initial States */
+.m3-card,
+.m3-elevated-nav-card,
+.special-features__item,
+.m3-nexus-card,
+.m3-blog-card,
+.m3-product-card {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    will-change: transform, opacity;
+}
+
 .m3-card {
     background: var(--md-sys-color-surface-container-low);
-    border-radius: 24px; 
+    border-radius: 28px; /* M3 Extra Large radius */
     overflow: hidden; 
     display: flex; 
     flex-direction: column;
-    transition: transform 0.4s var(--m3-motion-easing), box-shadow 0.4s var(--m3-motion-easing);
-    box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15);
+    transition: transform 0.4s var(--m3-motion-easing), 
+                box-shadow 0.4s var(--m3-motion-easing), 
+                background-color 0.3s ease;
+    box-shadow: var(--m3-elevation-1);
     position: relative;
-    min-height: 320px;
-    backface-visibility: hidden; /* Fix font blur */
-    transform: translateZ(0); /* Hardware acceleration */
+    min-height: 280px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    text-decoration: none;
+    color: inherit;
+}
+
+[data-theme="dark"] .m3-card {
+    background: var(--md-sys-color-surface-container-high);
 }
 
 .m3-card:hover { 
-    transform: translateY(-8px) scale(1.01) translateZ(0); 
+    transform: translateY(-6px) scale(1.01); 
+    background-color: var(--md-sys-color-surface-container-high);
     box-shadow: var(--m3-elevation-3); 
-    z-index: 2; /* Prevent overlaps on hover */
+    z-index: 2;
+}
+
+[data-theme="dark"] .m3-card:hover {
+    background-color: var(--md-sys-color-surface-container-highest);
 }
 
 .m3-card__background { 
@@ -160,45 +144,131 @@
 /* --- Card Meta Zoning (Overlay) --- */
 .card-overlay {
     position: absolute;
-    inset: 12px;
+    inset: 0;
     z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     pointer-events: none;
-    gap: 8px;
 }
 
 .card-overlay > * {
     pointer-events: auto;
 }
 
-/* Badge Base Style */
+/* Badge Base Style (Refined M3 Chip) */
 .badge-date,
 .m3-label--category,
 .m3-label--ai,
+.m3-label--ai-summary,
 .m3-label--sponsor {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
+    padding: 6px 14px;
     border-radius: 12px;
     font-size: 11px;
     font-weight: 800;
     white-space: nowrap;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    border: none;
     transition: all 0.2s var(--m3-motion-easing);
 }
 
+.m3-card__background { 
+    position: relative; 
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--md-sys-color-surface-container-high);
+}
+
 .badge-date {
-    background: var(--md-sys-color-primary) !important;
-    color: var(--md-sys-color-on-primary) !important;
-    border: none !important;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: var(--md-sys-color-secondary-container) !important;
+    color: var(--md-sys-color-on-secondary-container) !important;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.m3-card__meta-right {
+    display: flex;
+    gap: 12px;
+    padding-right: 80px; /* 日付ラベルと重ならないように余白を確保 */
+}
+
+/* Content Area Badges (Readability Priority) */
+.m3-card__meta-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    margin-top: -4px;
+}
+
+/* Ensure all badges inside the meta row are positioned naturally */
+.m3-card__meta-badges > *,
+.m3-card__meta-badges .m3-label--category,
+.m3-card__meta-badges .m3-label--ai,
+.m3-card__meta-badges .m3-label--ai-summary,
+.m3-card__meta-badges .m3-label--sponsor {
+    position: static !important;
+    inset: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+}
+
+.m3-label--category {
+    background: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+}
+
+/* AI and Sponsor Labels as Chips */
+.m3-label--ai, .m3-label--ai-summary, .m3-label--sponsor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    transition: all 0.2s ease;
+}
+
+.m3-label--icon-only {
+    padding: 6px !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+}
+
+.m3-label--ai, .m3-label--ai-summary {
+    background: #FF9900 !important;
+    color: #ffffff !important;
+}
+
+.m3-label--sponsor {
+    background: linear-gradient(135deg, var(--md-sys-color-tertiary-container), var(--md-sys-color-surface-container-highest)) !important;
+    color: var(--md-sys-color-on-tertiary-container) !important;
+    border: 1.5px dashed var(--md-sys-color-tertiary) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.m3-label--sponsor:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+/* Internal label text visibility */
+.m3-label__text {
+    display: inline-block !important;
+    margin-left: 4px;
 }
 
 .m3-label--ai {
@@ -251,16 +321,14 @@
     display: inline-flex;
 }
 .m3-article__meta-info .m3-label--category {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
     border-radius: 20px;
-    padding: 4px 14px;
-    font-size: 0.8rem;
+    padding: 6px 14px;
+    font-size: 0.9rem;
     font-weight: 800;
     display: flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid rgba(255, 153, 0, 0.1);
+    border: none;
 }
 
 /* Date Badge specific */
@@ -282,84 +350,154 @@
 .m3-label--category .material-symbols-outlined { font-size: 14px; opacity: 0.8; }
 
 /* Clear old wrapper restrictions & positions */
-.m3-card .m3-card__badges-top { display: contents; }
-.m3-card__categories-top { display: contents; }
-.badge-category-wrapper { display: contents; }
-.m3-card .m3-label--date { display: none; } /* Clear old hardcoded date label if exists */
-
-.m3-card__content { 
-    position: relative; 
-    z-index: 2; 
-    padding: 20px; 
-    display: flex; 
-    flex-direction: column; 
-    flex-grow: 1;
-    color: var(--md-sys-color-on-surface); 
+/* --- Card Content & Title Polishing --- */
+.m3-card__content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Fills remaining space to push footer down */
 }
 
-.m3-card__title { 
-    font-size: 1.4rem; 
-    font-weight: 900; 
-    line-height: 1.4; 
-    margin: 0 0 var(--m3-spacing-m); 
-    transition: color 0.25s cubic-bezier(0.2, 0, 0, 1);
-    word-break: break-all;
-    overflow-wrap: anywhere;
-    max-width: 22em; /* カーニング調整分、少し余裕を持たせる */
-    letter-spacing: -0.04em; /* カーニングを詰める */
-    font-feature-settings: "palt"; /* 日本語プロポーショナルメトリクス有効化 */
+.m3-card__title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.5;
+    margin: 0 0 16px;
+    color: var(--md-sys-color-on-surface);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    position: relative;
+    z-index: 5;
 }
 
-@media (max-width: 1000px) {
-    .m3-card__title {
-        max-width: 16em;
-    }
+.m3-card__title a {
+    color: inherit;
+    text-decoration: none;
 }
 
-@media (max-width: 599px) {
-    .m3-card__title {
-        max-width: 12em; /* モバイル：最大12文字で改行 */
-    }
-}
-
-.m3-card__title a { color: var(--md-sys-color-on-surface); text-decoration: none; display: block; }
+/* Stretched link to make the whole card clickable */
 .m3-card__title a::after {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: 1; /* Stretch link over the whole card */
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    /* This makes the whole card clickable but needs the card to be position: relative */
 }
 
-/* Ensure interactive elements stay clickable above the stretched link */
-.m3-card__ai-accordion,
-.m3-card__writer a {
+.m3-card:hover .m3-card__title {
+    color: var(--md-sys-color-primary);
+}
+
+/* Metadata area visibility */
+.m3-card__meta-badges {
     position: relative;
-    z-index: 2;
+    z-index: 10;
+    pointer-events: auto;
 }
 
-/* Let clicks on date and category pass through to the stretched link */
-.badge-date,
-.m3-card__category-tag {
-    pointer-events: none !important;
+/* Ensure categories and badges are visible and styled as chips */
+.m3-label--category,
+.m3-label--ai,
+.m3-label--ai-summary,
+.m3-label--sponsor {
+    position: static !important;
+    display: inline-flex !important;
+    margin: 0 4px 8px 0 !important;
 }
 
-/* --- No Image Card Adjustments --- */
+/* --- No Image Article Card Styles (M3 Refined) --- */
 .m3-card--no-image {
-    min-height: auto;
+    background: var(--md-sys-color-surface-container-low) !important;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    position: relative;
+    overflow: hidden;
+    padding-left: 6px;
+    height: 100%;
+    max-height: 320px;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
 }
-.m3-card--no-image .m3-card__background {
-    display: none;
+
+.m3-card--no-image .card-overlay {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 24px 20px 0;
+    margin-bottom: -12px;
 }
+
 .m3-card--no-image .m3-card__content {
-    padding-top: 64px; /* Space for overlay badges */
+    padding: 12px 20px 24px;
+    flex-grow: 1;
 }
-.m3-card--no-image .badge-date {
-    background: var(--md-sys-color-surface-container-highest);
-    color: var(--md-sys-color-on-surface);
-    border-color: transparent;
+
+.m3-card--no-image .m3-card__title {
+    font-size: 1.35rem;
+    line-height: 1.4;
+    font-weight: 800;
+    margin-bottom: 24px;
 }
 
 .m3-card__footer-meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; }
 .m3-card__writer { display: flex; align-items: center; gap: 10px; }
 .m3-card__writer img { border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); width: 24px; height: 24px; }
 .m3-card__comment-count { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 800; opacity: 0.9; }
+
+/* --- Archive Arrow Card --- */
+.m3-card--archive-link {
+    background: linear-gradient(135deg, var(--md-sys-color-primary), #ff6600);
+    color: #ffffff !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 280px;
+    border: none;
+}
+
+.m3-card--archive-link .m3-card__content {
+    justify-content: center;
+    padding: 32px;
+}
+
+.m3-card--archive-link .m3-card__archive-label {
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    opacity: 0.8;
+    margin-bottom: 12px;
+}
+
+.m3-card--archive-link .m3-card__title {
+    color: #ffffff !important;
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+}
+
+.m3-card--archive-link .m3-card__archive-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    transition: transform 0.3s var(--m3-motion-easing);
+}
+
+.m3-card--archive-link .m3-card__archive-icon .material-symbols-outlined {
+    font-size: 32px;
+}
+
+.m3-card--archive-link:hover .m3-card__archive-icon {
+    transform: translateX(12px) scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+}

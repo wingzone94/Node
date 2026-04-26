@@ -102,25 +102,37 @@
 .m3-toc-body a:hover { color: var(--md-sys-color-primary); padding-left: 4px; }
 .m3-toc-body .toc-level-h3 { padding-left: 16px; font-size: 0.88rem; opacity: 0.85; }
 
-/* Action Stack */
+/* --- Action Stack (Global Right-Side Fix) --- */
 .m3-action-stack {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
     display: flex;
-    flex-direction: column;
-    gap: var(--m3-spacing-m);
+    flex-direction: column; /* 上から下に並べる、一番下が Back to Top */
+    align-items: center;
+    gap: 16px;
+    z-index: 9999 !important; /* 全要素の最前面 */
+    pointer-events: none;
 }
 
-/* FAB Base */
+.m3-action-stack > * {
+    pointer-events: auto;
+}
+
+/* FAB Base - Force Orange Theme */
 .m3-fab {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%; /* サークル形状に変更 */
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 16px;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transition: transform 0.3s var(--m3-motion-easing), opacity 0.3s ease, visibility 0.3s, background-color 0.3s ease;
+    background-color: #FF9900 !important; /* カテゴリ色に同期せず、常に#FF9900 */
+    color: #ffffff !important; /* 絶対に白アイコン */
+    box-shadow: var(--m3-elevation-3);
+    transition: transform 0.3s var(--m3-motion-easing), opacity 0.3s ease, visibility 0.3s, background-color 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     opacity: 0;
     visibility: hidden;
@@ -133,20 +145,27 @@
     transform: scale(1);
 }
 
+/* サイズ差をなくすためバリエーションを無効化 */
+.m3-fab--small,
+.m3-fab--standard,
+.m3-fab--large {
+    width: 56px !important;
+    height: 56px !important;
+}
+
+.m3-fab:hover {
+    background-color: #e68a00 !important; /* ホバー時は少し濃いオレンジ */
+    box-shadow: var(--m3-elevation-4);
+}
+
 .m3-fab:active { transform: scale(0.95); }
 
-.m3-fab--primary {
-    background-color: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
-}
-.m3-fab--secondary {
-    background-color: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
-}
+/* All variants to Orange */
+.m3-fab--primary,
+.m3-fab--secondary,
 .m3-fab--tertiary {
-    background-color: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface);
-    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: #FF9900 !important;
+    color: #ffffff !important;
 }
 
 .m3-fab .material-symbols-outlined { font-size: 24px; font-variation-settings: 'FILL' 1; }

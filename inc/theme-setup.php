@@ -7,26 +7,48 @@ add_filter('pre_option_blogname', function() {
 function node_modify_posts_per_page($query) {
     if (!is_admin() && $query->is_main_query() && (is_home() || is_archive() || is_search())) {
         if (wp_is_mobile()) {
-            $query->set('posts_per_page', 8);   // Mobile: 1列×8件 - スクロール負荷を軽減
+            $query->set('posts_per_page', 12);  // 1列 or 2列で割り切れる12件
         } else {
-            $query->set('posts_per_page', 16);  // PC: 4列×4行 - グリッドに最適
+            $query->set('posts_per_page', 24);  // PC: 高解像度対応 (8列, 6列, 4列, 3列, 2列すべてに対応)
         }
     }
 }
 add_action('pre_get_posts', 'node_modify_posts_per_page');
 // メニュー登録
-function node_register_menus() {
+function node_theme_setup() {
     register_nav_menus([
         'primary' => 'ヘッダーメニュー',
         'drawer'  => 'サイドドロワーメニュー（カテゴリ等）'
     ]);
+
+    // エディタスタイルの有効化
+    add_theme_support('editor-styles');
+    add_editor_style('assets/css/style.css');
+
+    // クリーンアップ: 不要なコア機能を停止
+    remove_action('wp_head', 'print_emoji_detection_script', 7);
+    remove_action('admin_print_scripts', 'print_emoji_detection_script');
+    remove_action('wp_print_styles', 'print_emoji_styles');
+    remove_action('admin_print_styles', 'print_emoji_styles');
+    remove_action('wp_head', 'rsd_link');
+    remove_action('wp_head', 'wlwmanifest_link');
+    remove_action('wp_head', 'wp_generator');
 }
-add_action('after_setup_theme', 'node_register_menus');
+add_action('after_setup_theme', 'node_theme_setup');
 function node_enqueue_assets() {
     $version = '0.4.0';
     wp_enqueue_style('node-style', get_stylesheet_uri(), [], $version);
     wp_enqueue_style('node-assets-style', get_template_directory_uri() . '/assets/css/style.css', [], $version);
     wp_enqueue_style('node-blocks-style', get_template_directory_uri() . '/assets/css/blocks.css', [], $version);
+
+    // Google Fonts: Inter & Noto Sans JP
+    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Barlow:wght@100..900&family=Inter:wght@100..900&family=Noto+Sans+JP:wght@100..900&display=swap', [], null);
+    
+    // Material Symbols Outlined
+    wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', [], null);
+
+    // Font Awesome (For Brand Logos)
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', [], '6.7.2');
 
     wp_enqueue_script('gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js', [], null, true);
     wp_enqueue_script('gsap-scrollto', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js', ['gsap'], null, true);

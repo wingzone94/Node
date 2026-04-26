@@ -1,26 +1,38 @@
 <?php
+/**
+ * ソート可能テーブル
+ */
+
 if ( ! defined( 'ABSPATH' ) ) exit;
-function node_render_sort_table_block($attributes) {
-    ob_start();
-    ?>
-    <div class="m3-block-container">
-        <div class="m3-sort-table-wrapper">
-            <table class="m3-sort-table" data-sort-enabled="<?php echo $attributes['enable_sort'] ? 'true' : 'false'; ?>">
-                <thead><tr>
-                    <?php foreach ($attributes['headers'] as $header): ?>
-                        <th><?php echo esc_html($header); ?></th>
-                    <?php endforeach; ?>
-                </tr></thead>
+
+if ( ! function_exists( 'node_render_sort_table_block' ) ) {
+    function node_render_sort_table_block($attributes) {
+        $data = $attributes['data'] ?? [];
+        if (empty($data)) return '<p>テーブルデータがありません。</p>';
+
+        ob_start();
+        ?>
+        <div class="m3-table-container">
+            <table class="m3-sortable-table">
+                <thead>
+                    <tr>
+                        <?php foreach ($data[0] as $cell) : ?>
+                            <th><?php echo esc_html($cell); ?> <span class="material-symbols-outlined">unfold_more</span></th>
+                        <?php endforeach; ?>
+                    </tr>
+                </thead>
                 <tbody>
-                    <?php foreach ($attributes['rows'] as $row): ?>
-                        <tr><?php foreach ($row as $cell): ?>
-                            <td><?php echo esc_html($cell); ?></td>
-                        <?php endforeach; ?></tr>
-                    <?php endforeach; ?>
+                    <?php for ($i = 1; $i < count($data); $i++) : ?>
+                        <tr>
+                            <?php foreach ($data[$i] as $cell) : ?>
+                                <td><?php echo esc_html($cell); ?></td>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endfor; ?>
                 </tbody>
             </table>
         </div>
-    </div>
-    <?php
-    return ob_get_clean();
+        <?php
+        return ob_get_clean();
+    }
 }

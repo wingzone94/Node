@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 body { 
     font-family: var(--font-main); 
-    background-color: var(--md-sys-color-surface); 
+    background-color: var(--md-sys-color-surface) !important; 
     color: var(--md-sys-color-on-surface); 
     margin: 0; 
     -webkit-font-smoothing: antialiased; 
@@ -10,11 +10,10 @@ body {
     letter-spacing: -0.01em; /* 全体的にわずかにカーニングを詰める */
 }
 .m3-page-container { 
-    max-width: 1440px; 
+    max-width: 7680px; /* Full 8K Resolution Support */
     margin: 0 auto; 
     min-height: 100vh; 
     position: relative; 
-    will-change: transform;
     backface-visibility: hidden;
 }
 a { color: inherit; text-decoration: none; }

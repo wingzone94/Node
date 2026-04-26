@@ -50,7 +50,20 @@
                     $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
                     get_template_part('card', null, ['card_class' => $card_class]);
                 endwhile;
+                
+                // 次のページがある場合、アーカイブへの矢印カードを表示
+                if (get_next_posts_link()) :
                 ?>
+                <a href="<?php echo next_posts(0, false); ?>" class="m3-card m3-card--archive-link m3-ripple-host">
+                    <div class="m3-card__content">
+                        <span class="m3-card__archive-label">VIEW ARCHIVES</span>
+                        <h3 class="m3-card__title">もっと過去の記事を見る</h3>
+                        <div class="m3-card__archive-icon">
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>

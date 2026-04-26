@@ -135,13 +135,13 @@ function node_generate_m3_colors() {
             --md-sys-color-on-primary: #ffffff;
             --md-sys-color-primary-container: #ffdcbe;
             --md-sys-color-on-primary-container: #2c1600;
-            --md-sys-color-surface: #FFF8F0;
-            --md-sys-color-on-surface: #201b16;
-            --md-sys-color-surface-container-low: #fff5e9;
-            --md-sys-color-surface-container: #ffebcc;
-            --md-sys-color-surface-container-high: #ffe5b8;
-            --md-sys-color-outline: #817567;
-            --md-sys-color-outline-variant: #d3c4b4;
+            --md-sys-color-surface: #FFF4E5; /* Warm Orange Background */
+            --md-sys-color-on-surface: #2b1700;
+            --md-sys-color-surface-container-low: #ffffff;
+            --md-sys-color-surface-container: #ffe8d1;
+            --md-sys-color-surface-container-high: #f7ddc6;
+            --md-sys-color-outline: #857362;
+            --md-sys-color-outline-variant: #d6c2b1;
         }
         [data-theme="dark"] {
             --md-sys-color-primary: <?php echo esc_attr($seed_color_dark); ?>;
@@ -176,10 +176,20 @@ function node_the_category_labels($post_id = null) {
     }
     
     foreach ($display_cats as $cat) {
+        // カテゴリの説明欄に #FFFFFF 形式の色指定があればそれを使う
+        $cat_desc = $cat->description;
+        $custom_color = 'auto';
+        $style_attr = '';
+        if (preg_match('/#[a-fA-F0-9]{6}/', $cat_desc, $matches)) {
+            $custom_color = $matches[0];
+            $style_attr = 'style="background-color: ' . esc_attr($custom_color) . '; color: #ffffff;"';
+        }
+
         echo '<a href="' . esc_url(get_category_link($cat->term_id)) . '" ';
         echo 'class="m3-label--category" ';
-        echo 'data-color="auto" ';
-        echo 'data-thumb="' . esc_url($thumb_url) . '"';
+        echo 'data-color="' . esc_attr($custom_color) . '" ';
+        echo 'data-thumb="' . esc_url($thumb_url) . '" ';
+        echo $style_attr;
         echo '>';
         echo '<span class="material-symbols-outlined">folder</span>' . esc_html($cat->name) . '</a>';
     }
@@ -198,9 +208,13 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
     if (get_post_meta($post_id, '_node_is_ai_generated', true) === '1') {
         $ai_tooltip = 'AI生成されたメディアを含みます';
         $ai_class = 'm3-label--ai m3-tooltip-target';
-        if ($mode === 'compact') $ai_class .= ' m3-label--icon-only';
+        $pos_attr = '';
+        if ($mode === 'compact') {
+            $ai_class .= ' m3-label--icon-only';
+            $pos_attr = ' data-tooltip-pos="left"';
+        }
 
-        echo '<span class="' . esc_attr($ai_class) . '" data-tooltip="' . esc_attr($ai_tooltip) . '">';
+        echo '<span class="' . esc_attr($ai_class) . '" data-tooltip="' . esc_attr($ai_tooltip) . '"' . $pos_attr . '>';
         echo '<span class="material-symbols-outlined">auto_awesome</span>';
         if ($mode === 'full') {
             echo '<span class="m3-label__text">生成されたメディアを含む</span>';
@@ -212,7 +226,6 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
     if (get_post_meta($post_id, '_node_is_sponsor', true) === '1') {
         $sponsor_text = get_post_meta($post_id, '_node_sponsor_text', true) ?: 'SPONSORED';
         
-        // 個別ページ（full）の場合は管理画面のカスタム文言を使用、カード（compact）は固定文言
         if ($mode === 'full') {
             $sponsor_tooltip = get_post_meta($post_id, '_node_sponsor_tooltip', true) ?: 'この記事はスポンサー提供です。';
         } else {
@@ -220,9 +233,13 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
         }
         
         $sp_class = 'm3-label--sponsor m3-tooltip-target';
-        if ($mode === 'compact') $sp_class .= ' m3-label--icon-only';
+        $pos_attr = '';
+        if ($mode === 'compact') {
+            $sp_class .= ' m3-label--icon-only';
+            $pos_attr = ' data-tooltip-pos="left"';
+        }
 
-        echo '<span class="' . esc_attr($sp_class) . '" data-tooltip="' . esc_attr($sponsor_tooltip) . '">';
+        echo '<span class="' . esc_attr($sp_class) . '" data-tooltip="' . esc_attr($sponsor_tooltip) . '"' . $pos_attr . '>';
         echo '<span class="material-symbols-outlined">info</span>';
         if ($mode === 'full') {
             echo '<span class="m3-label__text">' . esc_html($sponsor_text) . '</span>';
@@ -231,18 +248,6 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
     }
 }
 
-function node_generate_ai_metadata($post_id, $post, $update) {
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE || $post->post_type !== 'post' || $post->post_status !== 'publish') return;
-    $content = strip_shortcodes(strip_tags($post->post_content));
-    $hash = md5($content);
-    if ($hash !== get_post_meta($post_id, '_node_content_hash', true)) {
-        $char_count = mb_strlen(preg_replace('/\s+/', '', $content));
-        $total_seconds = ceil(($char_count / 800) * 60);
-        update_post_meta($post_id, '_node_reading_time', floor($total_seconds / 60) . '分' . sprintf('%02d', $total_seconds % 60) . '秒');
-        update_post_meta($post_id, '_node_content_hash', $hash);
-    }
-}
-add_action('save_post', 'node_generate_ai_metadata', 20, 3);
 /* ==========================================================================
    広告エリアの制御
    ========================================================================== */

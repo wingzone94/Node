@@ -60,9 +60,28 @@ final class Luminous_AI_Core {
 		// 投稿保存時に読了時間を自動計算
 		add_action( 'save_post', [ $this, 'auto_calculate_reading_time' ], 20, 3 );
 
-		// AJAX: AI 要約生成
-		add_action( 'wp_ajax_node_generate_ai_summary', 'luminous_ai_ajax_generate_summary' );
+        // AJAX ハンドラの登録
+        add_action( 'wp_ajax_node_generate_ai_summary', 'luminous_ai_ajax_generate_summary' );
+
+        // メタボックス登録
+        if ( is_admin() ) {
+            add_action( 'add_meta_boxes', [ $this, 'add_ai_meta_boxes' ] );
+        }
 	}
+
+    /**
+     * メタボックス登録
+     */
+    public function add_ai_meta_boxes(): void {
+        add_meta_box(
+            'node_ai_summary',
+            'Nexus Abstract (AI要約)',
+            'luminous_ai_render_summary_meta_box',
+            'post',
+            'normal',
+            'high'
+        );
+    }
 
 	public function provide_ai_summary( string $summary, int $post_id ): string {
 		$stored = get_post_meta( $post_id, '_node_ai_summary', true );
@@ -75,7 +94,9 @@ final class Luminous_AI_Core {
 	}
 
 	public function auto_calculate_reading_time( int $post_id, \WP_Post $post, bool $update ): void {
-		luminous_ai_calculate_reading_time( $post_id, $post, $update );
+		if ( function_exists( 'luminous_ai_calculate_reading_time' ) ) {
+            luminous_ai_calculate_reading_time( $post_id, $post, $update );
+        }
 	}
 }
 

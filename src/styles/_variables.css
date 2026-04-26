@@ -12,6 +12,13 @@
     --m3-radius-large: 28px;
     --m3-radius-extra-large: 32px;
     --m3-radius-full: 1000px;
+    
+    /* --- Material 3 Surface Colors (Light) --- */
+    --md-sys-color-surface: #FFF4E5; /* Warm Orange Background */
+    --md-sys-color-on-surface: #2b1700;
+    --md-sys-color-surface-container-low: #ffffff;
+    --md-sys-color-surface-container: #ffe8d1;
+    --md-sys-color-outline-variant: #d6c2b1;
 
     --font-main: "Inter", "Noto Sans JP", sans-serif;
     --font-heading: "Inter", "Noto Sans JP", sans-serif;

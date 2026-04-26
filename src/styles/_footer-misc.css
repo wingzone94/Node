@@ -12,7 +12,7 @@
 }
 
 .m3-footer__brand {
-    padding: 48px var(--m3-spacing-m) 32px;
+    padding: 64px var(--m3-spacing-m) 24px;
     text-align: center;
 }
 
@@ -30,11 +30,10 @@
     font-weight: 500;
 }
 
-/* 色を分けて強調したナビゲーションエリア */
+/* ナビゲーションエリアの背景色を削除して統合 */
 .m3-footer__nav {
-    background-color: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
-    padding: 32px var(--m3-spacing-m);
+    padding: 16px var(--m3-spacing-m) 48px;
+    text-align: center;
 }
 
 .m3-footer__links {
@@ -48,7 +47,7 @@
 }
 
 .m3-footer__links a {
-    color: var(--md-sys-color-on-secondary-container);
+    color: var(--md-sys-color-on-surface-variant);
     text-decoration: none;
     font-weight: 800;
     font-size: 0.95rem;

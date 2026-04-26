@@ -1,6 +1,6 @@
 <?php
 /**
- * AJAX ハンドラ（スタブ）
+ * AJAX ハンドラ
  *
  * @package Luminous_AI_Core
  */
@@ -9,36 +9,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action('wp_ajax_node_generate_ai_summary', 'node_ajax_generate_ai_summary');
-function node_ajax_generate_ai_summary() {
-    check_ajax_referer('node_ai_generate_action', 'nonce');
-    if (!current_user_can('edit_posts')) {
-        wp_send_json_error(['message' => '権限がありません。']);
-    }
-    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
-    if (!$post_id) wp_send_json_error(['message' => '不正な投稿IDです。']);
-    $post = get_post($post_id);
-    if (!$post) wp_send_json_error(['message' => '記事が見つかりません。']);
-    $content = strip_shortcodes(strip_tags($post->post_content));
-    if (empty(trim($content))) wp_send_json_error(['message' => '記事本文が空です。']);
-    $api_key = defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '';
-    if (empty($api_key)) wp_send_json_error(['message' => 'GEMINI_API_KEYが設定されていません。']);
+if ( ! function_exists( 'luminous_ai_ajax_generate_summary' ) ) {
+    /**
+     * AI 要約生成 AJAX ハンドラ
+     */
+    function luminous_ai_ajax_generate_summary() {
+        check_ajax_referer('node_ai_generate_action', 'nonce');
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => '権限がありません。']);
+        }
 
-    $prompt = "以下の記事本文を100文字程度で簡潔に要約してください。\n\n" . mb_substr($content, 0, 3000);
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=' . $api_key;
-    $body = json_encode([
-        'contents' => [['parts' => [['text' => $prompt]]]],
-        'generationConfig' => ['maxOutputTokens' => 150, 'temperature' => 0.3]
-    ]);
-    $response = wp_remote_post($url, ['headers' => ['Content-Type' => 'application/json'], 'body' => $body, 'timeout' => 15]);
-    if (is_wp_error($response)) wp_send_json_error(['message' => 'APIリクエスト失敗: ' . $response->get_error_message()]);
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-        wp_send_json_success(['summary' => str_replace(["\r\n", "\r", "\n"], ' ', trim($data['candidates'][0]['content']['parts'][0]['text']))]);
-    } else {
-        wp_send_json_error(['message' => 'APIから正しいレスポンスが返されませんでした。']);
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+        if (!$post_id) {
+            wp_send_json_error(['message' => '不正な投稿IDです。']);
+        }
+
+        $post = get_post($post_id);
+        if (!$post) {
+            wp_send_json_error(['message' => '記事が見つかりません。']);
+        }
+
+        $content = strip_shortcodes(strip_tags($post->post_content));
+        if (empty(trim($content))) {
+            wp_send_json_error(['message' => '記事本文が空です。']);
+        }
+
+        // APIクラスを使用して要約を生成
+        if ( class_exists( 'Luminous_Gemini_API' ) ) {
+            $api = new Luminous_Gemini_API();
+            $result = $api->generate_summary($content);
+
+            if (is_wp_error($result)) {
+                wp_send_json_error(['message' => $result->get_error_message()]);
+            } else {
+                wp_send_json_success(['summary' => $result]);
+            }
+        } else {
+            wp_send_json_error(['message' => 'APIクラスが見つかりません。']);
+        }
     }
 }
-function luminous_ai_ajax_generate_summary(): void {
-	wp_send_json_error( [ 'message' => 'Luminous AI Core: 移行未完了' ] );
-}
+
+// 以前の名称（node_ajax_generate_ai_summary）が残っている場合はここから削除
+// 登録はプラグインのメインファイルで行う

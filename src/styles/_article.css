@@ -1,4 +1,16 @@
 /* --- AI Summary --- */
+.m3-article__meta-info .m3-label--category {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.9rem; /* CATEGORYラベルと統一 */
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
 .m3-ai-summary {
     background: var(--md-sys-color-secondary-container);
     color: var(--md-sys-color-on-secondary-container);
@@ -180,28 +192,110 @@
     font-size: 20px;
 }
 
-.m3-article__hero { 
+.m3-article__featured-image { 
     position: relative; 
-    width: calc(100% + (var(--m3-spacing-m) * 2)); 
-    margin-left: calc(-1 * var(--m3-spacing-m)); 
-    height: 50vh; 
-    min-height: 300px; 
-    max-height: 500px;
+    width: calc(100% + 96px);
+    margin-left: -48px;
+    margin-right: -48px;
+    margin-top: -40px;
+    aspect-ratio: 16 / 9;
     overflow: hidden; 
-    margin-bottom: var(--m3-spacing-xxxl); 
+    border-radius: 32px; /* 全体を角丸に */
 }
-@media (min-width: 768px) {
-    .m3-article__hero {
-        width: 100%;
-        margin-left: 0;
-        border-radius: var(--m3-radius-extra-large);
-        margin-top: var(--m3-spacing-l);
-    }
+
+/* Category labels positioned below the title, centered */
+.m3-article__cat-bottom-right {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 24px;
 }
-.m3-article__hero img { width: 100%; height: 100%; object-fit: cover; }
-.m3-article__hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--md-sys-color-surface), transparent); }
- 
-.m3-article__header { text-align: center; margin-bottom: var(--m3-spacing-xxxl); }
+
+/* Base Category & Badge Style for Single */
+.m3-article__cat-bottom-right .m3-label--category,
+.m3-article__cat-bottom-right .m3-label--sponsor,
+.m3-article__cat-bottom-right .m3-label--ai {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 18px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: var(--m3-elevation-1);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    text-decoration: none;
+}
+
+.m3-article__cat-bottom-right .m3-label--category {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+/* Sponsor Bubble Positioning & Interactive Reveal */
+.m3-article__sponsor-bubble-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 弾むような出現 */
+    pointer-events: none; /* ホバーの邪魔をしない */
+}
+
+/* タイトルまたはヘッダーをホバーした時に吹き出しを表示 */
+.m3-article__header:hover .m3-article__sponsor-bubble-wrapper {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.m3-card__sponsor-bubble-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: -8px;
+    margin-bottom: 8px;
+}
+
+.m3-article__cat-bottom-right .m3-label--sponsor,
+.m3-card__meta-badges .m3-label--sponsor,
+.m3-label--sponsor {
+    position: relative;
+    background: linear-gradient(135deg, var(--md-sys-color-tertiary-container), var(--md-sys-color-surface-container-highest)) !important;
+    color: var(--md-sys-color-on-tertiary-container) !important;
+    border: 1.5px dashed var(--md-sys-color-tertiary) !important;
+    padding: 6px 18px;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 12px;
+}
+
+/* Bubble Tail */
+.m3-label--sponsor::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--md-sys-color-tertiary);
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+}
+
+.m3-article__cat-bottom-right *:hover {
+    filter: brightness(0.95);
+    transform: translateY(-2px);
+}
+
+.m3-article__header { text-align: center; margin-bottom: var(--m3-spacing-xl); }
 .m3-article__title { 
     font-size: clamp(2.2rem, 6vw, 3.8rem); 
     font-weight: 900; 
@@ -222,7 +316,26 @@
 }
 .m3-article__title.is-medium { font-size: clamp(1.8rem, 5vw, 3.2rem); }
 .m3-article__title.is-long { font-size: clamp(1.5rem, 4vw, 2.6rem); }
-.m3-article__meta { display: flex; align-items: center; justify-content: center; gap: var(--m3-spacing-s); font-size: 1rem; font-weight: 700; color: var(--md-sys-color-outline); margin-bottom: var(--m3-spacing-m); }
+.m3-article__meta { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 16px; 
+    font-size: 0.95rem; 
+    font-weight: 700; 
+    color: var(--md-sys-color-outline); 
+    margin-bottom: var(--m3-spacing-m); 
+}
+.m3-article__meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.m3-article__relative-date {
+    opacity: 0.7;
+    font-weight: 500;
+    margin-left: 4px;
+}
  
 .m3-article__body { 
     font-size: 1.1rem; 
@@ -302,10 +415,11 @@
     gap: 6px;
 }
 .m3-article__category-label {
-    font-size: 11px;
+    font-size: 0.9rem;
     font-weight: 900;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
     color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.8;
 }
 .m3-label--category-more {
     font-size: 11px;
@@ -326,20 +440,29 @@
 .m3-article__header-card {
     background-color: var(--md-sys-color-surface-container-low);
     border-radius: 32px;
-    padding: 48px 32px;
-    margin: -40px auto 48px;
+    padding: 40px 48px; /* 縦を詰め、横を広げる */
+    margin: 32px auto 48px;
     border: 1px solid var(--md-sys-color-outline-variant);
-    max-width: 860px;
+    max-width: 1000px; /* 本文より広くして横長感を強調 */
+    width: 100%;
     position: relative;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+@media (min-width: 1024px) {
+    .m3-article__header-card {
+        margin-left: -68px; /* 左にはみ出し */
+        margin-right: -68px; /* 右にはみ出し */
+        width: calc(100% + 136px);
+    }
 }
 
 @media (max-width: 599px) {
     .m3-article__header-card {
         padding: 32px 20px;
         border-radius: 24px;
-        margin: -20px 12px 32px;
-        max-width: calc(100% - 24px);
+        margin: 24px 0 32px;
+        max-width: 100%;
     }
 }
 .m3-article__meta-info .m3-label--category {

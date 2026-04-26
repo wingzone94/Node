@@ -1,6 +1,8 @@
 import { extractColorFromImage } from './colorExtractor';
 import { generateM3Colors } from './theme';
 import { storage } from './storage';
+import './scripts/card-animation';
+import './scripts/share-actions';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // GSAP global config
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initAdaptiveHeader();
 
     // 12. Index Post Cards Floating Animation
-    initIndexCardsAnimation();
+    // initCardAnimations() is called inside card-animation.js on DOMContentLoaded
 });
 
 async function initColorExtraction() {
@@ -519,6 +521,9 @@ function initCommentFAB() {
 
 function initOverdriveScroll() {
     if (typeof gsap === 'undefined' || !document.querySelector('.m3-page-container')) return;
+    
+    // 記事詳細ページ（article-view）では sticky を優先するため、このエフェクトを無効化する
+    if (document.body.classList.contains('single-post') || document.querySelector('.article-view')) return;
 
     const container = document.querySelector('.m3-page-container');
     
@@ -586,15 +591,42 @@ function initTooltips() {
         const tipWidth = tooltip.offsetWidth;
         const tipHeight = tooltip.offsetHeight;
         
-        let x = rect.left + (rect.width / 2) - (tipWidth / 2);
-        let y = rect.top - tipHeight - 12; // 要素の上に表示
+        let x, y;
+        const requestedPos = target.getAttribute('data-tooltip-pos');
+        const isNearRightEdge = rect.right > window.innerWidth - 100;
+        const isNearTopEdge = rect.top < 100;
 
-        // 画面外はみ出し防止
+        if (requestedPos === 'left' || (isNearRightEdge && !isNearTopEdge)) {
+            // 左側に表示 (明示的な指定があるか、右端に近い場合)
+            x = rect.left - tipWidth - 20;
+            y = rect.top + (rect.height / 2) - (tipHeight / 2);
+        } else {
+            // 通常は中央上部に表示
+            x = rect.left + (rect.width / 2) - (tipWidth / 2);
+            y = rect.top - tipHeight - 32;
+
+            // 画面上部ではみ出す場合は下へ
+            if (y < 12) y = rect.bottom + 32;
+        }
+
+        // 最終的な画面外はみ出し防止
         x = Math.max(12, Math.min(x, window.innerWidth - tipWidth - 12));
-        if (y < 12) y = rect.bottom + 12; // 上に入らなければ下へ
+        y = Math.max(12, Math.min(y, window.innerHeight - tipHeight - 12));
 
-        gsap.set(tooltip, { x: x, y: y });
-        gsap.to(tooltip, { autoAlpha: 1, scale: 1, duration: 0.25, ease: "power2.out" });
+        // アニメーションの開始位置
+        const isLeftPos = requestedPos === 'left' || isNearRightEdge;
+        const startX = isLeftPos ? x + 10 : x;
+        const startY = isLeftPos ? y : y + (y > rect.top ? -10 : 10);
+
+        gsap.set(tooltip, { x: startX, y: startY }); 
+        gsap.to(tooltip, { 
+            autoAlpha: 1, 
+            x: x, 
+            y: y, 
+            scale: 1, 
+            duration: 0.35, 
+            ease: "back.out(1.2)" 
+        });
     };
 
     const hideTooltip = () => gsap.to(tooltip, { autoAlpha: 0, scale: 0.8, duration: 0.2, overwrite: true });
@@ -655,32 +687,11 @@ function initAdaptiveHeader() {
         const scrolled = window.scrollY > 20;
         if (scrolled && !isScrolled) {
             isScrolled = true;
-            header.style.backgroundColor = "var(--md-sys-color-surface-container)";
-            header.style.borderBottomColor = "var(--md-sys-color-outline-variant)";
+            header.classList.add('is-scrolled');
         } else if (!scrolled && isScrolled) {
             isScrolled = false;
-            header.style.backgroundColor = "transparent";
-            header.style.borderBottomColor = "transparent";
+            header.classList.remove('is-scrolled');
         }
     }, { passive: true });
 }
 
-function initIndexCardsAnimation() {
-    if (typeof gsap === 'undefined') return;
-    
-    const cards = document.querySelectorAll('.m3-post-grid .m3-card, .special-features__item');
-    if (!cards.length) return;
-
-    // 初期状態として非表示＆少し下に下げておく
-    gsap.set(cards, { autoAlpha: 0, y: 40, scale: 0.95 });
-
-    // Stagger (ずらし) アニメーションを再生
-    gsap.to(cards, {
-        autoAlpha: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.6,
-        stagger: 0.08,
-        ease: "back.out(1.2)",
-    });
-}
