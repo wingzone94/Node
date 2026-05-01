@@ -12,7 +12,7 @@ if ( ! function_exists( 'node_add_custom_meta_boxes' ) ) {
      * 各種メタボックスの追加
      */
     function node_add_custom_meta_boxes() {
-        add_meta_box('node_post_labels', '記事ラベル設定', 'node_post_labels_callback', 'post', 'side');
+        add_meta_box('node_post_labels', '記事設定 (ラベル)', 'node_post_labels_callback', 'post', 'side');
         add_meta_box('node_m3_color', 'Material You カラー設定', 'node_m3_color_meta_box_callback', 'post', 'side');
     }
 }
@@ -26,7 +26,10 @@ if ( ! function_exists( 'node_post_labels_callback' ) ) {
         $is_sponsor = get_post_meta($post->ID, '_node_is_sponsor', true);
         $sponsor_text = get_post_meta($post->ID, '_node_sponsor_text', true) ?: 'SPONSORED';
         $sponsor_tooltip = get_post_meta($post->ID, '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
+        
         wp_nonce_field('node_save_meta_box', 'node_meta_box_nonce');
+        
+        echo '<h4>ラベル設定</h4>';
         echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> 生成されたメディアを含みます</label></p>';
         echo '<p><label><input type="checkbox" name="node_is_sponsor" value="1" '.checked($is_sponsor, '1', false).'> スポンサー記事（案件 ）</label></p>';
         echo '<p><label>スポンサーラベル文言:<br><input type="text" name="node_sponsor_text" value="'.esc_attr($sponsor_text).'" style="width:100%"></label></p>';
@@ -46,7 +49,7 @@ if ( ! function_exists( 'node_m3_color_meta_box_callback' ) ) {
 if ( ! function_exists( 'node_save_custom_meta' ) ) {
     /**
      * 保存処理（テーマ側）
-     * 責務: 記事ラベル、スポンサー情報、個別カラー設定
+     * 責務: 記事ラベル、スポンサー情報、個別カラー設定、読了ゲージ設定
      */
     function node_save_custom_meta($post_id) {
         if (!isset($_POST['node_meta_box_nonce']) || !wp_verify_nonce($_POST['node_meta_box_nonce'], 'node_save_meta_box')) return;

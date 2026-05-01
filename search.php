@@ -14,7 +14,7 @@
                 <?php
                 while (have_posts()) : the_post();
                     $card_class = ($wp_query->current_post < 4 && !is_paged()) ? 'card-featured' : 'card-standard';
-                    get_template_part('card', null, ['card_class' => $card_class]);
+                    get_template_part('template-parts/card', null, ['card_class' => $card_class]);
                 endwhile;
                 ?>
             </div>

@@ -5,396 +5,330 @@ import './scripts/card-animation';
 import './scripts/share-actions';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // GSAP global config
-    if (typeof gsap !== 'undefined') {
-        gsap.config({ force3D: true });
-    }
-
-    // 1. カラー抽出ロジック
+    if (typeof gsap !== 'undefined') gsap.config({ force3D: true });
     initColorExtraction();
-
-    // 2. ダークモード切り替え
     initDarkMode();
-
-    // 3. 伸縮検索バー (GSAP Enhanced)
     initSearchBar();
-
-    // 4. ナビゲーションドロワー
     initDrawer();
-
-    // 5. リンクコピー & Web Share API
     initShareFeatures();
-
-    // 6. 目次 & FAB
-    initTableOfContents();
-    initCommentFAB();
-
-    // 7. M3 Rubber Banding / Stretch Effect (GSAP)
+    initTableOfContents(); // Handles TOC and FAB visibility
     initOverdriveScroll();
-
-    // 8. Keyboard Shortcuts
     initKeyboardShortcuts();
-
-    // 9. M3 Dynamic Tooltips
     initTooltips();
-
-    // 10. M3 Dynamic Ripple Effect
     initRippleEffect();
-
-    // 11. Adaptive Header
     initAdaptiveHeader();
-
-    // 12. Index Post Cards Floating Animation
-    // initCardAnimations() is called inside card-animation.js on DOMContentLoaded
+    initReadingInfoBubble();
+    initReadingProgress();
 });
+
+function initReadingInfoBubble() {
+    const meta = document.getElementById('m3-reading-meta-toggle');
+    if (!meta) return;
+
+    meta.addEventListener('click', () => {
+        meta.classList.toggle('is-info-active');
+    });
+}
+
+async function initReadingProgress() {
+    const progressBar = document.querySelector('.m3-header__progress-bar');
+    const container = document.querySelector('.m3-header__progress-container');
+    const article = document.querySelector('.m3-article__body');
+    if (!progressBar || !container || !article) return;
+    const updateProgress = () => {
+        const rect = article.getBoundingClientRect();
+        const articleTop = rect.top + window.pageYOffset;
+        const articleHeight = rect.height;
+        const windowHeight = window.innerHeight;
+        const currentScroll = window.pageYOffset;
+        const scrollStart = articleTop - 64; 
+        let progress = currentScroll > scrollStart ? ((currentScroll - scrollStart) / (articleHeight - windowHeight)) * 100 : 0;
+        progress = Math.min(100, Math.max(0, progress));
+        progressBar.style.width = `${progress}%`;
+        if (currentScroll > scrollStart && currentScroll < (articleTop + articleHeight - 100)) container.classList.add('is-visible');
+        else container.classList.remove('is-visible');
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+}
 
 async function initColorExtraction() {
     const labels = document.querySelectorAll('.m3-label--category');
-    if (!labels.length) return;
-
     for (const label of labels) {
-        const colorVal = label.dataset.color;
-        const thumbUrl = label.dataset.thumb;
+        const colorVal = label.dataset.color; const thumbUrl = label.dataset.thumb;
         const cacheId = `${label.textContent.trim()}_${thumbUrl || 'no-img'}`;
-
         try {
-            if (colorVal && colorVal.startsWith('#')) {
-                const colors = generateM3Colors(colorVal);
-                applyM3Colors(label, colors);
-                continue;
-            }
-
-            if (colorVal === 'auto' && thumbUrl) {
+            if (colorVal && colorVal.startsWith('#')) applyM3Colors(label, generateM3Colors(colorVal));
+            else if (colorVal === 'auto' && thumbUrl) {
                 const cached = storage.get(cacheId);
-                if (cached) {
-                    applyM3Colors(label, cached);
-                    continue;
+                if (cached) applyM3Colors(label, cached);
+                else {
+                    const img = new Image(); img.crossOrigin = "Anonymous"; img.src = thumbUrl;
+                    const colors = await generateM3Colors(await extractColorFromImage(img));
+                    applyM3Colors(label, colors); storage.set(cacheId, colors);
                 }
-
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.src = thumbUrl;
-                label.style.opacity = '0.6';
-
-                const rgb = await extractColorFromImage(img);
-                const colors = generateM3Colors(rgb);
-                applyM3Colors(label, colors);
-                storage.set(cacheId, colors);
-                label.style.opacity = '1';
-            } else {
-                const colors = generateM3Colors('#FF9900');
-                applyM3Colors(label, colors);
-            }
-        } catch (err) {
-            const colors = generateM3Colors('#FF9900');
-            applyM3Colors(label, colors);
-        }
+            } else applyM3Colors(label, generateM3Colors('#FF9900'));
+        } catch (err) { applyM3Colors(label, generateM3Colors('#FF9900')); }
     }
 }
-
 function applyM3Colors(el, colors) {
     el.style.setProperty('--md-sys-color-secondary-container', colors.secondaryContainer);
     el.style.setProperty('--md-sys-color-on-secondary-container', colors.onSecondaryContainer);
 }
 
 function initDarkMode() {
-    const themeControls = document.getElementById('m3-theme-controls');
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const popover = document.getElementById('theme-popover');
-    const syncToggle = document.getElementById('theme-sync-toggle');
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const setIcon = (theme) => {
-        const darkIcon = document.getElementById('theme-toggle-dark-icon');
-        const lightIcon = document.getElementById('theme-toggle-light-icon');
-        if (theme === 'dark') {
-            if (darkIcon) darkIcon.classList.remove('hidden');
-            if (lightIcon) lightIcon.classList.add('hidden');
-        } else {
-            if (lightIcon) lightIcon.classList.remove('hidden');
-            if (darkIcon) darkIcon.classList.add('hidden');
-        }
-    };
-
-    const updateTheme = (source = 'auto') => {
-        const isSyncOn = localStorage.getItem('theme-sync') !== 'false';
-        
-        if (syncToggle) {
-            syncToggle.checked = isSyncOn;
-        }
-
-        // 同期中であってもボタンは常に有効にする（クリックで同期解除するため）
-        if (themeToggleBtn) {
-            themeToggleBtn.style.opacity = '1';
-            themeToggleBtn.style.pointerEvents = 'auto';
-        }
-
-        let newTheme;
-        if (isSyncOn) {
-            newTheme = mql.matches ? 'dark' : 'light';
-        } else {
-            newTheme = localStorage.getItem('theme') || (mql.matches ? 'dark' : 'light');
-        }
-
-        document.documentElement.setAttribute('data-theme', newTheme);
-        setIcon(newTheme);
-    };
-
-    // Listen to system changes
-    mql.addEventListener('change', () => {
-        if (localStorage.getItem('theme-sync') !== 'false') {
-            updateTheme('system');
-        }
+    const updateTheme = () => document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (mql.matches ? 'dark' : 'light'));
+    mql.addEventListener('change', () => !localStorage.getItem('theme') && updateTheme());
+    document.getElementById('theme-toggle')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.setItem('theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        updateTheme();
     });
-
-    // Handle Manual Toggle
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            localStorage.setItem('theme-sync', 'false');
-            if (syncToggle) syncToggle.checked = false;
-            
-            localStorage.setItem('theme', targetTheme);
-            updateTheme('manual');
-        });
-    }
-
-    // Handle Sync Toggle
-    if (syncToggle) {
-        syncToggle.addEventListener('change', (e) => {
-            const isSyncOn = e.target.checked;
-            if (isSyncOn) {
-                localStorage.removeItem('theme-sync'); // Default is on
-            } else {
-                localStorage.setItem('theme-sync', 'false');
-                localStorage.setItem('theme', mql.matches ? 'dark' : 'light');
-            }
-            updateTheme('sync-toggle');
-        });
-    }
-
-    // Popover Hover / Long Press Logic
-    if (themeControls && popover && typeof gsap !== 'undefined') {
-        let hoverTimeout;
-        const isTouch = window.matchMedia('(pointer: coarse)').matches;
-
-        const showPopover = () => {
-            clearTimeout(hoverTimeout);
-            hoverTimeout = setTimeout(() => {
-                popover.classList.add('is-active');
-                gsap.fromTo(popover, 
-                    { autoAlpha: 0, y: 15 },
-                    { autoAlpha: 1, y: 0, duration: 0.4, ease: "back.out(1.5)", overwrite: true }
-                );
-            }, 300); // 300ms Intent delay
-        };
-
-        const hidePopover = () => {
-            clearTimeout(hoverTimeout);
-            hoverTimeout = setTimeout(() => {
-                gsap.to(popover, {
-                    autoAlpha: 0, y: 10, duration: 0.25, ease: "power2.in", overwrite: true,
-                    onComplete: () => popover.classList.remove('is-active')
-                });
-            }, 150); // Small debounce
-        };
-
-        if (!isTouch) {
-            themeControls.addEventListener('mouseenter', showPopover);
-            themeControls.addEventListener('mouseleave', hidePopover);
-            
-            // Allow focus-in to trigger it too
-            themeToggleBtn.addEventListener('focus', showPopover);
-            themeToggleBtn.addEventListener('blur', hidePopover);
-        } else {
-            let pressTimer;
-            themeControls.addEventListener('touchstart', () => {
-                pressTimer = setTimeout(showPopover, 500); // Long press
-            }, { passive: true });
-            
-            const cancelPress = () => clearTimeout(pressTimer);
-            themeControls.addEventListener('touchend', cancelPress);
-            themeControls.addEventListener('touchmove', cancelPress);
-            
-            document.addEventListener('touchstart', (e) => {
-                if (!themeControls.contains(e.target)) {
-                    hidePopover();
-                }
-            }, { passive: true });
-        }
-    }
-
-    updateTheme('init');
+    updateTheme();
 }
 
 function initSearchBar() {
     const searchToggle = document.getElementById('search-toggle');
     const searchBar = document.querySelector('.m3-search-bar');
-    const searchInput = document.querySelector('.m3-search-bar__input');
+    const searchInput = document.getElementById('m3-search-input');
+    const searchClear = document.getElementById('m3-search-clear');
+    const advancedTrigger = document.getElementById('m3-advanced-search-trigger');
+    const modal = document.getElementById('m3-advanced-search-modal');
+    const modalClose = document.getElementById('m3-advanced-search-close');
+    const modalReset = document.getElementById('m3-advanced-search-reset');
+    const modalApply = document.getElementById('m3-advanced-search-apply');
+    const inputWrapper = document.querySelector('.m3-search-input-wrapper');
 
-    if (searchToggle && searchBar && searchInput && typeof gsap !== 'undefined') {
-        let isSearchOpen = false;
-        const M3_EASE = "expo.out"; 
+    if (!searchToggle || !searchBar || !searchInput) return;
+
+    // --- Search Bar Toggle ---
+    searchToggle.addEventListener('click', (e) => {
+        if (!searchBar.classList.contains('is-active')) {
+            searchBar.classList.add('is-active');
+            setTimeout(() => searchInput.focus(), 300);
+        } else if (!searchInput.value.trim()) {
+            searchBar.classList.remove('is-active');
+        } else {
+            searchBar.submit();
+        }
+    });
+
+    // --- Clear Button Visibility & Logic ---
+    const updateClearBtn = () => {
+        searchClear.style.display = searchInput.value ? 'flex' : 'none';
+    };
+    searchInput.addEventListener('input', updateClearBtn);
+    searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        updateClearBtn();
+        searchInput.focus();
+    });
+    updateClearBtn();
+
+    // --- Advanced Search Modal ---
+    const openModal = () => {
+        modal.classList.add('is-active');
+        document.body.style.overflow = 'hidden';
+        switchPage(1); // 常に1ページ目から開始
+        initRangeSlider();
+    };
+
+    // --- Multi-page Logic ---
+    const switchPage = (pageNum) => {
+        const pagesContainer = modal.querySelector('.m3-modal__pages-container');
+        const pages = modal.querySelectorAll('.m3-modal__page');
+        const tabs = modal.querySelectorAll('.m3-modal__tab');
+        const indicator = modal.querySelector('.m3-modal__tab-indicator');
+        const totalPages = pages.length;
+
+        // Page Transform (100 / totalPages * (pageNum - 1))
+        const movePercent = (100 / totalPages) * (pageNum - 1);
+        pagesContainer.style.transform = `translateX(-${movePercent}%)`;
+
+        // Active State
+        pages.forEach(p => p.classList.toggle('is-active', p.dataset.page == pageNum));
+        tabs.forEach(t => t.classList.toggle('is-active', t.dataset.page == pageNum));
+
+        // Tab Indicator Position
+        const activeTab = modal.querySelector(`.m3-modal__tab[data-page="${pageNum}"]`);
+        if (activeTab && indicator) {
+            indicator.style.width = `${activeTab.offsetWidth}px`;
+            indicator.style.left = `${activeTab.offsetLeft}px`;
+        }
+    };
+
+    modal.querySelectorAll('.m3-modal__tab').forEach(el => {
+        el.addEventListener('click', () => switchPage(parseInt(el.dataset.page)));
+    });
+
+
+    const closeModal = () => {
+        modal.classList.remove('is-active');
+        document.body.style.overflow = '';
+    };
+
+    advancedTrigger.addEventListener('click', openModal);
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    // --- Range Slider Logic ---
+    function initRangeSlider() {
+        const slider = document.getElementById('m3-word-count-slider');
+        const minHandle = slider.querySelector('.m3-range-slider__handle--min');
+        const maxHandle = slider.querySelector('.m3-range-slider__handle--max');
+        const range = slider.querySelector('.m3-range-slider__range');
+        const minInput = document.getElementById('m3-min-chars');
+        const maxInput = document.getElementById('m3-max-chars');
         
-        // Init state
-        gsap.set(searchInput, { opacity: 0, scaleX: 0.8, x: 10 });
+        let minVal = parseInt(minInput.value) || 0;
+        let maxVal = parseInt(maxInput.value) || 10000;
+        const totalMax = 10000;
 
-        const toggleSearch = (open) => {
-            if (open) {
-                isSearchOpen = true;
-                searchBar.classList.add('is-active');
-                gsap.to(searchInput, {
-                    duration: 0.5,
-                    opacity: 1,
-                    scaleX: 1,
-                    x: 0,
-                    ease: M3_EASE,
-                    onComplete: () => searchInput.focus()
-                });
-            } else {
-                isSearchOpen = false;
-                searchBar.classList.remove('is-active');
-                gsap.to(searchInput, {
-                    duration: 0.4,
-                    opacity: 0,
-                    scaleX: 0.8,
-                    x: 10,
-                    ease: "power2.in",
-                    onComplete: () => searchInput.blur()
-                });
-            }
+        const updateAccentColor = () => {
+            let color = 'var(--rank-long)';
+            if (maxVal <= 2500) color = 'var(--rank-short)';
+            else if (maxVal <= 5000) color = 'var(--rank-medium-short)';
+            else if (maxVal <= 7500) color = 'var(--rank-standard)';
+            else if (maxVal <= 9999) color = 'var(--rank-medium-long)';
+            
+            modal.style.setProperty('--md-sys-color-primary', color);
         };
 
-        searchToggle.addEventListener('click', (e) => {
-            if (!isSearchOpen) {
-                e.preventDefault();
-                toggleSearch(true);
-            } else if (searchInput.value === '') {
-                toggleSearch(false);
+        const updateUI = () => {
+            const minPercent = (minVal / totalMax) * 100;
+            const maxPercent = (maxVal / totalMax) * 100;
+            minHandle.style.left = `${minPercent}%`;
+            maxHandle.style.left = `${maxPercent}%`;
+            range.style.left = `${minPercent}%`;
+            range.style.width = `${maxPercent - minPercent}%`;
+            minHandle.querySelector('.m3-range-slider__value').textContent = minVal;
+            maxHandle.querySelector('.m3-range-slider__value').textContent = maxVal >= totalMax ? '10000+' : maxVal;
+            minInput.value = minVal;
+            maxInput.value = maxVal;
+            updateAccentColor();
+        };
+
+        const handleDrag = (e, type) => {
+            const rect = slider.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            let percent = Math.min(100, Math.max(0, (x / rect.width) * 100));
+            let val = Math.round((percent / 100) * totalMax);
+
+            if (type === 'min') {
+                minVal = Math.min(val, maxVal - 500);
             } else {
-                searchBar.submit();
+                maxVal = Math.max(val, minVal + 500);
+            }
+            updateUI();
+        };
+
+        const onStart = (e, type) => {
+            const move = (ev) => handleDrag(ev, type);
+            const end = () => {
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('mouseup', end);
+                document.removeEventListener('touchmove', move);
+                document.removeEventListener('touchend', end);
+            };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', end);
+            document.addEventListener('touchmove', move, { passive: false });
+            document.addEventListener('touchend', end);
+        };
+
+        minHandle.addEventListener('mousedown', (e) => onStart(e, 'min'));
+        maxHandle.addEventListener('mousedown', (e) => onStart(e, 'max'));
+        minHandle.addEventListener('touchstart', (e) => onStart(e, 'min'), { passive: false });
+        maxHandle.addEventListener('touchstart', (e) => onStart(e, 'max'), { passive: false });
+
+        updateUI();
+    }
+
+    // --- Reading Time Chips Logic ---
+    modal.querySelectorAll('input[name="m3_reading_time"]').forEach(input => {
+        input.addEventListener('change', () => {
+            const val = input.value;
+            const minInput = document.getElementById('m3-min-chars');
+            const maxInput = document.getElementById('m3-max-chars');
+            
+            if (val === 'short') { minInput.value = 0; maxInput.value = 2500; }
+            else if (val === 'medium') { minInput.value = 2500; maxInput.value = 5000; }
+            else if (val === 'long') { minInput.value = 5000; maxInput.value = 10000; }
+            else { minInput.value = 0; maxInput.value = 10000; }
+
+            // スライダーを再初期化して反映
+            initRangeSlider();
+        });
+    });
+
+    // --- Modal Logic ---
+    modalReset.addEventListener('click', () => {
+        modal.querySelectorAll('input, select').forEach(input => {
+            if (input.tagName === 'SELECT') input.selectedIndex = 0;
+            else if (input.type === 'checkbox') input.checked = false;
+            else if (input.type === 'radio') {
+                if (input.name === 'm3_ai' || input.name === 'm3_media' || input.name === 'm3_reading_time') {
+                    input.checked = input.value === 'all';
+                } else {
+                    input.checked = false;
+                }
+            }
+            else if (input.id === 'm3-min-chars') input.value = 0;
+            else if (input.id === 'm3-max-chars') input.value = 10000;
+            else input.value = '';
+        });
+        // スライダーをリセット
+        initRangeSlider();
+    });
+
+    modalApply.addEventListener('click', () => {
+        const loading = document.getElementById('m3-search-loading');
+        if (loading) loading.classList.add('is-active');
+
+        const params = new URLSearchParams();
+        const sValue = searchInput.value.trim();
+        if (sValue) params.append('s', sValue);
+
+        // すべての入力要素を収集
+        modal.querySelectorAll('input, select').forEach(input => {
+            if (input.type === 'checkbox' && input.checked) params.append(input.name, input.value);
+            if (input.type === 'radio' && input.checked) params.append(input.name, input.value);
+            if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
+            if ((input.type === 'text' || input.type === 'date' || input.type === 'hidden') && input.value) {
+                params.append(input.name, input.value);
             }
         });
 
-        document.addEventListener('click', (e) => {
-            if (!searchBar.contains(e.target) && isSearchOpen) {
-                toggleSearch(false);
-            }
-        });
-    }
+        // アニメーションを見せるための微小な遅延
+        setTimeout(() => {
+            window.location.href = `${window.location.origin}/?${params.toString()}`;
+        }, 800);
+    });
 }
+
+
 
 function initDrawer() {
     const menuBtn = document.querySelector('.m3-header__menu');
     const drawer = document.getElementById('m3-drawer');
     const scrim = document.getElementById('m3-drawer-scrim');
-
     if (menuBtn && drawer && scrim) {
-        const toggleDrawer = (open) => {
-            drawer.classList.toggle('is-open', open);
-            scrim.classList.toggle('is-visible', open);
-            document.body.style.overflow = open ? 'hidden' : '';
-        };
-
-        menuBtn.addEventListener('click', () => toggleDrawer(true));
-        scrim.addEventListener('click', () => toggleDrawer(false));
+        const toggle = (open) => { drawer.classList.toggle('is-open', open); scrim.classList.toggle('is-visible', open); document.body.style.overflow = open ? 'hidden' : ''; };
+        menuBtn.addEventListener('click', () => toggle(true)); scrim.addEventListener('click', () => toggle(false));
     }
 }
 
 function initShareFeatures() {
     const shareBtns = document.querySelectorAll('.m3-share-btn');
-    const pageUrl = window.location.href;
-    const title = document.title;
-
-    const executeCopyFallback = async (btn, urlToCopy) => {
-        if (btn.classList.contains('is-success')) return;
-
-        const targetUrl = urlToCopy || pageUrl;
-        const copyIcon = btn.querySelector('.m3-copy-icon') || btn.querySelector('.material-symbols-outlined');
-        const copyLabel = btn.querySelector('.m3-copy-label') || btn.querySelector('.m3-share-btn__label');
-        let success = false;
-
-        try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(targetUrl);
-                success = true;
-            } else {
-                throw new Error("Clipboard API unsupported");
-            }
-        } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = targetUrl;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            textarea.style.left = '-9999px';
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                success = document.execCommand('copy');
-            } catch (e) {
-                success = false;
-            }
-            document.body.removeChild(textarea);
+    shareBtns.forEach(btn => btn.addEventListener('click', async (e) => {
+        const url = btn.dataset.url || window.location.href;
+        if (btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy')) {
+            e.preventDefault(); try { await navigator.clipboard.writeText(url); alert('コピーしました！'); } catch(err){}
+        } else if (navigator.share) {
+            e.preventDefault(); try { await navigator.share({ title: document.title, url }); } catch(err){}
         }
-
-        if (success) {
-            btn.classList.add('is-success');
-            const originalIcon = copyIcon ? copyIcon.textContent : 'content_copy';
-            const originalLabel = copyLabel ? copyLabel.textContent : 'コピー';
-            
-            if (copyIcon) copyIcon.textContent = 'check';
-            if (copyLabel) copyLabel.textContent = 'コピーしました！'; 
-            
-            if (typeof gsap !== 'undefined') {
-                gsap.fromTo(btn, { scale: 0.92 }, { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.3)" });
-            }
-
-            setTimeout(() => {
-                btn.classList.remove('is-success');
-                if (copyIcon) copyIcon.textContent = originalIcon;
-                if (copyLabel) copyLabel.textContent = originalLabel;
-            }, 2500); 
-        } else {
-            console.error('Copy failed');
-        }
-    };
-
-    shareBtns.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const urlToShare = btn.dataset.url || pageUrl;
-
-            // コピーボタンの処理
-            if (btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy')) {
-                e.preventDefault();
-                executeCopyFallback(btn, urlToShare);
-                return;
-            }
-
-            // システムシェアボタン または モバイルでの代替処理
-            const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
-            
-            if (isSystemShare) {
-                if (navigator.share) {
-                    e.preventDefault();
-                    try {
-                        await navigator.share({ title: title, url: urlToShare });
-                    } catch (err) {
-                        // ユーザーによるキャンセル時は何もしない
-                        if (err.name !== 'AbortError') {
-                            console.error('System share failed:', err);
-                        }
-                    }
-                } else {
-                    // システムシェア非対応時のみコピーを試行
-                    e.preventDefault();
-                    executeCopyFallback(btn, urlToShare);
-                }
-            }
-        });
-    });
+    }));
 }
 
 function initTableOfContents() {
@@ -403,295 +337,126 @@ function initTableOfContents() {
     const stickyToc = document.getElementById('m3-sticky-toc');
     const tocTrigger = document.getElementById('m3-toc-trigger');
     const closeBtn = document.getElementById('m3-toc-close');
+    const commentFab = document.getElementById('m3-scroll-to-comments');
+    const backToTopFab = document.getElementById('m3-back-to-top');
+    const commentSection = document.getElementById('comments');
 
+    // Central Scroll Logic for FABs (Registered for ALL pages)
+    const handleFabVisibility = () => {
+        const scrollY = window.scrollY;
+        if (backToTopFab) {
+            if (scrollY > 100) backToTopFab.classList.add('is-visible');
+            else backToTopFab.classList.remove('is-visible');
+        }
+        if (commentFab && commentSection) {
+            const rect = commentSection.getBoundingClientRect();
+            if (scrollY > 100 && rect.top > window.innerHeight) commentFab.classList.add('is-visible');
+            else commentFab.classList.remove('is-visible');
+        }
+        if (tocTrigger) {
+            if (scrollY > 100) tocTrigger.classList.add('is-visible');
+            else { tocTrigger.classList.remove('is-visible'); if (stickyToc?.classList.contains('is-active')) toggleToc(false); }
+        }
+    };
+    window.addEventListener('scroll', handleFabVisibility, { passive: true });
+    handleFabVisibility();
+
+    if (backToTopFab) backToTopFab.addEventListener('click', () => gsap.to(window, { duration: 0.8, scrollTo: 0, ease: "power3.inOut" }));
+    if (commentFab && commentSection) commentFab.addEventListener('click', () => gsap.to(window, { duration: 0.8, scrollTo: { y: commentSection, offsetY: 20 }, ease: "power3.inOut" }));
+
+    // TOC Specific Logic
     if (!articleBody || !tocContainer || !stickyToc || !tocTrigger) return;
-
     const headings = articleBody.querySelectorAll('h2, h3');
-    if (headings.length === 0) {
-        tocTrigger.remove();
-        stickyToc.remove();
-        return;
-    }
+    if (headings.length === 0) { tocTrigger.style.display = 'none'; return; }
 
     const tocList = document.createElement('ul');
     headings.forEach((heading, index) => {
-        const id = heading.id || `m3-heading-${index}`;
-        heading.id = id;
-        const li = document.createElement('li');
-        li.className = `toc-level-${heading.tagName.toLowerCase()}`;
-        const a = document.createElement('a');
-        a.href = `#${id}`;
-        a.textContent = heading.textContent.trim();
-        
-        a.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleToc(false);
-            const target = document.getElementById(id);
-            if (target && typeof gsap !== 'undefined') {
-                gsap.to(window, { duration: 0.8, scrollTo: { y: target, offsetY: 80 }, ease: "power3.inOut" });
-            }
-        });
-
-        li.appendChild(a);
-        tocList.appendChild(li);
+        const id = heading.id || `m3-heading-${index}`; heading.id = id;
+        const li = document.createElement('li'); li.className = `toc-level-${heading.tagName.toLowerCase()}`;
+        const a = document.createElement('a'); a.href = `#${id}`; a.textContent = heading.textContent.trim();
+        a.addEventListener('click', (e) => { e.preventDefault(); toggleToc(false); gsap.to(window, { duration: 0.8, scrollTo: { y: document.getElementById(id), offsetY: 80 }, ease: "power3.inOut" }); });
+        li.appendChild(a); tocList.appendChild(li);
     });
-    tocContainer.innerHTML = '';
-    tocContainer.appendChild(tocList);
+    tocContainer.innerHTML = ''; tocContainer.appendChild(tocList);
 
     const toggleToc = (show) => {
         if (show) {
             stickyToc.classList.add('is-active');
-            gsap.fromTo(stickyToc, 
-                { autoAlpha: 0, y: 20, scale: 0.95 },
-                { autoAlpha: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.2)" }
-            );
+            if (commentFab) commentFab.style.opacity = '0'; if (backToTopFab) backToTopFab.style.opacity = '0';
+            gsap.fromTo(stickyToc, { autoAlpha: 0, y: 20, scale: 0.95 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.2)" });
         } else {
-            gsap.to(stickyToc, { 
-                autoAlpha: 0, y: 15, scale: 0.95, duration: 0.3, ease: "power2.in",
-                onComplete: () => stickyToc.classList.remove('is-active')
-            });
+            gsap.to(stickyToc, { autoAlpha: 0, y: 15, scale: 0.95, duration: 0.3, ease: "power2.in", onComplete: () => {
+                stickyToc.classList.remove('is-active');
+                if (commentFab) commentFab.style.opacity = ''; if (backToTopFab) backToTopFab.style.opacity = '';
+            }});
         }
     };
-
-    tocTrigger.addEventListener('click', () => {
-        const isActive = stickyToc.classList.contains('is-active');
-        toggleToc(!isActive);
-    });
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => toggleToc(false));
-    }
-
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 400) {
-            tocTrigger.classList.add('is-visible');
-        } else {
-            tocTrigger.classList.remove('is-visible');
-            if (stickyToc.classList.contains('is-active')) toggleToc(false);
-        }
-    }, { passive: true });
-}
-
-function initCommentFAB() {
-    const scrollToCommentsBtn = document.getElementById('m3-scroll-to-comments');
-    const backToTopBtn = document.getElementById('m3-back-to-top');
-    const commentSection = document.getElementById('comments');
-
-    if (!scrollToCommentsBtn || !backToTopBtn) return;
-
-    const updateFABs = () => {
-        const scrollY = window.scrollY;
-        
-        if (scrollY > 400) {
-            backToTopBtn.classList.add('is-visible');
-        } else {
-            backToTopBtn.classList.remove('is-visible');
-        }
-
-        if (commentSection) {
-            const rect = commentSection.getBoundingClientRect();
-            if (scrollY > 600 && rect.top > window.innerHeight) {
-                scrollToCommentsBtn.classList.add('is-visible');
-            } else {
-                scrollToCommentsBtn.classList.remove('is-visible');
-            }
-        }
-    };
-
-    window.addEventListener('scroll', updateFABs, { passive: true });
-
-    backToTopBtn.addEventListener('click', () => {
-        if (typeof gsap !== 'undefined') {
-            gsap.to(window, { duration: 0.8, scrollTo: 0, ease: "power3.inOut" });
-        } else {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    });
-
-    scrollToCommentsBtn.addEventListener('click', () => {
-        if (commentSection) {
-            if (typeof gsap !== 'undefined') {
-                gsap.to(window, { duration: 0.8, scrollTo: { y: commentSection, offsetY: 20 }, ease: "power3.inOut" });
-            } else {
-                commentSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-    });
+    tocTrigger.addEventListener('click', () => toggleToc(!stickyToc.classList.contains('is-active')));
+    if (closeBtn) closeBtn.addEventListener('click', () => toggleToc(false));
 }
 
 function initOverdriveScroll() {
-    if (typeof gsap === 'undefined' || !document.querySelector('.m3-page-container')) return;
-    
-    // 記事詳細ページ（article-view）では sticky を優先するため、このエフェクトを無効化する
-    if (document.body.classList.contains('single-post') || document.querySelector('.article-view')) return;
-
+    if (typeof gsap === 'undefined' || !document.querySelector('.m3-page-container') || document.body.classList.contains('single-post')) return;
     const container = document.querySelector('.m3-page-container');
-    
-    const stretchEffect = () => {
-        const scrollY = window.scrollY;
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        
-        if (scrollY < 0) {
-            const stretch = Math.min(Math.abs(scrollY) / 200, 0.1);
-            gsap.set(container, { scaleY: 1 + stretch, transformOrigin: "top center" });
-        } else if (scrollY > maxScroll) {
-            const stretch = Math.min((scrollY - maxScroll) / 200, 0.1);
-            gsap.set(container, { scaleY: 1 + stretch, transformOrigin: "bottom center" });
-        } else {
-            gsap.to(container, { scaleY: 1, duration: 0.3, ease: "power2.out" });
-        }
-        requestAnimationFrame(stretchEffect);
+    const stretch = () => {
+        const scrollY = window.scrollY; const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (scrollY < 0) gsap.set(container, { scaleY: 1 + Math.min(Math.abs(scrollY) / 200, 0.1), transformOrigin: "top center" });
+        else if (scrollY > maxScroll) gsap.set(container, { scaleY: 1 + Math.min((scrollY - maxScroll) / 200, 0.1), transformOrigin: "bottom center" });
+        else gsap.to(container, { scaleY: 1, duration: 0.3, ease: "power2.out" });
+        requestAnimationFrame(stretch);
     };
-
-    requestAnimationFrame(stretchEffect);
+    stretch();
 }
 
 function initKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
-            if (e.key === 'Escape') e.target.blur();
-            return;
-        }
-
-        switch (e.key) {
-            case '/':
-                e.preventDefault();
-                const searchToggle = document.getElementById('search-toggle');
-                if (searchToggle) searchToggle.click();
-                break;
-            case 'Escape':
-                const drawer = document.getElementById('m3-drawer');
-                if (drawer && drawer.classList.contains('is-open')) document.getElementById('m3-drawer-scrim').click();
-                const searchBar = document.querySelector('.m3-search-bar');
-                if (searchBar && searchBar.classList.contains('is-active')) document.getElementById('search-toggle').click();
-                break;
-        }
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') { if (e.key === 'Escape') e.target.blur(); return; }
+        if (e.key === '/') { e.preventDefault(); document.getElementById('search-toggle')?.click(); }
+        else if (e.key === 'Escape') { document.getElementById('m3-drawer')?.classList.remove('is-open'); document.getElementById('m3-drawer-scrim')?.classList.remove('is-visible'); document.querySelector('.m3-search-bar')?.classList.remove('is-active'); }
     });
 }
 
 function initTooltips() {
-    if (typeof gsap === 'undefined') return;
-    const tooltip = document.createElement('div');
-    tooltip.className = 'm3-dynamic-tooltip';
-    document.body.appendChild(tooltip);
-
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
-
-    const showTooltip = (target) => {
-        if (isTouch) return;
-        const text = target.getAttribute('data-tooltip') || target.getAttribute('title') || '';
-        if (!text) return;
-
-        tooltip.textContent = text;
-        
-        // 1. まず表示させてからサイズを取得する (不透明度0で)
-        gsap.set(tooltip, { display: 'block', autoAlpha: 0, scale: 0.8 });
-        
-        const rect = target.getBoundingClientRect();
-        const tipWidth = tooltip.offsetWidth;
-        const tipHeight = tooltip.offsetHeight;
-        
-        let x, y;
-        const requestedPos = target.getAttribute('data-tooltip-pos');
-        const isNearRightEdge = rect.right > window.innerWidth - 100;
-        const isNearTopEdge = rect.top < 100;
-
-        if (requestedPos === 'left' || (isNearRightEdge && !isNearTopEdge)) {
-            // 左側に表示 (明示的な指定があるか、右端に近い場合)
-            x = rect.left - tipWidth - 20;
-            y = rect.top + (rect.height / 2) - (tipHeight / 2);
-        } else {
-            // 通常は中央上部に表示
-            x = rect.left + (rect.width / 2) - (tipWidth / 2);
-            y = rect.top - tipHeight - 32;
-
-            // 画面上部ではみ出す場合は下へ
-            if (y < 12) y = rect.bottom + 32;
-        }
-
-        // 最終的な画面外はみ出し防止
-        x = Math.max(12, Math.min(x, window.innerWidth - tipWidth - 12));
-        y = Math.max(12, Math.min(y, window.innerHeight - tipHeight - 12));
-
-        // アニメーションの開始位置
-        const isLeftPos = requestedPos === 'left' || isNearRightEdge;
-        const startX = isLeftPos ? x + 10 : x;
-        const startY = isLeftPos ? y : y + (y > rect.top ? -10 : 10);
-
-        gsap.set(tooltip, { x: startX, y: startY }); 
-        gsap.to(tooltip, { 
-            autoAlpha: 1, 
-            x: x, 
-            y: y, 
-            scale: 1, 
-            duration: 0.35, 
-            ease: "back.out(1.2)" 
-        });
+    if (typeof gsap === 'undefined' || window.matchMedia('(pointer: coarse)').matches) return;
+    const tooltip = document.createElement('div'); tooltip.className = 'm3-dynamic-tooltip'; document.body.appendChild(tooltip);
+    const show = (target) => {
+        const text = target.getAttribute('data-tooltip') || target.getAttribute('title'); if (!text) return;
+        tooltip.textContent = text; gsap.set(tooltip, { display: 'block', autoAlpha: 0, scale: 0.8 });
+        const rect = target.getBoundingClientRect(); const tipW = tooltip.offsetWidth; const tipH = tooltip.offsetHeight;
+        let x = rect.left - tipW - 16; let y = rect.top + rect.height/2 - tipH/2;
+        x = Math.max(12, Math.min(x, window.innerWidth - tipW - 12)); y = Math.max(12, Math.min(y, window.innerHeight - tipH - 12));
+        gsap.set(tooltip, { x: rect.left - 20, y: rect.top + rect.height/2 });
+        gsap.to(tooltip, { autoAlpha: 1, x, y, scale: 1, duration: 0.35, ease: "back.out(1.2)" });
     };
-
-    const hideTooltip = () => gsap.to(tooltip, { autoAlpha: 0, scale: 0.8, duration: 0.2, overwrite: true });
-
-    // 動的な要素にも対応するためにイベント委譲を使用
-    document.body.addEventListener('mouseenter', (e) => {
-        const target = e.target.closest('.m3-tooltip-target, [data-tooltip]');
-        if (target) showTooltip(target);
-    }, true);
-
-    document.body.addEventListener('mouseleave', (e) => {
-        const target = e.target.closest('.m3-tooltip-target, [data-tooltip]');
-        if (target) hideTooltip();
-    }, true);
+    const hide = () => gsap.to(tooltip, { autoAlpha: 0, scale: 0.8, duration: 0.2 });
+    document.body.addEventListener('mouseenter', (e) => { const t = e.target.closest('.m3-tooltip-target, [data-tooltip]'); if (t) show(t); }, true);
+    document.body.addEventListener('mouseleave', (e) => { const t = e.target.closest('.m3-tooltip-target, [data-tooltip]'); if (t) hide(); }, true);
 }
 
 function initRippleEffect() {
     if (typeof gsap === 'undefined') return;
-
-    const createRipple = (e, el) => {
-        const rect = el.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height);
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-
-        const ripple = document.createElement('span');
-        ripple.className = 'm3-ripple';
-        ripple.style.width = ripple.style.height = `${size * 2}px`;
-        ripple.style.left = `${x}px`;
-        ripple.style.top = `${y}px`;
-        el.appendChild(ripple);
-
-        gsap.fromTo(ripple, { scale: 0, opacity: 0.15 }, { scale: 1, duration: 0.5, ease: "power2.out" });
-
-        const removeRipple = () => {
-            gsap.to(ripple, { opacity: 0, duration: 0.3, onComplete: () => ripple.remove() });
-        };
-        el.addEventListener('mouseup', removeRipple, { once: true });
-        el.addEventListener('touchend', removeRipple, { once: true });
-        el.addEventListener('mouseleave', removeRipple, { once: true });
+    const create = (e, el) => {
+        const rect = el.getBoundingClientRect(); const size = Math.max(rect.width, rect.height);
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        const ripple = document.createElement('span'); ripple.className = 'm3-ripple';
+        ripple.style.width = ripple.style.height = `${size * 2}px`; ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
+        el.appendChild(ripple); gsap.fromTo(ripple, { scale: 0, opacity: 0.15, xPercent: -50, yPercent: -50 }, { scale: 1, duration: 0.5, ease: "power2.out" });
+        const remove = () => gsap.to(ripple, { opacity: 0, duration: 0.3, onComplete: () => ripple.remove() });
+        el.addEventListener('mouseup', remove, { once: true }); el.addEventListener('touchend', remove, { once: true }); el.addEventListener('mouseleave', remove, { once: true });
     };
-
-    const rippleSelectors = '.m3-card, .m3-button, .m3-btn, .m3-icon-button, .m3-label--category, .page-numbers, .m3-share-btn, .m3-elevated-nav-card';
-    document.querySelectorAll(rippleSelectors).forEach(el => {
-        el.classList.add('m3-ripple-host');
-        el.addEventListener('mousedown', (e) => createRipple(e, el));
-        el.addEventListener('touchstart', (e) => createRipple(e, el), { passive: true });
+    document.querySelectorAll('.m3-card, .m3-button, .m3-btn, .m3-icon-button, .m3-label--category, .page-numbers, .m3-share-btn, .m3-elevated-nav-card').forEach(el => {
+        el.classList.add('m3-ripple-host'); el.addEventListener('mousedown', (e) => create(e, el)); el.addEventListener('touchstart', (e) => create(e, el), { passive: true });
     });
 }
 
 function initAdaptiveHeader() {
-    const header = document.querySelector('.m3-header');
-    if (!header) return;
+    const header = document.querySelector('.m3-header'); if (!header) return;
     let isScrolled = false;
     window.addEventListener('scroll', () => {
-        const scrolled = window.scrollY > 20;
-        if (scrolled && !isScrolled) {
-            isScrolled = true;
-            header.classList.add('is-scrolled');
-        } else if (!scrolled && isScrolled) {
-            isScrolled = false;
-            header.classList.remove('is-scrolled');
-        }
+        const scrolled = window.scrollY > 20; if (scrolled && !isScrolled) { isScrolled = true; header.classList.add('is-scrolled'); }
+        else if (!scrolled && isScrolled) { isScrolled = false; header.classList.remove('is-scrolled'); }
     }, { passive: true });
 }
+import './styles/_blogcard-ai.css';
 

@@ -1,158 +1,113 @@
 <?php
-// サイト名を強制的に Luminous Core に変更
-add_filter('pre_option_blogname', function() {
-    return 'Luminous Core';
-});
-// 表示件数の動的制御 (Mobile: 16, PC: 32)
-function node_modify_posts_per_page($query) {
-    if (!is_admin() && $query->is_main_query() && (is_home() || is_archive() || is_search())) {
-        if (wp_is_mobile()) {
-            $query->set('posts_per_page', 12);  // 1列 or 2列で割り切れる12件
-        } else {
-            $query->set('posts_per_page', 24);  // PC: 高解像度対応 (8列, 6列, 4列, 3列, 2列すべてに対応)
-        }
-    }
+/**
+ * Theme Setup for Luminous Core (Node)
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
-add_action('pre_get_posts', 'node_modify_posts_per_page');
-// メニュー登録
+
+/**
+ * -------------------------------------------------------
+ * 1. テーマの基本設定
+ * -------------------------------------------------------
+ */
 function node_theme_setup() {
-    register_nav_menus([
-        'primary' => 'ヘッダーメニュー',
-        'drawer'  => 'サイドドロワーメニュー（カテゴリ等）'
-    ]);
 
-    // エディタスタイルの有効化
-    add_theme_support('editor-styles');
-    add_editor_style('assets/css/style.css');
+	// HTML <title> を WP に任せる
+	add_theme_support( 'title-tag' );
 
-    // クリーンアップ: 不要なコア機能を停止
-    remove_action('wp_head', 'print_emoji_detection_script', 7);
-    remove_action('admin_print_scripts', 'print_emoji_detection_script');
-    remove_action('wp_print_styles', 'print_emoji_styles');
-    remove_action('admin_print_styles', 'print_emoji_styles');
-    remove_action('wp_head', 'rsd_link');
-    remove_action('wp_head', 'wlwmanifest_link');
-    remove_action('wp_head', 'wp_generator');
+	// アイキャッチ画像
+	add_theme_support( 'post-thumbnails' );
+
+	// メニュー
+	register_nav_menus(
+		array(
+			'primary'   => __( 'Primary Menu', 'luminous-core' ),
+			'footer'    => __( 'Footer Menu', 'luminous-core' ),
+		)
+	);
+
+	// HTML5 マークアップ
+	add_theme_support(
+		'html5',
+		array(
+			'search-form',
+			'comment-form',
+			'comment-list',
+			'gallery',
+			'caption',
+			'script',
+			'style',
+			'navigation-widgets',
+		)
+	);
+
+	// サイトロゴ
+	add_theme_support(
+		'custom-logo',
+		array(
+			'height'      => 64,
+			'width'       => 64,
+			'flex-width'  => true,
+			'flex-height' => true,
+		)
+	);
+
+	// 埋め込みのレスポンシブ対応
+	add_theme_support( 'responsive-embeds' );
+
+	// 幅広ブロック
+	add_theme_support( 'align-wide' );
+
+	// ブロックエディタのスタイル
+	add_theme_support( 'editor-styles' );
+
+	// ブロックエディタに Vite の CSS を適用
+	add_editor_style( 'assets/css/style.css' );
+
+	// フィードリンク
+	add_theme_support( 'automatic-feed-links' );
+
+	// ブロックスタイル
+	add_theme_support( 'wp-block-styles' );
 }
-add_action('after_setup_theme', 'node_theme_setup');
-function node_enqueue_assets() {
-    $version = '0.4.0';
-    wp_enqueue_style('node-style', get_stylesheet_uri(), [], $version);
-    wp_enqueue_style('node-assets-style', get_template_directory_uri() . '/assets/css/style.css', [], $version);
-    wp_enqueue_style('node-blocks-style', get_template_directory_uri() . '/assets/css/blocks.css', [], $version);
-
-    // Google Fonts: Inter & Noto Sans JP
-    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Barlow:wght@100..900&family=Inter:wght@100..900&family=Noto+Sans+JP:wght@100..900&display=swap', [], null);
-    
-    // Material Symbols Outlined
-    wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', [], null);
-
-    // Font Awesome (For Brand Logos)
-    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', [], '6.7.2');
-
-    wp_enqueue_script('gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js', [], null, true);
-    wp_enqueue_script('gsap-scrollto', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js', ['gsap'], null, true);
-    wp_enqueue_script('node-main-js', get_template_directory_uri() . '/assets/js/main.js', ['gsap', 'gsap-scrollto'], $version, true);
-    wp_enqueue_script('node-blocks-js', get_template_directory_uri() . '/assets/js/blocks.js', ['gsap'], $version, true);
-}
-add_action('wp_enqueue_scripts', 'node_enqueue_assets');
+add_action( 'after_setup_theme', 'node_theme_setup' );
 
 /**
- * アーカイブのタイトルから「カテゴリー: 」などを削除
+ * -------------------------------------------------------
+ * 2. Dynamic Color Seed の初期化（FOUC 対策）
+ * -------------------------------------------------------
  */
-add_filter('get_the_archive_title', function ($title) {
-    if (is_category()) {
-        $title = single_cat_title('', false);
-    } elseif (is_tag()) {
-        $title = single_tag_title('', false);
-    } elseif (is_author()) {
-        $title = get_the_author();
-    } elseif (is_post_type_archive()) {
-        $title = post_type_archive_title('', false);
-    } elseif (is_tax()) {
-        $title = single_term_title('', false);
+add_action( 'after_setup_theme', 'node_initialize_seed_color' );
+/**
+ * Dynamic Color の seed color を取得する
+ * - まだ seed color が決まっていない場合はデフォルト値を返す
+ * - 将来的に JS 側と同期させる場合はここを拡張
+ */
+function node_extract_seed_color() {
+    // デフォルトの seed color（あなたのテーマは #FF9900）
+    $default_seed = '#FF9900';
+
+    // 投稿メタに保存されている場合はそれを優先
+    $seed = get_option('_node_seed_color');
+
+    if ( ! empty( $seed ) ) {
+        return $seed;
     }
-    return $title;
-});
 
+    return $default_seed;
+}
 /**
- * SEO/AMP: 構造化データ (JSON-LD) の追加
+ * Dynamic Color の seed color を初期化
  */
-function node_add_json_ld() {
-    if (is_single()) {
-        global $post;
-        $json = [
-            "@context" => "https://schema.org",
-            "@type" => "BlogPosting",
-            "headline" => get_the_title(),
-            "image" => [get_the_post_thumbnail_url($post->ID, 'full')],
-            "datePublished" => get_the_date('c'),
-            "dateModified" => get_the_modified_date('c'),
-            "author" => [
-                "@type" => "Person",
-                "name" => get_the_author(),
-                "url" => get_author_posts_url(get_the_author_meta('ID'))
-            ],
-            "publisher" => [
-                "@type" => "Organization",
-                "name" => get_bloginfo('name'),
-                "logo" => [
-                    "@type" => "ImageObject",
-                    "url" => get_template_directory_uri() . '/pwa-icon.png'
-                ]
-            ],
-            "description" => get_the_excerpt()
-        ];
-        echo "\n" . '<script type="application/ld+json">' . json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>' . "\n";
+function node_initialize_seed_color() {
+    if ( ! function_exists( 'node_extract_seed_color' ) ) {
+        return;
+    }
+
+    if ( ! get_option( '_node_seed_color' ) ) {
+        $seed = node_extract_seed_color();
+        update_option( '_node_seed_color', $seed );
     }
 }
-add_action('wp_head', 'node_add_json_ld');
-
-/**
- * Safari/Chrome用テーマカラーの強制出力 (最優先)
- */
-function node_force_theme_color_meta() {
-    echo '<meta name="theme-color" content="#FF9900">' . "\n";
-    echo '<meta name="msapplication-TileColor" content="#FF9900">' . "\n";
-    // Safariのレンダリングエンジン向けに、最上部の背景色を認識させるためのスクリプト
-    echo '<script>document.documentElement.style.backgroundColor = "#FF9900";</script>' . "\n";
-}
-add_action('wp_head', 'node_force_theme_color_meta', 9999);
-
-function node_enqueue_admin_assets($hook) {
-    if (!in_array($hook, ['post.php', 'post-new.php', 'term.php', 'edit-tags.php'])) return;
-    wp_enqueue_style('wp-color-picker');
-    wp_enqueue_script('node-admin-js', get_template_directory_uri() . '/assets/js/editor.js', ['wp-color-picker', 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post'], null, true);
-    wp_add_inline_script('node-admin-js', 'jQuery(function($){ $(".node-color-picker").wpColorPicker(); });');
-}
-add_action('admin_enqueue_scripts', 'node_enqueue_admin_assets');
-
-// テーマサポート
-add_theme_support('post-thumbnails');
-add_theme_support('responsive-embeds');
-add_theme_support('align-wide'); // YouTube等のブロックで「幅広」「全幅」や配置ポップアップを表示するために必須
-/**
- * Anti-FOUC: 即座にカラーテーマ（システム同期 or 手動）を反映するインラインスクリプト
- */
-function node_anti_fouc_script() {
-    ?>
-    <script>
-    (function() {
-        try {
-            var theme = localStorage.getItem('theme');
-            var sync = localStorage.getItem('theme-sync') !== 'false'; // デフォルトは同期ON
-            var isSysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (sync) {
-                document.documentElement.setAttribute('data-theme', isSysDark ? 'dark' : 'light');
-            } else if (theme) {
-                document.documentElement.setAttribute('data-theme', theme);
-            } else {
-                document.documentElement.setAttribute('data-theme', isSysDark ? 'dark' : 'light');
-            }
-        } catch(e) {}
-    })();
-    </script>
-    <?php
-}
-add_action('wp_head', 'node_anti_fouc_script', 1);

@@ -3,6 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
+    manifest: true,
     outDir: 'assets',
     emptyOutDir: false,
     rollupOptions: {

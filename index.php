@@ -48,7 +48,7 @@
                     }
                     
                     $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
-                    get_template_part('card', null, ['card_class' => $card_class]);
+                    get_template_part('template-parts/card', null, ['card_class' => $card_class]);
                 endwhile;
                 
                 // 次のページがある場合、アーカイブへの矢印カードを表示

@@ -2,8 +2,8 @@
 /* --- Floating TOC Card (FAB Triggered) --- */
 .m3-floating-toc-card {
     position: fixed;
-    bottom: 100px;
-    right: 24px;
+    bottom: 24px; /* ボタンと高さを揃える */
+    right: 90px; /* ボタンの左側に配置 */
     width: 340px;
     max-height: 70vh;
     background: var(--md-sys-color-surface-container-high);
@@ -45,6 +45,12 @@
     padding: 16px;
     overflow-y: auto;
     flex-grow: 1;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.m3-floating-toc-card__content::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
 }
 
 /* FAB positioning & Colors */

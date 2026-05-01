@@ -1,0 +1,107 @@
+.ai-summary-card summary {
+	font-weight: 600;
+	cursor: pointer;
+	color: var(--m3-sys-primary);
+}
+
+.ai-summary-single {
+	margin: 2rem 0;
+	padding: 1.2rem;
+	border-radius: 16px;
+	background: var(--m3-sys-surface-container-high);
+}
+
+.ai-summary-label {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--m3-sys-primary);
+	margin-bottom: 0.6rem;
+}
+
+.ai-summary-content {
+	position: relative;
+	min-height: 64px;
+}
+
+.ai-summary-shimmer {
+	position: absolute;
+	inset: 0;
+	border-radius: 12px;
+	background: linear-gradient(
+		90deg,
+		var(--m3-sys-surface-container-highest) 0%,
+		var(--m3-sys-surface-container-high) 50%,
+		var(--m3-sys-surface-container-highest) 100%
+	);
+	animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+	0% { opacity: 0.4; }
+	50% { opacity: 0.8; }
+	100% { opacity: 0.4; }
+}
+
+.ai-summary-text.is-hidden {
+	opacity: 0;
+}
+/* AI Summary Accordion (Card) */
+.m3-card__ai-accordion {
+    margin-top: 0.6rem;
+    border-radius: 12px;
+    background: var(--m3-sys-surface-container-high);
+    padding: 0.4rem 0.6rem;
+    box-shadow: var(--m3-elevation-level1);
+    transition: background 0.3s ease;
+}
+
+.m3-card__ai-accordion[open] {
+    background: var(--m3-sys-surface-container-highest);
+    box-shadow: var(--m3-elevation-level2);
+}
+
+.m3-card__ai-summary-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: var(--m3-sys-primary);
+    font-weight: 600;
+}
+
+.m3-card__ai-toggle-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.m3-card__ai-icon {
+    font-size: 18px;
+    color: var(--m3-sys-primary);
+}
+
+.m3-card__ai-chevron {
+    margin-left: auto;
+    transition: transform 0.25s ease;
+}
+
+.m3-card__ai-accordion[open] .m3-card__ai-chevron {
+    transform: rotate(180deg);
+}
+
+.m3-card__ai-body {
+    margin-top: 0.6rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--m3-sys-outline-variant);
+}
+
+.m3-card__ai-text {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--m3-sys-on-surface-variant);
+}
+
+.m3-card__ai-footer {
+    margin-top: 0.4rem;
+    display: flex;
+    justify-content: flex-end;
+}

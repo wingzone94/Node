@@ -108,7 +108,7 @@
     bottom: 24px;
     right: 24px;
     display: flex;
-    flex-direction: column; /* 上から下に並べる、一番下が Back to Top */
+    flex-direction: column; /* 上から下に並べる */
     align-items: center;
     gap: 16px;
     z-index: 9999 !important; /* 全要素の最前面 */
@@ -123,7 +123,7 @@
 .m3-fab {
     width: 56px !important;
     height: 56px !important;
-    border-radius: 16px;
+    border-radius: 50%; /* 完全な円形に変更 */
     border: none;
     cursor: pointer;
     display: flex;

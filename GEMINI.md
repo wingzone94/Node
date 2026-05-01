@@ -66,4 +66,4 @@
 常に日本語で応答してください
 ---
 **Luminous Core Teams**
-*Version 0.2.0 - 2024 (Established)*
+*Version 0.6.1 - 2024 (Established)*

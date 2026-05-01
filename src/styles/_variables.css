@@ -23,6 +23,24 @@
     --font-main: "Inter", "Noto Sans JP", sans-serif;
     --font-heading: "Inter", "Noto Sans JP", sans-serif;
 
+    /* --- Brand Colors --- */
+    --brand-windows: #00BCF2;
+    --brand-mac: #333333;
+    --brand-linux: #FCC624;
+    --brand-chromebook: #4285F4;
+    --brand-ios: #8E8E93;
+    --brand-android: #3DDC84;
+    --brand-nintendo: #E60012;
+    --brand-sony: #003087;
+    --brand-xbox: #107C10;
+
+    /* --- Reading Volume Colors --- */
+    --rank-short: #FF4081;
+    --rank-standard: #00E676;
+    --rank-long: #FF9100;
+    --rank-medium-short: #00E5FF;
+    --rank-medium-long: #2979FF;
+
     /* --- Material 3 Spacing --- */
     --m3-spacing-xs: 4px;
     --m3-spacing-s: 8px;

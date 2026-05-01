@@ -36,8 +36,11 @@ $extra_class = $has_ai ? ' m3-card--has-ai' : '';
 
         <!-- 新設: タイトル下の属性・カテゴリーラベルグループ (可読性重視) -->
         <div class="m3-card__meta-badges">
-            <?php node_the_category_labels(); ?>
-            <?php node_the_post_badges($post_id, 'compact'); ?>
+            <?php 
+            node_the_category_labels(); 
+            node_the_post_badges($post_id, 'compact');
+            ?>
+
             <?php if ($has_ai) : ?>
                 <span class="m3-label--ai-summary" title="AI要約あり">
                     <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
@@ -57,7 +60,9 @@ $extra_class = $has_ai ? ' m3-card--has-ai' : '';
                 </span>
             </summary>
             <div class="m3-card__ai-body">
-                <p class="m3-card__ai-text"><?php echo esc_html($ai_summary); ?></p>
+                <p class="m3-card__ai-text">
+    <?php echo esc_html( node_get_short_ai_summary( $ai_summary, 80 ) ); ?>
+</p>
                 <div class="m3-card__ai-footer">
                     <span class="m3-badge">
                         <span class="material-symbols-outlined" aria-hidden="true" style="font-size:12px;">smart_toy</span>

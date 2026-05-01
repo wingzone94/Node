@@ -48,13 +48,15 @@ export function initTableOfContents() {
     if (trigger && tocCard) {
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            tocCard.classList.toggle('is-active');
+            const isActive = tocCard.classList.toggle('is-active');
+            toggleOtherFabs(!isActive);
         });
     }
 
     if (closeBtn && tocCard) {
         closeBtn.addEventListener('click', () => {
             tocCard.classList.remove('is-active');
+            toggleOtherFabs(true);
         });
     }
 
@@ -62,6 +64,19 @@ export function initTableOfContents() {
     document.addEventListener('click', (e) => {
         if (tocCard && tocCard.classList.contains('is-active') && !tocCard.contains(e.target) && !trigger.contains(e.target)) {
             tocCard.classList.remove('is-active');
+            toggleOtherFabs(true);
         }
     });
+
+    function toggleOtherFabs(show) {
+        const commentBtn = document.getElementById('m3-scroll-to-comments');
+        const topBtn = document.getElementById('m3-back-to-top');
+        if (show) {
+            if (commentBtn) commentBtn.classList.remove('hidden');
+            if (topBtn) topBtn.classList.remove('hidden');
+        } else {
+            if (commentBtn) commentBtn.classList.add('hidden');
+            if (topBtn) topBtn.classList.add('hidden');
+        }
+    }
 }

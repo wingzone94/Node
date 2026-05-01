@@ -19,22 +19,24 @@
 </div><!-- .m3-page-container -->
 
 <div class="m3-action-stack">
-    <?php if (is_singular()) : ?>
-    <!-- TOC Trigger -->
-    <button id="m3-toc-trigger" class="m3-fab m3-tooltip-target" data-tooltip="目次を表示">
-        <span class="material-symbols-outlined">toc</span>
+    <!-- 1. Back to Top (Top) -->
+    <button id="m3-back-to-top" class="m3-fab m3-tooltip-target" data-tooltip="トップへ戻る">
+        <span class="material-symbols-outlined">arrow_upward</span>
     </button>
-    
-    <!-- Comment Trigger -->
+
+    <?php if (is_singular()) : ?>
+    <!-- 2. Comment Trigger -->
     <button id="m3-scroll-to-comments" class="m3-fab m3-tooltip-target" data-tooltip="コメント欄へ">
         <span class="material-symbols-outlined">chat_bubble</span>
     </button>
     <?php endif; ?>
 
-    <!-- Back to Top -->
-    <button id="m3-back-to-top" class="m3-fab m3-tooltip-target" data-tooltip="トップへ戻る">
-        <span class="material-symbols-outlined">arrow_upward</span>
+    <?php if (is_singular()) : ?>
+    <!-- 3. TOC Trigger -->
+    <button id="m3-toc-trigger" class="m3-fab m3-tooltip-target" data-tooltip="目次を表示">
+        <span class="material-symbols-outlined">toc</span>
     </button>
+    <?php endif; ?>
 </div>
 
 <div id="m3-ogp-tooltip" class="m3-dynamic-tooltip"></div>
