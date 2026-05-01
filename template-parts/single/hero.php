@@ -47,54 +47,35 @@
                 </div>
             </div>
 
-            <!-- 読了時間・文字数ゲージ（分離して表示 / 200文字以上の記事のみ表示） -->
-            <div class="m3-article__meta-reading">
-                <?php
-                $reading_info = node_get_article_ranking_info(get_the_ID());
-                $reading_time_display = luminous_get_reading_time(get_the_ID());
-                if (empty($reading_time_display)) {
-                    $reading_time_display = $reading_info['reading'] . '分';
-                }
-                
-                if ($reading_info['chars'] > 200) : // 極端に短い記事は非表示
-                ?>
-                <div class="m3-article__reading-meta m3-reading-gauge--circle m3-ripple-host" 
-                     id="m3-reading-meta-toggle"
-                     style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>;">
-                    
-                    <div class="m3-article__reading-main">
-                        <div class="m3-reading-circle">
-                            <svg viewBox="0 0 36 36" class="m3-reading-circle__svg">
-                                <path class="m3-reading-circle__bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="m3-reading-circle__progress" 
-                                      stroke-dasharray="100, 100" 
-                                      stroke-dashoffset="100"
-                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="material-symbols-outlined m3-icon-animate-timer">timer</span>
-                        </div>
-                        
-                        <div class="m3-reading-text-group">
-                            <div class="m3-reading-view-default">
-                                <span class="m3-reading-time-val m3-animate-reveal" style="--m3-reveal-delay: 2.1s;">
-                                    <?php echo esc_html($reading_time_display); ?>
-                                    <span class="m3-reading-chars">(約<?php echo esc_html($reading_info['chars']); ?>文字)</span>
-                                </span>
-                                <span class="m3-reading-time-label m3-animate-reveal" style="--m3-reveal-delay: 2.2s;">
-                                    <?php echo esc_html($reading_info['label']); ?>
-                                </span>
-                            </div>
-                            <div class="m3-reading-view-info">
-                                読了時間・文字数を自動で判定して表示しています。
-                            </div>
-                        </div>
+            <?php
+            $reading_info = node_get_article_ranking_info(get_the_ID());
+            $reading_time_display = luminous_get_reading_time(get_the_ID());
+            if (empty($reading_time_display)) {
+                $reading_time_display = $reading_info['reading'] . '分';
+            }
+            ?>
+            <div class="m3-article__reading-badge-expressive" id="m3-hero-reading-badge" style="background-color: <?php echo esc_attr($reading_info['color']); ?>;">
+                <div class="m3-reading-badge__gauge">
+                    <svg viewBox="0 0 36 36" class="m3-reading-circle__svg">
+                        <path class="m3-reading-circle__bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="m3-reading-circle__progress" 
+                              style="--target-progress: <?php echo esc_attr($reading_info['progress']); ?>;" 
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <span class="material-symbols-outlined">timer</span>
+                </div>
+                <span class="m3-reading-badge-text">
+                    <?php echo esc_html($reading_time_display); ?> (約<?php echo esc_html($reading_info['chars']); ?>文字)
+                </span>
+                <span class="m3-reading-badge-label"><?php echo esc_html($reading_info['label']); ?></span>
 
-                        <div class="m3-reading-info-icon">
-                            <span class="material-symbols-outlined">info</span>
-                        </div>
+                <!-- Hero Info Bubble -->
+                <div class="m3-hero-info-bubble" id="m3-hero-info-bubble">
+                    <div class="m3-hero-info-bubble__inner">
+                        <span class="material-symbols-outlined">info</span>
+                        <p>この記事の読了目安です。ブログ全体の平均文字数に基づき、あなたの読書進捗をリアルタイムで計測します。</p>
                     </div>
                 </div>
-                <?php endif; // End check for > 200 chars ?>
             </div>
         </div>
     </header>

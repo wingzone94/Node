@@ -268,28 +268,19 @@ function node_the_ad_area($position) {
    ========================================================================== */
 
 /**
- * ブログ全体の平均文字数を取得（トランジェントでキャッシュ）
+ * ブログ全体の平均文字数を取得
  */
 function node_get_global_average_chars() {
     $cache_key = 'node_global_average_chars';
     $avg_chars = get_transient($cache_key);
 
     if (false === $avg_chars) {
-        $post_ids = get_posts([
-            'post_type'   => 'post',
-            'post_status' => 'publish',
-            'numberposts' => -1,
-            'fields'      => 'ids'
-        ]);
+        global $wpdb;
+        $total_chars = $wpdb->get_var("SELECT SUM(CHAR_LENGTH(post_content)) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
+        $post_count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
 
-        $total_chars = 0;
-        foreach ($post_ids as $id) {
-            $content = get_post_field('post_content', $id);
-            $total_chars += mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
-        }
-
-        if (count($post_ids) > 0) {
-            $avg_chars = ceil($total_chars / count($post_ids));
+        if ($post_count > 0) {
+            $avg_chars = ceil($total_chars / $post_count);
         } else {
             $avg_chars = 2000;
         }
@@ -300,6 +291,26 @@ function node_get_global_average_chars() {
 }
 
 /**
+ * ブログ全体の最大文字数を取得
+ */
+function node_get_global_max_chars() {
+    $cache_key = 'node_global_max_chars';
+    $max_chars = get_transient($cache_key);
+
+    if (false === $max_chars) {
+        global $wpdb;
+        $max_chars = $wpdb->get_var("SELECT MAX(CHAR_LENGTH(post_content)) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
+        
+        if (!$max_chars) {
+            $max_chars = 5000;
+        }
+        set_transient($cache_key, $max_chars, DAY_IN_SECONDS);
+    }
+
+    return $max_chars;
+}
+
+/**
  * 記事の文字数と読了目安ランクを取得する
  */
 function node_get_article_ranking_info($post_id = null) {
@@ -307,8 +318,9 @@ function node_get_article_ranking_info($post_id = null) {
     $content = get_post_field('post_content', $post_id);
     $chars = mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
     
-    // ブログ全体の平均文字数を基準にする
+    // ブログ全体の平均文字数と最大文字数を基準にする
     $avg = node_get_global_average_chars();
+    $max = node_get_global_max_chars();
 
     // ランク判定 (全体平均 $avg に対する割合で判定)
     if ($chars < $avg * 0.4) {
@@ -339,9 +351,8 @@ function node_get_article_ranking_info($post_id = null) {
     }
 
     // 進行度（プログレス）の計算
-    // 「長い」の基準値($avg * 1.6)を100%とし、文字数に応じて滑らかに増えるようにする
-    $long_threshold = $avg * 1.6;
-    $progress = min(100, round(($chars / $long_threshold) * 100));
+    // ブログ内の最大文字数($max)を100%とする
+    $progress = min(100, round(($chars / $max) * 100));
 
     // 読了時間の計算 (分速800文字換算)
     $reading_time = ceil(($chars / 800));

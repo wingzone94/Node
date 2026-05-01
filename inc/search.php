@@ -31,152 +31,214 @@ function node_save_post_char_count( $post_id ) {
 add_action( 'save_post', 'node_save_post_char_count' );
 
 /**
- * 検索クエリを詳細検索パラメータに基づいて拡張する
+ * 詳細検索パラメータに基づいてクエリ引数を生成するヘルパー関数
  */
-function node_advanced_search_query( $query ) {
-	if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
-		return;
+function node_get_advanced_search_args( $params ) {
+	$args = array(
+		'post_type'      => 'post',
+		'post_status'    => 'publish',
+		'meta_query'     => array(),
+		'tax_query'      => array(),
+	);
+
+	if ( ! empty( $params['s'] ) ) {
+		$args['s'] = sanitize_text_field( $params['s'] );
 	}
 
-	$meta_query = array();
-	$tax_query  = array();
-
-	// 1. カテゴリ指定 (単一)
-	if ( ! empty( $_GET['m3_cat'] ) ) {
-		$tax_query[] = array(
+	// 1. カテゴリ指定
+	if ( ! empty( $params['m3_cat'] ) ) {
+		$args['tax_query'][] = array(
 			'taxonomy' => 'category',
 			'field'    => 'term_id',
-			'terms'    => intval( $_GET['m3_cat'] ),
+			'terms'    => intval( $params['m3_cat'] ),
 		);
 	}
 
 	// 1.5 タグ指定
-	if ( ! empty( $_GET['m3_tag'] ) ) {
-		$tax_query[] = array(
+	if ( ! empty( $params['m3_tag'] ) ) {
+		$args['tax_query'][] = array(
 			'taxonomy' => 'post_tag',
 			'field'    => 'name',
-			'terms'    => sanitize_text_field( $_GET['m3_tag'] ),
+			'terms'    => sanitize_text_field( $params['m3_tag'] ),
 		);
 	}
 
-	// 2. 文字数範囲指定
-	$min_chars = isset( $_GET['m3_min'] ) ? intval( $_GET['m3_min'] ) : 0;
-	$max_chars = isset( $_GET['m3_max'] ) ? intval( $_GET['m3_max'] ) : 0;
+	// 2. 文字数範囲指定 (0-10000の場合はフィルタしない)
+	$min_chars = isset( $params['m3_min'] ) ? intval( $params['m3_min'] ) : 0;
+	$max_chars = isset( $params['m3_max'] ) ? intval( $params['m3_max'] ) : 10000;
 
-	if ( $min_chars > 0 || $max_chars > 0 ) {
+	if ( $min_chars > 0 || $max_chars < 10000 ) {
 		$meta_range = array(
-			'key'     => '_node_char_count',
-			'type'    => 'NUMERIC',
+			'key'  => '_node_char_count',
+			'type' => 'NUMERIC',
 		);
-
-		if ( $min_chars > 0 && $max_chars > 0 ) {
+		
+		if ( $min_chars > 0 && $max_chars < 10000 ) {
 			$meta_range['value']   = array( $min_chars, $max_chars );
 			$meta_range['compare'] = 'BETWEEN';
 		} elseif ( $min_chars > 0 ) {
 			$meta_range['value']   = $min_chars;
 			$meta_range['compare'] = '>=';
 		} else {
-			$meta_range['value']   = $max_chars;
-			$meta_range['compare'] = '<=';
+			// maxのみ指定されている場合、メタデータがない記事（0文字扱い）も含める
+			$args['meta_query'][] = array(
+				'relation' => 'OR',
+				array(
+					'key'     => '_node_char_count',
+					'value'   => $max_chars,
+					'type'    => 'NUMERIC',
+					'compare' => '<=',
+				),
+				array(
+					'key'     => '_node_char_count',
+					'compare' => 'NOT EXISTS',
+				),
+			);
+			$meta_range = null; // 上記で追加済み
 		}
-		$meta_query[] = $meta_range;
+		
+		if ( $meta_range ) {
+			$args['meta_query'][] = $meta_range;
+		}
 	}
 
 	// 3. 日付範囲指定
 	$date_query = array();
-	if ( ! empty( $_GET['m3_start_date'] ) ) {
-		$date_query['after'] = sanitize_text_field( $_GET['m3_start_date'] );
+	if ( ! empty( $params['m3_start_date'] ) ) {
+		$date_query['after'] = sanitize_text_field( $params['m3_start_date'] );
 	}
-	if ( ! empty( $_GET['m3_end_date'] ) ) {
-		$date_query['before'] = sanitize_text_field( $_GET['m3_end_date'] );
+	if ( ! empty( $params['m3_end_date'] ) ) {
+		$date_query['before'] = sanitize_text_field( $params['m3_end_date'] );
 	}
 	if ( ! empty( $date_query ) ) {
 		$date_query['inclusive'] = true;
-		$query->set( 'date_query', array( $date_query ) );
+		$args['date_query'] = array( $date_query );
 	}
 
-	// 4. タイトル内単語検索
-	if ( ! empty( $_GET['m3_title_word'] ) ) {
-		add_filter( 'posts_where', function ( $where, $query ) {
-			global $wpdb;
-			$title_word = sanitize_text_field( $_GET['m3_title_word'] );
-			$where .= " AND {$wpdb->posts}.post_title LIKE '%" . $wpdb->esc_like( $title_word ) . "%'";
-			return $where;
-		}, 10, 2 );
-	}
-
-	// 5. メディア設定フィルタ
-	$media_filter = isset( $_GET['m3_media'] ) ? sanitize_text_field( $_GET['m3_media'] ) : 'all';
-	if ( $media_filter === 'image' ) {
-		$meta_query[] = array(
-			'key'     => '_thumbnail_id',
-			'compare' => 'EXISTS',
-		);
-	} elseif ( $media_filter === 'video' ) {
-		// 動画投稿フォーマットまたは特定の動画メタデータをチェック
-		$tax_query[] = array(
-			'taxonomy' => 'post_format',
-			'field'    => 'slug',
-			'terms'    => array( 'post-format-video' ),
-		);
-		// あるいはメタデータがある場合
-		$meta_query[] = array(
-			'key'     => '_node_video_url',
-			'compare' => 'EXISTS',
-		);
-		$meta_query['relation'] = 'OR';
-	} elseif ( $media_filter === 'none' ) {
-		$meta_query[] = array(
-			'key'     => '_thumbnail_id',
-			'compare' => 'NOT EXISTS',
-		);
-	}
-
-	// 6. プラットフォーム・ハードウェア指定
-	if ( ! empty( $_GET['m3_platform'] ) && is_array( $_GET['m3_platform'] ) ) {
-		$platforms = array_map( 'sanitize_text_field', $_GET['m3_platform'] );
-		$all_definitions = node_get_platforms_by_category();
-		
-		$resolved_platforms = [];
-		foreach ( $platforms as $p ) {
-			if ( isset( $all_definitions[ $p ] ) ) {
-				$resolved_platforms = array_merge( $resolved_platforms, $all_definitions[ $p ]['items'] );
-			} else {
-				$resolved_platforms[] = $p;
-			}
+	// 4. AI生成フィルタ
+	if ( ! empty( $params['m3_ai'] ) && $params['m3_ai'] !== 'all' ) {
+		if ( $params['m3_ai'] === 'only' ) {
+			$args['meta_query'][] = array(
+				'key'     => '_node_ai_generated',
+				'value'   => '1',
+				'compare' => '=',
+			);
+		} else {
+			$args['meta_query'][] = array(
+				'key'     => '_node_ai_generated',
+				'compare' => 'NOT EXISTS',
+			);
 		}
-		$resolved_platforms = array_unique( $resolved_platforms );
+	}
 
+	// 5. プラットフォーム指定
+	if ( ! empty( $params['m3_platform'] ) ) {
+		$platforms = (array) $params['m3_platform'];
 		$platform_query = array( 'relation' => 'OR' );
-		foreach ( $resolved_platforms as $p ) {
+		foreach ( $platforms as $p ) {
 			$platform_query[] = array(
-				'key'     => '_node_platforms', // プラットフォーム情報はここに保存されている想定
-				'value'   => $p,
+				'key'     => '_node_platforms',
+				'value'   => sanitize_text_field( $p ),
 				'compare' => 'LIKE',
 			);
 		}
-		$meta_query[] = $platform_query;
+		$args['meta_query'][] = $platform_query;
 	}
 
-	// タックスクエリとメタクエリを反映
-	if ( ! empty( $tax_query ) ) {
-		$query->set( 'tax_query', $tax_query );
-	}
-	if ( ! empty( $meta_query ) ) {
-		$query->set( 'meta_query', $meta_query );
+	// 5.5 メディアタイプ・埋め込みフィルタ (Content Search)
+	if ( ! empty( $params['m3_media_type'] ) ) {
+		$types = (array) $params['m3_media_type'];
+		// フィルタを一回だけ追加するようにする（グローバルなどで管理）
+		if ( ! has_filter( 'posts_where', 'node_content_media_search_filter' ) ) {
+			add_filter( 'posts_where', 'node_content_media_search_filter', 10, 2 );
+		}
 	}
 
-	// 7. 並び替え指定
+	return $args;
+}
+
+/**
+ * post_content に対して正規表現で検索を行う (Media Type Filter)
+ */
+function node_content_media_search_filter( $where, $query ) {
+	global $wpdb;
+
+	// メインクエリまたは特定の AJAX クエリでのみ動作させる
+	if ( ( $query->is_main_query() && $query->is_search() ) || $query->get( 'node_is_ajax_search' ) ) {
+		$types = isset( $_GET['m3_media_type'] ) ? (array) $_GET['m3_media_type'] : array();
+		
+		foreach ( $types as $type ) {
+			$pattern = '';
+			if ( $type === 'image' ) $pattern = '<img|wp-block-image';
+			elseif ( $type === 'video' ) $pattern = '<video|wp-block-video';
+			elseif ( $type === 'map' ) $pattern = 'google.com/maps|wp-block-embed-google-maps';
+			elseif ( $type === 'youtube' ) $pattern = 'youtube.com|youtu.be|wp-block-embed-youtube';
+			elseif ( $type === 'sns' ) $pattern = 'twitter.com|x.com|instagram.com|tiktok.com|wp-block-embed-';
+			elseif ( $type === 'download' ) $pattern = '\\.(pdf|zip|exe|dmg|rar|7z)';
+			
+			if ( ! empty( $pattern ) ) {
+				// 各条件を AND で結合
+				$where .= " AND {$wpdb->posts}.post_content REGEXP '" . esc_sql( $pattern ) . "'";
+			}
+		}
+	}
+
+	return $where;
+}
+
+/**
+ * 検索クエリを詳細検索パラメータに基づいて拡張する (メインクエリ用)
+ */
+function node_advanced_search_query( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
+		return;
+	}
+
+	$advanced_args = node_get_advanced_search_args( $_GET );
+
+	if ( ! empty( $advanced_args['tax_query'] ) ) {
+		$query->set( 'tax_query', $advanced_args['tax_query'] );
+	}
+	if ( ! empty( $advanced_args['meta_query'] ) ) {
+		$query->set( 'meta_query', $advanced_args['meta_query'] );
+	}
+	if ( ! empty( $advanced_args['date_query'] ) ) {
+		$query->set( 'date_query', $advanced_args['date_query'] );
+	}
+
+	// 並び替え
 	$sort = isset( $_GET['m3_sort'] ) ? sanitize_text_field( $_GET['m3_sort'] ) : '';
 	if ( $sort === 'word_count' ) {
 		$query->set( 'meta_key', '_node_char_count' );
 		$query->set( 'orderby', 'meta_value_num' );
 		$query->set( 'order', 'DESC' );
-	} elseif ( $sort === 'relevance' ) {
-		$query->set( 'orderby', 'relevance' );
-	} elseif ( $sort === 'date' ) {
+	} elseif ( $sort === 'oldest' ) {
+		$query->set( 'orderby', 'date' );
+		$query->set( 'order', 'ASC' );
+	} elseif ( $sort === 'newest' ) {
 		$query->set( 'orderby', 'date' );
 		$query->set( 'order', 'DESC' );
+	} elseif ( $sort === 'alpha' ) {
+		$query->set( 'orderby', 'title' );
+		$query->set( 'order', 'ASC' );
 	}
 }
 add_action( 'pre_get_posts', 'node_advanced_search_query' );
+
+/**
+ * AJAXで検索ヒット件数を取得する
+ */
+function node_ajax_get_search_count() {
+	$args = node_get_advanced_search_args( $_GET );
+	$args['posts_per_page'] = -1;
+	$args['fields']         = 'ids';
+	$args['node_is_ajax_search'] = true; // カスタムフラグを付与
+	
+	// AJAX時は他のアクションを妨げないよう、一時的にメインクエリっぽく振る舞わせる（必要なら）
+	$query = new WP_Query( $args );
+	$count = $query->found_posts;
+	
+	wp_send_json_success( array( 'count' => $count ) );
+}
+add_action( 'wp_ajax_node_get_search_count', 'node_ajax_get_search_count' );
+add_action( 'wp_ajax_nopriv_node_get_search_count', 'node_ajax_get_search_count' );

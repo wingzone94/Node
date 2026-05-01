@@ -45,14 +45,14 @@
             <div class="m3-search-container">
                 <form role="search" method="get" class="m3-search-bar" id="m3-main-search-form" action="<?php echo esc_url(home_url('/')); ?>">
                     <div class="m3-search-input-wrapper">
-                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="Search..." value="<?php echo get_search_query(); ?>" name="s" autocomplete="off">
+                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo get_search_query(); ?>" name="s" autocomplete="off">
                         
                         <div class="m3-search-actions-inline">
                             <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="検索ワードをクリア" style="display:none;">
                                 <span class="material-symbols-outlined">close</span>
                             </button>
                             <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索設定">
-                                <span class="material-symbols-outlined">tune</span>
+                                <span class="material-symbols-outlined">filter_alt</span>
                             </button>
                         </div>
                     </div>
@@ -62,9 +62,17 @@
                 </form>
             </div>
 
-            <a href="<?php bloginfo('rss2_url'); ?>" class="m3-icon-button m3-tooltip-target" data-tooltip="RSSフィード">
+            <a href="<?php bloginfo('rss2_url'); ?>" class="m3-icon-button m3-tooltip-target" id="m3-rss-trigger" data-tooltip="RSSフィード">
                 <span class="material-symbols-outlined">rss_feed</span>
             </a>
+            
+            <style>
+                #m3-rss-trigger:hover,
+                #m3-rss-trigger:active {
+                    color: #F26522 !important; /* Official RSS Orange on Interaction */
+                    background: rgba(242, 101, 34, 0.1) !important;
+                }
+            </style>
             
             <div id="m3-theme-controls">
                 <button id="theme-toggle" class="m3-icon-button m3-tooltip-target" data-tooltip="テーマ切り替え">
@@ -74,6 +82,18 @@
         </div>
     </div>
 
+    <?php if (is_home() || is_front_page()) : ?>
+    <div class="m3-header__clock" id="m3-header-clock">
+        <div class="m3-header__greeting" id="m3-header-greeting"></div>
+        <div class="m3-header__datetime">
+            <span class="m3-header__date" id="m3-header-date"></span>
+            <span class="m3-header__time" id="m3-header-time"></span>
+        </div>
+    </div>
+    <?php endif; ?>
+
+
+
     <!-- 詳細検索モーダル (Material 3 Expressive - Multi-page Masterpiece) -->
     <div id="m3-advanced-search-modal" class="m3-modal m3-modal--wide">
         <div class="m3-modal__content m3-advanced-search-card">
@@ -81,7 +101,7 @@
             <!-- Modal Header -->
             <div class="m3-modal__header">
                 <div class="m3-modal__title-group">
-                    <span class="material-symbols-outlined">page_info</span>
+                    <span class="material-symbols-outlined">filter_alt</span>
                     <h2 class="m3-modal__title">詳細検索</h2>
                 </div>
                 <button type="button" class="m3-icon-button m3-modal__close" id="m3-advanced-search-close">
@@ -96,14 +116,13 @@
                     <span>絞り込み</span>
                 </button>
                 <button type="button" class="m3-modal__tab" data-page="2">
-                    <span class="material-symbols-outlined">analytics</span>
+                    <span class="material-symbols-outlined">schedule</span>
                     <span>ボリューム・メディア</span>
                 </button>
                 <button type="button" class="m3-modal__tab" data-page="3">
                     <span class="material-symbols-outlined">devices</span>
                     <span>プラットフォーム</span>
                 </button>
-                <div class="m3-modal__tab-indicator"></div>
             </div>
             
             <div class="m3-modal__body">
@@ -170,25 +189,25 @@
                             <div class="m3-advanced-search-column">
                                 <div class="m3-search-section">
                                     <label class="m3-search-section-label">
-                                        <span class="material-symbols-outlined">format_size</span> 読了時間・文字数の指定
+                                        <span class="material-symbols-outlined">schedule</span> 読了時間・文字数の指定
                                     </label>
                                     
-                                    <div class="m3-reading-time-chips m3-reading-time-chips--compact">
-                                        <label class="m3-reading-chip">
-                                            <input type="radio" name="m3_reading_time" value="all" checked>
-                                            <span>すべて</span>
+                                    <div class="m3-radio-group">
+                                        <label class="m3-radio-item">
+                                            <input type="radio" name="m3_reading_time" value="all" checked class="m3-radio-input">
+                                            <span class="m3-radio-label">すべて</span>
                                         </label>
-                                        <label class="m3-reading-chip">
-                                            <input type="radio" name="m3_reading_time" value="short">
-                                            <span>~5分</span>
+                                        <label class="m3-radio-item">
+                                            <input type="radio" name="m3_reading_time" value="short" class="m3-radio-input">
+                                            <span class="m3-radio-label">~5分</span>
                                         </label>
-                                        <label class="m3-reading-chip">
-                                            <input type="radio" name="m3_reading_time" value="medium">
-                                            <span>~10分</span>
+                                        <label class="m3-radio-item">
+                                            <input type="radio" name="m3_reading_time" value="medium" class="m3-radio-input">
+                                            <span class="m3-radio-label">~10分</span>
                                         </label>
-                                        <label class="m3-reading-chip">
-                                            <input type="radio" name="m3_reading_time" value="long">
-                                            <span>15分~</span>
+                                        <label class="m3-radio-item">
+                                            <input type="radio" name="m3_reading_time" value="long" class="m3-radio-input">
+                                            <span class="m3-radio-label">15分~</span>
                                         </label>
                                     </div>
 
@@ -202,16 +221,54 @@
                                             <span class="m3-range-slider__value">10000+</span>
                                         </div>
                                     </div>
-                                    <input type="hidden" name="m3_min" id="m3-min-chars" value="0">
-                                    <input type="hidden" name="m3_max" id="m3-max-chars" value="10000">
+                                    <div class="m3-char-input-grid">
+                                        <div class="m3-char-input-field">
+                                            <span class="m3-char-input-label">最少文字数</span>
+                                            <input type="number" name="m3_min" id="m3-min-chars" value="0" min="0" max="10000" step="100" class="m3-text-input m3-char-input">
+                                        </div>
+                                        <div class="m3-char-input-field">
+                                            <span class="m3-char-input-label">最大文字数</span>
+                                            <input type="number" name="m3_max" id="m3-max-chars" value="10000" min="0" max="10000" step="100" class="m3-text-input m3-char-input">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="m3-advanced-search-column">
                                 <div class="m3-search-section">
                                     <label class="m3-search-section-label">
+                                        <span class="material-symbols-outlined">media_output</span> 含まれるメディア・埋め込み
+                                    </label>
+                                    <div class="m3-platform-list">
+                                        <label class="m3-platform-chip">
+                                            <input type="checkbox" name="m3_media_type[]" value="image">
+                                            <span>画像</span>
+                                        </label>
+                                        <label class="m3-platform-chip">
+                                            <input type="checkbox" name="m3_media_type[]" value="video">
+                                            <span>動画</span>
+                                        </label>
+                                        <label class="m3-platform-chip">
+                                            <input type="checkbox" name="m3_media_type[]" value="map">
+                                            <span>地図</span>
+                                        </label>
+                                        <label class="m3-platform-chip">
+                                            <input type="checkbox" name="m3_media_type[]" value="youtube">
+                                            <span>YouTube</span>
+                                        </label>
+                                        <label class="m3-platform-chip">
+                                            <input type="checkbox" name="m3_media_type[]" value="sns">
+                                            <span>SNS埋め込み</span>
+                                        </label>
+                                        <label class="m3-platform-chip">
+                                            <input type="checkbox" name="m3_media_type[]" value="download">
+                                            <span>ファイルのダウンロード</span>
+                                        </label>
+                                    </div>
+
+                                    <label class="m3-search-section-label">
                                         <span class="material-symbols-outlined">auto_awesome</span> 生成されたメディアの有無
                                     </label>
-                                    <div class="m3-radio-group m3-radio-group--horizontal">
+                                    <div class="m3-radio-group">
                                         <label class="m3-radio-item">
                                             <input type="radio" name="m3_ai" value="all" checked class="m3-radio-input">
                                             <span class="m3-radio-label">すべて</span>
@@ -232,90 +289,121 @@
 
                     <!-- Page 3: Platforms -->
                     <div class="m3-modal__page" data-page="3">
-                        <div class="m3-platform-grid">
-                            <div class="m3-platform-group">
-                                <label class="m3-platform-group-label">スマートフォン・タブレット</label>
-                                <div class="m3-platform-list">
-                                    <?php 
-                                    $mobile_apps = [
-                                        'iOS' => 'm3-platform-chip--ios', 
-                                        'Android' => 'm3-platform-chip--android'
-                                    ];
-                                    foreach($mobile_apps as $p => $cls): ?>
-                                        <label class="m3-platform-chip <?php echo $cls; ?>">
-                                            <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
-                                            <span><?php echo $p; ?></span>
-                                        </label>
-                                    <?php endforeach; ?>
+                        <div class="m3-platform-layout">
+                            <!-- Left Side: Digital Devices -->
+                            <div class="m3-platform-side">
+                                <div class="m3-platform-group">
+                                    <label class="m3-platform-group-label">
+                                        <span class="material-symbols-outlined">smartphone</span>
+                                        スマートフォン・タブレット
+                                    </label>
+                                    <div class="m3-platform-list">
+                                        <?php 
+                                        $mobile_apps = [
+                                            'iOS' => 'm3-platform-chip--ios', 
+                                            'Android' => 'm3-platform-chip--android'
+                                        ];
+                                        foreach($mobile_apps as $p => $cls): ?>
+                                            <label class="m3-platform-chip <?php echo $cls; ?>">
+                                                <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
+                                                <span><?php echo $p; ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="m3-platform-group" style="margin-top: 32px;">
+                                    <label class="m3-platform-group-label">
+                                        <span class="material-symbols-outlined">laptop_mac</span>
+                                        PC
+                                    </label>
+                                    <div class="m3-platform-list">
+                                        <?php 
+                                        $pc_apps = [
+                                            'Windows' => 'm3-platform-chip--windows', 
+                                            'Mac' => 'm3-platform-chip--mac', 
+                                            'Linux' => 'm3-platform-chip--linux',
+                                            'Chromebook' => 'm3-platform-chip--chromebook'
+                                        ];
+                                        foreach($pc_apps as $p => $cls): ?>
+                                            <label class="m3-platform-chip <?php echo $cls; ?>">
+                                                <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
+                                                <span><?php echo $p; ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="m3-platform-separator" style="height: 16px;"></div>
+                            <div class="m3-platform-divider"></div>
 
-                            <div class="m3-platform-group">
-                                <label class="m3-platform-group-label">PC</label>
-                                <div class="m3-platform-list">
-                                    <?php 
-                                    $pc_apps = [
-                                        'Windows' => 'm3-platform-chip--windows', 
-                                        'Mac' => 'm3-platform-chip--mac', 
-                                        'Linux' => 'm3-platform-chip--linux',
-                                        'Chromebook' => 'm3-platform-chip--chromebook'
-                                    ];
-                                    foreach($pc_apps as $p => $cls): ?>
-                                        <label class="m3-platform-chip <?php echo $cls; ?>">
-                                            <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
-                                            <span><?php echo $p; ?></span>
-                                        </label>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-
-                            <div class="m3-platform-separator"></div>
-
-                            <div class="m3-platform-group">
-                                <label class="m3-platform-group-label">ゲームプラットフォーム</label>
-                                
-                                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
-                                    <div class="m3-platform-subgroup">
-                                        <span style="font-size: 0.75rem; color: var(--md-sys-color-outline); font-weight: 800; display: block; margin-bottom: 6px;">Nintendo</span>
-                                        <div class="m3-platform-list">
-                                            <?php 
-                                            $nintendo = ['Switch 2', 'Switch', 'Wii U', 'Wii', 'GameCube', 'N64', 'SFC', 'FC', '3DS', 'DS', 'GBA', 'GB'];
-                                            foreach($nintendo as $p): ?>
-                                                <label class="m3-platform-chip m3-platform-chip--nintendo">
-                                                    <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
-                                                    <span><?php echo $p; ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
+                            <!-- Right Side: Game Platforms -->
+                            <div class="m3-platform-side">
+                                <div class="m3-platform-group">
+                                    <label class="m3-platform-group-label">
+                                        <span class="material-symbols-outlined">sports_esports</span>
+                                        ゲームプラットフォーム
+                                    </label>
+                                    <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 12px;">
+                                        <div class="m3-platform-subgroup">
+                                            <span class="m3-platform-subgroup-title">Nintendo</span>
+                                            <div class="m3-platform-list">
+                                                <?php 
+                                                $nintendo = ['Switch 2', 'Switch', 'Wii U', 'Wii', 'GameCube', 'N64', 'SFC', 'FC', '3DS', 'DS', 'GBA', 'GB'];
+                                                foreach($nintendo as $p): ?>
+                                                    <label class="m3-platform-chip m3-platform-chip--nintendo">
+                                                        <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>" data-is-game="true">
+                                                        <span><?php echo $p; ?></span>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="m3-platform-subgroup">
-                                        <span style="font-size: 0.75rem; color: var(--md-sys-color-outline); font-weight: 800; display: block; margin-bottom: 6px;">PlayStation</span>
-                                        <div class="m3-platform-list">
-                                            <?php 
-                                            $sony = ['PS5', 'PS4', 'PS3', 'PS2', 'PS1', 'PS Vita', 'PSP'];
-                                            foreach($sony as $p): ?>
-                                                <label class="m3-platform-chip m3-platform-chip--sony">
-                                                    <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
-                                                    <span><?php echo $p; ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
+                                        <div class="m3-platform-subgroup">
+                                            <span class="m3-platform-subgroup-title">PlayStation</span>
+                                            <div class="m3-platform-list">
+                                                <?php 
+                                                $sony = ['PS5', 'PS4', 'PS3', 'PS2', 'PS1', 'PS Vita', 'PSP'];
+                                                foreach($sony as $p): ?>
+                                                    <label class="m3-platform-chip m3-platform-chip--sony">
+                                                        <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>" data-is-game="true">
+                                                        <span><?php echo $p; ?></span>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="m3-platform-subgroup">
-                                        <span style="font-size: 0.75rem; color: var(--md-sys-color-outline); font-weight: 800; display: block; margin-bottom: 6px;">Xbox</span>
-                                        <div class="m3-platform-list">
-                                            <?php 
-                                            $ms = ['Xbox Series X/S', 'Xbox One', 'Xbox 360', 'Xbox'];
-                                            foreach($ms as $p): ?>
-                                                <label class="m3-platform-chip m3-platform-chip--xbox">
-                                                    <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>">
-                                                    <span><?php echo $p; ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
+                                        <div class="m3-platform-subgroup">
+                                            <span class="m3-platform-subgroup-title">Xbox</span>
+                                            <div class="m3-platform-list">
+                                                <?php 
+                                                $ms = ['Xbox Series X/S', 'Xbox One', 'Xbox 360', 'Xbox'];
+                                                foreach($ms as $p): ?>
+                                                    <label class="m3-platform-chip m3-platform-chip--xbox">
+                                                        <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>" data-is-game="true">
+                                                        <span><?php echo $p; ?></span>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+
+                                        <div class="m3-platform-subgroup">
+                                            <span class="m3-platform-subgroup-title">PC Game Stores & Others</span>
+                                            <div class="m3-platform-list">
+                                                <?php 
+                                                $other_platforms = [
+                                                    'Steam' => 'm3-platform-chip--steam',
+                                                    'Epic Games Store' => 'm3-platform-chip--epic',
+                                                    'Geforce NOW' => 'm3-platform-chip--geforce',
+                                                    'その他' => 'm3-platform-chip--others'
+                                                ];
+                                                foreach($other_platforms as $p => $cls): ?>
+                                                    <label class="m3-platform-chip <?php echo $cls; ?>">
+                                                        <input type="checkbox" name="m3_platform[]" value="<?php echo $p; ?>" data-is-game="true">
+                                                        <span><?php echo $p; ?></span>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -334,7 +422,7 @@
                 </div>
                 <div class="m3-modal__footer-actions">
                     <button type="button" class="m3-button m3-button--text" id="m3-advanced-search-reset">
-                        <span class="material-symbols-outlined">restart_alt</span> リセット
+                        <span class="material-symbols-outlined">delete</span> リセット
                     </button>
                     <button type="button" class="m3-button m3-button--filled" id="m3-advanced-search-apply">
                         <span class="material-symbols-outlined">search_check</span> 

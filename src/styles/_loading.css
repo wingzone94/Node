@@ -1,0 +1,104 @@
+/* Material 3 Expressive Loading Styles */
+
+.m3-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 244, 229, 0.85); /* fallback warm surface */
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s cubic-bezier(0.2, 0, 0, 1);
+    border-radius: inherit;
+}
+
+[data-theme="dark"] .m3-loading-overlay {
+    background: rgba(30, 27, 22, 0.85);
+}
+
+.m3-loading-overlay.is-active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Material 3 Indeterminate Circular Progress (Expressive) */
+.m3-loading-spinner {
+    width: 64px;
+    height: 64px;
+    position: relative;
+}
+
+.m3-spinner-svg {
+    width: 100%;
+    height: 100%;
+    animation: m3-spinner-rotate 1.4s linear infinite;
+    transform-origin: center center;
+}
+
+.m3-spinner-path {
+    stroke: var(--md-sys-color-primary, #FF9900);
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    stroke-width: 4;
+    animation: m3-spinner-dash 1.4s ease-in-out infinite;
+}
+
+@keyframes m3-spinner-rotate {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes m3-spinner-dash {
+    0% {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 100, 200;
+        stroke-dashoffset: -15px;
+    }
+    100% {
+        stroke-dasharray: 100, 200;
+        stroke-dashoffset: -125px;
+    }
+}
+
+/* Optional: Secondary inner ring for more "Expressive" look */
+.m3-loading-spinner::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 2px solid var(--md-sys-color-primary);
+    border-radius: 50%;
+    opacity: 0.2;
+    animation: m3-spinner-pulse 1.4s infinite ease-out;
+}
+
+@keyframes m3-spinner-pulse {
+    0% { transform: scale(0.8); opacity: 0.3; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+.m3-loading-text {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: var(--md-sys-color-primary);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-indent: 0.2em;
+    animation: m3-loading-text-fade 1.4s infinite ease-in-out;
+}
+
+@keyframes m3-loading-text-fade {
+    0%, 100% { opacity: 0.5; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-2px); }
+}

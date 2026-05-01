@@ -1,0 +1,31 @@
+/* Material Symbols - Variable Axis Animations */
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
+    display: inline-block;
+}
+
+/* Global Interaction triggers */
+.m3-icon-button:hover .material-symbols-outlined,
+.m3-button:hover .material-symbols-outlined,
+.m3-card:hover .material-symbols-outlined,
+.m3-modal__tab:hover .material-symbols-outlined,
+.m3-modal__tab.is-active .material-symbols-outlined,
+.m3-article__reading-badge-expressive:hover .material-symbols-outlined,
+.m3-article__reading-badge-expressive.is-info-active .material-symbols-outlined,
+.m3-fab:hover .material-symbols-outlined,
+.m3-header__logo-link:hover .material-symbols-outlined,
+.m3-hero-info-bubble .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 200, 'opsz' 24;
+}
+
+/* Specific logic for Search Modal Tabs (Filled when active) */
+.m3-modal__tab.is-active .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Theme toggle special case */
+#theme-toggle:hover #theme-toggle-icon {
+    transform: rotate(-15deg) scale(1.1);
+}

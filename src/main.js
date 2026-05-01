@@ -16,25 +16,130 @@ document.addEventListener('DOMContentLoaded', async () => {
     initKeyboardShortcuts();
     initTooltips();
     initRippleEffect();
-    initAdaptiveHeader();
-    initReadingInfoBubble();
     initReadingProgress();
+    initHeroInfoBubble();
+    initScrollAnimations();
+    initHeaderClock();
 });
 
-function initReadingInfoBubble() {
-    const meta = document.getElementById('m3-reading-meta-toggle');
-    if (!meta) return;
+function initHeroInfoBubble() {
+    const trigger = document.getElementById('m3-hero-reading-badge');
+    const bubble = document.getElementById('m3-hero-info-bubble');
+    
+    if (!trigger || !bubble) return;
 
-    meta.addEventListener('click', () => {
-        meta.classList.toggle('is-info-active');
+    let hideTimeout;
+
+    const showInfo = () => {
+        trigger.classList.add('is-info-active');
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => {
+            trigger.classList.remove('is-info-active');
+        }, 5000);
+    };
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (trigger.classList.contains('is-info-active')) {
+            trigger.classList.remove('is-info-active');
+            clearTimeout(hideTimeout);
+        } else {
+            showInfo();
+        }
     });
+
+    document.addEventListener('click', (e) => {
+        if (!trigger.contains(e.target)) {
+            trigger.classList.remove('is-info-active');
+        }
+    });
+}
+
+function initHeaderClock() {
+    const clock = document.getElementById('m3-header-clock');
+    if (!clock) return;
+
+    const dateEl = document.getElementById('m3-header-date');
+    const timeEl = document.getElementById('m3-header-time');
+    const greetingEl = document.getElementById('m3-header-greeting');
+
+    const update = () => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+
+        if (dateEl) dateEl.textContent = `${y}/${m}/${d}`;
+        if (timeEl) timeEl.textContent = `${hh}:${mm}:${ss}`;
+
+        const hours = now.getHours();
+        let greeting = '';
+        let emoji = '';
+        if (hours >= 6 && hours < 10) { greeting = 'Good Morning!'; emoji = '🌅'; }
+        else if (hours >= 10 && hours < 18) { greeting = 'Hello!'; emoji = '☀️'; }
+        else if (hours >= 18 && hours < 22) { greeting = 'Good Evening!'; emoji = '🌇'; }
+        else { greeting = 'Good night...'; emoji = '😴'; }
+
+        if (greetingEl && !greetingEl.dataset.initialized) {
+            greetingEl.textContent = `${emoji} ${greeting}`;
+            greetingEl.dataset.initialized = "true";
+            
+            // Fade-in animation
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(clock, 
+                    { opacity: 0, y: -10 }, 
+                    { opacity: 0.6, y: 0, duration: 1.2, ease: "power3.out" }
+                );
+            }
+
+            // Fade out the ENTIRE clock container after 5 seconds
+            setTimeout(() => {
+                if (typeof gsap !== 'undefined') {
+                    gsap.to(clock, { 
+                        opacity: 0, 
+                        y: 10,
+                        duration: 1.5, 
+                        ease: "power3.inOut", 
+                        onComplete: () => {
+                            clock.style.display = 'none';
+                        }
+                    });
+                } else {
+                    clock.style.display = 'none';
+                }
+            }, 5000);
+        }
+    };
+
+    setInterval(update, 1000);
+    update();
+}
+
+function initScrollAnimations() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.m3-reading-badge').forEach(el => observer.observe(el));
 }
 
 async function initReadingProgress() {
     const progressBar = document.querySelector('.m3-header__progress-bar');
     const container = document.querySelector('.m3-header__progress-container');
     const article = document.querySelector('.m3-article__body');
-    if (!progressBar || !container || !article) return;
+    
+    if (!progressBar || !article) return;
+    
+    let shattered = false;
+    
     const updateProgress = () => {
         const rect = article.getBoundingClientRect();
         const articleTop = rect.top + window.pageYOffset;
@@ -42,12 +147,75 @@ async function initReadingProgress() {
         const windowHeight = window.innerHeight;
         const currentScroll = window.pageYOffset;
         const scrollStart = articleTop - 64; 
+        
         let progress = currentScroll > scrollStart ? ((currentScroll - scrollStart) / (articleHeight - windowHeight)) * 100 : 0;
         progress = Math.min(100, Math.max(0, progress));
-        progressBar.style.width = `${progress}%`;
-        if (currentScroll > scrollStart && currentScroll < (articleTop + articleHeight - 100)) container.classList.add('is-visible');
-        else container.classList.remove('is-visible');
+        
+        // 可逆性の実装: 上にスクロールして100%未満になったら復活させる
+        if (progress < 99.5 && shattered) {
+            shattered = false;
+            gsap.to(progressBar, { opacity: 1, scaleY: 1, duration: 0.3, ease: "power2.out" });
+        }
+
+        if (!shattered) {
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        // 読了時の粉砕アニメーション (100%到達時)
+        if (progress >= 99.8 && !shattered) {
+            shattered = true;
+            playBarShatterAnimation(container, progressBar);
+        }
+
+        if (container) {
+            // スクロール範囲内なら表示
+            if (currentScroll > scrollStart && currentScroll < (articleTop + articleHeight - 100)) {
+                container.classList.add('is-visible');
+            } else {
+                container.classList.remove('is-visible');
+            }
+        }
     };
+
+    function playBarShatterAnimation(parent, bar) {
+        if (!parent || !bar || typeof gsap === 'undefined') return;
+        
+        // バー自体を弾けさせる
+        gsap.to(bar, { 
+            opacity: 0, 
+            scaleY: 3, 
+            duration: 0.2, 
+            ease: "expo.out" 
+        });
+
+        const rect = bar.getBoundingClientRect();
+        const shardCount = 20;
+
+        for (let i = 0; i < shardCount; i++) {
+            const shard = document.createElement('div');
+            shard.className = 'm3-gauge-shard';
+            shard.style.backgroundColor = '#FF9900';
+            shard.style.left = `${Math.random() * rect.width}px`;
+            shard.style.top = `0px`;
+            parent.appendChild(shard);
+            
+            // 上方へランダムに飛び散る
+            const angle = (Math.random() * Math.PI) + Math.PI; 
+            const dist = 40 + Math.random() * 120;
+            
+            gsap.to(shard, {
+                x: Math.cos(angle) * dist,
+                y: Math.sin(angle) * dist,
+                rotation: Math.random() * 720,
+                scale: 0,
+                opacity: 0,
+                duration: 0.8 + Math.random() * 0.4,
+                ease: "power4.out",
+                onComplete: () => shard.remove()
+            });
+        }
+    }
+
     window.addEventListener('scroll', updateProgress, { passive: true });
     updateProgress();
 }
@@ -132,6 +300,7 @@ function initSearchBar() {
         document.body.style.overflow = 'hidden';
         switchPage(1); // 常に1ページ目から開始
         initRangeSlider();
+        updateHitCount(); // 初期表示時にカウントを更新
     };
 
     // --- Multi-page Logic ---
@@ -139,7 +308,6 @@ function initSearchBar() {
         const pagesContainer = modal.querySelector('.m3-modal__pages-container');
         const pages = modal.querySelectorAll('.m3-modal__page');
         const tabs = modal.querySelectorAll('.m3-modal__tab');
-        const indicator = modal.querySelector('.m3-modal__tab-indicator');
         const totalPages = pages.length;
 
         // Page Transform (100 / totalPages * (pageNum - 1))
@@ -149,13 +317,6 @@ function initSearchBar() {
         // Active State
         pages.forEach(p => p.classList.toggle('is-active', p.dataset.page == pageNum));
         tabs.forEach(t => t.classList.toggle('is-active', t.dataset.page == pageNum));
-
-        // Tab Indicator Position
-        const activeTab = modal.querySelector(`.m3-modal__tab[data-page="${pageNum}"]`);
-        if (activeTab && indicator) {
-            indicator.style.width = `${activeTab.offsetWidth}px`;
-            indicator.style.left = `${activeTab.offsetLeft}px`;
-        }
     };
 
     modal.querySelectorAll('.m3-modal__tab').forEach(el => {
@@ -185,35 +346,39 @@ function initSearchBar() {
         let maxVal = parseInt(maxInput.value) || 10000;
         const totalMax = 10000;
 
-        const updateAccentColor = () => {
-            let color = 'var(--rank-long)';
-            if (maxVal <= 2500) color = 'var(--rank-short)';
-            else if (maxVal <= 5000) color = 'var(--rank-medium-short)';
-            else if (maxVal <= 7500) color = 'var(--rank-standard)';
-            else if (maxVal <= 9999) color = 'var(--rank-medium-long)';
-            
-            modal.style.setProperty('--md-sys-color-primary', color);
-        };
-
         const updateUI = () => {
             const minPercent = (minVal / totalMax) * 100;
             const maxPercent = (maxVal / totalMax) * 100;
-            minHandle.style.left = `${minPercent}%`;
-            maxHandle.style.left = `${maxPercent}%`;
-            range.style.left = `${minPercent}%`;
-            range.style.width = `${maxPercent - minPercent}%`;
+            
+            const padding = 28; // Matches CSS padding
+            const containerWidth = slider.offsetWidth;
+            const trackWidth = containerWidth - (padding * 2);
+            
+            const minPos = padding + (minPercent / 100) * trackWidth;
+            const maxPos = padding + (maxPercent / 100) * trackWidth;
+            
+            minHandle.style.left = `${minPos}px`;
+            maxHandle.style.left = `${maxPos}px`;
+            range.style.left = `${minPos}px`;
+            range.style.width = `${maxPos - minPos}px`;
+            
             minHandle.querySelector('.m3-range-slider__value').textContent = minVal;
             maxHandle.querySelector('.m3-range-slider__value').textContent = maxVal >= totalMax ? '10000+' : maxVal;
             minInput.value = minVal;
             maxInput.value = maxVal;
-            updateAccentColor();
         };
 
         const handleDrag = (e, type) => {
             const rect = slider.getBoundingClientRect();
-            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-            let percent = Math.min(100, Math.max(0, (x / rect.width) * 100));
+            const padding = 28;
+            const trackWidth = rect.width - (padding * 2);
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left - padding;
+            
+            const percent = Math.min(100, Math.max(0, (x / trackWidth) * 100));
             let val = Math.round((percent / 100) * totalMax);
+            
+            // スナップ機能 (500単位)
+            val = Math.round(val / 500) * 500;
 
             if (type === 'min') {
                 minVal = Math.min(val, maxVal - 500);
@@ -221,6 +386,7 @@ function initSearchBar() {
                 maxVal = Math.max(val, minVal + 500);
             }
             updateUI();
+            updateHitCount(); // ヒット件数をリアルタイム更新
         };
 
         const onStart = (e, type) => {
@@ -242,6 +408,18 @@ function initSearchBar() {
         minHandle.addEventListener('touchstart', (e) => onStart(e, 'min'), { passive: false });
         maxHandle.addEventListener('touchstart', (e) => onStart(e, 'max'), { passive: false });
 
+        // --- Manual Input Sync ---
+        minInput.addEventListener('change', () => {
+            minVal = Math.min(Math.max(0, parseInt(minInput.value) || 0), maxVal - 500);
+            updateUI();
+            updateHitCount();
+        });
+        maxInput.addEventListener('change', () => {
+            maxVal = Math.max(Math.min(totalMax, parseInt(maxInput.value) || 0), minVal + 500);
+            updateUI();
+            updateHitCount();
+        });
+
         updateUI();
     }
 
@@ -262,25 +440,172 @@ function initSearchBar() {
         });
     });
 
-    // --- Modal Logic ---
-    modalReset.addEventListener('click', () => {
-        modal.querySelectorAll('input, select').forEach(input => {
-            if (input.tagName === 'SELECT') input.selectedIndex = 0;
-            else if (input.type === 'checkbox') input.checked = false;
-            else if (input.type === 'radio') {
-                if (input.name === 'm3_ai' || input.name === 'm3_media' || input.name === 'm3_reading_time') {
-                    input.checked = input.value === 'all';
-                } else {
-                    input.checked = false;
+    // --- Platform Selection Limit (Games Only) ---
+    const MAX_GAME_PLATFORMS = 5;
+    const applyButton = document.getElementById('m3-advanced-search-apply');
+    const platformCheckboxes = modal.querySelectorAll('input[name="m3_platform[]"]');
+
+    platformCheckboxes.forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const isGame = cb.dataset.isGame === 'true';
+            if (isGame && cb.checked) {
+                const checkedGames = modal.querySelectorAll('input[name="m3_platform[]"][data-is-game="true"]:checked');
+                if (checkedGames.length > MAX_GAME_PLATFORMS) {
+                    // 5個を超えても一応選択可能にするが、警告（シェイク）は出す
+                    if (applyButton && typeof gsap !== 'undefined') {
+                        gsap.to(applyButton, { 
+                            x: 8, duration: 0.08, repeat: 5, yoyo: true, 
+                            ease: "power2.inOut", 
+                            onComplete: () => gsap.set(applyButton, { x: 0 })
+                        });
+                        applyButton.classList.add('is-error-shake');
+                        setTimeout(() => applyButton.classList.remove('is-error-shake'), 600);
+                    }
                 }
             }
-            else if (input.id === 'm3-min-chars') input.value = 0;
-            else if (input.id === 'm3-max-chars') input.value = 10000;
-            else input.value = '';
+            updateHitCount();
         });
-        // スライダーをリセット
-        initRangeSlider();
     });
+
+    // --- Modal Logic with Vanishing Animation ---
+    modalReset.addEventListener('click', () => {
+        const sections = modal.querySelectorAll('.m3-search-section, .m3-platform-group');
+        
+        // M3E Vanishing Animation
+        if (typeof gsap !== 'undefined') {
+            gsap.to(sections, {
+                y: 10, opacity: 0, duration: 0.25, stagger: 0.03, ease: "power2.in",
+                onComplete: () => {
+                    performReset();
+                    // Reappear Animation
+                    gsap.to(sections, {
+                        y: 0, opacity: 1, duration: 0.4, stagger: 0.03, ease: "back.out(1.5)"
+                    });
+                }
+            });
+        } else {
+            performReset();
+        }
+
+        function performReset() {
+            modal.querySelectorAll('input, select').forEach(input => {
+                if (input.tagName === 'SELECT') input.selectedIndex = 0;
+                else if (input.type === 'checkbox') input.checked = false;
+                else if (input.type === 'radio') {
+                    if (['m3_ai', 'm3_media', 'm3_reading_time'].includes(input.name)) {
+                        input.checked = input.value === 'all';
+                    } else {
+                        input.checked = false;
+                    }
+                }
+                else if (input.id === 'm3-min-chars') input.value = 0;
+                else if (input.id === 'm3-max-chars') input.value = 10000;
+                else input.value = '';
+            });
+            initRangeSlider();
+            updateHitCount();
+        }
+    });
+
+    // --- Real-time Search Hits (Debounced for stability) ---
+    let hitCountTimeout;
+    function updateHitCount() {
+        const hitCountText = document.querySelector('.m3-search-hits-text strong');
+        if (!hitCountText) return;
+        
+        clearTimeout(hitCountTimeout);
+        hitCountTimeout = setTimeout(() => {
+            hitCountText.style.transition = 'opacity 0.2s';
+            hitCountText.style.opacity = '0.3'; // Loading state
+            
+            const params = new URLSearchParams();
+            const sValue = searchInput.value.trim();
+            if (sValue) params.append('s', sValue);
+            
+            modal.querySelectorAll('input, select').forEach(input => {
+                if (input.type === 'checkbox' && input.checked) params.append(input.name, input.value);
+                if (input.type === 'radio' && input.checked) params.append(input.name, input.value);
+                if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
+                if ((input.type === 'text' || input.type === 'date' || input.type === 'hidden' || input.type === 'number') && input.value) {
+                    params.append(input.name, input.value);
+                }
+            });
+            
+            // WordPress AJAX endpoint
+            const ajaxUrl = `${m3_ajax.ajax_url}?action=node_get_search_count&${params.toString()}`;
+            
+            const resultsContainer = document.getElementById('m3-search-results-list');
+        if (resultsContainer) showSkeletonLoader(resultsContainer, 4);
+
+        fetch(ajaxUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        hitCountText.textContent = data.data.count;
+                    }
+                    hitCountText.style.opacity = '1';
+                })
+                .catch(() => { hitCountText.style.opacity = '1'; });
+        }, 300); // 300ms debounce
+    };
+
+    const updateTabStatus = () => {
+        const tabs = modal.querySelectorAll('.m3-modal__tab');
+        const pages = modal.querySelectorAll('.m3-modal__page');
+
+        pages.forEach((page, index) => {
+            const tab = tabs[index];
+            let hasValue = false;
+
+            if (index === 0) {
+                // Page 1: Cat, Tag, Dates
+                const cat = page.querySelector('select[name="m3_cat"]')?.value;
+                const tag = page.querySelector('input[name="m3_tag"]')?.value;
+                const start = page.querySelector('input[name="m3_start_date"]')?.value;
+                const end = page.querySelector('input[name="m3_end_date"]')?.value;
+                if (cat || tag || start || end) hasValue = true;
+            } else if (index === 1) {
+                // Page 2: Reading Time, Chars, Media, AI
+                const readingTime = page.querySelector('input[name="m3_reading_time"]:checked')?.value;
+                const minChars = page.querySelector('#m3-min-chars')?.value;
+                const maxChars = page.querySelector('#m3-max-chars')?.value;
+                const mediaChecked = page.querySelectorAll('input[name="m3_media_type[]"]:checked').length > 0;
+                const ai = page.querySelector('input[name="m3_ai"]:checked')?.value;
+                
+                if ((readingTime && readingTime !== 'all') || 
+                    (minChars && minChars !== '0') || 
+                    (maxChars && maxChars !== '10000') || 
+                    mediaChecked || 
+                    (ai && ai !== 'all')) {
+                    hasValue = true;
+                }
+            } else if (index === 2) {
+                // Page 3: Platforms
+                const platformsChecked = page.querySelectorAll('input[name="m3_platform[]"]:checked').length > 0;
+                if (platformsChecked) hasValue = true;
+            }
+
+            tab.classList.toggle('has-settings', hasValue);
+        });
+    };
+
+    // Add listeners to ALL inputs in the modal
+    modal.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('change', () => {
+            updateHitCount();
+            updateTabStatus();
+        });
+        if (input.type === 'text' || input.type === 'number') {
+            input.addEventListener('input', () => {
+                updateHitCount();
+                updateTabStatus();
+            });
+        }
+    });
+    searchInput.addEventListener('input', updateHitCount);
+    
+    // Initial call to set status if filters are pre-filled (e.g. from URL)
+    updateTabStatus();
 
     modalApply.addEventListener('click', () => {
         const loading = document.getElementById('m3-search-loading');
@@ -288,21 +613,22 @@ function initSearchBar() {
 
         const params = new URLSearchParams();
         const sValue = searchInput.value.trim();
-        if (sValue) params.append('s', sValue);
+        params.append('s', sValue); // Always append s to trigger search.php even if empty
 
         // すべての入力要素を収集
         modal.querySelectorAll('input, select').forEach(input => {
             if (input.type === 'checkbox' && input.checked) params.append(input.name, input.value);
             if (input.type === 'radio' && input.checked) params.append(input.name, input.value);
             if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
-            if ((input.type === 'text' || input.type === 'date' || input.type === 'hidden') && input.value) {
+            if ((input.type === 'text' || input.type === 'date' || input.type === 'hidden' || input.type === 'number') && input.value) {
                 params.append(input.name, input.value);
             }
         });
 
         // アニメーションを見せるための微小な遅延
         setTimeout(() => {
-            window.location.href = `${window.location.origin}/?${params.toString()}`;
+            const homeUrl = typeof m3_ajax !== 'undefined' ? m3_ajax.home_url : `${window.location.origin}/`;
+            window.location.href = `${homeUrl}?${params.toString()}`;
         }, 800);
     });
 }
@@ -374,10 +700,25 @@ function initTableOfContents() {
         const id = heading.id || `m3-heading-${index}`; heading.id = id;
         const li = document.createElement('li'); li.className = `toc-level-${heading.tagName.toLowerCase()}`;
         const a = document.createElement('a'); a.href = `#${id}`; a.textContent = heading.textContent.trim();
+        a.className = 'm3-toc-link';
         a.addEventListener('click', (e) => { e.preventDefault(); toggleToc(false); gsap.to(window, { duration: 0.8, scrollTo: { y: document.getElementById(id), offsetY: 80 }, ease: "power3.inOut" }); });
         li.appendChild(a); tocList.appendChild(li);
     });
     tocContainer.innerHTML = ''; tocContainer.appendChild(tocList);
+
+    // Scroll Spy for TOC
+    const observerOptions = { rootMargin: '-100px 0px -70% 0px', threshold: 0 };
+    const tocObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                document.querySelectorAll('.m3-toc-link').forEach(a => {
+                    a.classList.toggle('is-active', a.getAttribute('href') === `#${id}`);
+                });
+            }
+        });
+    }, observerOptions);
+    headings.forEach(h => tocObserver.observe(h));
 
     const toggleToc = (show) => {
         if (show) {
@@ -408,6 +749,22 @@ function initOverdriveScroll() {
     stretch();
 }
 
+/**
+ * Minecraft Skeleton Loader Utility
+ */
+function showSkeletonLoader(container, count = 6) {
+    const skeletonHtml = Array(count).fill(`
+        <div class="m3-skeleton m3-skeleton-card">
+            <div class="m3-skeleton__image"></div>
+            <div class="m3-skeleton__title"></div>
+            <div class="m3-skeleton__text"></div>
+            <div class="m3-skeleton__meta"></div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = `<div class="m3-post-grid__skeleton">${skeletonHtml}</div>`;
+}
+
 function initKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') { if (e.key === 'Escape') e.target.blur(); return; }
@@ -423,9 +780,28 @@ function initTooltips() {
         const text = target.getAttribute('data-tooltip') || target.getAttribute('title'); if (!text) return;
         tooltip.textContent = text; gsap.set(tooltip, { display: 'block', autoAlpha: 0, scale: 0.8 });
         const rect = target.getBoundingClientRect(); const tipW = tooltip.offsetWidth; const tipH = tooltip.offsetHeight;
-        let x = rect.left - tipW - 16; let y = rect.top + rect.height/2 - tipH/2;
-        x = Math.max(12, Math.min(x, window.innerWidth - tipW - 12)); y = Math.max(12, Math.min(y, window.innerHeight - tipH - 12));
-        gsap.set(tooltip, { x: rect.left - 20, y: rect.top + rect.height/2 });
+        
+        let x, y;
+        const isBottomTooltip = target.id === 'm3-rss-trigger' || target.id === 'theme-toggle';
+
+        if (isBottomTooltip) {
+            // Position at the bottom of the target
+            x = rect.left + rect.width/2 - tipW/2; 
+            y = rect.bottom + 8;
+        } else {
+            // Position at the left of the target (Default)
+            x = rect.left - tipW - 16; 
+            y = rect.top + rect.height/2 - tipH/2;
+        }
+        
+        // Viewport bounds check
+        x = Math.max(12, Math.min(x, window.innerWidth - tipW - 12)); 
+        y = Math.max(12, Math.min(y, window.innerHeight - tipH - 12));
+        
+        const startX = isBottomTooltip ? (rect.left + rect.width/2 - tipW/2) : (rect.left - 20);
+        const startY = isBottomTooltip ? (rect.bottom - 10) : (rect.top + rect.height/2);
+
+        gsap.set(tooltip, { x: startX, y: startY });
         gsap.to(tooltip, { autoAlpha: 1, x, y, scale: 1, duration: 0.35, ease: "back.out(1.2)" });
     };
     const hide = () => gsap.to(tooltip, { autoAlpha: 0, scale: 0.8, duration: 0.2 });

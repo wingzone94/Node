@@ -155,4 +155,62 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* --- Archive Pill Button --- */
+.m3-archive-pill-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 32px;
+    padding-right: 16px;
+}
+
+.m3-archive-pill-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    padding: 12px 32px;
+    border-radius: 40px; /* Pill shape */
+    text-decoration: none;
+    box-shadow: var(--m3-elevation-2);
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.m3-archive-pill-button:hover {
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-primary);
+    box-shadow: var(--m3-elevation-4);
+    transform: translateY(-2px);
+    border: 1px solid var(--md-sys-color-primary);
+}
+
+.m3-archive-pill-button__text {
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+}
+
+.m3-archive-pill-button__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    margin-right: -16px; 
+}
+
+.m3-archive-pill-button:hover .m3-archive-pill-button__icon {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.m3-archive-pill-button .material-symbols-outlined {
+    font-size: 24px;
+}
  

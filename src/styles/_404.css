@@ -1,0 +1,228 @@
+/**
+ * Luminous Core - 404 Magma Edition (Material 3 Expressive)
+ */
+
+.m3-404-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background-color: #1a0000;
+    color: #fff;
+    text-align: center;
+}
+
+/* Background & Magma Overlay */
+.m3-404-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.m3-404-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(1px) brightness(0.8);
+    animation: mc-bg-drift 60s linear infinite alternate;
+}
+
+@keyframes mc-bg-drift {
+    from { transform: scale(1.1) translateX(-2%); }
+    to { transform: scale(1.1) translateX(2%); }
+}
+
+.m3-404-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 68, 0, 0.3) 0%, rgba(20, 0, 0, 0.8) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+}
+
+/* Content Layout */
+.m3-404-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 800px;
+    padding: var(--m3-spacing-xl);
+    animation: mc-fade-in 1s ease-out;
+}
+
+@keyframes mc-fade-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Typography - Game Over Style */
+.m3-404-title-large {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(3rem, 10vw, 6.5rem);
+    color: #fff;
+    text-shadow: 6px 6px 0px rgba(0, 0, 0, 1), 0 0 20px rgba(255, 100, 0, 0.5);
+    margin-bottom: var(--m3-spacing-l);
+    letter-spacing: -2px;
+}
+
+.m3-404-subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 2.8rem;
+    color: #ff9900;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    margin-bottom: var(--m3-spacing-m);
+}
+
+.m3-404-description {
+    font-size: 1.2rem;
+    color: #eee;
+    margin-bottom: var(--m3-spacing-xxl);
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+/* Minecraft UI Buttons */
+.m3-mc-button {
+    font-family: 'VT323', monospace;
+    font-size: 1.8rem;
+    background-color: #7e7e7e;
+    color: #fff !important;
+    border: 3px solid #000;
+    border-top-color: #afafaf;
+    border-left-color: #afafaf;
+    border-right-color: #444;
+    border-bottom-color: #444;
+    padding: 8px 48px;
+    display: inline-block;
+    text-decoration: none;
+    cursor: pointer;
+    transition: none;
+    width: auto;
+    min-width: 280px;
+    box-sizing: border-box;
+}
+
+.m3-mc-button:hover {
+    background-color: #8e8e8e;
+    border-top-color: #fff;
+    border-left-color: #fff;
+    color: #ffffa0 !important;
+}
+
+.m3-mc-button:active {
+    background-color: #5e5e5e;
+    border: 3px solid #000;
+    padding: 10px 48px 6px;
+}
+
+.m3-404-button-group {
+    display: flex;
+    justify-content: center;
+    gap: var(--m3-spacing-m);
+    margin-bottom: var(--m3-spacing-xxl);
+}
+
+/* Material 3 Expressive Search Box */
+.m3-404-search-expressive {
+    margin-top: var(--m3-spacing-xxxl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--m3-spacing-l);
+}
+
+.m3-mc-text {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: #ffcc00;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+.m3-404-search-form-wrapper {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* Custom Search Form Style (M3 Expressive) */
+.m3-404-search-form-wrapper form {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 1000px;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    transition: all 0.4s var(--m3-motion-easing);
+}
+
+.m3-404-search-form-wrapper form:focus-within {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 12px 48px rgba(255, 153, 0, 0.4);
+    transform: translateY(-2px) scale(1.02);
+    border-color: rgba(255, 153, 0, 0.5);
+}
+
+.m3-404-search-form-wrapper input[type="search"] {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.m3-404-search-form-wrapper input[type="search"]::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.m3-404-search-form-wrapper button[type="submit"],
+.m3-404-search-form-wrapper .search-submit {
+    background: url('../images/mc-search-icon.png') no-repeat center !important;
+    background-size: 32px !important;
+    border: none !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: transparent !important; /* Hide "Search" text if present */
+    overflow: hidden;
+    font-size: 0;
+    line-height: 0;
+    box-shadow: none !important;
+}
+
+.m3-404-search-form-wrapper button[type="submit"]:hover,
+.m3-404-search-form-wrapper .search-submit:hover {
+    transform: scale(1.2) rotate(-5deg);
+    filter: drop-shadow(0 0 8px rgba(255, 153, 0, 0.8));
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .m3-404-title-large {
+        font-size: 3.2rem;
+    }
+    .m3-mc-button {
+        min-width: 100%;
+    }
+    .m3-404-search-form-wrapper {
+        max-width: 100%;
+    }
+}

@@ -123,6 +123,7 @@
 .m3-share-btn--hatebu { background-color: #00A4DE !important; color: #ffffff !important; }
 .m3-share-btn--threads { background-color: #000000 !important; color: #ffffff !important; }
 .m3-share-btn--bluesky { background-color: #0085ff !important; color: #ffffff !important; }
+.m3-share-btn--misskey { background-color: #94ba0a !important; color: #ffffff !important; }
 .m3-share-btn--system { 
     display: none !important; /* PCビューでは非表示 */
 }
@@ -150,8 +151,11 @@
  
 .m3-share-buttons .m3-share-btn i, 
 .m3-share-buttons .m3-share-btn .material-symbols-outlined,
-.m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
+.m3-share-buttons .m3-share-btn .m3-share-btn__icon,
+.m3-share-buttons .m3-share-btn svg { 
     font-size: 22px !important; 
+    width: 22px !important;
+    height: 22px !important;
     margin-right: 8px !important;
     display: flex !important; 
     align-items: center !important; 

@@ -3,37 +3,63 @@
    ========================================================================== */
 
 .m3-footer {
-    background-color: var(--md-sys-color-surface-container);
-    color: var(--md-sys-color-on-surface);
-    margin-top: var(--m3-spacing-xxl, 64px);
-    border-top: 1px solid var(--md-sys-color-outline-variant);
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    margin-top: 120px;
+    border-radius: 48px 48px 0 0; /* M3E Large Rounded Top */
+    padding: 80px 0 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 -12px 40px rgba(255, 153, 0, 0.1);
+}
+
+[data-theme="dark"] .m3-footer {
+    background-color: #2D1A00; /* Rich Dark Burnt Orange */
+    color: #FFDCBE;
+}
+
+.m3-footer__main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 64px;
+}
+
+.m3-footer__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 64px;
+}
+
+@media (max-width: 900px) {
+    .m3-footer__grid {
+        grid-template-columns: 1fr;
+        gap: 48px;
+    }
+}
+
+.m3-footer__col--brand {
     display: flex;
     flex-direction: column;
+    gap: 24px;
 }
 
-.m3-footer__brand {
-    padding: 64px var(--m3-spacing-m) 24px;
-    text-align: center;
-}
-
-.m3-footer__brand .m3-logo-text {
-    margin: 0 0 8px;
-    font-size: 1.75rem;
+.m3-footer__title {
+    font-size: 0.8rem;
     font-weight: 900;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.1em;
+    color: var(--md-sys-color-on-primary-container);
+    opacity: 0.7;
+    margin-bottom: 24px;
+    text-transform: uppercase;
 }
 
 .m3-footer__tagline {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--md-sys-color-on-surface-variant);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-primary-container);
     font-weight: 500;
-}
-
-/* ナビゲーションエリアの背景色を削除して統合 */
-.m3-footer__nav {
-    padding: 16px var(--m3-spacing-m) 48px;
-    text-align: center;
+    max-width: 320px;
+    opacity: 0.8;
 }
 
 .m3-footer__links {
@@ -41,48 +67,65 @@
     padding: 0;
     margin: 0;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px 40px;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .m3-footer__links a {
-    color: var(--md-sys-color-on-surface-variant);
+    color: inherit;
     text-decoration: none;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 0.95rem;
-    position: relative;
-    padding: 4px 0;
-    transition: opacity 0.3s var(--m3-motion-easing);
+    transition: all 0.2s ease;
+    display: inline-block;
 }
 
 .m3-footer__links a:hover {
-    opacity: 0.7;
+    color: var(--md-sys-color-primary);
+    transform: translateX(4px);
 }
 
-.m3-footer__links a::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: var(--md-sys-color-on-secondary-container);
-    transition: width 0.3s var(--m3-motion-easing);
-    opacity: 0.5;
+.m3-footer__bottom {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle dark overlay on orange */
+    padding: 24px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.m3-footer__links a:hover::after {
-    width: 100%;
+[data-theme="dark"] .m3-footer__bottom {
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
-.m3-footer__meta {
-    background-color: var(--md-sys-color-surface-container-low);
-    text-align: center;
-    padding: 24px var(--m3-spacing-m);
-    font-size: 0.8rem;
-    font-weight: 600;
+.m3-footer__bottom-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-footer__bottom-links {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--md-sys-color-primary);
+}
+
+.m3-footer__version {
+    opacity: 0.5;
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+@media (max-width: 600px) {
+    .m3-footer__bottom-inner {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
 }
 
 /* ==========================================================================

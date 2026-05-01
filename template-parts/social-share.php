@@ -78,8 +78,30 @@ $title = urlencode(get_the_title());
            aria-label="BlueSkyでシェアする" 
            target="_blank" 
            rel="noopener noreferrer">
-            <i class="fa-brands fa-bluesky" aria-hidden="true"></i>
+            <span class="m3-share-btn__icon">
+                <!-- Legacy Bluesky Logo (Cloud Era) -->
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 4c-4.418 0-8 3.582-8 8 0 .74.1 1.455.286 2.133-1.742.603-2.999 2.253-2.999 4.205 0 2.485 2.015 4.5 4.5 4.5h12c2.485 0 4.5-2.015 4.5-4.5 0-2.306-1.735-4.207-3.989-4.48C18.155 7.64 15.426 4 12 4z"/>
+                </svg>
+            </span>
             <span class="m3-share-btn__label">BlueSky</span>
+        </a>
+
+        <!-- Misskey.io -->
+        <a href="https://misskey-hub.net/share/?text=<?php echo $title; ?>&url=<?php echo $url; ?>" 
+           class="m3-share-btn m3-share-btn--misskey" 
+           data-url="<?php echo esc_url($permalink); ?>"
+           title="Misskeyでシェア" 
+           aria-label="Misskeyでシェアする" 
+           target="_blank" 
+           rel="noopener noreferrer">
+            <span class="m3-share-btn__icon">
+                <!-- Official-style Misskey Icon -->
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-6.627-5.373-12-12-12zM6.5 6.5h3v11h-3zm5.5 0h3v7l4-7h3l-4 7 4 4h-3l-4-4v4h-3z"/>
+                </svg>
+            </span>
+            <span class="m3-share-btn__label">Misskey</span>
         </a>
 
         <!-- システムシェア (モバイルのみ) -->
