@@ -310,17 +310,20 @@
 }
 .m3-modal__tabs { 
     display: flex; 
+    flex-wrap: nowrap; /* Force single row */
     padding: 4px; 
     gap: 0; 
-    background: var(--md-sys-color-surface-container-highest); /* More distinct background */
+    background: var(--md-sys-color-surface-container-highest); 
     border-radius: 32px;
     margin: 8px auto 24px;
-    max-width: 320px;
-    width: 90%;
+    max-width: 600px; /* Increased to accommodate 3 tabs easily */
+    width: fit-content; /* Hug content but don't exceed max-width */
+    min-width: 320px;
     position: relative;
     z-index: 10;
     min-height: 56px;
     border: 1px solid var(--md-sys-color-outline-variant);
+    overflow: hidden;
 }
 .m3-modal__tab-indicator {
     position: absolute;
@@ -341,7 +344,7 @@
     align-items: center; 
     justify-content: center;
     gap: 8px; 
-    padding: 8px 16px; 
+    padding: 8px 24px; /* Slightly more padding */
     border-radius: 28px; 
     background: transparent; 
     color: var(--md-sys-color-on-surface-variant); 
@@ -354,6 +357,7 @@
     -webkit-tap-highlight-color: transparent;
     outline: none;
     cursor: pointer;
+    white-space: nowrap; /* Prevent text wrapping */
 }
 .m3-modal__tab.is-active { 
     color: #FFFFFF !important; /* ABSOLUTE WHITE */
