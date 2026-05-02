@@ -52,7 +52,7 @@
                                 <span class="material-symbols-outlined">close</span>
                             </button>
                             <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索設定">
-                                <span class="material-symbols-outlined">filter_alt</span>
+                                <span class="material-symbols-outlined">tune</span>
                             </button>
                         </div>
                     </div>
@@ -112,7 +112,7 @@
             <!-- Tab Navigation (Top) -->
             <div class="m3-modal__tabs">
                 <button type="button" class="m3-modal__tab is-active" data-page="1">
-                    <span class="material-symbols-outlined">filter_list</span>
+                    <span class="material-symbols-outlined">filter_alt</span>
                     <span>絞り込み</span>
                 </button>
                 <button type="button" class="m3-modal__tab" data-page="2">
