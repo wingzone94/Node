@@ -29,21 +29,20 @@ class Luminous_Gemini_API {
     }
 
     /**
-     * 記事本文の要約を生成する
+     * 汎用的なテキスト生成
      */
-    public function generate_summary(string $content): string|WP_Error {
+    public function generate_content(string $prompt, int $max_tokens = 200, float $temperature = 0.7): string|WP_Error {
         if (empty($this->api_key)) {
             return new WP_Error('missing_api_key', 'GEMINI_API_KEYが設定されていません。');
         }
 
-        $prompt = "以下の記事本文を100文字程度で簡潔に要約してください。\n\n" . mb_substr($content, 0, 3000);
         $url = $this->api_url . '?key=' . $this->api_key;
 
         $body = json_encode([
             'contents' => [['parts' => [['text' => $prompt]]]],
             'generationConfig' => [
-                'maxOutputTokens' => 150,
-                'temperature' => 0.3
+                'maxOutputTokens' => $max_tokens,
+                'temperature' => $temperature
             ]
         ]);
 
@@ -60,10 +59,23 @@ class Luminous_Gemini_API {
         $data = json_decode(wp_remote_retrieve_body($response), true);
         
         if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            $summary = trim($data['candidates'][0]['content']['parts'][0]['text']);
-            return str_replace(["\r\n", "\r", "\n"], ' ', $summary);
+            return trim($data['candidates'][0]['content']['parts'][0]['text']);
         }
 
         return new WP_Error('api_error', 'APIから正しいレスポンスが返されませんでした。');
+    }
+
+    /**
+     * 記事本文の要約を生成する
+     */
+    public function generate_summary(string $content): string|WP_Error {
+        $prompt = "以下の記事本文を100文字程度で簡潔に要約してください。\n\n" . mb_substr($content, 0, 3000);
+        $result = $this->generate_content($prompt, 150, 0.3);
+        
+        if (is_wp_error($result)) {
+            return $result;
+        }
+
+        return str_replace(["\r\n", "\r", "\n"], ' ', $result);
     }
 }

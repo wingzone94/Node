@@ -36,6 +36,7 @@ require_once NODE_THEME_DIR . '/inc/ogp-generator.php';
 require_once NODE_THEME_DIR . '/inc/media.php';
 require_once NODE_THEME_DIR . '/inc/search.php';
 require_once NODE_THEME_DIR . '/inc/utilities.php';
+require_once NODE_THEME_DIR . '/inc/gemini-helper.php';
 
 /**
  * -------------------------------------------------------
@@ -92,7 +93,7 @@ function node_enqueue_assets() {
 	// Google Fonts & Material Symbols
 	wp_enqueue_style(
 		'node-fonts',
-		'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&display=swap',
+		'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap',
 		array(),
 		null
 	);

@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDarkMode();
     initSearchBar();
     initDrawer();
+    initViewSwitcher();
+    initHandyMode();
     initShareFeatures();
     initTableOfContents(); // Handles TOC and FAB visibility
     initOverdriveScroll();
@@ -248,11 +250,15 @@ function initDarkMode() {
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     const updateTheme = () => document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (mql.matches ? 'dark' : 'light'));
     mql.addEventListener('change', () => !localStorage.getItem('theme') && updateTheme());
-    document.getElementById('theme-toggle')?.addEventListener('click', (e) => {
-        e.preventDefault();
+    const toggleBtn = document.getElementById('theme-toggle');
+    const bottomToggleBtn = document.getElementById('m3-bottom-theme-toggle');
+    const toggleFunc = (e) => {
+        if (e) e.preventDefault();
         localStorage.setItem('theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         updateTheme();
-    });
+    };
+    toggleBtn?.addEventListener('click', toggleFunc);
+    bottomToggleBtn?.addEventListener('click', toggleFunc);
     updateTheme();
 }
 
@@ -270,13 +276,17 @@ function initSearchBar() {
 
     if (!searchToggle || !searchBar || !searchInput) return;
 
+    const header = document.querySelector('.m3-header');
+
     // --- Search Bar Toggle ---
     searchToggle.addEventListener('click', (e) => {
         if (!searchBar.classList.contains('is-active')) {
             searchBar.classList.add('is-active');
+            header?.classList.add('search-is-active');
             setTimeout(() => searchInput.focus(), 300);
         } else if (!searchInput.value.trim()) {
             searchBar.classList.remove('is-active');
+            header?.classList.remove('search-is-active');
         } else {
             searchBar.submit();
         }
@@ -292,44 +302,104 @@ function initSearchBar() {
         updateClearBtn();
         searchInput.focus();
     });
+
+    // --- Mobile Close Button ---
+    document.getElementById('m3-search-mobile-close')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        searchBar.classList.remove('is-active');
+        header?.classList.remove('search-is-active');
+        searchInput.value = '';
+        updateClearBtn();
+    });
+
     updateClearBtn();
 
+    // --- Advanced Search Modal ---
     // --- Advanced Search Modal ---
     const openModal = () => {
         modal.classList.add('is-active');
         document.body.style.overflow = 'hidden';
-        switchPage(1); // 常に1ページ目から開始
+        setTimeout(() => switchPage(1), 50); 
         initRangeSlider();
-        updateHitCount(); // 初期表示時にカウントを更新
+        updateHitCount();
     };
-
-    // --- Multi-page Logic ---
-    const switchPage = (pageNum) => {
-        const pagesContainer = modal.querySelector('.m3-modal__pages-container');
-        const pages = modal.querySelectorAll('.m3-modal__page');
-        const tabs = modal.querySelectorAll('.m3-modal__tab');
-        const totalPages = pages.length;
-
-        // Page Transform (100 / totalPages * (pageNum - 1))
-        const movePercent = (100 / totalPages) * (pageNum - 1);
-        pagesContainer.style.transform = `translateX(-${movePercent}%)`;
-
-        // Active State
-        pages.forEach(p => p.classList.toggle('is-active', p.dataset.page == pageNum));
-        tabs.forEach(t => t.classList.toggle('is-active', t.dataset.page == pageNum));
-    };
-
-    modal.querySelectorAll('.m3-modal__tab').forEach(el => {
-        el.addEventListener('click', () => switchPage(parseInt(el.dataset.page)));
-    });
-
 
     const closeModal = () => {
         modal.classList.remove('is-active');
         document.body.style.overflow = '';
     };
 
-    advancedTrigger.addEventListener('click', openModal);
+    // Bind ALL triggers (Header and Bottom Nav)
+    document.querySelectorAll('.m3-search-advanced-trigger').forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openModal();
+        });
+    });
+
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    // --- Multi-page Logic ---
+    const switchPage = (pageNum) => {
+        // Skip switching logic on mobile (single scroll)
+        if (window.innerWidth <= 600) {
+            // Ensure all pages are visible for single scroll
+            modal.querySelectorAll('.m3-modal__page').forEach(p => {
+                p.classList.add('is-active');
+            });
+            // Init all components once
+            setTimeout(initRangeSlider, 200);
+            return;
+        }
+
+        const pagesContainer = modal.querySelector('.m3-modal__pages-container');
+        const allPages = Array.from(modal.querySelectorAll('.m3-modal__page'));
+        const allTabs = Array.from(modal.querySelectorAll('.m3-modal__tab'));
+        
+        const visiblePages = allPages.filter(p => p.offsetWidth > 0 || getComputedStyle(p).display !== 'none');
+        if (!pagesContainer || visiblePages.length === 0) return;
+
+        const targetPageIndex = visiblePages.findIndex(p => p.dataset.page == pageNum);
+        if (targetPageIndex === -1) return;
+
+        const totalVisible = visiblePages.length;
+        const movePercent = (100 / totalVisible) * targetPageIndex;
+        pagesContainer.style.transform = `translateX(-${movePercent}%)`;
+
+        allPages.forEach(p => p.classList.toggle('is-active', p.dataset.page == pageNum));
+        allTabs.forEach(t => t.classList.toggle('is-active', t.dataset.page == pageNum));
+
+        const tabsContainer = document.getElementById('m3-search-tabs');
+        if (tabsContainer) {
+            const indicator = tabsContainer.querySelector('.m3-modal__tab-indicator');
+            const activeTab = allTabs.find(t => t.dataset.page == pageNum);
+            if (indicator && activeTab && activeTab.offsetWidth > 0) {
+                indicator.style.width = `${activeTab.offsetWidth}px`;
+                indicator.style.left = `${activeTab.offsetLeft}px`;
+            }
+        }
+
+        if (pageNum === 2) {
+            setTimeout(initRangeSlider, 150);
+        }
+    };
+
+    modal.querySelectorAll('.m3-modal__tab').forEach(el => {
+        el.addEventListener('click', () => switchPage(parseInt(el.dataset.page)));
+    });
+
+    // Bind all triggers (Header, Bottom Nav, etc.)
+    document.querySelectorAll('.m3-search-advanced-trigger').forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openModal();
+        });
+    });
+
     modalClose.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
@@ -342,17 +412,23 @@ function initSearchBar() {
         const minInput = document.getElementById('m3-min-chars');
         const maxInput = document.getElementById('m3-max-chars');
         
+        // Set reasonable defaults if empty or stuck at 10000
+        if (!minInput.value || minInput.value == "10000") minInput.value = 0;
+        if (!maxInput.value || maxInput.value == "0") maxInput.value = 5000;
+
         let minVal = parseInt(minInput.value) || 0;
-        let maxVal = parseInt(maxInput.value) || 10000;
+        let maxVal = parseInt(maxInput.value) || 5000;
         const totalMax = 10000;
 
         const updateUI = () => {
+            const rect = slider.getBoundingClientRect();
+            if (rect.width === 0) return;
+
             const minPercent = (minVal / totalMax) * 100;
             const maxPercent = (maxVal / totalMax) * 100;
             
-            const padding = 28; // Matches CSS padding
-            const containerWidth = slider.offsetWidth;
-            const trackWidth = containerWidth - (padding * 2);
+            const padding = 28;
+            const trackWidth = rect.width - (padding * 2);
             
             const minPos = padding + (minPercent / 100) * trackWidth;
             const maxPos = padding + (maxPercent / 100) * trackWidth;
@@ -369,10 +445,14 @@ function initSearchBar() {
         };
 
         const handleDrag = (e, type) => {
+            if (e.cancelable) e.preventDefault(); // Stop mobile scroll
             const rect = slider.getBoundingClientRect();
+            if (rect.width === 0) return;
+
             const padding = 28;
             const trackWidth = rect.width - (padding * 2);
-            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left - padding;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const x = clientX - rect.left - padding;
             
             const percent = Math.min(100, Math.max(0, (x / trackWidth) * 100));
             let val = Math.round((percent / 100) * totalMax);
@@ -386,7 +466,7 @@ function initSearchBar() {
                 maxVal = Math.max(val, minVal + 500);
             }
             updateUI();
-            updateHitCount(); // ヒット件数をリアルタイム更新
+            updateHitCount();
         };
 
         const onStart = (e, type) => {
@@ -402,6 +482,62 @@ function initSearchBar() {
             document.addEventListener('touchmove', move, { passive: false });
             document.addEventListener('touchend', end);
         };
+
+    const initTagSuggestions = () => {
+        const tagInput = document.getElementById('m3-tag-input');
+        const suggestionList = document.getElementById('m3-tag-suggestions');
+        if (!tagInput || !suggestionList) return;
+
+        let debounceTimer;
+
+        tagInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const query = tagInput.value.trim();
+            
+            if (query.length < 1) {
+                suggestionList.classList.remove('is-active');
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                // Use WordPress REST API to fetch tags
+                fetch(`/wp-json/wp/v2/tags?search=${encodeURIComponent(query)}&per_page=10`)
+                    .then(res => res.json())
+                    .then(tags => {
+                        if (tags && tags.length > 0) {
+                            suggestionList.innerHTML = tags.map(tag => `
+                                <div class="m3-suggestion-item" data-tag="${tag.name}">
+                                    <span class="material-symbols-outlined">sell</span>
+                                    <span>${tag.name}</span>
+                                </div>
+                            `).join('');
+                            suggestionList.classList.add('is-active');
+                            
+                            // Click event for each suggestion
+                            suggestionList.querySelectorAll('.m3-suggestion-item').forEach(item => {
+                                item.addEventListener('click', () => {
+                                    tagInput.value = item.dataset.tag;
+                                    suggestionList.classList.remove('is-active');
+                                    updateHitCount();
+                                });
+                            });
+                        } else {
+                            suggestionList.classList.remove('is-active');
+                        }
+                    })
+                    .catch(() => suggestionList.classList.remove('is-active'));
+            }, 300);
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!tagInput.contains(e.target) && !suggestionList.contains(e.target)) {
+                suggestionList.classList.remove('is-active');
+            }
+        });
+    };
+
+    initTagSuggestions();
 
         minHandle.addEventListener('mousedown', (e) => onStart(e, 'min'));
         maxHandle.addEventListener('mousedown', (e) => onStart(e, 'max'));
@@ -484,6 +620,34 @@ function initSearchBar() {
                 }
             });
         } else {
+            // 初期検知
+            checkHandyAspect();
+
+            // フォルダブル開閉検知
+            let lastWidth = window.innerWidth;
+            window.addEventListener('resize', () => {
+                const currentWidth = window.innerWidth;
+                const widthDiff = Math.abs(currentWidth - lastWidth);
+
+                // 150px以上の急激な幅の変化があった場合、フォルダブルの開閉とみなす
+                if (widthDiff > 150) {
+                    // システムダイアログを表示
+                    alert('画面の折りたたみが検知されたため、表示を最適化します。');
+                    
+                    // 最適化ロジックの実行
+                    checkHandyAspect();
+                    
+                    // 必要に応じてリロードや特定のレイアウト調整
+                    if (currentWidth > 600 && window.innerHeight / currentWidth < 1.2) {
+                        // 展開時（タブレット風）の追加処理
+                        console.log('Unfolded state detected');
+                    }
+                }
+                lastWidth = currentWidth;
+            });
+
+            // ボトムナビの目次ボタン
+
             performReset();
         }
 
@@ -640,8 +804,18 @@ function initDrawer() {
     const drawer = document.getElementById('m3-drawer');
     const scrim = document.getElementById('m3-drawer-scrim');
     if (menuBtn && drawer && scrim) {
-        const toggle = (open) => { drawer.classList.toggle('is-open', open); scrim.classList.toggle('is-visible', open); document.body.style.overflow = open ? 'hidden' : ''; };
-        menuBtn.addEventListener('click', () => toggle(true)); scrim.addEventListener('click', () => toggle(false));
+        const toggle = (open) => { 
+            drawer.classList.toggle('is-open', open); 
+            scrim.classList.toggle('is-visible', open); 
+            document.body.style.overflow = open ? 'hidden' : ''; 
+        };
+        menuBtn.addEventListener('click', () => toggle(true));
+        scrim.addEventListener('click', () => toggle(false));
+        
+        const closeBtn = document.getElementById('m3-drawer-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => toggle(false));
+        }
     }
 }
 
@@ -833,6 +1007,19 @@ function initAdaptiveHeader() {
         const scrolled = window.scrollY > 20; if (scrolled && !isScrolled) { isScrolled = true; header.classList.add('is-scrolled'); }
         else if (!scrolled && isScrolled) { isScrolled = false; header.classList.remove('is-scrolled'); }
     }, { passive: true });
+
+    // --- Back to Top (Handy) ---
+    document.getElementById('m3-back-to-top-handy')?.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // --- Comments Scroll (Handy) ---
+    document.getElementById('m3-bottom-comments-trigger')?.addEventListener('click', () => {
+        const comments = document.getElementById('comments');
+        if (comments) {
+            window.scrollTo({ top: comments.offsetTop - 100, behavior: 'smooth' });
+        }
+    });
 }
 import './styles/_blogcard-ai.css';
 

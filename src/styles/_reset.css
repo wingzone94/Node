@@ -6,8 +6,15 @@ body {
     color: var(--md-sys-color-on-surface); 
     margin: 0; 
     -webkit-font-smoothing: antialiased; 
+    -webkit-tap-highlight-color: transparent; /* タップ時の青い枠を消し、M3リップルに任せる */
+    -webkit-text-size-adjust: 100%; /* iOSでの回転時の文字サイズ変更を防止 */
     overflow-x: hidden;
+    overflow-wrap: break-word; /* 長い単語での横漏れを防止 */
     letter-spacing: -0.01em; /* 全体的にわずかにカーニングを詰める */
+}
+
+input, select, textarea {
+    font-size: 16px !important; /* iOS Safariの自動ズーム防止 */
 }
 .m3-page-container { 
     max-width: 7680px; /* Full 8K Resolution Support */

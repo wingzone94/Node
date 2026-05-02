@@ -45,13 +45,17 @@ export function initTableOfContents() {
     container.appendChild(list);
 
     // Toggle TOC
-    if (trigger && tocCard) {
-        trigger.addEventListener('click', (e) => {
+    const setupTrigger = (el) => {
+        if (!el || !tocCard) return;
+        el.addEventListener('click', (e) => {
             e.stopPropagation();
             const isActive = tocCard.classList.toggle('is-active');
             toggleOtherFabs(!isActive);
         });
-    }
+    };
+
+    setupTrigger(trigger);
+    setupTrigger(document.getElementById('m3-handy-toc-trigger'));
 
     if (closeBtn && tocCard) {
         closeBtn.addEventListener('click', () => {

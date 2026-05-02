@@ -34,16 +34,20 @@ get_header(); ?>
             // 1. Keyword
             if (get_search_query()) $filters[] = ['label' => 'キーワード', 'value' => get_search_query(), 'icon' => 'key'];
             // 2. Category
-            if (!empty($_GET['m3_cat'])) {
-                $cat = get_category($_GET['m3_cat']);
+            $cat_id = $_GET['m3_cat'] ?? '';
+            if (!empty($cat_id)) {
+                $cat = get_category($cat_id);
                 if ($cat) $filters[] = ['label' => 'カテゴリ', 'value' => $cat->name, 'icon' => 'category'];
             }
             // 3. Tag
-            if (!empty($_GET['m3_tag'])) $filters[] = ['label' => 'タグ', 'value' => $_GET['m3_tag'], 'icon' => 'sell'];
+            $tag = $_GET['m3_tag'] ?? '';
+            if (!empty($tag)) $filters[] = ['label' => 'タグ', 'value' => $tag, 'icon' => 'sell'];
             // 4. Date Range
-            if (!empty($_GET['m3_start_date']) || !empty($_GET['m3_end_date'])) {
-                $start = $_GET['m3_start_date'] ?: '開始日未指定';
-                $end = $_GET['m3_end_date'] ?: '終了日未指定';
+            $start_date = $_GET['m3_start_date'] ?? '';
+            $end_date = $_GET['m3_end_date'] ?? '';
+            if (!empty($start_date) || !empty($end_date)) {
+                $start = $start_date ?: '開始日未指定';
+                $end = $end_date ?: '終了日未指定';
                 $filters[] = ['label' => '期間', 'value' => $start . ' 〜 ' . $end, 'icon' => 'calendar_month'];
             }
             // 5. Word Count
@@ -53,17 +57,19 @@ get_header(); ?>
                 $filters[] = ['label' => '文字数', 'value' => $min . ' 〜 ' . ($max >= 10000 ? '10000+' : $max) . '字', 'icon' => 'format_size'];
             }
             // 6. Platform
-            if (!empty($_GET['m3_platform'])) {
-                $platforms = (array)$_GET['m3_platform'];
+            $platforms_input = $_GET['m3_platform'] ?? [];
+            if (!empty($platforms_input)) {
+                $platforms = (array)$platforms_input;
                 $filters[] = ['label' => 'プラットフォーム', 'value' => implode(', ', $platforms), 'icon' => 'devices'];
             }
             // 7. Media Types
-            if (!empty($_GET['m3_media_type'])) {
+            $media_input = $_GET['m3_media_type'] ?? [];
+            if (!empty($media_input)) {
                 $media_map = [
                     'image' => '画像', 'video' => '動画', 'map' => '地図',
                     'youtube' => 'YouTube', 'sns' => 'SNS埋め込み', 'download' => 'ファイル'
                 ];
-                $media_labels = array_map(function($t) use ($media_map) { return $media_map[$t] ?? $t; }, (array)$_GET['m3_media_type']);
+                $media_labels = array_map(function($t) use ($media_map) { return $media_map[$t] ?? $t; }, (array)$media_input);
                 $filters[] = ['label' => 'メディア', 'value' => implode(', ', $media_labels), 'icon' => 'perm_media'];
             }
 

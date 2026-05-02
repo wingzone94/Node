@@ -1,228 +1,192 @@
 /**
- * Luminous Core - 404 Magma Edition (Material 3 Expressive)
+ * Luminous Core - 404 Experience Refined
  */
 
 .m3-404-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-    background-color: #1a0000;
-    color: #fff;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; background-color: #1a0000; color: #fff;
     text-align: center;
 }
 
-/* Background & Magma Overlay */
-.m3-404-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-}
+/* --- Backgrounds --- */
+.m3-404-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+.m3-404-theme-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
+.m3-404-theme-bg img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
 
-.m3-404-bg img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: blur(1px) brightness(0.8);
-    animation: mc-bg-drift 60s linear infinite alternate;
-}
-
-@keyframes mc-bg-drift {
-    from { transform: scale(1.1) translateX(-2%); }
-    to { transform: scale(1.1) translateX(2%); }
-}
-
+/* --- Global Overlay (Default) --- */
 .m3-404-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(255, 68, 0, 0.3) 0%, rgba(20, 0, 0, 0.8) 100%);
-    mix-blend-mode: overlay;
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(255, 68, 0, 0.25) 0%, rgba(20, 0, 0, 0.85) 100%);
+    mix-blend-mode: overlay; pointer-events: none; z-index: 2;
 }
 
-/* Content Layout */
-.m3-404-content {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 800px;
-    padding: var(--m3-spacing-xl);
-    animation: mc-fade-in 1s ease-out;
-}
-
-@keyframes mc-fade-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* Typography - Game Over Style */
+/* --- Content Layout --- */
+.m3-404-content { position: relative; z-index: 10; width: 100%; max-width: 800px; padding: 24px; }
 .m3-404-title-large {
-    font-family: 'Press Start 2P', cursive;
-    font-size: clamp(3rem, 10vw, 6.5rem);
-    color: #fff;
-    text-shadow: 6px 6px 0px rgba(0, 0, 0, 1), 0 0 20px rgba(255, 100, 0, 0.5);
-    margin-bottom: var(--m3-spacing-l);
-    letter-spacing: -2px;
+    font-family: 'Press Start 2P', cursive; font-size: clamp(3rem, 10vw, 6.5rem);
+    color: #fff; text-shadow: 6px 6px 0px #000; margin-bottom: 24px;
 }
-
 .m3-404-subtitle {
-    font-family: 'VT323', monospace;
-    font-size: 2.8rem;
-    color: #ff9900;
-    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
-    margin-bottom: var(--m3-spacing-m);
+    font-family: 'VT323', monospace; font-size: 2.8rem; color: #ff9900;
+    text-shadow: 2px 2px 0px #000; margin-bottom: 16px;
 }
+.m3-404-description { font-size: 1.1rem; color: #eee; line-height: 1.6; margin-bottom: 40px; }
 
-.m3-404-description {
-    font-size: 1.2rem;
-    color: #eee;
-    margin-bottom: var(--m3-spacing-xxl);
-    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.6;
-}
-
-/* Minecraft UI Buttons */
+/* --- Minecraft Buttons (Global Default) --- */
 .m3-mc-button {
-    font-family: 'VT323', monospace;
-    font-size: 1.8rem;
-    background-color: #7e7e7e;
-    color: #fff !important;
-    border: 3px solid #000;
-    border-top-color: #afafaf;
-    border-left-color: #afafaf;
-    border-right-color: #444;
-    border-bottom-color: #444;
-    padding: 8px 48px;
-    display: inline-block;
-    text-decoration: none;
-    cursor: pointer;
-    transition: none;
-    width: auto;
-    min-width: 280px;
-    box-sizing: border-box;
+    font-family: 'VT323', monospace; font-size: 1.8rem; background-color: #7e7e7e;
+    color: #fff !important; border: 3px solid #000; border-top-color: #afafaf;
+    border-left-color: #afafaf; padding: 8px 32px; display: inline-block;
+    text-decoration: none; min-width: 280px; box-sizing: border-box;
+}
+.m3-mc-button:hover { background-color: #8e8e8e; border-top-color: #fff; color: #ffffa0 !important; }
+
+/* --- Theme Toggling Logic --- */
+.m3-theme-specific, .m3-bsod-content { display: none; }
+
+/* Default / Magma */
+.m3-404--minecraft-lava .m3-bg-minecraft-lava, 
+.m3-404--minecraft-lava .m3-content-default { display: block; }
+
+/* Creeper */
+.m3-404--minecraft-creeper .m3-bg-minecraft-creeper,
+.m3-404--minecraft-creeper .m3-content-minecraft-creeper { display: block; }
+.m3-404--minecraft-creeper .m3-404-overlay { background: radial-gradient(circle, rgba(0, 50, 0, 0.4) 0%, rgba(0, 0, 0, 0.9) 100%); }
+.m3-mc-death-msg { font-family: 'Press Start 2P', cursive; font-size: clamp(1.2rem, 4vw, 2.5rem); color: #fff; text-shadow: 4px 4px 0 #000; margin-bottom: 32px; }
+
+/* Raid */
+.m3-404--minecraft-raid .m3-bg-minecraft-raid,
+.m3-404--minecraft-raid .m3-content-minecraft-raid { display: block; }
+
+/* ==========================================================================
+   Fortnite Theme (STRICTLY ISOLATED)
+   ========================================================================== */
+.m3-404--fortnite { background-color: #2a0050 !important; }
+.m3-404--fortnite .m3-bg-fortnite, .m3-404--fortnite .m3-content-fortnite { display: block !important; }
+.m3-404--fortnite .m3-404-overlay { background: radial-gradient(circle, rgba(138, 43, 226, 0.1) 0%, rgba(10, 0, 30, 0.9) 100%); }
+
+.m3-404--fortnite .m3-404-fortnite-bg {
+    width: 100%; height: 100%; background: url('../images/fortnite_404_bg.png') no-repeat center;
+    background-size: cover; animation: fortnite-drift 20s infinite alternate; filter: brightness(0.6);
+}
+.m3-404--fortnite .m3-content-fortnite {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 0; width: 100%;
+}
+.m3-404--fortnite .m3-fortnite-banner {
+    background: linear-gradient(180deg, #303030 0%, #101010 100%);
+    padding: 20px 60px; border-radius: 4px; border: 2px solid #505050;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center;
+    animation: fortnite-pop 0.6s cubic-bezier(0.17, 0.89, 0.32, 1.2);
+}
+.m3-404--fortnite .m3-fortnite-rank {
+    font-family: 'Oswald', sans-serif; font-size: 6rem; font-weight: 900;
+    color: #fff; font-style: italic; letter-spacing: -2px; line-height: 1;
+}
+.m3-404--fortnite .m3-fortnite-label {
+    font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700;
+    color: #aaa; letter-spacing: 4px; margin-top: -5px;
+}
+.m3-404--fortnite .m3-fortnite-eliminated {
+    margin-top: 24px; font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 800;
+    color: #fff; text-transform: uppercase; background: #e61c1c; padding: 6px 48px;
+    transform: skewX(-15deg); box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+    animation: fortnite-slide 0.8s 0.2s both;
+}
+.m3-404--fortnite .m3-mc-button {
+    font-family: 'Oswald', sans-serif; background: #0078ff; border: none; border-radius: 4px;
+    text-transform: uppercase; font-weight: 700; box-shadow: 0 4px 0 #004fb3; min-width: 220px;
 }
 
-.m3-mc-button:hover {
-    background-color: #8e8e8e;
-    border-top-color: #fff;
-    border-left-color: #fff;
-    color: #ffffa0 !important;
+/* ==========================================================================
+   Material 3 Expressive (Paper UI System)
+   ========================================================================== */
+.m3-404--material-expressive { background-color: var(--md-sys-color-surface-container-lowest); }
+.m3-404--material-expressive .m3-bg-material-expressive,
+.m3-404--material-expressive .m3-content-material-expressive { display: flex !important; }
+.m3-404--material-expressive .m3-404-overlay { display: none; }
+.m3-404--material-expressive .m3-404-main-text { display: none; }
+
+.m3-bg-material-expressive {
+    background: var(--md-sys-color-surface-container-lowest);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.m3-expressive-paper-canvas {
+    position: absolute; width: 100%; height: 100%;
+    background: radial-gradient(circle at 10% 20%, var(--md-sys-color-primary-container) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--md-sys-color-secondary-container) 0%, transparent 40%);
+    opacity: 0.4;
+}
+.m3-expressive-blob {
+    position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.3;
+    animation: m3-paper-float 20s infinite alternate;
+}
+.m3-blob-1 { width: 40vw; height: 40vw; background: var(--md-sys-color-primary); top: -10%; left: -10%; }
+.m3-blob-2 { width: 30vw; height: 30vw; background: var(--md-sys-color-tertiary); bottom: 10%; right: 10%; animation-delay: -5s; }
+
+/* The UI "Paper" Card */
+.m3-expressive-ui-card {
+    background: var(--md-sys-color-surface-container-low);
+    padding: 48px; border-radius: 48px; text-align: left;
+    box-shadow: var(--md-sys-shadow-l); border: 1px solid var(--md-sys-color-outline-variant);
+    max-width: 500px; width: 90%; margin: 0 auto;
+    animation: m3-paper-pop 0.8s cubic-bezier(0.2, 0, 0, 1);
+}
+.m3-expressive-ui-header { margin-bottom: 32px; }
+.m3-expressive-ui-chip {
+    background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);
+    padding: 8px 20px; border-radius: 100px; font-weight: 700; font-size: 0.9rem;
+}
+.m3-expressive-ui-title {
+    color: var(--md-sys-color-on-surface); font-size: 3rem; font-weight: 800;
+    margin: 0 0 16px; font-family: var(--m3-font-display); line-height: 1.1;
+}
+.m3-expressive-ui-text { color: var(--md-sys-color-on-surface-variant); font-size: 1.1rem; margin-bottom: 40px; }
+
+.m3-expressive-ui-visual {
+    background: var(--md-sys-color-surface-container-high);
+    height: 160px; border-radius: 28px 80px 28px 28px; /* Expressive Shape */
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 40px; position: relative; overflow: hidden;
+}
+.m3-expressive-shape {
+    font-size: 5rem; font-weight: 900; opacity: 0.1;
+    font-family: var(--m3-font-display); transform: rotate(-5deg);
+}
+.m3-404--material-expressive .m3-mc-button {
+    background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary) !important;
+    border: none; border-radius: 100px; padding: 18px 48px; font-family: inherit;
+    font-size: 1.1rem; font-weight: 700; min-width: 200px; box-shadow: var(--md-sys-shadow-m);
 }
 
-.m3-mc-button:active {
-    background-color: #5e5e5e;
-    border: 3px solid #000;
-    padding: 10px 48px 6px;
-}
+/* ==========================================================================
+   Windows BSOD
+   ========================================================================== */
+.m3-404--windows-bsod { background-color: #0078d7 !important; }
+.m3-404--windows-bsod .m3-bg-windows-bsod, .m3-404--windows-bsod .m3-bsod-content { display: block !important; }
+.m3-404--windows-bsod .m3-404-content { display: none; }
+.m3-bsod-content { color: #fff; text-align: left; padding: 10vw; font-family: "Segoe UI", sans-serif; }
+.m3-bsod-smiley { font-size: 8rem; margin-bottom: 20px; }
+.m3-bsod-title { font-size: 2rem; font-weight: 300; margin-bottom: 32px; }
 
-.m3-404-button-group {
-    display: flex;
-    justify-content: center;
-    gap: var(--m3-spacing-m);
-    margin-bottom: var(--m3-spacing-xxl);
-}
+/* --- Animations --- */
+@keyframes fortnite-pop { from { transform: scale(0.8); opacity: 0; } }
+@keyframes fortnite-slide { from { transform: translateX(-50px); opacity: 0; } }
+@keyframes m3-paper-pop { from { transform: translateY(30px) scale(0.95); opacity: 0; } }
+@keyframes m3-paper-float { from { transform: translate(0, 0); } to { transform: translate(5%, 5%); } }
 
-/* Material 3 Expressive Search Box */
-.m3-404-search-expressive {
-    margin-top: var(--m3-spacing-xxxl);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--m3-spacing-l);
-}
+/* --- Gallery & Disclaimer --- */
+.m3-404-disclaimer { position: absolute; bottom: 24px; right: 24px; text-align: right; font-size: 0.65rem; opacity: 0.5; z-index: 100; }
+.m3-gallery-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+.m3-gallery-modal.is-active { display: flex; }
+.m3-gallery-content { background: #1a1a1a; padding: 32px; border-radius: 24px; max-width: 600px; width: 90%; }
+.m3-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; }
+.m3-gallery-item { cursor: pointer; text-align: center; }
+.m3-gallery-preview { height: 80px; background: #333; border-radius: 12px; margin-bottom: 8px; }
 
-.m3-mc-text {
-    font-family: 'VT323', monospace;
-    font-size: 1.5rem;
-    color: #ffcc00;
-    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
-}
-
-.m3-404-search-form-wrapper {
-    width: 100%;
-    max-width: 500px;
-}
-
-/* Custom Search Form Style (M3 Expressive) */
-.m3-404-search-form-wrapper form {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border-radius: 1000px;
-    padding: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    transition: all 0.4s var(--m3-motion-easing);
-}
-
-.m3-404-search-form-wrapper form:focus-within {
-    background: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 12px 48px rgba(255, 153, 0, 0.4);
-    transform: translateY(-2px) scale(1.02);
-    border-color: rgba(255, 153, 0, 0.5);
-}
-
-.m3-404-search-form-wrapper input[type="search"] {
-    flex-grow: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    padding: 12px 24px;
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-
-.m3-404-search-form-wrapper input[type="search"]::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.m3-404-search-form-wrapper button[type="submit"],
-.m3-404-search-form-wrapper .search-submit {
-    background: url('../images/mc-search-icon.png') no-repeat center !important;
-    background-size: 32px !important;
-    border: none !important;
-    width: 56px !important;
-    height: 56px !important;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: transform 0.2s;
-    color: transparent !important; /* Hide "Search" text if present */
-    overflow: hidden;
-    font-size: 0;
-    line-height: 0;
-    box-shadow: none !important;
-}
-
-.m3-404-search-form-wrapper button[type="submit"]:hover,
-.m3-404-search-form-wrapper .search-submit:hover {
-    transform: scale(1.2) rotate(-5deg);
-    filter: drop-shadow(0 0 8px rgba(255, 153, 0, 0.8));
-}
-
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 600px) {
-    .m3-404-title-large {
-        font-size: 3.2rem;
-    }
-    .m3-mc-button {
-        min-width: 100%;
-    }
-    .m3-404-search-form-wrapper {
-        max-width: 100%;
-    }
+    .m3-404-content { padding-bottom: 120px; }
+    .m3-mc-button { min-width: 100%; }
+    .m3-404--fortnite .m3-fortnite-rank { font-size: 4rem; }
 }

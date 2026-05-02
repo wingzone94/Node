@@ -21,7 +21,7 @@
 /* --- Sticky Navigation & FABs --- */
 .m3-sticky-navigation {
     position: fixed;
-    bottom: var(--m3-spacing-l);
+    bottom: calc(var(--m3-spacing-l) + var(--safe-area-bottom));
     right: var(--m3-spacing-l);
     z-index: 2000;
     display: flex;
@@ -105,7 +105,7 @@
 /* --- Action Stack (Global Right-Side Fix) --- */
 .m3-action-stack {
     position: fixed;
-    bottom: 24px;
+    bottom: calc(24px + var(--safe-area-bottom));
     right: 24px;
     display: flex;
     flex-direction: column; /* 上から下に並べる */
@@ -188,7 +188,10 @@
 }
 
 @media (max-width: 600px) {
-    .m3-sticky-navigation { bottom: var(--m3-spacing-s); right: var(--m3-spacing-s); }
+    .m3-sticky-navigation { 
+        bottom: calc(var(--m3-spacing-s) + var(--safe-area-bottom)); 
+        right: var(--m3-spacing-s); 
+    }
     .m3-sticky-toc { width: calc(100vw - 32px); max-height: 360px; }
 }
  

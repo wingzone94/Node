@@ -123,6 +123,11 @@
 .m3-share-btn--hatebu { background-color: #00A4DE !important; color: #ffffff !important; }
 .m3-share-btn--threads { background-color: #000000 !important; color: #ffffff !important; }
 .m3-share-btn--bluesky { background-color: #0085ff !important; color: #ffffff !important; }
+.m3-share-btn--bluesky svg { 
+    width: 22px; 
+    height: 22px;
+    fill: #ffffff;
+}
 .m3-share-btn--misskey { background-color: #94ba0a !important; color: #ffffff !important; }
 .m3-share-btn--system { 
     display: none !important; /* PCビューでは非表示 */
@@ -153,13 +158,26 @@
 .m3-share-buttons .m3-share-btn .material-symbols-outlined,
 .m3-share-buttons .m3-share-btn .m3-share-btn__icon,
 .m3-share-buttons .m3-share-btn svg { 
-    font-size: 22px !important; 
-    width: 22px !important;
-    height: 22px !important;
+    font-size: 24px !important; 
+    width: 24px !important;
+    height: 24px !important;
     margin-right: 8px !important;
     display: flex !important; 
     align-items: center !important; 
     justify-content: center !important; 
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 599px) {
+    .m3-share-buttons .m3-share-btn i, 
+    .m3-share-buttons .m3-share-btn .material-symbols-outlined,
+    .m3-share-buttons .m3-share-btn .m3-share-btn__icon,
+    .m3-share-buttons .m3-share-btn svg { 
+        margin-right: 0 !important;
+        font-size: 24px !important; 
+        width: 24px !important;
+        height: 24px !important;
+    }
 }
  
 .m3-share-btn__label { 
@@ -168,5 +186,11 @@
     opacity: 1 !important;
     display: inline !important;
     white-space: nowrap !important; /* 改行を禁止 */
+}
+
+/* はてなブックマーク専用の文字調整 */
+.m3-share-btn--hatebu .m3-share-btn__label {
+    letter-spacing: -0.05em !important; /* カーニングを詰める */
+    font-size: 12.5px !important;       /* 1行に収めるための微調整 */
 }
  

@@ -81,6 +81,71 @@
 [data-theme="dark"] #theme-toggle-light-icon { opacity: 0; transform: scale(0.5); pointer-events: none; }
 [data-theme="dark"] #theme-toggle-dark-icon { opacity: 1; transform: scale(1); pointer-events: none; }
  
-/* JSで追加される .hidden クラスも念のため維持 */
-.hidden { display: none !important; }
+/* --- Snackbar (Material 3) --- */
+.m3-snackbar {
+    position: fixed;
+    bottom: calc(24px + var(--safe-area-bottom));
+    left: 24px;
+    right: 24px;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    padding: 14px 16px;
+    border-radius: var(--m3-radius-small);
+    box-shadow: var(--m3-elevation-3);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s var(--m3-motion-easing);
+}
+
+.m3-snackbar.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.m3-snackbar__content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.m3-snackbar__text {
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.m3-snackbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.m3-snackbar__actions .m3-button--text {
+    color: var(--md-sys-color-inverse-primary);
+    padding: 0 12px;
+    height: 36px;
+    font-size: 0.85rem;
+}
+
+.m3-snackbar__actions .m3-icon-button {
+    color: var(--md-sys-color-inverse-on-surface);
+    width: 32px;
+    height: 32px;
+}
+
+@media (min-width: 768px) {
+    .m3-snackbar {
+        left: 24px;
+        right: auto;
+        margin: 0;
+    }
+}
  

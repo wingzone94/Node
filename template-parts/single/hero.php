@@ -54,15 +54,15 @@
                 $reading_time_display = $reading_info['reading'] . '分';
             }
             ?>
-            <div class="m3-article__reading-badge-expressive" id="m3-hero-reading-badge" style="background-color: <?php echo esc_attr($reading_info['color']); ?>;">
+            <div class="m3-article__reading-badge-expressive" id="m3-hero-reading-badge" style="background-color: <?php echo esc_attr($reading_info['color']); ?>;" aria-hidden="true">
                 <div class="m3-reading-badge__gauge">
-                    <svg viewBox="0 0 36 36" class="m3-reading-circle__svg">
+                    <svg viewBox="0 0 36 36" class="m3-reading-circle__svg" aria-hidden="true" focusable="false">
                         <path class="m3-reading-circle__bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         <path class="m3-reading-circle__progress" 
                               style="--target-progress: <?php echo esc_attr($reading_info['progress']); ?>;" 
                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
-                    <span class="material-symbols-outlined">timer</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">timer</span>
                 </div>
                 <span class="m3-reading-badge-text">
                     <?php echo esc_html($reading_time_display); ?> (約<?php echo esc_html($reading_info['chars']); ?>文字)
