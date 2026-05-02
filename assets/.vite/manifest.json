@@ -9,10 +9,7 @@
     "file": "js/main.js",
     "name": "main",
     "src": "src/main.js",
-    "isEntry": true,
-    "css": [
-      "css/main.css"
-    ]
+    "isEntry": true
   },
   "src/styles/style.css": {
     "file": "css/style.css",

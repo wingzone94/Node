@@ -267,14 +267,12 @@ function initSearchBar() {
     const searchBar = document.querySelector('.m3-search-bar');
     const searchInput = document.getElementById('m3-search-input');
     const searchClear = document.getElementById('m3-search-clear');
-    const advancedTrigger = document.getElementById('m3-advanced-search-trigger');
     const modal = document.getElementById('m3-advanced-search-modal');
     const modalClose = document.getElementById('m3-advanced-search-close');
     const modalReset = document.getElementById('m3-advanced-search-reset');
     const modalApply = document.getElementById('m3-advanced-search-apply');
-    const inputWrapper = document.querySelector('.m3-search-input-wrapper');
 
-    if (!searchToggle || !searchBar || !searchInput) return;
+    if (!searchToggle || !searchBar || !searchInput || !modal) return;
 
     const header = document.querySelector('.m3-header');
 
@@ -292,37 +290,41 @@ function initSearchBar() {
         }
     });
 
-    // --- Clear Button Visibility & Logic ---
+    // --- Clear Button Logic ---
     const updateClearBtn = () => {
-        searchClear.style.display = searchInput.value ? 'flex' : 'none';
+        if (searchClear) searchClear.style.display = searchInput.value ? 'flex' : 'none';
     };
     searchInput.addEventListener('input', updateClearBtn);
-    searchClear.addEventListener('click', () => {
+    searchClear?.addEventListener('click', () => {
         searchInput.value = '';
         updateClearBtn();
         searchInput.focus();
+        updateHitCount();
     });
 
     // --- Mobile Close Button ---
     document.getElementById('m3-search-mobile-close')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
         searchBar.classList.remove('is-active');
         header?.classList.remove('search-is-active');
-        searchInput.value = '';
-        updateClearBtn();
     });
 
-    updateClearBtn();
-
-    // --- Advanced Search Modal ---
-    // --- Advanced Search Modal ---
+    // --- Modal Control ---
     const openModal = () => {
         modal.classList.add('is-active');
         document.body.style.overflow = 'hidden';
-        setTimeout(() => switchPage(1), 50); 
-        initRangeSlider();
-        updateHitCount();
+        
+        if (window.innerWidth > 600) {
+            switchPage(1);
+        } else {
+            // Mobile: Single scroll view
+            modal.querySelectorAll('.m3-modal__page').forEach(p => p.classList.add('is-active'));
+        }
+        
+        setTimeout(() => {
+            initRangeSlider();
+            updateHitCount();
+            updateTabStatus();
+        }, 150);
     };
 
     const closeModal = () => {
@@ -330,60 +332,41 @@ function initSearchBar() {
         document.body.style.overflow = '';
     };
 
-    // Bind ALL triggers (Header and Bottom Nav)
     document.querySelectorAll('.m3-search-advanced-trigger').forEach(trigger => {
         trigger.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             openModal();
         });
     });
 
-    modalClose.addEventListener('click', closeModal);
+    modalClose?.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-    // --- Multi-page Logic ---
+    // --- PC Tab Switching ---
     const switchPage = (pageNum) => {
-        // Skip switching logic on mobile (single scroll)
-        if (window.innerWidth <= 600) {
-            // Ensure all pages are visible for single scroll
-            modal.querySelectorAll('.m3-modal__page').forEach(p => {
-                p.classList.add('is-active');
-            });
-            // Init all components once
-            setTimeout(initRangeSlider, 200);
-            return;
-        }
+        if (window.innerWidth <= 600) return;
 
         const pagesContainer = modal.querySelector('.m3-modal__pages-container');
         const allPages = Array.from(modal.querySelectorAll('.m3-modal__page'));
         const allTabs = Array.from(modal.querySelectorAll('.m3-modal__tab'));
         
-        const visiblePages = allPages.filter(p => p.offsetWidth > 0 || getComputedStyle(p).display !== 'none');
-        if (!pagesContainer || visiblePages.length === 0) return;
+        if (!pagesContainer || allPages.length === 0) return;
 
-        const targetPageIndex = visiblePages.findIndex(p => p.dataset.page == pageNum);
-        if (targetPageIndex === -1) return;
-
-        const totalVisible = visiblePages.length;
-        const movePercent = (100 / totalVisible) * targetPageIndex;
+        const movePercent = (100 / allPages.length) * (pageNum - 1);
         pagesContainer.style.transform = `translateX(-${movePercent}%)`;
 
         allPages.forEach(p => p.classList.toggle('is-active', p.dataset.page == pageNum));
         allTabs.forEach(t => t.classList.toggle('is-active', t.dataset.page == pageNum));
 
+        // Update tab indicator
         const tabsContainer = document.getElementById('m3-search-tabs');
         if (tabsContainer) {
             const indicator = tabsContainer.querySelector('.m3-modal__tab-indicator');
             const activeTab = allTabs.find(t => t.dataset.page == pageNum);
-            if (indicator && activeTab && activeTab.offsetWidth > 0) {
+            if (indicator && activeTab) {
                 indicator.style.width = `${activeTab.offsetWidth}px`;
                 indicator.style.left = `${activeTab.offsetLeft}px`;
             }
-        }
-
-        if (pageNum === 2) {
-            setTimeout(initRangeSlider, 150);
         }
     };
 
@@ -391,33 +374,19 @@ function initSearchBar() {
         el.addEventListener('click', () => switchPage(parseInt(el.dataset.page)));
     });
 
-    // Bind all triggers (Header, Bottom Nav, etc.)
-    document.querySelectorAll('.m3-search-advanced-trigger').forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            openModal();
-        });
-    });
-
-    modalClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-    // --- Range Slider Logic ---
+    // --- Range Slider ---
     function initRangeSlider() {
         const slider = document.getElementById('m3-word-count-slider');
-        const minHandle = slider.querySelector('.m3-range-slider__handle--min');
-        const maxHandle = slider.querySelector('.m3-range-slider__handle--max');
-        const range = slider.querySelector('.m3-range-slider__range');
+        const minHandle = document.getElementById('m3-slider-handle-min');
+        const maxHandle = document.getElementById('m3-slider-handle-max');
+        const range = document.getElementById('m3-slider-range');
         const minInput = document.getElementById('m3-min-chars');
         const maxInput = document.getElementById('m3-max-chars');
         
-        // Set reasonable defaults if empty or stuck at 10000
-        if (!minInput.value || minInput.value == "10000") minInput.value = 0;
-        if (!maxInput.value || maxInput.value == "0") maxInput.value = 5000;
+        if (!slider || !minHandle || !maxHandle || !range || !minInput || !maxInput) return;
 
         let minVal = parseInt(minInput.value) || 0;
-        let maxVal = parseInt(maxInput.value) || 5000;
+        let maxVal = parseInt(maxInput.value) || 10000;
         const totalMax = 10000;
 
         const updateUI = () => {
@@ -427,11 +396,11 @@ function initSearchBar() {
             const minPercent = (minVal / totalMax) * 100;
             const maxPercent = (maxVal / totalMax) * 100;
             
-            const padding = 28;
-            const trackWidth = rect.width - (padding * 2);
+            const offset = 14;
+            const trackWidth = rect.width - (offset * 2);
             
-            const minPos = padding + (minPercent / 100) * trackWidth;
-            const maxPos = padding + (maxPercent / 100) * trackWidth;
+            const minPos = offset + (minPercent / 100) * trackWidth;
+            const maxPos = offset + (maxPercent / 100) * trackWidth;
             
             minHandle.style.left = `${minPos}px`;
             maxHandle.style.left = `${maxPos}px`;
@@ -440,24 +409,21 @@ function initSearchBar() {
             
             minHandle.querySelector('.m3-range-slider__value').textContent = minVal;
             maxHandle.querySelector('.m3-range-slider__value').textContent = maxVal >= totalMax ? '10000+' : maxVal;
+            
             minInput.value = minVal;
             maxInput.value = maxVal;
         };
 
         const handleDrag = (e, type) => {
-            if (e.cancelable) e.preventDefault(); // Stop mobile scroll
+            if (e.cancelable) e.preventDefault();
             const rect = slider.getBoundingClientRect();
-            if (rect.width === 0) return;
-
-            const padding = 28;
-            const trackWidth = rect.width - (padding * 2);
+            const offset = 14;
+            const trackWidth = rect.width - (offset * 2);
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const x = clientX - rect.left - padding;
+            const x = clientX - rect.left - offset;
             
             const percent = Math.min(100, Math.max(0, (x / trackWidth) * 100));
             let val = Math.round((percent / 100) * totalMax);
-            
-            // スナップ機能 (500単位)
             val = Math.round(val / 500) * 500;
 
             if (type === 'min') {
@@ -483,28 +449,42 @@ function initSearchBar() {
             document.addEventListener('touchend', end);
         };
 
+        minHandle.onmousedown = (e) => onStart(e, 'min');
+        maxHandle.onmousedown = (e) => onStart(e, 'max');
+        minHandle.ontouchstart = (e) => onStart(e, 'min');
+        maxHandle.ontouchstart = (e) => onStart(e, 'max');
+
+        minInput.onchange = () => {
+            minVal = Math.min(Math.max(0, parseInt(minInput.value) || 0), maxVal - 500);
+            updateUI();
+            updateHitCount();
+        };
+        maxInput.onchange = () => {
+            maxVal = Math.max(Math.min(totalMax, parseInt(maxInput.value) || 0), minVal + 500);
+            updateUI();
+            updateHitCount();
+        };
+
+        updateUI();
+    }
+
+    // --- Tag Suggestions ---
     const initTagSuggestions = () => {
         const tagInput = document.getElementById('m3-tag-input');
         const suggestionList = document.getElementById('m3-tag-suggestions');
         if (!tagInput || !suggestionList) return;
 
         let debounceTimer;
-
         tagInput.addEventListener('input', () => {
             clearTimeout(debounceTimer);
             const query = tagInput.value.trim();
-            
-            if (query.length < 1) {
-                suggestionList.classList.remove('is-active');
-                return;
-            }
+            if (query.length < 1) { suggestionList.classList.remove('is-active'); return; }
 
             debounceTimer = setTimeout(() => {
-                // Use WordPress REST API to fetch tags
                 fetch(`/wp-json/wp/v2/tags?search=${encodeURIComponent(query)}&per_page=10`)
                     .then(res => res.json())
                     .then(tags => {
-                        if (tags && tags.length > 0) {
+                        if (tags?.length > 0) {
                             suggestionList.innerHTML = tags.map(tag => `
                                 <div class="m3-suggestion-item" data-tag="${tag.name}">
                                     <span class="material-symbols-outlined">sell</span>
@@ -512,292 +492,106 @@ function initSearchBar() {
                                 </div>
                             `).join('');
                             suggestionList.classList.add('is-active');
-                            
-                            // Click event for each suggestion
                             suggestionList.querySelectorAll('.m3-suggestion-item').forEach(item => {
-                                item.addEventListener('click', () => {
+                                item.onclick = () => {
                                     tagInput.value = item.dataset.tag;
                                     suggestionList.classList.remove('is-active');
                                     updateHitCount();
-                                });
+                                    updateTabStatus();
+                                };
                             });
-                        } else {
-                            suggestionList.classList.remove('is-active');
-                        }
-                    })
-                    .catch(() => suggestionList.classList.remove('is-active'));
+                        } else { suggestionList.classList.remove('is-active'); }
+                    });
             }, 300);
         });
-
-        // Close when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!tagInput.contains(e.target) && !suggestionList.contains(e.target)) {
-                suggestionList.classList.remove('is-active');
-            }
-        });
     };
-
     initTagSuggestions();
 
-        minHandle.addEventListener('mousedown', (e) => onStart(e, 'min'));
-        maxHandle.addEventListener('mousedown', (e) => onStart(e, 'max'));
-        minHandle.addEventListener('touchstart', (e) => onStart(e, 'min'), { passive: false });
-        maxHandle.addEventListener('touchstart', (e) => onStart(e, 'max'), { passive: false });
-
-        // --- Manual Input Sync ---
-        minInput.addEventListener('change', () => {
-            minVal = Math.min(Math.max(0, parseInt(minInput.value) || 0), maxVal - 500);
-            updateUI();
-            updateHitCount();
-        });
-        maxInput.addEventListener('change', () => {
-            maxVal = Math.max(Math.min(totalMax, parseInt(maxInput.value) || 0), minVal + 500);
-            updateUI();
-            updateHitCount();
-        });
-
-        updateUI();
-    }
-
-    // --- Reading Time Chips Logic ---
+    // --- Reading Time Chips ---
     modal.querySelectorAll('input[name="m3_reading_time"]').forEach(input => {
         input.addEventListener('change', () => {
             const val = input.value;
             const minInput = document.getElementById('m3-min-chars');
             const maxInput = document.getElementById('m3-max-chars');
-            
             if (val === 'short') { minInput.value = 0; maxInput.value = 2500; }
             else if (val === 'medium') { minInput.value = 2500; maxInput.value = 5000; }
             else if (val === 'long') { minInput.value = 5000; maxInput.value = 10000; }
             else { minInput.value = 0; maxInput.value = 10000; }
-
-            // スライダーを再初期化して反映
             initRangeSlider();
         });
     });
 
-    // --- Platform Selection Limit (Games Only) ---
-    const MAX_GAME_PLATFORMS = 5;
-    const applyButton = document.getElementById('m3-advanced-search-apply');
-    const platformCheckboxes = modal.querySelectorAll('input[name="m3_platform[]"]');
-
-    platformCheckboxes.forEach(cb => {
-        cb.addEventListener('change', (e) => {
-            const isGame = cb.dataset.isGame === 'true';
-            if (isGame && cb.checked) {
-                const checkedGames = modal.querySelectorAll('input[name="m3_platform[]"][data-is-game="true"]:checked');
-                if (checkedGames.length > MAX_GAME_PLATFORMS) {
-                    // 5個を超えても一応選択可能にするが、警告（シェイク）は出す
-                    if (applyButton && typeof gsap !== 'undefined') {
-                        gsap.to(applyButton, { 
-                            x: 8, duration: 0.08, repeat: 5, yoyo: true, 
-                            ease: "power2.inOut", 
-                            onComplete: () => gsap.set(applyButton, { x: 0 })
-                        });
-                        applyButton.classList.add('is-error-shake');
-                        setTimeout(() => applyButton.classList.remove('is-error-shake'), 600);
-                    }
-                }
-            }
-            updateHitCount();
-        });
-    });
-
-    // --- Modal Logic with Vanishing Animation ---
-    modalReset.addEventListener('click', () => {
-        const sections = modal.querySelectorAll('.m3-search-section, .m3-platform-group');
-        
-        // M3E Vanishing Animation
-        if (typeof gsap !== 'undefined') {
-            gsap.to(sections, {
-                y: 10, opacity: 0, duration: 0.25, stagger: 0.03, ease: "power2.in",
-                onComplete: () => {
-                    performReset();
-                    // Reappear Animation
-                    gsap.to(sections, {
-                        y: 0, opacity: 1, duration: 0.4, stagger: 0.03, ease: "back.out(1.5)"
-                    });
-                }
-            });
-        } else {
-            // 初期検知
-            checkHandyAspect();
-
-            // フォルダブル開閉検知
-            let lastWidth = window.innerWidth;
-            window.addEventListener('resize', () => {
-                const currentWidth = window.innerWidth;
-                const widthDiff = Math.abs(currentWidth - lastWidth);
-
-                // 150px以上の急激な幅の変化があった場合、フォルダブルの開閉とみなす
-                if (widthDiff > 150) {
-                    // システムダイアログを表示
-                    alert('画面の折りたたみが検知されたため、表示を最適化します。');
-                    
-                    // 最適化ロジックの実行
-                    checkHandyAspect();
-                    
-                    // 必要に応じてリロードや特定のレイアウト調整
-                    if (currentWidth > 600 && window.innerHeight / currentWidth < 1.2) {
-                        // 展開時（タブレット風）の追加処理
-                        console.log('Unfolded state detected');
-                    }
-                }
-                lastWidth = currentWidth;
-            });
-
-            // ボトムナビの目次ボタン
-
-            performReset();
-        }
-
-        function performReset() {
-            modal.querySelectorAll('input, select').forEach(input => {
-                if (input.tagName === 'SELECT') input.selectedIndex = 0;
-                else if (input.type === 'checkbox') input.checked = false;
-                else if (input.type === 'radio') {
-                    if (['m3_ai', 'm3_media', 'm3_reading_time'].includes(input.name)) {
-                        input.checked = input.value === 'all';
-                    } else {
-                        input.checked = false;
-                    }
-                }
-                else if (input.id === 'm3-min-chars') input.value = 0;
-                else if (input.id === 'm3-max-chars') input.value = 10000;
-                else input.value = '';
-            });
-            initRangeSlider();
-            updateHitCount();
-        }
-    });
-
-    // --- Real-time Search Hits (Debounced for stability) ---
+    // --- Hit Count & Tab Status ---
     let hitCountTimeout;
-    function updateHitCount() {
+    const updateHitCount = () => {
         const hitCountText = document.querySelector('.m3-search-hits-text strong');
         if (!hitCountText) return;
-        
         clearTimeout(hitCountTimeout);
         hitCountTimeout = setTimeout(() => {
-            hitCountText.style.transition = 'opacity 0.2s';
-            hitCountText.style.opacity = '0.3'; // Loading state
-            
+            hitCountText.style.opacity = '0.3';
             const params = new URLSearchParams();
-            const sValue = searchInput.value.trim();
-            if (sValue) params.append('s', sValue);
-            
+            const sVal = searchInput.value.trim();
+            if (sVal) params.append('s', sVal);
             modal.querySelectorAll('input, select').forEach(input => {
-                if (input.type === 'checkbox' && input.checked) params.append(input.name, input.value);
-                if (input.type === 'radio' && input.checked) params.append(input.name, input.value);
-                if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
-                if ((input.type === 'text' || input.type === 'date' || input.type === 'hidden' || input.type === 'number') && input.value) {
-                    params.append(input.name, input.value);
-                }
+                if ((input.type === 'checkbox' || input.type === 'radio') && input.checked) params.append(input.name, input.value);
+                else if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
+                else if ((input.type === 'text' || input.type === 'date' || input.type === 'number') && input.value) params.append(input.name, input.value);
             });
-            
-            // WordPress AJAX endpoint
-            const ajaxUrl = `${m3_ajax.ajax_url}?action=node_get_search_count&${params.toString()}`;
-            
-            const resultsContainer = document.getElementById('m3-search-results-list');
-        if (resultsContainer) showSkeletonLoader(resultsContainer, 4);
-
-        fetch(ajaxUrl)
+            fetch(`${m3_ajax.ajax_url}?action=node_get_search_count&${params.toString()}`)
                 .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        hitCountText.textContent = data.data.count;
-                    }
-                    hitCountText.style.opacity = '1';
-                })
-                .catch(() => { hitCountText.style.opacity = '1'; });
-        }, 300); // 300ms debounce
+                .then(data => { if (data.success) hitCountText.textContent = data.data.count; hitCountText.style.opacity = '1'; });
+        }, 400);
     };
 
     const updateTabStatus = () => {
-        const tabs = modal.querySelectorAll('.m3-modal__tab');
         const pages = modal.querySelectorAll('.m3-modal__page');
-
-        pages.forEach((page, index) => {
-            const tab = tabs[index];
+        const tabs = modal.querySelectorAll('.m3-modal__tab');
+        pages.forEach((page, i) => {
             let hasValue = false;
-
-            if (index === 0) {
-                // Page 1: Cat, Tag, Dates
-                const cat = page.querySelector('select[name="m3_cat"]')?.value;
-                const tag = page.querySelector('input[name="m3_tag"]')?.value;
-                const start = page.querySelector('input[name="m3_start_date"]')?.value;
-                const end = page.querySelector('input[name="m3_end_date"]')?.value;
-                if (cat || tag || start || end) hasValue = true;
-            } else if (index === 1) {
-                // Page 2: Reading Time, Chars, Media, AI
-                const readingTime = page.querySelector('input[name="m3_reading_time"]:checked')?.value;
-                const minChars = page.querySelector('#m3-min-chars')?.value;
-                const maxChars = page.querySelector('#m3-max-chars')?.value;
-                const mediaChecked = page.querySelectorAll('input[name="m3_media_type[]"]:checked').length > 0;
-                const ai = page.querySelector('input[name="m3_ai"]:checked')?.value;
-                
-                if ((readingTime && readingTime !== 'all') || 
-                    (minChars && minChars !== '0') || 
-                    (maxChars && maxChars !== '10000') || 
-                    mediaChecked || 
-                    (ai && ai !== 'all')) {
-                    hasValue = true;
-                }
-            } else if (index === 2) {
-                // Page 3: Platforms
-                const platformsChecked = page.querySelectorAll('input[name="m3_platform[]"]:checked').length > 0;
-                if (platformsChecked) hasValue = true;
-            }
-
-            tab.classList.toggle('has-settings', hasValue);
+            page.querySelectorAll('input, select').forEach(input => {
+                if (input.type === 'checkbox' && input.checked) hasValue = true;
+                if (input.type === 'radio' && input.checked && input.value !== 'all') hasValue = true;
+                if (input.tagName === 'SELECT' && input.value !== '') hasValue = true;
+                if (input.type === 'text' && input.value !== '') hasValue = true;
+                if ((input.id === 'm3-min-chars' && input.value !== '0') || (input.id === 'm3-max-chars' && input.value !== '10000')) hasValue = true;
+            });
+            tabs[i]?.classList.toggle('has-settings', hasValue);
         });
     };
 
-    // Add listeners to ALL inputs in the modal
     modal.querySelectorAll('input, select').forEach(input => {
-        input.addEventListener('change', () => {
-            updateHitCount();
-            updateTabStatus();
-        });
-        if (input.type === 'text' || input.type === 'number') {
-            input.addEventListener('input', () => {
-                updateHitCount();
-                updateTabStatus();
-            });
-        }
+        input.addEventListener('change', () => { updateHitCount(); updateTabStatus(); });
+        if (input.type === 'text' || input.type === 'number') input.addEventListener('input', () => { updateHitCount(); updateTabStatus(); });
     });
-    searchInput.addEventListener('input', updateHitCount);
-    
-    // Initial call to set status if filters are pre-filled (e.g. from URL)
-    updateTabStatus();
 
-    modalApply.addEventListener('click', () => {
-        const loading = document.getElementById('m3-search-loading');
-        if (loading) loading.classList.add('is-active');
-
+    // --- Apply Search ---
+    modalApply?.addEventListener('click', () => {
+        document.getElementById('m3-search-loading')?.classList.add('is-active');
         const params = new URLSearchParams();
-        const sValue = searchInput.value.trim();
-        params.append('s', sValue); // Always append s to trigger search.php even if empty
-
-        // すべての入力要素を収集
+        params.append('s', searchInput.value.trim());
         modal.querySelectorAll('input, select').forEach(input => {
-            if (input.type === 'checkbox' && input.checked) params.append(input.name, input.value);
-            if (input.type === 'radio' && input.checked) params.append(input.name, input.value);
-            if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
-            if ((input.type === 'text' || input.type === 'date' || input.type === 'hidden' || input.type === 'number') && input.value) {
-                params.append(input.name, input.value);
-            }
+            if ((input.type === 'checkbox' || input.type === 'radio') && input.checked) params.append(input.name, input.value);
+            else if (input.tagName === 'SELECT' && input.value) params.append(input.name, input.value);
+            else if ((input.type === 'text' || input.type === 'date' || input.type === 'number') && input.value) params.append(input.name, input.value);
         });
+        setTimeout(() => { window.location.href = `${m3_ajax.home_url}?${params.toString()}`; }, 600);
+    });
 
-        // アニメーションを見せるための微小な遅延
-        setTimeout(() => {
-            const homeUrl = typeof m3_ajax !== 'undefined' ? m3_ajax.home_url : `${window.location.origin}/`;
-            window.location.href = `${homeUrl}?${params.toString()}`;
-        }, 800);
+    // --- Reset ---
+    modalReset?.addEventListener('click', () => {
+        modal.querySelectorAll('input, select').forEach(input => {
+            if (input.type === 'checkbox') input.checked = false;
+            else if (input.type === 'radio') input.checked = input.value === 'all';
+            else if (input.tagName === 'SELECT') input.selectedIndex = 0;
+            else if (input.id === 'm3-min-chars') input.value = 0;
+            else if (input.id === 'm3-max-chars') input.value = 10000;
+            else input.value = '';
+        });
+        initRangeSlider();
+        updateHitCount();
+        updateTabStatus();
     });
 }
-
-
 
 function initDrawer() {
     const menuBtn = document.querySelector('.m3-header__menu');
@@ -1021,5 +815,18 @@ function initAdaptiveHeader() {
         }
     });
 }
-import './styles/_blogcard-ai.css';
 
+function initViewSwitcher() {
+    const btn = document.getElementById('m3-view-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+        const isPC = document.body.classList.contains('pc-view');
+        document.body.classList.toggle('pc-view', !isPC);
+        localStorage.setItem('view-mode', !isPC ? 'pc' : 'mobile');
+        alert(!isPC ? 'PCビューに切り替えました。' : 'モバイルビューに切り替えました。');
+    });
+}
+
+function initHandyMode() {
+    // Implement handy mode if needed
+}

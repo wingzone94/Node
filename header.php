@@ -205,40 +205,40 @@
                 <div class="m3-modal__page" data-page="2">
                     <div class="m3-advanced-search-grid-layout">
                         <div class="m3-advanced-search-column">
-                            <div class="m3-search-section">
-                                <label class="m3-search-section-label"><span class="material-symbols-outlined">schedule</span> 読了目安</label>
-                                <div class="m3-radio-group">
-                                    <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="all" checked><span class="m3-radio-label">すべて</span></label>
-                                    <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="short"><span class="m3-radio-label">~5分</span></label>
-                                    <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="medium"><span class="m3-radio-label">~10分</span></label>
-                                    <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="long"><span class="m3-radio-label">15分~</span></label>
-                                </div>
-                                
-                                <div class="m3-mobile-hidden">
+                                <div class="m3-search-section">
                                     <!-- Range Slider -->
-                                    <div class="m3-search-section-label m3-search-section-label--sub"><span class="material-symbols-outlined">straighten</span> 文字数範囲</div>
-                                    <div class="m3-range-slider" id="m3-char-range-slider">
-                                        <div class="m3-range-slider__track"></div>
-                                        <div class="m3-range-slider__range" id="m3-slider-range"></div>
-                                        <div class="m3-range-slider__handle" id="m3-slider-handle-min">
-                                            <div class="m3-range-slider__value" id="m3-slider-value-min">0</div>
-                                        </div>
-                                        <div class="m3-range-slider__handle" id="m3-slider-handle-max">
-                                            <div class="m3-range-slider__value" id="m3-slider-value-max">10000</div>
-                                        </div>
+                                    <label class="m3-search-section-label"><span class="material-symbols-outlined">schedule</span> 読了目安・ボリューム</label>
+                                    <div class="m3-radio-group">
+                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="all" checked><span class="m3-radio-label">すべて</span></label>
+                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="short"><span class="m3-radio-label">~5分</span></label>
+                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="medium"><span class="m3-radio-label">~10分</span></label>
+                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="long"><span class="m3-radio-label">15分~</span></label>
                                     </div>
-                                    <div class="m3-char-input-grid">
-                                        <div class="m3-char-input-field">
-                                            <span class="m3-char-input-label">最小</span>
-                                            <input type="number" name="m3_min" id="m3-min-chars" value="0" class="m3-text-input m3-char-input">
+                                    
+                                    <div class="m3-slider-container">
+                                        <div class="m3-search-section-label m3-search-section-label--sub"><span class="material-symbols-outlined">straighten</span> 文字数範囲</div>
+                                        <div class="m3-range-slider" id="m3-word-count-slider">
+                                            <div class="m3-range-slider__track"></div>
+                                            <div class="m3-range-slider__range" id="m3-slider-range"></div>
+                                            <div class="m3-range-slider__handle m3-range-slider__handle--min" id="m3-slider-handle-min">
+                                                <div class="m3-range-slider__value">0</div>
+                                            </div>
+                                            <div class="m3-range-slider__handle m3-range-slider__handle--max" id="m3-slider-handle-max">
+                                                <div class="m3-range-slider__value">10000</div>
+                                            </div>
                                         </div>
-                                        <div class="m3-char-input-field">
-                                            <span class="m3-char-input-label">最大</span>
-                                            <input type="number" name="m3_max" id="m3-max-chars" value="10000" class="m3-text-input m3-char-input">
+                                        <div class="m3-char-input-grid">
+                                            <div class="m3-char-input-field">
+                                                <span class="m3-char-input-label">最小</span>
+                                                <input type="number" name="m3_min" id="m3-min-chars" value="0" class="m3-text-input m3-char-input">
+                                            </div>
+                                            <div class="m3-char-input-field">
+                                                <span class="m3-char-input-label">最大</span>
+                                                <input type="number" name="m3_max" id="m3-max-chars" value="10000" class="m3-text-input m3-char-input">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
                         <div class="m3-advanced-search-column">
                             <div class="m3-search-section">
