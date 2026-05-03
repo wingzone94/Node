@@ -19,7 +19,7 @@ Luminous Core は、最高峰のパフォーマンスと視覚体験を両立す
 - **REST API & oEmbed:** 外部メディア（Apple Music, Steam 等）のシームレスな統合。
 
 ## 🛠️ Development & Build
-- **Vite:** フロントエンド・アセットの高速ビルドプロセス。
+- **Bun / Vite:** フロントエンド・アセットの超高速ビルドおよびパッケージ管理。
 - **WordPress Hooks:** `register_block_type`, `embed_oembed_html` 等による標準機能の拡張。
 
 ---
