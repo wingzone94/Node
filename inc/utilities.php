@@ -172,7 +172,7 @@ function node_the_category_labels($post_id = null) {
 
     echo '<div class="m3-article__category-group' . ($is_card ? ' is-card' : '') . '">';
     if (!$is_card) {
-        echo '<span class="m3-article__category-label">CATEGORY</span>';
+        echo '<span class="m3-article__category-label"><span class="material-symbols-outlined">folder</span>CATEGORY</span>';
     }
     
     foreach ($display_cats as $cat) {
@@ -191,7 +191,7 @@ function node_the_category_labels($post_id = null) {
         echo 'data-thumb="' . esc_url($thumb_url) . '" ';
         echo $style_attr;
         echo '>';
-        echo '<span class="material-symbols-outlined">folder</span>' . esc_html($cat->name) . '</a>';
+        echo esc_html($cat->name) . '</a>';
     }
     
     if ($count > $limit) {
@@ -248,6 +248,16 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
     }
 }
 
+/**
+ * AI要約の短縮版を取得する
+ */
+function node_get_short_ai_summary($text, $length = 80) {
+    if (empty($text)) return '';
+    $text = strip_tags($text);
+    if (mb_strlen($text) <= $length) return $text;
+    return mb_substr($text, 0, $length) . '...';
+}
+
 /* ==========================================================================
    広告エリアの制御
    ========================================================================== */
@@ -267,106 +277,6 @@ function node_the_ad_area($position) {
    記事の文字数と読了目安ランクの取得
    ========================================================================== */
 
-/**
- * ブログ全体の平均文字数を取得
- */
-function node_get_global_average_chars() {
-    $cache_key = 'node_global_average_chars';
-    $avg_chars = get_transient($cache_key);
-
-    if (false === $avg_chars) {
-        global $wpdb;
-        $total_chars = $wpdb->get_var("SELECT SUM(CHAR_LENGTH(post_content)) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
-        $post_count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
-
-        if ($post_count > 0) {
-            $avg_chars = ceil($total_chars / $post_count);
-        } else {
-            $avg_chars = 2000;
-        }
-        set_transient($cache_key, $avg_chars, DAY_IN_SECONDS);
-    }
-
-    return $avg_chars;
-}
-
-/**
- * ブログ全体の最大文字数を取得
- */
-function node_get_global_max_chars() {
-    $cache_key = 'node_global_max_chars';
-    $max_chars = get_transient($cache_key);
-
-    if (false === $max_chars) {
-        global $wpdb;
-        $max_chars = $wpdb->get_var("SELECT MAX(CHAR_LENGTH(post_content)) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
-        
-        if (!$max_chars) {
-            $max_chars = 5000;
-        }
-        set_transient($cache_key, $max_chars, DAY_IN_SECONDS);
-    }
-
-    return $max_chars;
-}
-
-/**
- * 記事の文字数と読了目安ランクを取得する
- */
-function node_get_article_ranking_info($post_id = null) {
-    if (!$post_id) $post_id = get_the_ID();
-    $content = get_post_field('post_content', $post_id);
-    $chars = mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
-    
-    // ブログ全体の平均文字数と最大文字数を基準にする
-    $avg = node_get_global_average_chars();
-    $max = node_get_global_max_chars();
-
-    // ランク判定 (全体平均 $avg に対する割合で判定)
-    if ($chars < $avg * 0.4) {
-        $rank = 'short';
-        $label = '短い';
-        $color = '#FF4081'; // Pink
-        $container_color = '#FCE4EC';
-    } elseif ($chars < $avg * 0.8) {
-        $rank = 'somewhat_short';
-        $label = 'やや短い';
-        $color = '#00E5FF'; // Cyan
-        $container_color = '#E0F7FA';
-    } elseif ($chars < $avg * 1.2) {
-        $rank = 'standard';
-        $label = '標準';
-        $color = '#00E676'; // Green
-        $container_color = '#E8F5E9';
-    } elseif ($chars < $avg * 1.6) {
-        $rank = 'somewhat_long';
-        $label = 'やや長い';
-        $color = '#2979FF'; // Blue
-        $container_color = '#E3F2FD';
-    } else {
-        $rank = 'long';
-        $label = '長い';
-        $color = '#FF9100'; // Orange
-        $container_color = '#FFF3E0';
-    }
-
-    // 進行度（プログレス）の計算
-    // ブログ内の最大文字数($max)を100%とする
-    $progress = min(100, round(($chars / $max) * 100));
-
-    // 読了時間の計算 (分速800文字換算)
-    $reading_time = ceil(($chars / 800));
-
-    return [
-        'rank' => $rank,
-        'label' => $label,
-        'progress' => $progress,
-        'color' => $color,
-        'container_color' => $container_color,
-        'reading' => max(1, $reading_time),
-        'chars' => number_format($chars)
-    ];
-}
 
 /**
  * プラットフォームの分類定義を取得する
@@ -402,4 +312,14 @@ function node_get_platform_category_name( $platform_name ) {
         }
     }
     return 'その他';
+}
+/**
+ * フッターメニューのフォールバック（AdSense審査対策）
+ */
+function node_footer_menu_fallback() {
+    echo '<ul class="m3-footer__links">';
+    echo '<li><a href="' . esc_url( home_url( '/' ) ) . '">ホーム</a></li>';
+    echo '<li><a href="' . esc_url( home_url( '/privacy-policy/' ) ) . '">プライバシーポリシー</a></li>';
+    echo '<li><a href="' . esc_url( home_url( '/contact/' ) ) . '">お問い合わせ</a></li>';
+    echo '</ul>';
 }

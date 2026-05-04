@@ -1,6 +1,6 @@
 <?php
 /**
- * Nexus Abstract & Game Info Template
+ * Intelligence Summary & Game Info Template
  *
  * @package Luminous_Nexus
  */
@@ -23,7 +23,7 @@ if ( empty( $ai_summary ) && ( ! is_array( $game_info ) || empty( $game_info['ti
     <aside class="m3-nexus-abstract">
         <div class="m3-nexus-abstract__badge">
             <span class="material-symbols-outlined">psychology</span>
-            NEXUS ABSTRACT
+            INTELLIGENCE SUMMARY
         </div>
         <div class="m3-nexus-abstract__content">
             <?php echo nl2br(esc_html($ai_summary)); ?>

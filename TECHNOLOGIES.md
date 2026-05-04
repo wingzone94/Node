@@ -15,7 +15,7 @@ Luminous Core は、最高峰のパフォーマンスと視覚体験を両立す
 
 ## 🧠 Backend & Intelligence
 - **PHP 8.1+:** WordPress の最新環境に最適化されたバックエンド。
-- **Gemini API (Google AI):** 記事の自動要約（Nexus Abstract）およびメタデータ生成。
+- **Gemini API (Google AI):** 記事の自動要約（Intelligence Summary）およびメタデータ生成。
 - **REST API & oEmbed:** 外部メディア（Apple Music, Steam 等）のシームレスな統合。
 
 ## 🛠️ Development & Build

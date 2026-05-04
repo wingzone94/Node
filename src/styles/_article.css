@@ -1,5 +1,9 @@
 /* --- AI Summary --- */
 /* ... (rest of the file) */
+.m3-article__accent-line {
+    display: none; /* 不要な線を非表示化 */
+}
+
 .m3-article__meta-info .m3-label--category {
     background: var(--md-sys-color-secondary-container);
     color: var(--md-sys-color-on-secondary-container);
@@ -18,25 +22,29 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 12px;
-    padding: 6px 20px 6px 10px;
-    border-radius: 28px;
-    color: #ffffff !important;
-    margin: 16px auto 24px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    gap: 16px;
+    padding: 10px 24px 10px 14px;
+    border-radius: 20px;
+    margin: 24px auto 40px;
     font-weight: 900;
     font-size: 1rem;
     letter-spacing: -0.01em;
-    animation: m3BadgeReveal 0.6s cubic-bezier(0.2, 0, 0, 1) forwards;
+    animation: m3BadgeReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: var(--m3-elevation-2);
 }
 
 .m3-article__reading-badge-expressive:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    filter: brightness(1.05);
 }
+[data-theme="dark"] .m3-article__reading-badge-expressive {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+
 
 /* Hero Info Bubble Styles */
 .m3-hero-info-bubble {
@@ -95,31 +103,7 @@
     color: var(--md-sys-color-on-surface);
 }
 
-@media (max-width: 840px) {
-    .m3-hero-info-bubble {
-        left: 50% !important;
-        right: auto !important;
-        top: calc(100% + 16px) !important;
-        bottom: auto !important;
-        transform: translateX(-50%) translateY(10px) !important;
-        width: calc(100vw - 40px) !important;
-        max-width: 340px !important;
-        position: absolute;
-    }
-    .m3-article__reading-badge-expressive.is-info-active .m3-hero-info-bubble {
-        transform: translateX(-50%) translateY(0) !important;
-    }
-    .m3-hero-info-bubble__inner::after {
-        right: auto !important;
-        left: 50% !important;
-        top: auto !important;
-        bottom: 100% !important;
-        transform: translateX(-50%) !important;
-        border-right-color: transparent !important;
-        border-bottom-color: var(--md-sys-color-surface-container-high) !important;
-        border-top-color: transparent !important;
-    }
-}
+
 
 .m3-reading-badge__gauge {
     position: relative;
@@ -139,16 +123,22 @@
 
 .m3-reading-circle__bg {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.2);
+    stroke: rgba(0, 0, 0, 0.08); /* Fainter background circle */
     stroke-width: 4;
 }
 
 .m3-reading-circle__progress {
     fill: none;
-    stroke: #ffffff;
-    stroke-width: 4;
+    stroke: var(--badge-accent);
+    stroke-width: 4; /* Refined weight */
     stroke-linecap: round;
     stroke-dasharray: 0, 100;
+    animation: m3CircleDraw 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes m3CircleDraw {
+    from { stroke-dasharray: 0, 100; }
+    to { stroke-dasharray: var(--target-progress), 100; }
 }
 
 .m3-reading-badge.is-visible .m3-reading-circle__progress {
@@ -185,24 +175,61 @@
 }
 
 .m3-reading-badge__gauge .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px; /* Slightly larger */
     z-index: 1;
-    color: #ffffff;
+    color: var(--badge-accent);
+    font-variation-settings: 'FILL' 1, 'wght' 500; /* Bolder weight for clarity */
+    animation: stopwatch-pulse 2s ease-in-out infinite;
 }
 
-.m3-reading-badge__gauge .material-symbols-outlined {
-    font-size: 18px;
-    z-index: 1;
-    color: #ffffff;
+@keyframes stopwatch-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.8; }
 }
 
 .m3-reading-badge-label {
+    position: relative;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
     background: rgba(255, 255, 255, 0.2);
-    padding: 2px 8px;
-    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+}
+
+.m3-badge-label-desc {
+    display: none;
     font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.4s ease;
+}
+
+.is-info-active .m3-reading-badge-label {
+    min-width: 320px;
+    background: rgba(255, 255, 255, 0.95); /* よりソリッドにして可読性を最大化 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.is-info-active .m3-badge-label-main {
+    display: none;
+}
+
+.is-info-active .m3-badge-label-desc {
+    display: inline-block;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+[data-theme="dark"] .m3-reading-badge-label {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .m3-ai-summary__header {
@@ -245,14 +272,28 @@
     font-size: 1rem;
     line-height: 1.8;
     position: relative;
-    min-height: 80px;
+    min-height: 100px;
+    padding-bottom: 32px; /* スペースを確保して重なりを防止 */
 }
 .m3-ai-summary__text {
     margin: 0;
 }
 .m3-ai-summary__footer {
-    margin-top: var(--m3-spacing-m);
-    text-align: right;
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    margin: 0;
+}
+.m3-ai-summary__footer span {
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: #FF9900;
+    background: rgba(255, 153, 0, 0.1);
+    padding: 4px 12px;
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 153, 0, 0.2);
 }
 
 /* --- Shimmer Animation --- */
@@ -637,6 +678,90 @@
 }
 .m3-article__body li { line-height: 1.8; margin-bottom: var(--m3-spacing-s); }
 
+.m3-article__tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--m3-spacing-xl);
+}
+
+/* Breadcrumbs (SEO & Navigation) */
+.m3-breadcrumbs {
+    margin: var(--m3-spacing-m) 0;
+    padding: 0 var(--m3-spacing-m);
+}
+
+.m3-breadcrumbs__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.m3-breadcrumbs__item a {
+    color: var(--md-sys-color-secondary);
+    text-decoration: none;
+    transition: color 0.2s var(--m3-motion-easing);
+}
+
+.m3-breadcrumbs__item a:hover {
+    color: var(--md-sys-color-primary);
+}
+
+.m3-breadcrumbs__item--current {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.m3-breadcrumbs__separator {
+    display: flex;
+    align-items: center;
+    margin: 0 4px;
+    color: var(--md-sys-color-outline-variant);
+}
+
+.m3-breadcrumbs__separator .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.m3-archive-header {
+    margin: var(--m3-spacing-xl) var(--m3-spacing-m);
+}
+
+.m3-archive-description {
+    font-size: 0.9rem;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.6;
+    margin-top: var(--m3-spacing-s);
+    max-width: 600px;
+}
+
+.m3-article__footer-label {
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 12px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+
 /* --- Emphasized Category Card Design --- */
 .m3-article__category-group {
     display: flex;
@@ -655,11 +780,19 @@
     gap: 6px;
 }
 .m3-article__category-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 0.9rem;
     font-weight: 900;
     letter-spacing: 0.05em;
     color: var(--md-sys-color-on-surface-variant);
     opacity: 0.8;
+}
+
+.m3-article__category-label .material-symbols-outlined {
+    font-size: 1.1rem;
+    font-variation-settings: 'FILL' 1, 'wght' 400;
 }
 .m3-label--category-more {
     font-size: 11px;
@@ -732,7 +865,7 @@
 .m3-ad-area {
     margin: var(--m3-spacing-xxxl) auto;
     background: var(--md-sys-color-surface-container);
-    border-radius: var(--m3-radius-medium);
+    border-radius: 24px; /* 全てを角丸に */
     padding: var(--m3-spacing-l);
     display: flex;
     align-items: center;
@@ -751,3 +884,36 @@
 }
 
  
+
+/* --- PhotoSwipe M3 Integration --- */
+.pswp__bg {
+    background: var(--md-sys-color-surface) !important;
+    opacity: 0.95 !important;
+    backdrop-filter: blur(12px);
+}
+
+.pswp__img--placeholder {
+    background: var(--md-sys-color-surface-container-highest) !important;
+}
+
+.pswp__icn {
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+.pswp__button--close:hover {
+    background: var(--md-sys-color-error-container) !important;
+    color: var(--md-sys-color-on-error-container) !important;
+}
+
+.pswp__caption__center {
+    font-family: var(--font-main) !important;
+    font-weight: 700 !important;
+    color: var(--md-sys-color-on-surface) !important;
+    text-align: center;
+}
+
+.pswp__counter {
+    font-family: var(--font-main) !important;
+    font-weight: 900 !important;
+    color: var(--md-sys-color-primary) !important;
+}

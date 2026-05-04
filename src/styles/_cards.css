@@ -103,7 +103,7 @@
 
 .m3-card {
     background: var(--md-sys-color-surface-container-low);
-    border-radius: 0; /* 角丸を撤廃し長方形に */
+    border-radius: 0 0 32px 32px; /* 上は四角、下は角丸に反転 */
     overflow: hidden; 
     display: flex; 
     flex-direction: column;
@@ -133,35 +133,65 @@
     background-color: var(--md-sys-color-surface-container-highest);
 }
 
-.m3-card__background { 
+.m3-card__image-link { 
     position: relative; 
     width: 100%;
-    aspect-ratio: 16 / 9;
+    border-radius: 0; /* 上部は完全な四角形 */
+    aspect-ratio: 16 / 9; /* 少し高さを戻して安定感を出す */
     overflow: hidden;
-    background: var(--md-sys-color-surface-container-high);
+    background: color-mix(in srgb, var(--md-sys-color-primary) 5%, var(--md-sys-color-surface-container-high));
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.m3-card__background { 
+.m3-card__image-link img { 
     position: relative; 
-    width: 100%;
-    aspect-ratio: 16 / 9; /* 全てのカードで比率を固定 */
-    overflow: hidden;
-    background: var(--md-sys-color-surface-container-high);
-}
-
-.m3-card__background img { 
-    position: relative;
     z-index: 1;
     width: 100%; 
     height: 100%; 
-    object-fit: cover; /* 領域を隙間なく埋める */
-    transition: transform 0.8s var(--m3-motion-easing); 
+    object-fit: cover; /* 下地が見えないようにピッタリ合わせる */
+    transform: none;
+    padding: 0;
+    transition: transform 0.6s var(--m3-motion-easing); 
     will-change: transform;
 }
 
-.m3-card:hover .m3-card__background img {
-    transform: scale(1.05) translateZ(0);
+.card-standard .m3-card__image-link {
+    aspect-ratio: 16 / 9;
 }
+
+.card-standard .m3-card__image-link img {
+    transform: none;
+}
+
+.m3-card:hover .m3-card__image-link img {
+    transform: scale(1.02) translateZ(0);
+}
+
+/* ARTICLESグリッドを厳格に3カラムに制限 */
+.m3-post-grid__container.is-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); /* モバイルは1列 */
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .m3-post-grid__container.is-articles-grid {
+        grid-template-columns: repeat(2, 1fr); /* タブレットは2列 */
+    }
+}
+
+@media (min-width: 1024px) {
+    .m3-post-grid__container.is-articles-grid {
+        grid-template-columns: repeat(3, 1fr); /* PCは厳格に3列 */
+        gap: 48px;
+    }
+}
+
+
 
 /* --- Card Meta Zoning (Overlay) --- */
 .card-overlay {
@@ -265,7 +295,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: 24px;
     padding: 6px 12px;
     font-size: 0.9rem;
     font-weight: 800;
@@ -300,23 +330,25 @@
 .m3-label--reading-time {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: 8px;
+    padding: 6px 16px;
     border-radius: 12px;
     font-size: 11px;
-    font-weight: 800;
-    background: var(--md-sys-color-surface-container-highest) !important;
-    color: var(--md-sys-color-on-surface-variant) !important;
+    font-weight: 900;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(8px);
+    color: var(--md-sys-color-primary) !important;
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--md-sys-color-outline-variant) !important;
-    transition: all 0.2s var(--m3-motion-easing);
+    border: 1.5px solid var(--md-sys-color-primary) !important;
+    transition: all 0.3s var(--m3-motion-easing);
     z-index: 1;
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.1);
 }
 
 .m3-label--reading-time .material-symbols-outlined {
-    font-size: 14px;
-    opacity: 0.8;
+    font-size: 16px;
+    font-variation-settings: 'FILL' 1;
 }
 
 .m3-label__gauge-container {
@@ -324,24 +356,24 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 3px;
-    background: rgba(0, 0, 0, 0.08);
+    height: 4px;
+    background: rgba(0, 0, 0, 0.05);
     z-index: -1;
-}
-
-[data-theme="dark"] .m3-label__gauge-container {
-    background: rgba(255, 255, 255, 0.12);
 }
 
 .m3-label__gauge-bar {
     display: block;
     height: 100%;
-    transition: width 1s var(--m3-motion-easing);
+    background: linear-gradient(90deg, var(--md-sys-color-primary), #ffc107);
+    box-shadow: 0 0 8px var(--md-sys-color-primary);
+    transition: width 1.2s var(--m3-motion-easing);
 }
 
 .m3-label--reading-time:hover {
-    background: var(--md-sys-color-surface-variant) !important;
-    transform: translateY(-1px);
+    background: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(255, 153, 0, 0.2);
 }
 
 /* Internal label text visibility */
@@ -431,10 +463,16 @@
 /* Clear old wrapper restrictions & positions */
 /* --- Card Content & Title Polishing --- */
 .m3-card__content {
-    padding: 24px;
+    padding: 20px 24px 28px;
     display: flex;
     flex-direction: column;
-    flex: 1; /* Fills remaining space to push footer down */
+    flex: 1;
+    background: var(--md-sys-color-surface-container-low);
+    margin-top: -20px;
+    border-radius: 0 0 32px 32px; /* カード全体の形状に合わせて下を丸める */
+    position: relative;
+    z-index: 5;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .m3-card__title {
@@ -492,9 +530,10 @@
 .m3-card--no-image {
     background: var(--md-sys-color-surface-container-low) !important;
     border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 32px !important; /* 四隅すべてを角丸に */
     position: relative;
     overflow: hidden;
-    padding-left: 6px;
+    padding: 12px; /* 全体的な余白を追加 */
     height: 100%;
     max-height: 320px;
     min-height: 260px;
@@ -579,4 +618,82 @@
 .m3-card--archive-link:hover .m3-card__archive-icon {
     transform: translateX(12px) scale(1.1);
     background: rgba(255, 255, 255, 0.3);
+}
+
+/* --- List View Layout (Archives) --- */
+.m3-post-grid--list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+    max-width: 900px; /* リスト表示時は幅を絞って可読性を高める */
+    margin: 0 auto;
+}
+
+.m3-post-grid--list .m3-card {
+    display: flex;
+    flex-direction: row; /* 横並び */
+    align-items: stretch;
+    min-height: 220px;
+    padding: 0;
+    overflow: hidden;
+    gap: 0;
+}
+
+.m3-post-grid--list .m3-card__image-link {
+    flex: 0 0 35%; /* 画像を左側に35%固定 */
+    max-width: 320px;
+    height: auto;
+    border-radius: 0;
+}
+
+.m3-post-grid--list .m3-card__image-link img {
+    height: 100%;
+    object-fit: cover;
+}
+
+.m3-post-grid--list .m3-card__content {
+    flex: 1;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.m3-post-grid--list .m3-card__title {
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.m3-post-grid--list .m3-card__ai-accordion {
+    margin: 12px 0;
+}
+
+/* Mobile Adjustments for List View */
+@media (max-width: 768px) {
+    .m3-post-grid--list .m3-card {
+        min-height: 160px;
+    }
+    .m3-post-grid--list .m3-card__image-link {
+        flex: 0 0 120px; /* モバイルでは画像を少し小さく固定 */
+    }
+    .m3-post-grid--list .m3-card__content {
+        padding: 16px 20px;
+    }
+    .m3-post-grid--list .m3-card__title {
+        font-size: 1.1rem;
+    }
+    .m3-post-grid--list .m3-card__footer-meta {
+        display: none; /* モバイルリストではメタ情報を整理してタイトルを強調 */
+    }
+}
+
+@media (max-width: 480px) {
+    .m3-post-grid--list .m3-card {
+        flex-direction: column; /* 超小型端末では縦に戻す */
+    }
+    .m3-post-grid--list .m3-card__image-link {
+        flex: 0 0 180px;
+        max-width: none;
+    }
 }

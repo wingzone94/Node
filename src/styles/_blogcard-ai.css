@@ -154,16 +154,17 @@
 /* アコーディオン本体 (<details>) */
 .m3-card__ai-accordion {
     margin: var(--m3-spacing-s) 0 var(--m3-spacing-m);
-    border-radius: var(--m3-radius-medium);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-low);
+    border-radius: 16px;
+    border: 1.5px solid var(--md-sys-color-primary);
+    background: linear-gradient(135deg, var(--md-sys-color-primary-container) 0%, var(--md-sys-color-surface-container-low) 100%);
     overflow: hidden;
-    transition: box-shadow 0.3s var(--m3-motion-easing);
+    transition: all 0.3s var(--m3-motion-easing);
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.1);
 }
 
 .m3-card__ai-accordion[open] {
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
-    border-color: color-mix(in srgb, var(--md-sys-color-primary) 40%, var(--md-sys-color-outline-variant));
+    box-shadow: 0 12px 32px rgba(255, 153, 0, 0.2);
+    transform: scale(1.02);
 }
 
 /* トグルボタン (<summary>) — デフォルトの▶マーカーを除去 */
@@ -172,11 +173,10 @@
     list-style: none;
     cursor: pointer;
     padding: 0;
-    min-height: 48px; /* 最小タッチターゲット確保 */
+    min-height: 48px;
 }
 
 .m3-card__ai-summary-toggle::-webkit-details-marker { display: none; }
-
 .m3-card__ai-summary-toggle::marker { display: none; }
 
 /* トグル内部レイアウト */
@@ -186,13 +186,14 @@
     gap: var(--m3-spacing-s);
     padding: var(--m3-spacing-s) var(--m3-spacing-m);
     min-height: 48px;
-    border-radius: var(--m3-radius-medium);
-    transition: background-color 0.2s var(--m3-motion-easing);
+    border-radius: 14px;
+    transition: all 0.2s var(--m3-motion-easing);
     user-select: none;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .m3-card__ai-summary-toggle:hover .m3-card__ai-toggle-inner {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+    background: rgba(255, 153, 0, 0.15);
 }
 
 .m3-card__ai-summary-toggle:focus-visible .m3-card__ai-toggle-inner {

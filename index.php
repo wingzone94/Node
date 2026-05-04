@@ -3,21 +3,34 @@
 <main id="primary" class="site-main">
 
     <?php 
-    if (is_home() && !is_paged()) : 
+    // SEO: パンくずリスト
+    node_the_breadcrumbs();
+
+    // SEO: ページタイトル (h1)
+    if ( ! is_home() || is_paged() ) :
+    ?>
+        <header class="m3-archive-header">
+            <h1 class="m3-section-title"><?php echo esc_html( node_get_archive_title() ); ?></h1>
+            <?php if ( get_the_archive_description() ) : ?>
+                <div class="m3-archive-description"><?php the_archive_description(); ?></div>
+            <?php endif; ?>
+        </header>
+    <?php 
+    endif;
+
+    if ((is_home() || is_front_page()) && !is_paged()) : 
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
         if (!empty($spotlight_cats)) :
     ?>
         <!-- リファクタリングされた SPOTLIGHT セクション -->
         <section class="special-features">
-            <div class="special-features__header">
-                <h2 class="special-features__title">🔥SPOTLIGHT</h2>
-            </div>
-            <div class="special-features__pills" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px;">
+            <h2 class="m3-section-title">🔥 SPOTLIGHT</h2>
+            <div class="special-features__pills">
                 <?php foreach ($spotlight_cats as $cat) : ?>
                     <a href="<?php echo esc_url($cat['url']); ?>" 
-                       class="m3-spotlight-badge" 
+                       class="m3-spotlight-badge m3-ripple-host" 
                        style="background-color: <?php echo esc_attr($cat['color']); ?>; color: #ffffff;">
-                       <span class="material-symbols-outlined" style="font-size: 1.2rem;">auto_awesome</span> 
+                       <span class="material-symbols-outlined">auto_awesome</span> 
                        <?php echo esc_html($cat['name']); ?>
                     </a>
                 <?php endforeach; ?>
@@ -44,11 +57,13 @@
                         echo '</div>'; // Close latest container
                         echo '<hr class="m3-section-divider">';
                         echo '<h2 class="m3-section-title">🕒 ARTICLES</h2>';
-                        echo '<div class="m3-post-grid__container">'; // Open standard container
+                        echo '<div class="m3-post-grid__container is-articles-grid">'; // Open standard container
                     }
                     
                     $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
-                    get_template_part('template-parts/card', null, ['card_class' => $card_class]);
+                    get_template_part('template-parts/card', null, ['card_class' => $card_class, 'show_ai' => false]);
+
+
                 endwhile; ?>
             </div>
 
@@ -66,15 +81,7 @@
         <?php endif; ?>
     </div>
 
-    <div class="m3-navigation">
-        <?php 
-        the_posts_pagination([
-            'mid_size'  => 2,
-            'prev_text' => '<span class="material-symbols-outlined">chevron_left</span>',
-            'next_text' => '<span class="material-symbols-outlined">chevron_right</span>',
-        ]); 
-        ?>
-    </div>
+
 
 </main>
 

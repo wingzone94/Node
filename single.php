@@ -1,20 +1,38 @@
 <?php get_header(); ?>
 
 <main id="primary" class="site-main article-view">
-    <?php while (have_posts()) : the_post(); ?>
+    <?php 
+    // SEO: パンくずリスト
+    node_the_breadcrumbs();
+    
+    while (have_posts()) : the_post(); 
+    ?>
 
         <article id="post-<?php the_ID(); ?>" <?php post_class('m3-article'); ?>>
+<?php get_template_part('template-parts/single/hero'); ?>
             
-            <?php get_template_part('template-parts/single/hero'); ?>
+            
 
             <?php
-            $ai_summary = apply_filters( 'luminous_get_ai_summary', '', get_the_ID() );
-            if ( $ai_summary ) {
-                get_template_part( 'template-parts/ai-summary', null, [ 'summary' => $ai_summary, 'mode' => 'single' ] );
-            }
+                // AI 要約を取得
+                $ai_summary    = get_post_meta( get_the_ID(), '_node_ai_summary', true );
+                $tone_color    = get_post_meta( get_the_ID(), '_node_ai_tone_color', true );
+                $keywords      = get_post_meta( get_the_ID(), '_node_ai_keywords', true );
+                // コンポーネントへ渡す引数配列
+                $ai_args = array(
+                    'summary'    => $ai_summary,
+                    'mode'       => 'single',
+                    'tone_color' => $tone_color,
+                    'keywords'   => is_array( $keywords ) ? $keywords : array(),
+                );
+                if ( ! empty( $ai_summary ) ) {
+                    get_template_part( 'template-parts/ai-summary', null, $ai_args );
+                }
             ?>
+            <div class="m3-article__body">
+                <?php the_content(); ?>
+            </div>
 
-            <?php get_template_part('template-parts/single/content'); ?>
 
             <?php get_template_part('template-parts/single/footer'); ?>
             

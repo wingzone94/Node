@@ -158,3 +158,43 @@ function luminous_filter_card_meta_fields( array $fields, int $post_id ): array 
 function luminous_enqueue_plugin_scripts(): void {
 	do_action( 'luminous_enqueue_scripts' );
 }
+/* ==========================================================================
+   6. Media & Lightbox Support
+   ========================================================================== */
+
+/**
+ * 記事内の画像に自動的にメディアファイルへのリンクを付与する。
+ * Lightbox プラグインを確実に動作させるためのフィルタ。
+ *
+ * @param string $content 投稿本文。
+ * @return string リンク付与後の本文。
+ */
+add_filter( 'the_content', 'luminous_auto_image_lightbox_link', 20 );
+
+function luminous_auto_image_lightbox_link( $content ) {
+    if ( ! is_singular() ) return $content;
+
+    // <a>タグで囲まれていない <img> タグを探してラップする
+    // 1. すでに <a> で囲まれている <img> を一時的に退避
+    // 2. 残った <img> を <a> でラップ
+    $pattern = '/<a[^>]*>.*?<img[^>]+>.*?<\/a>/is';
+    $placeholders = [];
+    $content = preg_replace_callback($pattern, function($matches) use (&$placeholders) {
+        $placeholder = '<!--M3_LINKED_IMG_' . count($placeholders) . '-->';
+        $placeholders[] = $matches[0];
+        return $placeholder;
+    }, $content);
+
+    // まだリンクされていない画像をラップ
+    $img_pattern = '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i';
+    $content = preg_replace_callback($img_pattern, function($matches) {
+        return '<a href="' . esc_url($matches[1]) . '" class="m3-lightbox-link">' . $matches[0] . '</a>';
+    }, $content);
+
+    // 退避させていたリンク済み画像を元に戻す
+    foreach ($placeholders as $index => $original) {
+        $content = str_replace('<!--M3_LINKED_IMG_' . $index . '-->', $original, $content);
+    }
+
+    return $content;
+}

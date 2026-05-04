@@ -14,7 +14,7 @@ body {
 }
 
 input, select, textarea {
-    font-size: 16px !important; /* iOS Safariの自動ズーム防止 */
+    font-size: 1rem !important; /* iOS Safariの自動ズーム防止しつつ可変性を確保 */
 }
 .m3-page-container { 
     max-width: 7680px; /* Full 8K Resolution Support */

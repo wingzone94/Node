@@ -69,7 +69,7 @@
 /* FAB positioning & Colors */
 #m3-toc-trigger,
 .m3-fab {
-    background: var(--md-sys-color-primary) !important;
+    background: #FF9900 !important;
     color: #ffffff !important;
 }
 

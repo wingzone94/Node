@@ -1,3 +1,4 @@
+    <?php get_template_part('template-parts/ad', 'article'); ?>
     <footer class="m3-footer">
         <div class="m3-footer__main">
             <div class="m3-footer__grid">
@@ -13,16 +14,18 @@
                 </div>
 
                 <!-- Nav Column -->
-                <div class="m3-footer__col">
+                <div class="m3-footer__col m3-footer__col--nav">
                     <h3 class="m3-footer__title">NAVIGATION</h3>
-                    <ul class="m3-footer__links">
-                        <li><a href="<?php echo esc_url(home_url('/')); ?>">ホーム</a></li>
-                        <li><a href="<?php echo esc_url(home_url('/about/')); ?>">このブログについて</a></li>
-                        <li><a href="<?php echo esc_url(home_url('/contact/')); ?>">お問い合わせ</a></li>
-                        <li><a href="<?php echo esc_url(home_url('/privacy-policy/')); ?>">プライバシーポリシー</a></li>
-                    </ul>
-                </div>
-
+                    <?php
+                    wp_nav_menu(
+                        array(
+                            'theme_location' => 'footer',
+                            'menu_class'     => 'm3-footer__links',
+                            'container'      => false,
+                            'fallback_cb'    => 'node_footer_menu_fallback',
+                        )
+                    );
+                    ?>
                 </div>
             </div>
         </div>
@@ -40,24 +43,35 @@
 </div><!-- .m3-page-container -->
 
 <div class="m3-action-stack">
-    <!-- 1. Back to Top (Top) -->
-    <button id="m3-back-to-top" class="m3-fab m3-tooltip-target" data-tooltip="トップへ戻る">
-        <span class="material-symbols-outlined">arrow_upward</span>
-    </button>
-
-    <?php if (is_singular()) : ?>
-    <!-- 2. Comment Trigger -->
+    <?php if (is_singular()) : 
+        $post_id = get_the_ID();
+        $has_ai = !empty(apply_filters('luminous_get_ai_summary', '', $post_id));
+        $has_comments = comments_open($post_id) || get_comments_number($post_id) > 0;
+    ?>
+    <!-- 1. Comment Trigger (Bottom-most in stack) -->
+    <?php if ($has_comments) : ?>
     <button id="m3-scroll-to-comments" class="m3-fab m3-tooltip-target" data-tooltip="コメント欄へ">
         <span class="material-symbols-outlined">chat_bubble</span>
     </button>
     <?php endif; ?>
 
-    <?php if (is_singular()) : ?>
-    <!-- 3. TOC Trigger -->
+    <!-- 2. TOC Trigger -->
     <button id="m3-toc-trigger" class="m3-fab m3-tooltip-target" data-tooltip="目次を表示">
         <span class="material-symbols-outlined">toc</span>
     </button>
+
+    <!-- 3. AI Summary Jump -->
+    <?php if ($has_ai) : ?>
+    <button id="m3-jump-to-ai" class="m3-fab m3-tooltip-target" data-tooltip="AI要約へジャンプ">
+        <span class="material-symbols-outlined">auto_awesome</span>
+    </button>
     <?php endif; ?>
+    <?php endif; ?>
+
+    <!-- 4. Back to Top (Top-most in stack) -->
+    <button id="m3-back-to-top" class="m3-fab m3-tooltip-target" data-tooltip="トップへ戻る">
+        <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
 </div>
 
 <div id="m3-ogp-tooltip" class="m3-dynamic-tooltip"></div>

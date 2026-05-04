@@ -1,0 +1,136 @@
+.ai-summary-single {
+    display: block;
+    max-width: 800px;
+    margin: var(--m3-spacing-xxl) auto;
+    padding: 40px 48px 60px; /* 下部にクレジット用のスペースを確保 */
+    border-radius: 48px;
+    background: linear-gradient(165deg, 
+        color-mix(in srgb, var(--ai-vibe-color) 15%, var(--md-sys-color-surface-container-low)),
+        color-mix(in srgb, var(--ai-vibe-color) 8%, var(--md-sys-color-surface-container-high))
+    );
+    border: 1px solid color-mix(in srgb, var(--ai-vibe-color) 25%, transparent);
+    color: var(--md-sys-color-on-surface);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 20px 80px -20px color-mix(in srgb, var(--ai-vibe-color) 30%, transparent),
+        inset 0 0 40px rgba(255, 255, 255, 0.05);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-sizing: border-box;
+}
+
+.ai-summary-single::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--ai-vibe-color) 5%, transparent) 0%, transparent 70%);
+    pointer-events: none;
+    animation: m3-expressive-glow 10s infinite alternate ease-in-out;
+}
+
+@keyframes m3-expressive-glow {
+    from { transform: translate(-10%, -10%); }
+    to { transform: translate(10%, 10%); }
+}
+
+.ai-summary-inner {
+    position: relative;
+    z-index: 1;
+}
+
+.ai-summary-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--ai-vibe-color);
+    margin-bottom: 24px;
+}
+
+.m3-expressive-icon {
+    font-size: 28px;
+    font-variation-settings: 'FILL' 1, 'wght' 600;
+    filter: drop-shadow(0 0 8px var(--ai-vibe-color));
+    animation: m3-icon-sparkle 3s infinite ease-in-out;
+}
+
+@keyframes m3-icon-sparkle {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(15deg); opacity: 0.8; }
+}
+
+.m3-expressive-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--ai-vibe-color), color-mix(in srgb, var(--ai-vibe-color) 60%, #fff));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ai-summary-text {
+    font-size: 1.1rem;
+    line-height: 2;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
+    margin: 0;
+}
+
+.ai-summary-credit {
+    position: absolute;
+    bottom: 24px;
+    right: 32px;
+    display: flex;
+    align-items: center;
+    padding: 6px 16px;
+    background: color-mix(in srgb, var(--ai-vibe-color) 12%, var(--md-sys-color-surface-container-highest));
+    border-radius: 100px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--ai-vibe-color);
+    border: 1px solid color-mix(in srgb, var(--ai-vibe-color) 20%, transparent);
+    z-index: 10;
+    box-shadow: var(--m3-elevation-1);
+}
+
+.ai-summary-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, 
+        transparent, 
+        color-mix(in srgb, var(--ai-vibe-color) 15%, transparent), 
+        transparent);
+    background-size: 200% 100%;
+    animation: ai-shimmer 2s infinite linear;
+    border-radius: var(--m3-radius-small);
+}
+
+@keyframes ai-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+[data-theme="dark"] .ai-summary-single {
+    background: color-mix(in srgb, var(--ai-vibe-color) 10%, var(--md-sys-color-surface-container));
+    border-color: color-mix(in srgb, var(--ai-vibe-color) 40%, transparent);
+}
+
+@media (max-width: 600px) {
+    .ai-summary-single {
+        padding: 32px 24px 70px;
+        margin: var(--m3-spacing-l) 0;
+        border-radius: 32px;
+    }
+    
+    .ai-summary-text {
+        font-size: 1rem;
+        line-height: 1.8;
+    }
+
+    .ai-summary-credit {
+        bottom: 16px;
+        right: 16px;
+    }
+}

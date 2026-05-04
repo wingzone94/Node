@@ -29,6 +29,8 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
+<div class="m3-page-container">
+
 <!-- 1. Header Section -->
 <header id="masthead" class="m3-header">
     <div class="m3-header__inner">
@@ -43,50 +45,53 @@
             </div>
         </div>
 
-        <!-- Header Right: Core Actions -->
+        <!-- Header Right: Action Group -->
         <div class="m3-header__actions">
-            <!-- Global Search Control -->
+            <!-- Search Control -->
             <div class="m3-search-container">
                 <form role="search" method="get" class="m3-search-bar" id="m3-main-search-form" action="<?php echo esc_url(home_url('/')); ?>">
                     <div class="m3-search-input-wrapper">
-                        <!-- Mobile Back/Close Button -->
                         <button type="button" class="m3-icon-button m3-search-mobile-close" id="m3-search-mobile-close" aria-label="検索を閉じる">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
-
-                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索ワードを入力..." value="<?php echo get_search_query(); ?>" name="s" autocomplete="off">
-                        
+                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo get_search_query(); ?>" name="s" autocomplete="off">
                         <div class="m3-search-actions-inline">
-                            <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="検索ワードをクリア" style="display:none;">
+                            <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="クリア" style="display:none;">
                                 <span class="material-symbols-outlined">close</span>
                             </button>
-                            <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索設定">
+                            <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索">
                                 <span class="material-symbols-outlined">tune</span>
                             </button>
                         </div>
                     </div>
-                    <button type="button" class="m3-icon-button m3-search-bar__toggle" id="search-toggle" aria-label="検索バーを開く">
+                    <button type="button" class="m3-icon-button m3-search-bar__toggle m3-tooltip-target" id="search-toggle" aria-label="検索" data-tooltip="検索">
                         <span class="material-symbols-outlined">search</span>
                     </button>
                 </form>
             </div>
 
-            <!-- RSS Feed -->
-            <a href="<?php bloginfo('rss2_url'); ?>" class="m3-icon-button m3-tooltip-target m3-rss-button" id="m3-rss-trigger" data-tooltip="RSSフィード">
+            <!-- RSS -->
+            <a href="<?php bloginfo('rss2_url'); ?>" class="m3-icon-button m3-tooltip-target m3-rss-button" id="m3-rss-trigger" aria-label="RSS" data-tooltip="RSSフィード">
                 <span class="material-symbols-outlined">rss_feed</span>
             </a>
             
-            <!-- Theme Control -->
+            <!-- Theme -->
             <div id="m3-theme-controls">
-                <button id="theme-toggle" class="m3-icon-button m3-tooltip-target" data-tooltip="テーマ切り替え">
+                <button id="theme-toggle" class="m3-icon-button m3-tooltip-target" aria-label="テーマ" data-tooltip="テーマ切り替え">
                     <span class="material-symbols-outlined" id="theme-toggle-icon">brightness_6</span>
                 </button>
             </div>
 
-            <!-- View Toggle (Tablet/PC only via CSS) -->
-            <button class="m3-icon-button" id="m3-view-toggle" aria-label="表示モードを切り替える">
+            <!-- View (Tablet Only) -->
+            <?php 
+            $ua = $_SERVER['HTTP_USER_AGENT'];
+            $is_tablet = (strpos($ua, 'iPad') !== false) || (strpos($ua, 'Android') !== false && strpos($ua, 'Mobile') === false) || (strpos($ua, 'Tablet') !== false);
+            if ($is_tablet) : 
+            ?>
+            <button class="m3-icon-button m3-tooltip-target" id="m3-view-toggle" aria-label="表示モード" data-tooltip="表示モード切替">
                 <span class="material-symbols-outlined">devices</span>
             </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -95,29 +100,6 @@
         <div class="m3-header__progress-bar"></div>
     </div>
 </header>
-
-<!-- 2. Header Extensions -->
-<div class="m3-header-extensions">
-    <!-- Clock & Greeting (Home Only) -->
-    <?php if (is_home() || is_front_page()) : ?>
-    <div class="m3-header__clock" id="m3-header-clock">
-        <div class="m3-header__greeting" id="m3-header-greeting"></div>
-        <div class="m3-header__datetime">
-            <span class="m3-header__date" id="m3-header-date"></span>
-            <span class="m3-header__time" id="m3-header-time"></span>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <!-- Main Global Navigation (Optional desktop nav) -->
-    <nav class="m3-header__nav">
-        <?php 
-        if (has_nav_menu('primary')) {
-            wp_nav_menu(['theme_location' => 'primary', 'container' => false, 'fallback_cb' => false]); 
-        }
-        ?>
-    </nav>
-</div>
 
 <!-- 3. Portal Components (Fixed/Overlay Elements) -->
 
@@ -317,6 +299,13 @@
                 <span class="m3-search-hits-text">
                     <strong id="m3-search-hit-count"><?php echo number_format_i18n(wp_count_posts()->publish); ?></strong> 件の記事
                 </span>
+            </div>
+            <div class="m3-modal__footer-options">
+                <label class="m3-checkbox-label">
+                    <input type="checkbox" id="m3-save-search-settings">
+                    <span class="m3-checkbox-custom"></span>
+                    <span class="m3-checkbox-text">検索条件を保存する</span>
+                </label>
             </div>
             <div class="m3-modal__footer-actions">
                 <button type="button" class="m3-button m3-button--text" id="m3-advanced-search-reset">リセット</button>

@@ -2,7 +2,14 @@
 .special-features { padding: 3rem 2rem 1.5rem; background: var(--md-sys-color-surface); margin-top: clamp(24px, 5vh, 40px); }
 .special-features__header { margin-bottom: 2rem; }
 .special-features__title { font-size: 1rem; font-weight: 900; letter-spacing: 0.15em; color: var(--md-sys-color-outline); margin: 0; text-transform: uppercase; }
- 
+
+.special-features__pills {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+
 .special-features__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

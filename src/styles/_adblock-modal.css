@@ -1,0 +1,179 @@
+/* --- AdBlock Detector Modal --- */
+.ns-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.ns-adblock-card {
+    background: #ffffff;
+    border-radius: 32px;
+    width: 100%;
+    max-width: 520px;
+    padding: 48px 32px;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.ns-adblock-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+/* 太陽のようなアイコン */
+.ns-adblock-icon-wrapper {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid #FF9900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+}
+.ns-adblock-icon-wrapper::before {
+    content: '';
+    position: absolute;
+    width: 120%; height: 120%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,153,0,0.1) 0%, transparent 70%);
+}
+.ns-adblock-icon {
+    color: #FF9900;
+    font-size: 24px;
+}
+
+.ns-adblock-title {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #1a1a1a;
+    margin: 0;
+    text-align: left;
+}
+
+.ns-adblock-desc {
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+    margin: 0 0 32px 0;
+}
+.ns-adblock-desc p { margin: 0; }
+
+/* 円形タイマー */
+.ns-adblock-timer-wrapper {
+    position: relative;
+    width: 100px; height: 100px;
+    margin: 0 auto 24px auto;
+}
+.ns-adblock-progress-ring {
+    transform: rotate(-90deg);
+}
+.ns-adblock-timer-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.ns-adblock-timer-text #ns-countdown-timer {
+    font-size: 28px;
+    font-weight: 900;
+    color: #FF9900;
+    line-height: 1;
+}
+.ns-adblock-timer-unit {
+    font-size: 12px;
+    color: #FF9900;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.ns-adblock-hint {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0 0 16px 0;
+}
+
+/* ボタン群 */
+.ns-adblock-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.ns-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    height: 56px;
+    border-radius: 28px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    border: none;
+}
+.ns-btn .material-symbols-outlined { font-size: 20px; }
+
+.ns-btn--primary {
+    background: #FF9900;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
+}
+.ns-btn--primary:hover {
+    background: #e68a00;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 153, 0, 0.4);
+}
+
+.ns-btn--outline {
+    background: transparent;
+    color: #666;
+    border: 1px solid #e0e0e0;
+}
+.ns-btn--outline:not(:disabled):hover {
+    background: #f5f5f5;
+    color: #333;
+    border-color: #ccc;
+}
+.ns-btn--outline:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #fafafa;
+}
+
+.ns-adblock-footer-msg {
+    background: #FFF9F2;
+    color: #B26B00;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    text-align: left;
+    width: 100%;
+}
+.ns-adblock-footer-msg .material-symbols-outlined {
+    font-size: 20px;
+    color: #FF9900;
+}

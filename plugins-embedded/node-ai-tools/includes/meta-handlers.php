@@ -2,18 +2,18 @@
 /**
  * メタデータハンドラ
  *
- * @package Luminous_AI_Core
+ * @package Node_AI_Tools
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! function_exists( 'luminous_ai_calculate_reading_time' ) ) {
+if ( ! function_exists( 'node_ai_calculate_reading_time' ) ) {
     /**
      * 読了時間の自動計算
      */
-    function luminous_ai_calculate_reading_time( int $post_id, \WP_Post $post, bool $update ): void {
+    function node_ai_calculate_reading_time( int $post_id, \WP_Post $post, bool $update ): void {
         // 自動保存時はスキップ
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
@@ -33,9 +33,13 @@ if ( ! function_exists( 'luminous_ai_calculate_reading_time' ) ) {
             // 文字数カウント（空白を除去）
             $char_count = mb_strlen(preg_replace('/\s+/', '', $content));
             
-            // 読了時間の計算 (分速800文字換算)
-            $total_seconds = ceil(($char_count / 800) * 60);
-            $time_string = floor($total_seconds / 60) . '分' . sprintf('%02d', $total_seconds % 60) . '秒';
+            // 1. 文字数ベースの読了時間計算 (分速500文字換算)
+            $total_seconds = ceil(($char_count / 500) * 60);
+            
+            // 2. 「〇分〇秒」または「〇分」形式で整形
+            $minutes = floor($total_seconds / 60);
+            $seconds = $total_seconds % 60;
+            $time_string = ($minutes > 0) ? $minutes . '分' . sprintf('%02d', $seconds) . '秒' : $seconds . '秒';
             
             update_post_meta($post_id, '_node_reading_time', $time_string);
             update_post_meta($post_id, '_node_content_hash', $hash);
@@ -43,15 +47,18 @@ if ( ! function_exists( 'luminous_ai_calculate_reading_time' ) ) {
     }
 }
 
-if ( ! function_exists( 'luminous_ai_save_meta' ) ) {
+if ( ! function_exists( 'node_ai_save_meta' ) ) {
     /**
      * AI Core 関連のメタデータ保存処理
      */
-    function luminous_ai_save_meta($post_id) {
+    function node_ai_save_meta($post_id) {
         // AI要約用 Nonce チェック
-        if (isset($_POST['luminous_ai_save_meta_nonce']) && wp_verify_nonce($_POST['luminous_ai_save_meta_nonce'], 'luminous_ai_save_meta_action')) {
+        if (isset($_POST['node_ai_save_meta_nonce']) && wp_verify_nonce($_POST['node_ai_save_meta_nonce'], 'node_ai_save_meta_action')) {
             if (isset($_POST['node_ai_summary'])) {
                 update_post_meta($post_id, '_node_ai_summary', sanitize_textarea_field($_POST['node_ai_summary']));
+            }
+            if (isset($_POST['node_ai_custom_prompt'])) {
+                update_post_meta($post_id, '_node_ai_custom_prompt', sanitize_text_field($_POST['node_ai_custom_prompt']));
             }
         }
     }

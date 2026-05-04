@@ -131,6 +131,26 @@ foreach ($m3_404_keys as $key) {
                         <?php get_search_form(); ?>
                     </div>
                 </div>
+
+                <!-- AdSense Friendly: Recent Posts -->
+                <div class="m3-404-recent-posts">
+                    <h3 class="m3-404-recent-title">おすすめの記事</h3>
+                    <div class="m3-404-recent-grid">
+                        <?php
+                        $recent_posts = new WP_Query([
+                            'post_type' => 'post',
+                            'posts_per_page' => 3,
+                            'ignore_sticky_posts' => 1
+                        ]);
+                        if ($recent_posts->have_posts()) :
+                            while ($recent_posts->have_posts()) : $recent_posts->the_post();
+                                get_template_part('template-parts/article-card', null, ['card_class' => 'm3-card--compact']);
+                            endwhile;
+                            wp_reset_postdata();
+                        endif;
+                        ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

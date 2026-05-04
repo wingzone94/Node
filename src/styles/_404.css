@@ -190,3 +190,51 @@
     .m3-mc-button { min-width: 100%; }
     .m3-404--fortnite .m3-fortnite-rank { font-size: 4rem; }
 }
+/* --- Recent Posts on 404 --- */
+.m3-404-recent-posts {
+    margin-top: 64px;
+    text-align: left;
+    animation: m3-paper-pop 0.8s 0.4s both;
+}
+
+.m3-404-recent-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ff9900;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.m3-404-recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+/* 404ページ用のコンパクトカード調整 */
+.m3-404-recent-grid .m3-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.m3-404--material-expressive .m3-404-recent-posts {
+    max-width: 1000px;
+    margin: 64px auto 0;
+}
+
+.m3-404--material-expressive .m3-404-recent-title {
+    color: var(--md-sys-color-primary);
+}
+
+.m3-404--material-expressive .m3-404-recent-grid .m3-card {
+    background: var(--md-sys-color-surface-container-low);
+    border-color: var(--md-sys-color-outline-variant);
+}
+
+@media (max-width: 600px) {
+    .m3-404-recent-posts {
+        margin-top: 48px;
+    }
+}

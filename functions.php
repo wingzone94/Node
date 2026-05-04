@@ -37,6 +37,8 @@ require_once NODE_THEME_DIR . '/inc/media.php';
 require_once NODE_THEME_DIR . '/inc/search.php';
 require_once NODE_THEME_DIR . '/inc/utilities.php';
 require_once NODE_THEME_DIR . '/inc/gemini-helper.php';
+require_once NODE_THEME_DIR . '/inc/admin-settings.php';
+require_once NODE_THEME_DIR . '/inc/seo.php';
 
 /**
  * -------------------------------------------------------

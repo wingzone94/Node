@@ -108,7 +108,7 @@
     bottom: calc(24px + var(--safe-area-bottom));
     right: 24px;
     display: flex;
-    flex-direction: column; /* 上から下に並べる */
+    flex-direction: column-reverse; /* 下から上に積み上げる */
     align-items: center;
     gap: 16px;
     z-index: 9999 !important; /* 全要素の最前面 */
@@ -139,7 +139,7 @@
     transform: scale(0.5);
 }
 
-.m3-fab.is-visible {
+.m3-action-stack.is-visible .m3-fab {
     opacity: 1;
     visibility: visible;
     transform: scale(1);
