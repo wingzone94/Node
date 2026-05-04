@@ -154,8 +154,9 @@
     box-shadow: var(--m3-elevation-2);
 }
 
-.m3-related-card__image {
-    aspect-ratio: 16 / 9;
+ .m3-related-card__image {
+    /* Smaller image area for related posts to prevent oversized visuals */
+    aspect-ratio: 4 / 3;
     width: 100%;
     overflow: hidden;
     background: var(--md-sys-color-surface-container-high);

@@ -59,11 +59,10 @@ class Node_Gemini_API {
                 'responseMimeType' => $options['response_mime_type'],
             ]
         ];
-
         $response = wp_remote_post($url, [
             'headers' => ['Content-Type' => 'application/json'],
             'body'    => json_encode($payload),
-            'timeout' => 20
+            'timeout' => 120 // 20秒から120秒に延長
         ]);
 
         if (is_wp_error($response)) {
@@ -112,6 +111,9 @@ class Node_Gemini_API {
      */
     public function generate_reading_time_estimate(string $content): string|WP_Error {
         $prompt = "以下の記事の読了目安時間を推定し、「〇分〇秒」という形式で回答してください。日本語として自然な読書速度（分速400〜600文字程度）を基準にしつつ、内容の難易度や構成（コード、リスト、画像等）も加味して人間が読み終えるのにかかる時間を算出してください。解説は不要です。結果の数値のみを返してください。\n\n" . mb_substr($content, 0, 4000);
-        return $this->generate_content($prompt, 20, 0.1);
+        return $this->generate_content($prompt, [
+            'max_tokens'  => 10,
+            'temperature' => 0.1
+        ]);
     }
 }

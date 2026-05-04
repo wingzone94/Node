@@ -141,3 +141,18 @@ function node_register_service_worker() {
 	</script>';
 }
 add_action( 'wp_footer', 'node_register_service_worker' );
+// Branding normalization: CyberNode -> Node for branding in frontend (no DB changes)
+function luminous_brand_normalize( $value ) {
+  if ( is_string( $value ) && strpos( $value, 'CyberNode' ) !== false ) {
+    $value = str_replace( 'CyberNode', 'Node', $value );
+  }
+  return $value;
+}
+add_filter( 'option_blogname', 'luminous_brand_normalize' );
+add_filter( 'option_blogdescription', 'luminous_brand_normalize' );
+add_filter( 'gettext', function( $translated, $text, $domain ) {
+  if ( strpos( $text, 'CyberNode' ) !== false ) {
+    $translated = str_replace( 'CyberNode', 'Node', $translated );
+  }
+  return $translated;
+}, 20, 3 );
