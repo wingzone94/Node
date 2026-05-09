@@ -206,7 +206,7 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
     
     // AI生成ラベル
     if (get_post_meta($post_id, '_node_is_ai_generated', true) === '1') {
-        $ai_tooltip = 'AI生成されたメディアを含みます';
+        $ai_tooltip = '生成されたメディアを含みます';
         $ai_class = 'm3-label--ai m3-tooltip-target';
         $pos_attr = '';
         if ($mode === 'compact') {
@@ -214,7 +214,7 @@ function node_the_post_badges($post_id = null, $mode = 'compact') {
             $pos_attr = ' data-tooltip-pos="left"';
         }
 
-        echo '<span class="' . esc_attr($ai_class) . '" data-tooltip="' . esc_attr($ai_tooltip) . '"' . $pos_attr . '>';
+        echo '<span class="' . esc_attr($ai_class) . '" data-tooltip="' . esc_attr($ai_tooltip) . '" title="' . esc_attr($ai_tooltip) . '" aria-label="' . esc_attr($ai_tooltip) . '"' . $pos_attr . '>';
         echo '<span class="material-symbols-outlined">auto_awesome</span>';
         if ($mode === 'full') {
             echo '<span class="m3-label__text">生成されたメディアを含む</span>';

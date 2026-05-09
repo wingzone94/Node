@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Node Signal
+ * Plugin Name: Luminous Signal
  * Plugin URI: https://example.com
  * Description: メディアの収益化とユーザビリティを両立するためのマネタイズ・検知層プラグイン。報酬レート管理や広告ブロック検知UIを提供します。
  * Version: 1.0.0

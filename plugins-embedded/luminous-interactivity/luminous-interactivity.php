@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Luminous Interactivity
  * Plugin URI:   https://github.com/wingzone94/Node
- * Description:  スポイラー（目隠し）、しおり機能、CERO Z 年齢確認ダイアログ。Luminous Core テーマと連携。
+ * Description:  スポイラー（目隠し）、CERO Z 年齢確認ダイアログ。Luminous Core テーマと連携。
  * Version:      1.0.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
@@ -42,7 +42,6 @@ final class Luminous_Interactivity {
 
 	private function load_dependencies(): void {
 		require_once LUMINOUS_INTER_DIR . 'includes/spoiler.php';
-		require_once LUMINOUS_INTER_DIR . 'includes/bookmark.php';
 		require_once LUMINOUS_INTER_DIR . 'includes/cero-z.php';
 
 		if ( is_admin() ) {

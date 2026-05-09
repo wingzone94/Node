@@ -1,6 +1,6 @@
 <?php get_header(); ?>
 
-<main id="primary" class="site-main article-view">
+<main id="primary" class="site-main article-view m3-reveal m3-page-enter">
     <?php 
     // SEO: パンくずリスト
     node_the_breadcrumbs();
@@ -29,8 +29,18 @@
                     get_template_part( 'template-parts/ai-summary', null, $ai_args );
                 }
             ?>
-            <div class="m3-article__body">
-                <?php the_content(); ?>
+            <div class="m3-article__body m3-reveal">
+                <?php 
+                the_content(); 
+                
+                wp_link_pages( array(
+                    'before'      => '<nav class="m3-pagination m3-pagination--split"><span class="m3-pagination__label"><span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>PAGES</span>',
+                    'after'       => '</nav>',
+                    'link_before' => '<span class="m3-pagination__number">',
+                    'link_after'  => '</span>',
+                    'separator'   => ' ',
+                ) );
+                ?>
             </div>
 
 
@@ -40,7 +50,7 @@
 
         <?php get_template_part('template-parts/single/related'); ?>
 
-        <section id="comments" class="m3-comments-section">
+        <section id="comments" class="m3-comments-section m3-reveal">
             <?php if (comments_open() || get_comments_number()) :
                 comments_template();
             endif; ?>

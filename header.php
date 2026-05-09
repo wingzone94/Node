@@ -13,8 +13,22 @@
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
+    <!-- High Performance Font Loading Pattern -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap">
+    <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
+    
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    </noscript>
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -39,6 +53,7 @@
             <div class="site-branding">
                 <?php if (has_custom_logo()) : the_custom_logo(); else : ?>
                     <a href="<?php echo esc_url(home_url('/')); ?>" rel="home" class="m3-header__logo-link">
+                        <img src="<?php echo esc_url(get_theme_file_uri('LuminusCore-300x300.webp')); ?>" alt="Luminous Core" class="m3-header__logo-img">
                         <span class="m3-logo-text">Luminous Core</span>
                     </a>
                 <?php endif; ?>
@@ -321,7 +336,8 @@
 </div>
 
 
-<!-- Bottom Navigation (Handy Mode Optimized) -->
+<!-- Bottom Navigation (Handy Mode Optimized - Singular Only) -->
+<?php if (is_singular()) : ?>
 <nav class="m3-bottom-nav" id="m3-bottom-nav">
     <button class="m3-bottom-nav__item" id="m3-handy-toc-trigger" aria-label="目次">
         <span class="material-symbols-outlined">list_alt</span>
@@ -331,11 +347,12 @@
         <span class="material-symbols-outlined">comment</span>
         <span class="m3-bottom-nav__label">コメント</span>
     </button>
-    <button class="m3-bottom-nav__item" id="m3-back-to-top-handy" aria-label="トップへ">
+    <button class="m3-bottom-nav__item" id="m3-back-to-top-handy" aria-label="トップ">
         <span class="material-symbols-outlined">arrow_upward</span>
         <span class="m3-bottom-nav__label">トップ</span>
     </button>
 </nav>
+<?php endif; ?>
 
 <!-- Snackbar (Notifications) -->
 <div id="m3-snackbar" class="m3-snackbar" aria-live="polite">

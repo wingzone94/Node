@@ -104,6 +104,12 @@
     max-height: 60vh;
     overflow-y: auto;
     font-size: 0.95rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.m3-toc-content::-webkit-scrollbar {
+    display: none;
 }
 
 /* TOC Dynamic Links */
@@ -124,17 +130,32 @@
     font-weight: 900;
 }
 
-/* --- Related Posts (Ultra Simple 2x2) --- */
+/* --- Related Posts (2x2 Grid) --- */
 .m3-related-posts--simple {
     margin-top: 80px;
     padding-top: 60px;
     border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
+.m3-related-posts__inner {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.m3-related-posts__title {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: var(--md-sys-color-outline);
+    letter-spacing: 0.12em;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    text-align: center;
+}
+
 .m3-related-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: 16px;
 }
 
 .m3-related-card {
@@ -142,7 +163,7 @@
     flex-direction: column;
     text-decoration: none;
     color: inherit;
-    border-radius: 20px;
+    border-radius: 16px;
     overflow: hidden;
     background: var(--md-sys-color-surface-container-lowest);
     border: 1px solid var(--md-sys-color-outline-variant);
@@ -150,13 +171,12 @@
 }
 
 .m3-related-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--m3-elevation-2);
 }
 
- .m3-related-card__image {
-    /* Smaller image area for related posts to prevent oversized visuals */
-    aspect-ratio: 4 / 3;
+.m3-related-card__image {
+    aspect-ratio: 16 / 9;
     width: 100%;
     overflow: hidden;
     background: var(--md-sys-color-surface-container-high);
@@ -174,13 +194,13 @@
 }
 
 .m3-related-card__content {
-    padding: 16px;
+    padding: 12px;
 }
 
 .m3-related-card__title {
     margin: 0;
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: 0.88rem;
+    line-height: 1.4;
     font-weight: 700;
     color: var(--md-sys-color-on-surface);
     display: -webkit-box;

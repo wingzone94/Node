@@ -71,6 +71,15 @@ function node_theme_setup() {
 
 	// ブロックスタイル
 	add_theme_support( 'wp-block-styles' );
+
+	// テーブルの「並べ替え可能」スタイルを登録
+	register_block_style(
+		'core/table',
+		array(
+			'name'  => 'sortable',
+			'label' => '並べ替え可能',
+		)
+	);
 }
 add_action( 'after_setup_theme', 'node_theme_setup' );
 

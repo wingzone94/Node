@@ -98,7 +98,7 @@ function node_the_breadcrumbs() {
     
     // Home
     echo '<li class="m3-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
-    echo '<a itemprop="item" href="' . esc_url( home_url( '/' ) ) . '"><span itemprop="name">HOME</span></a>';
+    echo '<a itemprop="item" href="' . esc_url( home_url( '/' ) ) . '"><span itemprop="name">ホーム</span></a>';
     echo '<meta itemprop="position" content="1" /></li>';
 
     if ( is_singular() ) {
@@ -142,13 +142,13 @@ function node_get_archive_title() {
     } elseif ( is_year() ) {
         return get_the_date( 'Y年' );
     } elseif ( is_month() ) {
-        return get_the_date( 'F Y' );
+        return get_the_date( 'Y年m月' );
     } elseif ( is_day() ) {
         return get_the_date( 'Y年m月d日' );
     } elseif ( is_search() ) {
         return '検索結果: ' . get_search_query();
     } elseif ( is_home() ) {
-        return get_bloginfo( 'name' );
+        return 'Luminous Core';
     }
     return '記事一覧';
 }

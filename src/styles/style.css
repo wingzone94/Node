@@ -1,5 +1,6 @@
 /* Luminous Core - CSS Module Entry Point */
 @import './_variables.css';
+@import './_motion.css';
 @import './_reset.css';
 @import './_material-symbols.css';
 @import './_header.css';
@@ -8,6 +9,7 @@
 @import './_spotlight.css';
 @import './_navigation.css';
 @import './_cards.css';
+@import './_product-card.css';
 @import './_article.css';
 @import './_article-layout.css';
 @import './_share.css';

@@ -9,7 +9,10 @@
     if ($post_tags) :
     ?>
     <div class="m3-article__tags">
-        <span class="m3-article__footer-label">TAGS</span>
+        <span class="m3-article__footer-label">
+            <span class="material-symbols-outlined">sell</span>
+            タグ
+        </span>
         <?php foreach ($post_tags as $tag) : ?>
             <a href="<?php echo esc_url(get_tag_link($tag->term_id)); ?>" class="m3-filter-chip">#<?php echo esc_html($tag->name); ?></a>
         <?php endforeach; ?>
@@ -28,18 +31,34 @@
     ?>
     <nav class="m3-post-navigation">
         <?php if ($prev_post) : ?>
+        <?php $prev_thumb = get_the_post_thumbnail_url($prev_post->ID, 'medium_large'); ?>
         <a href="<?php echo get_permalink($prev_post->ID); ?>" class="m3-elevated-nav-card m3-ripple-host">
+            <?php if ($prev_thumb) : ?>
+                <div class="m3-elevated-nav-card__bg" style="background-image: url('<?php echo esc_url($prev_thumb); ?>');"></div>
+            <?php endif; ?>
+            <div class="m3-elevated-nav-card__overlay"></div>
             <div class="m3-elevated-nav-card__content">
-                <span class="m3-elevated-nav-card__label">PREVIOUS</span>
+                <span class="m3-elevated-nav-card__label">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    前の記事
+                </span>
                 <h4 class="m3-elevated-nav-card__title"><?php echo esc_html(get_the_title($prev_post->ID)); ?></h4>
             </div>
         </a>
         <?php endif; ?>
         
         <?php if ($next_post) : ?>
+        <?php $next_thumb = get_the_post_thumbnail_url($next_post->ID, 'medium_large'); ?>
         <a href="<?php echo get_permalink($next_post->ID); ?>" class="m3-elevated-nav-card m3-ripple-host" style="text-align: right;">
+            <?php if ($next_thumb) : ?>
+                <div class="m3-elevated-nav-card__bg" style="background-image: url('<?php echo esc_url($next_thumb); ?>');"></div>
+            <?php endif; ?>
+            <div class="m3-elevated-nav-card__overlay"></div>
             <div class="m3-elevated-nav-card__content" style="align-items: flex-end;">
-                <span class="m3-elevated-nav-card__label">NEXT</span>
+                <span class="m3-elevated-nav-card__label">
+                    次の記事
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </span>
                 <h4 class="m3-elevated-nav-card__title"><?php echo esc_html(get_the_title($next_post->ID)); ?></h4>
             </div>
         </a>

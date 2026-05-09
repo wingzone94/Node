@@ -3,10 +3,11 @@
  * Template part for displaying the article hero section in single.php
  */
 ?>
-<div class="m3-article__header-card">
+<div class="m3-article__header-card <?php echo has_post_thumbnail() ? 'has-thumbnail' : 'has-no-thumbnail'; ?>">
     <?php if (has_post_thumbnail()) : ?>
         <div class="m3-article__featured-image">
-            <?php the_post_thumbnail('full'); ?>
+            <?php echo get_the_post_thumbnail(get_the_ID(), 'full', ['class' => 'm3-article__featured-img']); ?>
+            <div class="m3-article__featured-gradient"></div>
         </div>
     <?php endif; ?>
 
@@ -34,7 +35,9 @@
             $title_class .= ' is-medium';
         }
         ?>
-        <h1 class="<?php echo esc_attr($title_class); ?>"><?php the_title(); ?></h1>
+        <h1 class="<?php echo esc_attr($title_class); ?>">
+            <?php the_title(); ?>
+        </h1>
 
         <div class="m3-article__meta-container">
             <!-- 日付表示 -->
@@ -114,8 +117,8 @@
                     <svg viewBox="0 0 36 36" class="m3-reading-circle__svg" aria-hidden="true" focusable="false">
                         <path class="m3-reading-circle__bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         <path class="m3-reading-circle__progress" 
-                              style="--target-progress: <?php echo esc_attr($reading_info['progress']); ?>;" 
-                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                               style="--target-progress: <?php echo esc_attr($reading_info['progress']); ?>;" 
+                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <span class="material-symbols-outlined" aria-hidden="true">timer</span>
                 </div>
@@ -124,8 +127,15 @@
                 </span>
                 <span class="m3-reading-badge-label">
                     <span class="m3-badge-label-main"><?php echo esc_html($reading_info['label']); ?></span>
-                    <span class="m3-badge-label-desc">読了目安：文字数と画像から計算しています</span>
                 </span>
+            </div>
+
+            <!-- Reading Info Panel (Mobile: below card, Desktop: side bubble) -->
+            <div id="m3-hero-info-panel" class="m3-hero-info-panel">
+                <div class="m3-hero-info-panel__inner">
+                    <span class="material-symbols-outlined">info</span>
+                    <p>読了目安：文字数と画像から計算しています</p>
+                </div>
             </div>
         </div>
     </header>

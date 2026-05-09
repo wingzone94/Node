@@ -179,6 +179,14 @@ figure.aligncenter iframe {
     letter-spacing: -0.02em;
 }
 
+.m3-section-title__sub {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--md-sys-color-outline);
+    margin-left: 4px;
+    opacity: 0.8;
+}
+
 /* 最初のセクションタイトルの上部余白をさらに抑制 */
 .m3-post-grid>.m3-section-title:first-child {
     margin-top: 8px;
@@ -338,16 +346,18 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-.m3-logo-text {
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    background: linear-gradient(135deg, var(--md-sys-color-primary), #ff6600);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+/* Removed logo styles - moved to _header.css */
 
 .m3-article__title {
     line-height: 1.25 !important;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.m3-article__title-icon {
+    font-size: 2.8rem !important;
+    opacity: 0.3;
 }
 
 .m3-article__body {
@@ -558,4 +568,51 @@ body {
 .m3-card__date-footer .material-symbols-outlined {
     font-size: 14px;
     opacity: 0.7;
+}
+
+/* --- Layout Utilities (M3 Expressive) --- */
+.m3-surface {
+    background-color: var(--md-sys-color-surface-container-low);
+    border-radius: 40px;
+    padding: 32px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: var(--m3-elevation-1);
+    margin-bottom: 32px;
+}
+
+.m3-surface--variant {
+    background-color: var(--md-sys-color-surface-container);
+}
+
+.m3-section-spacing {
+    margin-top: 48px;
+    margin-bottom: 64px;
+}
+
+@media (max-width: 600px) {
+    .m3-surface {
+        padding: 24px 16px;
+        border-radius: 28px;
+        margin-bottom: 24px;
+    }
+    .m3-section-spacing {
+        margin-top: 32px;
+        margin-bottom: 40px;
+    }
+}
+
+.m3-divider-wrapper {
+    padding: 48px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.m3-divider--expressive {
+    width: 100%;
+    max-width: 120px;
+    height: 6px;
+    background: linear-gradient(90deg, transparent, var(--md-sys-color-primary), transparent);
+    border: none;
+    border-radius: 3px;
+    opacity: 0.5;
 }

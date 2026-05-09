@@ -75,3 +75,38 @@ function node_default_image_output_format($formats) {
     return $formats;
 }
 add_filter('image_editor_output_format', 'node_default_image_output_format');
+
+// ==========================================================================
+// 6. パフォーマンス: LCP画像のPreload（事前読み込み）
+// ==========================================================================
+
+/**
+ * ヒーロー画像（アイキャッチ画像）のPreloadヘッダーを出力し、LCPを改善する
+ */
+function node_preload_hero_image() {
+    // 記事/固定ページでアイキャッチ画像が設定されている場合
+    if ( is_singular() && has_post_thumbnail() ) {
+        $post_id = get_the_ID();
+        
+        // アイキャッチ画像のURLとsrcset属性を取得してPreloadする
+        $attachment_id = get_post_thumbnail_id( $post_id );
+        $image_src     = wp_get_attachment_image_src( $attachment_id, 'full' );
+        $image_srcset  = wp_get_attachment_image_srcset( $attachment_id, 'full' );
+        $image_sizes   = wp_get_attachment_image_sizes( $attachment_id, 'full' );
+
+        if ( $image_src ) {
+            $url = $image_src[0];
+            echo '<link rel="preload" as="image" href="' . esc_url( $url ) . '"';
+            if ( $image_srcset ) {
+                echo ' imagesrcset="' . esc_attr( $image_srcset ) . '"';
+            }
+            if ( $image_sizes ) {
+                echo ' imagesizes="' . esc_attr( $image_sizes ) . '"';
+            }
+            echo ">\n";
+        }
+    }
+}
+add_action( 'wp_head', 'node_preload_hero_image', 1 );
+
+

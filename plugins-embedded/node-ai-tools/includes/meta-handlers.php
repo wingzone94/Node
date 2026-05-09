@@ -53,12 +53,18 @@ if ( ! function_exists( 'node_ai_save_meta' ) ) {
      */
     function node_ai_save_meta($post_id) {
         // AI要約用 Nonce チェック
-        if (isset($_POST['node_ai_save_meta_nonce']) && wp_verify_nonce($_POST['node_ai_save_meta_nonce'], 'node_ai_save_meta_action')) {
+        if (isset($_POST['node_ai_generate_nonce']) && wp_verify_nonce($_POST['node_ai_generate_nonce'], 'node_ai_generate_action')) {
             if (isset($_POST['node_ai_summary'])) {
                 update_post_meta($post_id, '_node_ai_summary', sanitize_textarea_field($_POST['node_ai_summary']));
             }
             if (isset($_POST['node_ai_custom_prompt'])) {
                 update_post_meta($post_id, '_node_ai_custom_prompt', sanitize_text_field($_POST['node_ai_custom_prompt']));
+            }
+            if (isset($_POST['node_ai_max_lines'])) {
+                update_post_meta($post_id, '_node_ai_max_lines', intval($_POST['node_ai_max_lines']));
+            }
+            if (isset($_POST['node_ai_max_chars'])) {
+                update_post_meta($post_id, '_node_ai_max_chars', intval($_POST['node_ai_max_chars']));
             }
         }
     }

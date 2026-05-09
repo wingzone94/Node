@@ -18,6 +18,19 @@ if ( ! function_exists( 'node_add_custom_meta_boxes' ) ) {
 }
 add_action('add_meta_boxes', 'node_add_custom_meta_boxes');
 
+/**
+ * 記事メタデータをREST APIに公開
+ */
+function node_register_post_meta() {
+    register_meta('post', '_node_is_ai_generated', [
+        'show_in_rest' => true,
+        'single'       => true,
+        'type'         => 'boolean',
+    ]);
+}
+add_action('init', 'node_register_post_meta');
+
+
 // --- コールバック関数 ---
 
 if ( ! function_exists( 'node_post_labels_callback' ) ) {
@@ -30,7 +43,7 @@ if ( ! function_exists( 'node_post_labels_callback' ) ) {
         wp_nonce_field('node_save_meta_box', 'node_meta_box_nonce');
         
         echo '<h4>ラベル設定</h4>';
-        echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> 生成されたメディアを含みます</label></p>';
+        echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> 生成されたメディアを含む</label></p>';
         echo '<p><label><input type="checkbox" name="node_is_sponsor" value="1" '.checked($is_sponsor, '1', false).'> スポンサー記事（案件 ）</label></p>';
         echo '<p><label>スポンサーラベル文言:<br><input type="text" name="node_sponsor_text" value="'.esc_attr($sponsor_text).'" style="width:100%"></label></p>';
         echo '<p><label>スポンサー説明文 (ホバー時):<br><input type="text" name="node_sponsor_tooltip" value="'.esc_attr($sponsor_tooltip).'" style="width:100%"></label></p>';
@@ -64,6 +77,8 @@ if ( ! function_exists( 'node_save_custom_meta' ) ) {
         }
         if (!$has_ai_media) {
             $post_content = get_post_field('post_content', $post_id);
+            
+            // 1. 画像アタッチメントのメタデータから判別
             preg_match_all('/wp-image-([0-9]+)/', $post_content, $matches);
             if (!empty($matches[1])) {
                 foreach ($matches[1] as $att_id) {
@@ -71,6 +86,15 @@ if ( ! function_exists( 'node_save_custom_meta' ) ) {
                         $has_ai_media = true;
                         break;
                     }
+                }
+            }
+
+            // 2. キャプションに「生成」が含まれるかチェック
+            if (!$has_ai_media && strpos($post_content, '生成') !== false) {
+                // Gutenbergのブロックデリミタやfigcaption内を検索
+                if (preg_match('/<!--\s+wp:image\s+{[^}]*"caption":"[^"]*生成[^"]*"[^}]*}\s+-->/i', $post_content) || 
+                    preg_match('/<figcaption[^>]*>[^<]*生成[^<]*<\/figcaption>/i', $post_content)) {
+                    $has_ai_media = true;
                 }
             }
         }

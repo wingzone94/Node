@@ -1,0 +1,48 @@
+/* --- Material 3 Expressive Motion (Visibility Override) --- */
+
+/* 1. Scroll Reveal System - Force Visible by default */
+.m3-reveal {
+    opacity: 1; /* 初期状態で見えるように変更 */
+    transform: none;
+    transition: opacity 0.8s var(--m3-motion-easing), 
+                transform 0.8s var(--m3-motion-easing);
+}
+
+.m3-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Staggered Delay for children */
+.m3-reveal-group {
+    display: block; /* contents から block に戻して安定させる */
+}
+
+.m3-reveal-group > * {
+    opacity: 1; /* 初期状態で見えるように変更 */
+    transform: none;
+    transition: opacity 0.6s var(--m3-motion-easing), 
+                transform 0.6s var(--m3-motion-easing);
+}
+
+/* 2. Micro-interactions */
+.m3-ripple-host {
+    position: relative;
+    overflow: hidden;
+}
+
+/* 3. Page Transitions - Force Visible */
+.m3-page-enter {
+    opacity: 1 !important;
+    animation: none !important; /* アニメーションによる不具合を排除 */
+}
+
+/* 4. Hover Lift (Enhanced) */
+.m3-hover-lift {
+    transition: transform 0.4s var(--m3-motion-easing), box-shadow 0.4s var(--m3-motion-easing);
+}
+
+.m3-hover-lift:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--m3-elevation-4);
+}

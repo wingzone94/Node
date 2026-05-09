@@ -62,7 +62,7 @@ class Node_Gemini_API {
         $response = wp_remote_post($url, [
             'headers' => ['Content-Type' => 'application/json'],
             'body'    => json_encode($payload),
-            'timeout' => 120 // 20秒から120秒に延長
+            'timeout' => 30 // Reduced to 30s to avoid editor timeout
         ]);
 
         if (is_wp_error($response)) {
@@ -81,12 +81,18 @@ class Node_Gemini_API {
     /**
      * デザイナー品質の要約を生成する
      */
-    public function generate_summary(string $content, string $custom_prompt = ''): string|WP_Error {
-        $system_prompt = "あなたは先進的な技術ブログ 'Node' の編集長です。
+    public function generate_summary(string $content, string $custom_prompt = '', array $options = []): string|WP_Error {
+        $options = wp_parse_args($options, [
+            'max_lines' => 3,
+            'max_chars' => 120
+        ]);
+
+        $system_prompt = "あなたは先進的な技術ブログ 'Luminous Core' の編集長です。
         提供された記事を解析し、以下の JSON フォーマットでレスポンスしてください。
+        必ず、要約は {$options['max_lines']} 行以内、かつ {$options['max_chars']} 文字以内厳守で作成してください。
         {
-          \"summary\": \"読者の好奇心を刺激する、情緒的で洗練された100文字程度の要約。\",
-          \"tone_color\": \"記事のトーンを表す色（hexコード）。技術的なら青系、情熱的なら赤系など。\",
+          \"summary\": \"読者の好奇心を刺激する、情緒的で洗練された要約。\",
+          \"tone_color\": \"記事のトーンを表す色（hexコード）。\",
           \"vibe_keywords\": [\"キーワード1\", \"キーワード2\"]
         }";
 

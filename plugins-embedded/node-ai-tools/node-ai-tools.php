@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:  Node AI Tools
+ * Plugin Name:  Luminous AI Tools
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  Gemini API 連携による AI 要約生成・読了時間自動計算。Luminous Core テーマと連携。
  * Version:      1.0.0
@@ -60,8 +60,8 @@ final class Node_AI_Tools {
 		// 投稿保存時に読了時間を自動計算
 		add_action( 'save_post', [ $this, 'auto_calculate_reading_time' ], 20, 3 );
 
-        // 投稿保存時にAI要約（キャッチコピー含む）を自動生成（未生成の場合のみ）
-        add_action( 'save_post', [ $this, 'auto_generate_ai_summary' ], 25, 3 );
+        // 投稿保存時にAI要約（キャッチコピー含む）を自動生成（手動トリガーに変更）
+        // add_action( 'save_post', [ $this, 'auto_generate_ai_summary' ], 25, 3 );
 
         // AJAX ハンドラの登録
         add_action( 'wp_ajax_node_generate_ai_summary', 'node_ai_ajax_generate_summary' );
@@ -69,6 +69,7 @@ final class Node_AI_Tools {
         // メタボックス登録
         if ( is_admin() ) {
             add_action( 'add_meta_boxes', [ $this, 'add_ai_meta_boxes' ] );
+            add_action( 'save_post', 'node_ai_save_meta' );
         }
 	}
 
@@ -102,6 +103,9 @@ final class Node_AI_Tools {
     public function auto_generate_ai_summary( int $post_id, \WP_Post $post, bool $update ): void {
         if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
         if ( $post->post_type !== 'post' || $post->post_status !== 'publish' ) return;
+        
+        // REST API 経由（エディタ保存時）は、同期処理によるタイムアウトを避けるためスキップ
+        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) return;
 
         // すでに要約が存在するかチェック
         $existing_summary = get_post_meta($post_id, '_node_ai_summary', true);

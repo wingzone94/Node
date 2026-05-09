@@ -2,35 +2,52 @@
 /**
  * Template part for displaying related posts in single.php
  */
-$categories = get_the_category(get_the_ID());
-if ($categories) :
+$post_id = get_the_ID();
+$categories = get_the_category($post_id);
+$args = array(
+    'post__not_in'   => array($post_id),
+    'posts_per_page' => 4,
+    'orderby'        => 'rand',
+);
+
+if ($categories) {
     $cat_ids = array();
     foreach($categories as $cat) $cat_ids[] = $cat->term_id;
+    $args['category__in'] = $cat_ids;
+}
 
-    $related_query = new WP_Query(array(
-        'category__in'   => $cat_ids,
-        'post__not_in'   => array(get_the_ID()),
-        'posts_per_page' => 4,
-        'orderby'        => 'rand',
-    ));
+$related_query = new WP_Query($args);
 
-    if ($related_query->have_posts()) :
+// Fallback to recent posts if no related posts found in same category
+if (!$related_query->have_posts()) {
+    unset($args['category__in']);
+    $args['orderby'] = 'date';
+    $related_query = new WP_Query($args);
+}
+
+if ($related_query->have_posts()) :
 ?>
 <section class="m3-related-posts m3-related-posts--simple">
-    <h3 class="m3-related-posts__title">RELATED POSTS</h3>
-    <div class="m3-related-grid">
-        <?php while ($related_query->have_posts()) : $related_query->the_post(); ?>
-            <a href="<?php the_permalink(); ?>" class="m3-related-card">
-                <?php if (has_post_thumbnail()) : ?>
-                    <div class="m3-related-card__image">
-                        <?php the_post_thumbnail('medium_large'); ?>
+    <div class="m3-related-posts__inner">
+        <h3 class="m3-related-posts__title">RELATED POSTS</h3>
+        <div class="m3-related-grid">
+            <?php while ($related_query->have_posts()) : $related_query->the_post(); ?>
+                <a href="<?php the_permalink(); ?>" class="m3-related-card">
+                    <?php if (has_post_thumbnail()) : ?>
+                        <div class="m3-related-card__image">
+                            <?php the_post_thumbnail('medium_large'); ?>
+                        </div>
+                    <?php else : ?>
+                        <div class="m3-related-card__image m3-related-card__image--placeholder" style="display: flex; align-items: center; justify-content: center; background: var(--md-sys-color-surface-container-high); aspect-ratio: 4/3;">
+                            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--md-sys-color-outline-variant);">image</span>
+                        </div>
+                    <?php endif; ?>
+                    <div class="m3-related-card__content">
+                        <h4 class="m3-related-card__title"><?php the_title(); ?></h4>
                     </div>
-                <?php endif; ?>
-                <div class="m3-related-card__content">
-                    <h4 class="m3-related-card__title"><?php the_title(); ?></h4>
-                </div>
-            </a>
-        <?php endwhile; wp_reset_postdata(); ?>
+                </a>
+            <?php endwhile; wp_reset_postdata(); ?>
+        </div>
     </div>
 </section>
-<?php endif; endif; ?>
+<?php endif; ?>

@@ -1,1 +1,5 @@
-.DS_Store\nnode_modules/\ncolor_script*.js\n.gemini/
+.DS_Store
+node_modules/
+color_script*.js
+.gemini/
+dist/

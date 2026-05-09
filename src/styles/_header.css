@@ -48,12 +48,33 @@
 }
 
 .m3-logo-text { 
+    font-family: "din-2014", sans-serif;
     font-size: 1.4rem; 
-    font-weight: 900; 
-    letter-spacing: -0.03em;
-    color: var(--md-sys-color-on-surface); 
+    font-weight: 600; 
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #1B1812; 
     display: block;
     line-height: 1;
+}
+
+[data-theme="dark"] .m3-logo-text {
+    color: #F5EFEB;
+}
+
+.m3-header__logo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.m3-header__logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 6px;
+    flex-shrink: 0;
 }
 
 .m3-header__actions { 
@@ -63,7 +84,7 @@
 }
 @media (max-width: 600px) {
     .m3-header__actions {
-        gap: 0;
+        gap: 2px;
     }
     .m3-header__actions .m3-icon-button {
         width: 40px;
@@ -163,8 +184,23 @@
 }
 .m3-search-clear {
     color: var(--md-sys-color-on-surface-variant) !important;
-    width: 40px !important;
-    height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    margin: 0 4px;
+    opacity: 0.7;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: none; /* Initially hidden */
+    align-items: center;
+    justify-content: center;
+}
+.m3-search-clear:hover {
+    opacity: 1;
+    background: var(--md-sys-color-surface-variant) !important;
+    transform: scale(1.1);
+}
+.m3-search-clear .material-symbols-outlined {
+    font-size: 20px !important;
 }
 .m3-search-trigger-group {
     display: flex;

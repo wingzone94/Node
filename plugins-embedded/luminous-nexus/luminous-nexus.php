@@ -46,6 +46,7 @@ final class Luminous_Nexus {
 
 		if ( is_admin() ) {
 			require_once LUMINOUS_NEXUS_DIR . 'includes/meta-box-game-info.php';
+			require_once LUMINOUS_NEXUS_DIR . 'includes/admin-settings.php';
 		}
 	}
 

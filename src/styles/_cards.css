@@ -1,699 +1,232 @@
-/* --- Ripple Effect Base --- */
-.m3-ripple-host {
-    position: relative;
-    overflow: hidden;
-    transform: translateZ(0); /* 境界で切り抜くためにGPUレイヤーを強制 */
-}
+/* --- Post Grid & Cards (Ver 0.7.0 Pure Edition) --- */
 
-.m3-ripple {
-    position: absolute;
-    border-radius: 50%;
-    background-color: currentColor; /* 要素の文字色を継承 */
-    pointer-events: none;
-    z-index: 10;
-    /* transform は JS(GSAP) 側でコントロールします */
-}
-
-/* --- Post Grid & Cards (Dynamic Hierarchical Grid) --- */
 .m3-post-grid {
-    padding: clamp(16px, 4vw, var(--m3-spacing-xxxl)) var(--m3-spacing-m);
-    padding-right: 24px !important; /* 24px Sanctuary - Absolute Guarantee */
+    padding: var(--m3-spacing-xl) var(--m3-spacing-m);
     width: 100%;
-    /* overflow: hidden; Removed to prevent clipping of shadows/ripples and sanctuary erosion */
 }
 
-.m3-post-grid__container { 
+.m3-post-grid__container {
     display: grid;
-    /* PCビューで確実に横並びにするため、最小幅を300pxに調整 */
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-    grid-auto-flow: dense; 
-    gap: clamp(20px, 2.5vw, 40px); 
-    margin: 0 auto;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 32px;
     width: 100%;
+    align-items: start;
 }
 
-/* Featured Card Adjustment for larger screens */
-@media (min-width: 1200px) {
-    .card-featured {
-        grid-column: span 2;
-        grid-row: span 2;
-    }
-}
-
-/* Extra Wide Screen Polish */
-@media (min-width: 1920px) {
-    .m3-post-grid__container {
-        gap: 40px;
-    }
-}
-
-/* Ultra Tall (Xperia 1 VI / 21:9 Portrait) Adaptation */
-@media (max-aspect-ratio: 1/2), (height > 900px) and (width < 600px) {
-    .card-featured {
-        max-height: 70vh;
-        overflow: hidden;
-    }
-    .m3-header {
-        height: 56px;
-    }
-    .m3-card__background {
-        aspect-ratio: 4 / 3;
-    }
-}
-
-/* Touch Interface Optimization (Pointer: Coarse) */
-@media (pointer: coarse) {
-    .m3-icon-button, 
-    .m3-button, 
-    .m3-share-btn,
-    .page-numbers,
-    .m3-label--category {
-        min-width: 48px !important;
-        min-height: 48px !important;
-    }
-
-    .m3-header {
-        height: 72px;
-    }
-
-    .m3-card {
-        cursor: default;
-    }
-
-    .m3-card:hover {
-        transform: none;
-    }
-    .m3-card:active {
-        transform: scale(0.98) translateZ(0);
-        transition: transform 0.1s var(--m3-motion-easing);
-    }
-}
-
-/* Animation Initial States */
-.m3-card,
-.m3-elevated-nav-card,
-.special-features__item,
-.m3-nexus-card,
-.m3-blog-card,
-.m3-product-card {
-    opacity: 0;
-    transform: translateY(40px) scale(0.95);
-    will-change: transform, opacity;
+/* LATESTセクション専用のコンテナ設定 (Ver 0.7.0) */
+.m3-post-grid__container--featured {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+    gap: 40px;
+    width: 100%;
+    align-items: start;
+    margin-bottom: 48px;
 }
 
 .m3-card {
     background: var(--md-sys-color-surface-container-low);
-    border-radius: 0 0 32px 32px; /* 上は四角、下は角丸に反転 */
-    overflow: hidden; 
-    display: flex; 
+    border-radius: 28px;
+    overflow: hidden;
+    display: flex;
     flex-direction: column;
-    transition: transform 0.4s var(--m3-motion-easing), 
-                box-shadow 0.4s var(--m3-motion-easing), 
-                background-color 0.3s ease;
+    transition: transform 0.4s var(--m3-motion-easing), box-shadow 0.4s var(--m3-motion-easing);
     box-shadow: var(--m3-elevation-1);
     position: relative;
-    min-height: 280px;
-    border: 1px solid var(--md-sys-color-outline-variant);
     text-decoration: none;
     color: inherit;
+    height: 100%;
+    border: 1px solid var(--md-sys-color-outline-variant); /* Ver 0.7.0 は細いボーダーあり */
 }
 
 [data-theme="dark"] .m3-card {
     background: var(--md-sys-color-surface-container-high);
 }
 
-.m3-card:hover { 
-    transform: translateY(-6px) scale(1.01); 
-    background-color: var(--md-sys-color-surface-container-high);
-    box-shadow: var(--m3-elevation-3); 
-    z-index: 2;
+.m3-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--m3-elevation-3);
 }
 
-[data-theme="dark"] .m3-card:hover {
-    background-color: var(--md-sys-color-surface-container-highest);
-}
-
-.m3-card__image-link { 
-    position: relative; 
+/* 1. Visual Area */
+.m3-card__visual {
+    position: relative;
     width: 100%;
-    border-radius: 0; /* 上部は完全な四角形 */
-    aspect-ratio: 16 / 9; /* 少し高さを戻して安定感を出す */
     overflow: hidden;
-    background: color-mix(in srgb, var(--md-sys-color-primary) 5%, var(--md-sys-color-surface-container-high));
+}
+
+.m3-card__image-link {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+}
+
+.m3-card__image-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--m3-motion-easing);
+}
+
+.m3-card__no-image-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    aspect-ratio: 21 / 5;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface-variant);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.m3-card__image-link img { 
-    position: relative; 
-    z-index: 1;
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; /* 下地が見えないようにピッタリ合わせる */
-    transform: none;
-    padding: 0;
-    transition: transform 0.6s var(--m3-motion-easing); 
-    will-change: transform;
+.m3-card__no-image-placeholder .material-symbols-outlined {
+    font-size: 24px;
+    opacity: 0.3;
 }
 
-.card-standard .m3-card__image-link {
-    aspect-ratio: 16 / 9;
+/* 2. Labels (Ver 0.7.0 Style: Absolute Top-Left & Orange Pills) */
+.m3-card__labels {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    z-index: 10;
 }
 
-.card-standard .m3-card__image-link img {
-    transform: none;
+.m3-card--no-image .m3-card__labels {
+    position: static;
+    padding: 16px 20px 0;
 }
 
-.m3-card:hover .m3-card__image-link img {
-    transform: scale(1.02) translateZ(0);
+/* Label Styling */
+.m3-label--category,
+.m3-label--ai,
+.m3-label--ai-summary,
+.m3-badge--compact,
+.m3-label--category,
+.m3-label--ai,
+.m3-label--ai-summary,
+.m3-badge--compact,
+.m3-label--sponsor {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container) !important;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-decoration: none;
+    line-height: 1.2;
+    border: 1px solid rgba(255, 153, 0, 0.15);
+    box-shadow: var(--m3-elevation-1);
 }
 
-/* ARTICLESグリッドを厳格に3カラムに制限 */
-.m3-post-grid__container.is-articles-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr); /* モバイルは1列 */
-    gap: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
+.m3-label--ai, .m3-label--ai-summary {
+    background: linear-gradient(135deg, #FF9800, #F44336);
 }
 
-@media (min-width: 768px) {
-    .m3-post-grid__container.is-articles-grid {
-        grid-template-columns: repeat(2, 1fr); /* タブレットは2列 */
-    }
+.m3-label--ai .m3-label__text {
+    font-size: 0.65rem;
+}
+
+/* 3. Content Area */
+.m3-card__content {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.m3-card__title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 900;
+    line-height: 1.35;
+    color: var(--md-sys-color-on-surface);
+}
+
+.m3-card__title a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* AI Accordion */
+.m3-card__ai-accordion {
+    background: var(--md-sys-color-surface-container-highest);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-card__ai-summary-toggle {
+    padding: 10px 12px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.m3-card__ai-toggle-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+}
+
+.m3-card__ai-body {
+    padding: 0 12px 12px;
+}
+
+.m3-card__ai-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 0;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* 4. Footer */
+.m3-card__footer {
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-card__writer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.m3-card__writer img {
+    border-radius: 50%;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-card__date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-card__date .material-symbols-outlined {
+    font-size: 14px;
 }
 
 @media (min-width: 1024px) {
     .m3-post-grid__container.is-articles-grid {
-        grid-template-columns: repeat(3, 1fr); /* PCは厳格に3列 */
-        gap: 48px;
-    }
-}
-
-
-
-/* --- Card Meta Zoning (Overlay) --- */
-.card-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    pointer-events: none;
-}
-
-.card-overlay > * {
-    pointer-events: auto;
-}
-
-/* Badge Base Style (Refined M3 Chip) */
-.badge-date,
-.m3-label--category,
-.m3-label--ai,
-.m3-label--ai-summary,
-.m3-label--sponsor {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 800;
-    white-space: nowrap;
-    border: none;
-    transition: all 0.2s var(--m3-motion-easing);
-}
-
-.m3-card__background { 
-    position: relative; 
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background: var(--md-sys-color-surface-container-high);
-}
-
-.badge-date {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    background: var(--md-sys-color-secondary-container) !important;
-    color: var(--md-sys-color-on-secondary-container) !important;
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 800;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    pointer-events: none;
-}
-
-.m3-card__meta-right {
-    display: flex;
-    gap: 12px;
-    padding-right: 80px; /* 日付ラベルと重ならないように余白を確保 */
-}
-
-/* Content Area Badges (Readability Priority) */
-.m3-card__meta-badges {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    margin-top: -4px;
-}
-
-.m3-article__category-group {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-/* Ensure all badges inside the meta row are positioned naturally */
-.m3-card__meta-badges > *,
-.m3-card__meta-badges .m3-label--category,
-.m3-card__meta-badges .m3-label--ai,
-.m3-card__meta-badges .m3-label--ai-summary,
-.m3-card__meta-badges .m3-label--sponsor,
-.m3-card__meta-badges .m3-label--reading-time {
-    position: static !important;
-    inset: auto !important;
-    margin: 0 !important;
-    transform: none !important;
-}
-
-.m3-label--category {
-    background: var(--md-sys-color-primary-container) !important;
-    color: var(--md-sys-color-on-primary-container) !important;
-}
-
-/* AI and Sponsor Labels as Chips */
-/* ... (rest of the file) */
-.m3-label--ai, .m3-label--ai-summary, .m3-label--sponsor {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 24px;
-    padding: 6px 12px;
-    font-size: 0.9rem;
-    font-weight: 800;
-    transition: all 0.2s ease;
-}
-
-.m3-label--icon-only {
-    padding: 6px !important;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-}
-
-.m3-label--ai, .m3-label--ai-summary {
-    background: #FF9900 !important;
-    color: #ffffff !important;
-}
-
-.m3-label--sponsor {
-    background: linear-gradient(135deg, var(--md-sys-color-tertiary-container), var(--md-sys-color-surface-container-highest)) !important;
-    color: var(--md-sys-color-on-tertiary-container) !important;
-    border: 1.5px dashed var(--md-sys-color-tertiary) !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.m3-label--sponsor:hover {
-    filter: brightness(0.95);
-    transform: translateY(-1px);
-}
-
-/* Reading Time Label with Gauge (Space Saving) */
-.m3-label--reading-time {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 900;
-    background: rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(8px);
-    color: var(--md-sys-color-primary) !important;
-    position: relative;
-    overflow: hidden;
-    border: 1.5px solid var(--md-sys-color-primary) !important;
-    transition: all 0.3s var(--m3-motion-easing);
-    z-index: 1;
-    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.1);
-}
-
-.m3-label--reading-time .material-symbols-outlined {
-    font-size: 16px;
-    font-variation-settings: 'FILL' 1;
-}
-
-.m3-label__gauge-container {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: rgba(0, 0, 0, 0.05);
-    z-index: -1;
-}
-
-.m3-label__gauge-bar {
-    display: block;
-    height: 100%;
-    background: linear-gradient(90deg, var(--md-sys-color-primary), #ffc107);
-    box-shadow: 0 0 8px var(--md-sys-color-primary);
-    transition: width 1.2s var(--m3-motion-easing);
-}
-
-.m3-label--reading-time:hover {
-    background: var(--md-sys-color-primary-container) !important;
-    color: var(--md-sys-color-on-primary-container) !important;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 24px rgba(255, 153, 0, 0.2);
-}
-
-/* Internal label text visibility */
-.m3-label__text {
-    display: inline-block !important;
-    margin-left: 4px;
-}
-
-.m3-label--ai {
-    background: #FF9900 !important;
-    color: #FFFFFF !important;
-    border: none !important;
-}
-
-/* Icon Only Mode (Card Upper) */
-.m3-label--icon-only {
-    width: 34px;
-    height: 34px;
-    padding: 0 !important;
-    justify-content: center;
-    border-radius: 50% !important;
-    cursor: help;
-}
-.m3-label--icon-only .material-symbols-outlined {
-    margin: 0 !important;
-    font-size: 20px;
-}
-.m3-label--icon-only:hover {
-    transform: scale(1.1);
-    background-color: var(--md-sys-color-primary-container) !important;
-    color: var(--md-sys-color-on-primary-container) !important;
-}
-
-/* Tooltip Polish */
-.m3-dynamic-tooltip {
-    position: fixed;
-    background: var(--md-sys-color-on-surface);
-    color: var(--md-sys-color-surface);
-    padding: 8px 14px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 800;
-    pointer-events: none;
-    z-index: 4000 !important; /* Force to front */
-    opacity: 0;
-    transform: scale(0.9);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    max-width: none; /* 1行で収めるために制限を解除 */
-    white-space: nowrap; /* 強制的に1行にする */
-    line-height: 1;
-    text-align: center;
-}
-
-/* Category Label in Content (Card Lower) */
-.m3-card__category-tag {
-    display: inline-flex;
-}
-.m3-article__meta-info .m3-label--category {
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 0.9rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border: none;
-}
-
-/* Date Badge specific */
-.badge-date svg { width: 16px; height: 16px; opacity: 0.8; }
-
-/* Make category label interactive */
-.m3-label--category {
-    cursor: pointer;
-    background: var(--md-sys-color-primary) !important;
-    color: var(--md-sys-color-on-primary) !important;
-    border: none !important;
-    transition: transform 0.2s var(--m3-motion-easing), box-shadow 0.2s var(--m3-motion-easing);
-}
-.m3-label--category:hover {
-    background: #ff6600 !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-    transform: translateY(-1px);
-}
-.m3-label--category .material-symbols-outlined { font-size: 14px; opacity: 0.8; }
-
-/* Clear old wrapper restrictions & positions */
-/* --- Card Content & Title Polishing --- */
-.m3-card__content {
-    padding: 20px 24px 28px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    background: var(--md-sys-color-surface-container-low);
-    margin-top: -20px;
-    border-radius: 0 0 32px 32px; /* カード全体の形状に合わせて下を丸める */
-    position: relative;
-    z-index: 5;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.m3-card__title {
-    font-size: 1.25rem;
-    font-weight: 800;
-    line-height: 1.5;
-    margin: 0 0 16px;
-    color: var(--md-sys-color-on-surface);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    position: relative;
-    z-index: 5;
-}
-
-.m3-card__title a {
-    color: inherit;
-    text-decoration: none;
-}
-
-/* Stretched link to make the whole card clickable */
-.m3-card__title a::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    /* This makes the whole card clickable but needs the card to be position: relative */
-}
-
-.m3-card:hover .m3-card__title {
-    color: var(--md-sys-color-primary);
-}
-
-/* Metadata area visibility */
-.m3-card__meta-badges {
-    position: relative;
-    z-index: 10;
-    pointer-events: auto;
-}
-
-/* Ensure categories and badges are visible and styled as chips */
-.m3-label--category,
-.m3-label--ai,
-.m3-label--ai-summary,
-.m3-label--sponsor {
-    position: static !important;
-    display: inline-flex !important;
-    margin: 0 4px 8px 0 !important;
-}
-
-/* --- No Image Article Card Styles (M3 Refined) --- */
-.m3-card--no-image {
-    background: var(--md-sys-color-surface-container-low) !important;
-    border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: 32px !important; /* 四隅すべてを角丸に */
-    position: relative;
-    overflow: hidden;
-    padding: 12px; /* 全体的な余白を追加 */
-    height: 100%;
-    max-height: 320px;
-    min-height: 260px;
-    display: flex;
-    flex-direction: column;
-}
-
-.m3-card--no-image .card-overlay {
-    position: relative;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 24px 20px 0;
-    margin-bottom: -12px;
-}
-
-.m3-card--no-image .m3-card__content {
-    padding: 12px 20px 24px;
-    flex-grow: 1;
-}
-
-.m3-card--no-image .m3-card__title {
-    font-size: 1.35rem;
-    line-height: 1.4;
-    font-weight: 800;
-    margin-bottom: 24px;
-}
-
-.m3-card__footer-meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; }
-.m3-card__writer { display: flex; align-items: center; gap: 10px; }
-.m3-card__writer img { border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); width: 24px; height: 24px; }
-.m3-card__comment-count { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 800; opacity: 0.9; }
-
-/* --- Archive Arrow Card --- */
-.m3-card--archive-link {
-    background: linear-gradient(135deg, var(--md-sys-color-primary), #ff6600);
-    color: #ffffff !important;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    min-height: 280px;
-    border: none;
-}
-
-.m3-card--archive-link .m3-card__content {
-    justify-content: center;
-    padding: 32px;
-}
-
-.m3-card--archive-link .m3-card__archive-label {
-    font-size: 0.8rem;
-    font-weight: 900;
-    letter-spacing: 0.2em;
-    opacity: 0.8;
-    margin-bottom: 12px;
-}
-
-.m3-card--archive-link .m3-card__title {
-    color: #ffffff !important;
-    font-size: 1.5rem;
-    margin-bottom: 24px;
-}
-
-.m3-card--archive-link .m3-card__archive-icon {
-    width: 64px;
-    height: 64px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    transition: transform 0.3s var(--m3-motion-easing);
-}
-
-.m3-card--archive-link .m3-card__archive-icon .material-symbols-outlined {
-    font-size: 32px;
-}
-
-.m3-card--archive-link:hover .m3-card__archive-icon {
-    transform: translateX(12px) scale(1.1);
-    background: rgba(255, 255, 255, 0.3);
-}
-
-/* --- List View Layout (Archives) --- */
-.m3-post-grid--list {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 24px !important;
-    max-width: 900px; /* リスト表示時は幅を絞って可読性を高める */
-    margin: 0 auto;
-}
-
-.m3-post-grid--list .m3-card {
-    display: flex;
-    flex-direction: row; /* 横並び */
-    align-items: stretch;
-    min-height: 220px;
-    padding: 0;
-    overflow: hidden;
-    gap: 0;
-}
-
-.m3-post-grid--list .m3-card__image-link {
-    flex: 0 0 35%; /* 画像を左側に35%固定 */
-    max-width: 320px;
-    height: auto;
-    border-radius: 0;
-}
-
-.m3-post-grid--list .m3-card__image-link img {
-    height: 100%;
-    object-fit: cover;
-}
-
-.m3-post-grid--list .m3-card__content {
-    flex: 1;
-    padding: 24px 32px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.m3-post-grid--list .m3-card__title {
-    font-size: 1.5rem;
-    margin-bottom: 12px;
-    line-height: 1.3;
-}
-
-.m3-post-grid--list .m3-card__ai-accordion {
-    margin: 12px 0;
-}
-
-/* Mobile Adjustments for List View */
-@media (max-width: 768px) {
-    .m3-post-grid--list .m3-card {
-        min-height: 160px;
-    }
-    .m3-post-grid--list .m3-card__image-link {
-        flex: 0 0 120px; /* モバイルでは画像を少し小さく固定 */
-    }
-    .m3-post-grid--list .m3-card__content {
-        padding: 16px 20px;
-    }
-    .m3-post-grid--list .m3-card__title {
-        font-size: 1.1rem;
-    }
-    .m3-post-grid--list .m3-card__footer-meta {
-        display: none; /* モバイルリストではメタ情報を整理してタイトルを強調 */
-    }
-}
-
-@media (max-width: 480px) {
-    .m3-post-grid--list .m3-card {
-        flex-direction: column; /* 超小型端末では縦に戻す */
-    }
-    .m3-post-grid--list .m3-card__image-link {
-        flex: 0 0 180px;
-        max-width: none;
+        grid-template-columns: repeat(3, 1fr);
     }
 }

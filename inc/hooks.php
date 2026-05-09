@@ -198,3 +198,49 @@ function luminous_auto_image_lightbox_link( $content ) {
 
     return $content;
 }
+
+/**
+ * テーマアセット画像を <picture> タグで出力する（WebP優先 + Retina対応）。
+ *
+ * @param string $filename  assets/images/ 内のファイル名。
+ * @param array  $args      属性（alt, class, loading, formats等）。
+ */
+function node_render_theme_image( string $filename, array $args = [] ): void {
+    $base_name = pathinfo( $filename, PATHINFO_FILENAME );
+    $ext       = pathinfo( $filename, PATHINFO_EXTENSION );
+    $dir_uri   = get_template_directory_uri() . '/assets/images/';
+    
+    // デフォルトの設定
+    $formats = $args['formats'] ?? [ 'webp', $ext ];
+    $alt     = $args['alt'] ?? '';
+    $class   = $args['class'] ?? '';
+    $loading = $args['loading'] ?? 'lazy';
+
+    echo '<picture class="' . esc_attr( $class ) . '">';
+    
+    foreach ( $formats as $format ) {
+        $mime = 'image/' . ( $format === 'jpg' ? 'jpeg' : $format );
+        $file_url_1x = $dir_uri . $base_name . '.' . $format;
+        $file_url_2x = $dir_uri . $base_name . '@2x.' . $format;
+        
+        // Retina (2x) 用の記述
+        $srcset = esc_url( $file_url_1x ) . ' 1x, ' . esc_url( $file_url_2x ) . ' 2x';
+
+        // 最後の要素（imgタグにフォールバックする形式）以外を <source> として出力
+        if ( $format !== $ext || count($formats) > 1 && $format === 'webp' ) {
+            echo '<source srcset="' . $srcset . '" type="' . esc_attr( $mime ) . '">';
+        }
+    }
+
+    /**
+     * 最適化プラグインの二重処理を回避する除外クラス/属性
+     * - skip-lazy / no-lazy : 遅延読み込みの二重処理を防止
+     * - no-webp : WebP変換/Picture化の二重処理を防止 (EWWW等)
+     * - data-no-optimize="1" : SG Optimizer等の最適化を防止
+     */
+    $skip_attrs = 'class="skip-lazy no-lazy no-webp" data-no-optimize="1" data-skip-lazy="1"';
+
+    // 最終的なフォールバック img タグ
+    echo '<img src="' . esc_url( $dir_uri . $filename ) . '" alt="' . esc_attr( $alt ) . '" loading="' . esc_attr( $loading ) . '" ' . $skip_attrs . '>';
+    echo '</picture>';
+}

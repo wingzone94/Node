@@ -92,21 +92,8 @@ function node_enqueue_assets() {
 		}
 	}
 
-	// Google Fonts & Material Symbols
-	wp_enqueue_style(
-		'node-fonts',
-		'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap',
-		array(),
-		null
-	);
+	// Google Fonts & Material Symbols are now handled in header.php for performance.
 
-	// Font Awesome (Brands) for Social Icons
-	wp_enqueue_style(
-		'font-awesome',
-		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-		array(),
-		'6.5.1'
-	);
 
 	// GSAP (CDN)
 	wp_register_script(
@@ -141,18 +128,43 @@ function node_register_service_worker() {
 	</script>';
 }
 add_action( 'wp_footer', 'node_register_service_worker' );
-// Branding normalization: CyberNode -> Node for branding in frontend (no DB changes)
+/**
+ * -------------------------------------------------------
+ * 5. Branding Normalization & DB Updates
+ * -------------------------------------------------------
+ */
+
+/**
+ * Force update DB options if they still contain old branding.
+ */
+function node_enforce_branding_update() {
+    if ( ! is_admin() || (defined('REST_REQUEST') && REST_REQUEST) ) return;
+    $current_name = get_option('blogname');
+    if ($current_name === 'CyberNode' || $current_name === 'Node' || empty($current_name)) {
+        update_option('blogname', 'Luminous Core');
+    }
+}
+add_action('admin_init', 'node_enforce_branding_update');
+
+/**
+ * Filter frontend output to ensure branding consistency.
+ */
 function luminous_brand_normalize( $value ) {
-  if ( is_string( $value ) && strpos( $value, 'CyberNode' ) !== false ) {
-    $value = str_replace( 'CyberNode', 'Node', $value );
-  }
-  return $value;
+    if ( is_string( $value ) ) {
+        return str_replace( array( 'CyberNode', 'Node' ), 'Luminous Core', $value );
+    }
+    return $value;
 }
 add_filter( 'option_blogname', 'luminous_brand_normalize' );
 add_filter( 'option_blogdescription', 'luminous_brand_normalize' );
+add_filter( 'pre_get_document_title', 'luminous_brand_normalize', 999 );
+
+/**
+ * Handle translation strings and admin branding.
+ */
 add_filter( 'gettext', function( $translated, $text, $domain ) {
-  if ( strpos( $text, 'CyberNode' ) !== false ) {
-    $translated = str_replace( 'CyberNode', 'Node', $translated );
-  }
-  return $translated;
+    if ( strpos( $translated, 'CyberNode' ) !== false || strpos( $translated, 'Node' ) !== false ) {
+        $translated = str_replace( array( 'CyberNode', 'Node' ), 'Luminous Core', $translated );
+    }
+    return $translated;
 }, 20, 3 );

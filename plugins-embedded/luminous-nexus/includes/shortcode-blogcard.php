@@ -61,6 +61,13 @@ function node_blogcard_shortcode($atts) {
     $ogp = node_get_ogp_data($atts['url']);
     if (!$ogp) return '<a href="' . esc_url($atts['url']) . '">' . esc_html($atts['url']) . '</a>';
 
+    // Amazon アフィリエイト ID の付与
+    $amazon_id = get_option('luminous_nexus_amazon_id');
+    if ($amazon_id && str_contains($atts['url'], 'amazon.co.jp') && !str_contains($atts['url'], 'tag=')) {
+        $separator = str_contains($atts['url'], '?') ? '&' : '?';
+        $atts['url'] .= "{$separator}tag={$amazon_id}";
+    }
+
     ob_start();
     ?>
     <div class="m3-blogcard" onclick="window.open('<?php echo esc_url($atts['url']); ?>', '_blank')">

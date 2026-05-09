@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Node Flow
+ * Plugin Name: Luminous Flow
  * Plugin URI: https://example.com
  * Description: フロントエンドUXと動的ルーティングを担当するプラグイン。ハイブリッド・スクローラー機能などを提供します。
  * Version: 1.0.0

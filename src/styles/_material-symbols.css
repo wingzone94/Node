@@ -1,9 +1,16 @@
 /* Material Symbols - Variable Axis Animations */
 
 .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
     display: inline-block;
+    line-height: 1;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Global Interaction triggers */

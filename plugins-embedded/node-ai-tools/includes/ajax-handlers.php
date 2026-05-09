@@ -35,18 +35,21 @@ if ( ! function_exists( 'node_ai_ajax_generate_summary' ) ) {
         }
 
         $custom_prompt = isset($_POST['custom_prompt']) ? sanitize_text_field($_POST['custom_prompt']) : '';
+        $max_lines     = isset($_POST['max_lines']) ? intval($_POST['max_lines']) : 3;
+        $max_chars     = isset($_POST['max_chars']) ? intval($_POST['max_chars']) : 120;
 
-        // 生成回数上限チェック（1記事あたり3回まで）
-        $attempts = (int) get_post_meta($post_id, '_node_ai_summary_attempts', true);
-        if ($attempts >= 3) {
-            wp_send_json_error(['message' => '本記事のAI要約生成は上限に達しました（3回）'] );
-            return;
-        }
+        // 保存（将来の再生成時のデフォルト用）
+        update_post_meta($post_id, '_node_ai_custom_prompt', $custom_prompt);
+        update_post_meta($post_id, '_node_ai_max_lines', $max_lines);
+        update_post_meta($post_id, '_node_ai_max_chars', $max_chars);
 
         // APIクラスを使用して要約を生成 (JSONレスポンスを期待)
         if ( class_exists( 'Node_Gemini_API' ) ) {
             $api = new Node_Gemini_API();
-            $result = $api->generate_summary( $content, $custom_prompt );
+            $result = $api->generate_summary( $content, $custom_prompt, [
+                'max_lines' => $max_lines,
+                'max_chars' => $max_chars
+            ] );
         } else {
             wp_send_json_error( [ 'message' => 'APIクラスが見つかりません。' ] );
             return;

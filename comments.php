@@ -20,7 +20,7 @@ function node_comment_callback($comment, $args, $depth) {
                 <header class="m3-comment-card__header">
                     <span class="m3-comment-card__author"><?php comment_author_link(); ?></span>
                     <time class="m3-comment-card__date" datetime="<?php comment_time('c'); ?>">
-                        <?php printf(esc_html__('%1$s at %2$s', 'node'), get_comment_date(), get_comment_time()); ?>
+                        <?php printf(esc_html__('%1$s %2$s', 'node'), get_comment_date(), get_comment_time()); ?>
                     </time>
                 </header>
                 

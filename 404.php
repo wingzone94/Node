@@ -36,9 +36,9 @@ foreach ($m3_404_keys as $key) {
 <main id="primary" class="site-main m3-404-page m3-404--<?php echo esc_attr($m3_404_current); ?>">
     <!-- Background Layers -->
     <div class="m3-404-bg no-copy">
-        <div class="m3-404-theme-bg m3-bg-minecraft-lava"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/minecraft-lava.png'); ?>" alt="" loading="lazy"></div>
-        <div class="m3-404-theme-bg m3-bg-minecraft-creeper"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/creeper_aftermath_bg.png'); ?>" alt="" loading="lazy"></div>
-        <div class="m3-404-theme-bg m3-bg-minecraft-raid"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/pillager_raid_aftermath_bg.png'); ?>" alt="" loading="lazy"></div>
+        <div class="m3-404-theme-bg m3-bg-minecraft-lava"><?php node_render_theme_image('minecraft-lava.png', ['alt' => '溶岩']); ?></div>
+        <div class="m3-404-theme-bg m3-bg-minecraft-creeper"><?php node_render_theme_image('creeper_aftermath_bg.png', ['alt' => 'クリーパー']); ?></div>
+        <div class="m3-404-theme-bg m3-bg-minecraft-raid"><?php node_render_theme_image('pillager_raid_aftermath_bg.png', ['alt' => '襲撃']); ?></div>
         
         <!-- Fortnite Specific Background -->
         <div class="m3-404-theme-bg m3-bg-fortnite"><div class="m3-404-fortnite-bg"></div></div>
@@ -99,8 +99,8 @@ foreach ($m3_404_keys as $key) {
                     <div class="m3-expressive-ui-header">
                         <span class="m3-expressive-ui-chip">Error 404</span>
                     </div>
-                    <h1 class="m3-expressive-ui-title">Page Not Found</h1>
-                    <p class="m3-expressive-ui-text">The requested component could not be inflated. Please check the destination or return home.</p>
+                    <h1 class="m3-expressive-ui-title">ページが見つかりません</h1>
+                    <p class="m3-expressive-ui-text">リクエストされたコンポーネントを展開できませんでした。リンク先を確認するか、ホームにお戻りください。</p>
                     <div class="m3-expressive-ui-visual">
                         <div class="m3-expressive-shape">404</div>
                     </div>
@@ -159,7 +159,7 @@ foreach ($m3_404_keys as $key) {
     <div class="m3-404-disclaimer">
         <p>
             <span id="m3-404-original-copyright"><?php echo esc_html($m3_copyrights[$m3_404_current]); ?></span>. 
-            All artworks are AI-generated parodies. <span class="m3-disclaimer-copy-guard">Unauthorized reproduction prohibited.</span>
+            すべての作品はAIによって生成されたパロディです。 <span class="m3-disclaimer-copy-guard">無断転載を禁じます。</span>
         </p>
     </div>
 
@@ -167,7 +167,7 @@ foreach ($m3_404_keys as $key) {
     <div id="m3-404-gallery-modal" class="m3-gallery-modal">
         <div class="m3-gallery-content">
             <div class="m3-gallery-header">
-                <h3>404 Art Gallery <small style="font-size: 0.6em; opacity: 0.6; font-weight: normal;">(AI Generated Parody)</small></h3>
+                <h3>404 アートギャラリー <small style="font-size: 0.6em; opacity: 0.6; font-weight: normal;">(AI生成パロディ)</small></h3>
                 <button class="m3-gallery-close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="m3-gallery-grid">

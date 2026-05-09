@@ -6,7 +6,7 @@ import './scripts/share-actions';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof gsap !== 'undefined') gsap.config({ force3D: true });
-    
+
     const initializers = [
         initColorExtraction,
         initDarkMode,
@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         initReadingProgress,
         initHeroInfoBubble,
         initScrollAnimations,
-        initHeaderClock
+        initHeaderClock,
+        initTableSorter
     ];
 
     initializers.forEach(init => {
@@ -38,15 +39,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function initHeroInfoBubble() {
     const trigger = document.getElementById('m3-hero-reading-badge');
-    if (!trigger) return;
+    const panel = document.getElementById('m3-hero-info-panel');
+    if (!trigger || !panel) return;
 
     let hideTimeout;
 
     const showInfo = () => {
         trigger.classList.add('is-info-active');
+        panel.classList.add('is-active');
         clearTimeout(hideTimeout);
         hideTimeout = setTimeout(() => {
             trigger.classList.remove('is-info-active');
+            panel.classList.remove('is-active');
         }, 5000);
     };
 
@@ -54,6 +58,7 @@ function initHeroInfoBubble() {
         e.stopPropagation();
         if (trigger.classList.contains('is-info-active')) {
             trigger.classList.remove('is-info-active');
+            panel.classList.remove('is-active');
             clearTimeout(hideTimeout);
         } else {
             showInfo();
@@ -61,8 +66,9 @@ function initHeroInfoBubble() {
     });
 
     document.addEventListener('click', (e) => {
-        if (!trigger.contains(e.target)) {
+        if (!trigger.contains(e.target) && !panel.contains(e.target)) {
             trigger.classList.remove('is-info-active');
+            panel.classList.remove('is-active');
         }
     });
 }
@@ -100,11 +106,11 @@ function initHeaderClock() {
         if (!isHomePage) {
             setTimeout(() => {
                 if (typeof gsap !== 'undefined') {
-                    gsap.to(clock, { 
-                        opacity: 0, 
+                    gsap.to(clock, {
+                        opacity: 0,
                         y: 10,
-                        duration: 1.5, 
-                        ease: "power3.inOut", 
+                        duration: 1.5,
+                        ease: "power3.inOut",
                         onComplete: () => {
                             clock.style.display = 'none';
                         }
@@ -125,34 +131,36 @@ function initScrollAnimations() {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('is-visible');
+                // Optional: keep observing if you want reveal-on-each-scroll, 
+                // but unobserve is standard for "reveal once"
                 observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.1 });
 
-    document.querySelectorAll('.m3-reading-badge').forEach(el => observer.observe(el));
+    document.querySelectorAll('.m3-reading-badge, .m3-reveal, .m3-reveal-group').forEach(el => observer.observe(el));
 }
 
 async function initReadingProgress() {
     const progressBar = document.querySelector('.m3-header__progress-bar');
     const container = document.querySelector('.m3-header__progress-container');
     const article = document.querySelector('.m3-article__body');
-    
+
     if (!progressBar || !article) return;
-    
+
     let shattered = false;
-    
+
     const updateProgress = () => {
         const rect = article.getBoundingClientRect();
         const articleTop = rect.top + window.pageYOffset;
         const articleHeight = rect.height;
         const windowHeight = window.innerHeight;
         const currentScroll = window.pageYOffset;
-        const scrollStart = articleTop - 64; 
-        
+        const scrollStart = articleTop - 64;
+
         let progress = currentScroll > scrollStart ? ((currentScroll - scrollStart) / (articleHeight - windowHeight)) * 100 : 0;
         progress = Math.min(100, Math.max(0, progress));
-        
+
         // 可逆性の実装: 上にスクロールして100%未満になったら復活させる
         if (progress < 99.5 && shattered) {
             shattered = false;
@@ -165,7 +173,7 @@ async function initReadingProgress() {
                 if (progress > 0) container.classList.add('is-visible');
                 else container.classList.remove('is-visible');
             }
-            
+
             // 100%到達時の粉砕アニメーション
             if (progress >= 99.9 && !shattered) {
                 shattered = true;
@@ -180,10 +188,10 @@ async function initReadingProgress() {
 
 function shatterProgressBar(el) {
     if (typeof gsap === 'undefined') return;
-    
+
     const rect = el.getBoundingClientRect();
     const shards = 12;
-    
+
     for (let i = 0; i < shards; i++) {
         const shard = document.createElement('div');
         shard.className = 'm3-gauge-shard';
@@ -191,7 +199,7 @@ function shatterProgressBar(el) {
         shard.style.left = `${rect.left + (Math.random() * rect.width)}px`;
         shard.style.top = `${rect.top}px`;
         document.body.appendChild(shard);
-        
+
         gsap.to(shard, {
             x: (Math.random() - 0.5) * 300,
             y: Math.random() * 500 + 100,
@@ -202,9 +210,10 @@ function shatterProgressBar(el) {
             onComplete: () => shard.remove()
         });
     }
-    
+
     gsap.to(el, { opacity: 0, scaleY: 0, duration: 0.2 });
 }
+
 
 function initColorExtraction() {
     const badges = document.querySelectorAll('.m3-article__category-group a, .m3-reading-badge-label');
@@ -229,12 +238,12 @@ function initDarkMode() {
     const updateTheme = () => {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
         const icon = toggle.querySelector('.material-symbols-outlined');
-        
+
         // 常に「明るさ（brightness_6）」アイコンを使用
         if (icon) {
             icon.textContent = 'brightness_6';
         }
-        
+
         storage.set('theme', isDark ? 'dark' : 'light');
     };
 
@@ -288,11 +297,21 @@ function initSearchBar() {
     const updateClearBtn = () => {
         if (searchClear) searchClear.style.display = searchInput.value ? 'flex' : 'none';
     };
+    
+    // Initialize state
+    updateClearBtn();
+    
     searchInput.addEventListener('input', updateClearBtn);
+    searchInput.addEventListener('change', updateClearBtn);
+    searchInput.addEventListener('search', updateClearBtn); // For 'x' in type="search" browsers
+    
     searchClear?.addEventListener('click', () => {
-        searchInput.value = '';
-        updateClearBtn();
-        searchInput.focus();
+        if (searchInput.value) {
+            animateSearchClear(searchInput, searchClear, () => {
+                updateClearBtn();
+            });
+            searchInput.focus();
+        }
     });
 
     // --- Mobile Close ---
@@ -329,11 +348,11 @@ function initSearchBar() {
             });
             if (saveToggle) saveToggle.checked = true;
         }
-        
+
         if (window.innerWidth > 600) {
             switchPage(1);
         }
-        
+
         setTimeout(() => {
             initRangeSlider();
             updateHitCount();
@@ -369,7 +388,7 @@ function initSearchBar() {
         const pagesContainer = modal.querySelector('.m3-modal__pages-container');
         const allPages = Array.from(modal.querySelectorAll('.m3-modal__page'));
         const allTabs = Array.from(modal.querySelectorAll('.m3-modal__tab'));
-        
+
         if (!pagesContainer || allPages.length === 0) return;
 
         const movePercent = (100 / allPages.length) * (pageNum - 1);
@@ -417,7 +436,7 @@ function initSearchBar() {
         const range = document.getElementById('m3-slider-range');
         const minInput = document.getElementById('m3-min-chars');
         const maxInput = document.getElementById('m3-max-chars');
-        
+
         if (!slider || !minHandle || !maxHandle || !range || !minInput || !maxInput) return;
 
         let minVal = parseInt(minInput.value) || 0;
@@ -430,21 +449,21 @@ function initSearchBar() {
 
             const minPercent = (minVal / totalMax) * 100;
             const maxPercent = (maxVal / totalMax) * 100;
-            
+
             const offset = 14;
             const trackWidth = rect.width - (offset * 2);
-            
+
             const minPos = offset + (minPercent / 100) * trackWidth;
             const maxPos = offset + (maxPercent / 100) * trackWidth;
-            
+
             minHandle.style.left = `${minPos}px`;
             maxHandle.style.left = `${maxPos}px`;
             range.style.left = `${minPos}px`;
             range.style.width = `${maxPos - minPos}px`;
-            
+
             minHandle.querySelector('.m3-range-slider__value').textContent = minVal;
             maxHandle.querySelector('.m3-range-slider__value').textContent = maxVal >= totalMax ? '10000+' : maxVal;
-            
+
             minInput.value = minVal;
             maxInput.value = maxVal;
         };
@@ -456,7 +475,7 @@ function initSearchBar() {
             const trackWidth = rect.width - (offset * 2);
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const x = clientX - rect.left - offset;
-            
+
             const percent = Math.min(100, Math.max(0, (x / trackWidth) * 100));
             let val = Math.round((percent / 100) * totalMax);
             val = Math.round(val / 500) * 500;
@@ -523,25 +542,25 @@ function initSearchBar() {
 
             const counter = document.getElementById('m3-search-hit-count');
             const applyBtn = document.getElementById('m3-advanced-search-apply');
-            
+
             if (counter) counter.style.opacity = '0.5';
 
             fetch(m3_ajax.ajax_url, {
                 method: 'POST',
                 body: params
             })
-            .then(res => res.json())
-            .then(res => {
-                if (res.success && counter) {
-                    counter.textContent = res.data.count;
-                    counter.style.opacity = '1';
-                    
-                    if (applyBtn) {
-                        applyBtn.disabled = (res.data.count === 0);
-                        applyBtn.style.opacity = res.data.count === 0 ? '0.5' : '1';
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success && counter) {
+                        counter.textContent = res.data.count;
+                        counter.style.opacity = '1';
+
+                        if (applyBtn) {
+                            applyBtn.disabled = (res.data.count === 0);
+                            applyBtn.style.opacity = res.data.count === 0 ? '0.5' : '1';
+                        }
                     }
-                }
-            });
+                });
         }, 300);
     }
 
@@ -599,7 +618,7 @@ function initSearchBar() {
             else if (input.id === 'm3-max-chars') input.value = 10000;
             else input.value = '';
         });
-        
+
         // Also clear saved search
         storage.remove('m3-saved-search');
         const saveToggle = document.getElementById('m3-save-search-settings');
@@ -616,7 +635,7 @@ function initDrawer() {
     const drawer = document.getElementById('m3-drawer');
     const scrim = document.getElementById('m3-drawer-scrim');
     if (menuBtn && drawer && scrim) {
-        const toggle = (open) => { 
+        const toggle = (open) => {
             drawer.classList.toggle('is-active', open);
             scrim.classList.toggle('is-active', open);
             document.body.style.overflow = open ? 'hidden' : '';
@@ -645,6 +664,25 @@ function initHandyMode() {
             toc?.click();
         });
     }
+
+    const commentsBtn = document.getElementById('m3-bottom-comments-trigger');
+    if (commentsBtn) {
+        commentsBtn.addEventListener('click', () => {
+            const comments = document.getElementById('comments') || document.getElementById('respond');
+            if (comments) {
+                const headerOffset = 100;
+                const elementPosition = comments.getBoundingClientRect().top + window.pageYOffset;
+                window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
+            }
+        });
+    }
+
+    const topBtn = document.getElementById('m3-back-to-top-handy');
+    if (topBtn) {
+        topBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 }
 
 function initShareFeatures() {
@@ -653,37 +691,105 @@ function initShareFeatures() {
 
 function initTableOfContents() {
     const trigger = document.getElementById('m3-toc-trigger');
-    const toc = document.getElementById('m3-toc-modal');
-    if (trigger && toc) {
-        const fabIds = ['m3-back-to-top', 'm3-scroll-to-comments', 'm3-jump-to-ai', 'm3-toc-trigger'];
+    const toc = document.getElementById('m3-sticky-toc');
+    const container = document.getElementById('m3-toc-container');
+    const article = document.querySelector('.m3-article__body');
 
-        trigger.addEventListener('click', () => {
-            toc.classList.add('is-active');
-            document.body.style.overflow = 'hidden';
-            // Hide ALL FABs
-            fabIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.setProperty('display', 'none', 'important');
-            });
-        });
-        
-        const closeTOC = () => {
-            toc.classList.remove('is-active');
-            document.body.style.overflow = '';
-            // Restore ALL FABs
-            fabIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.setProperty('display', 'flex', 'important');
-            });
-        };
+    if (!trigger || !toc || !container || !article) return;
 
-        toc.querySelector('.m3-modal__close')?.addEventListener('click', closeTOC);
-        
-        // Escape to close
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && toc.classList.contains('is-active')) closeTOC();
-        });
+    // --- 1. TOC Content Generation ---
+    const headings = article.querySelectorAll('h1, h2, h3, h4, h5');
+    if (headings.length === 0) {
+        trigger.style.display = 'none';
+        return;
     }
+
+    container.innerHTML = '';
+    const ul = document.createElement('ul');
+    ul.className = 'm3-toc-list';
+
+    headings.forEach((heading, index) => {
+        const id = heading.id || `m3-heading-${index}`;
+        heading.id = id;
+
+        const li = document.createElement('li');
+        li.className = `m3-toc-item m3-toc-item--${heading.tagName.toLowerCase()}`;
+        
+        const a = document.createElement('a');
+        a.href = `#${id}`;
+        a.className = 'm3-toc-link';
+        a.textContent = heading.innerText || heading.textContent;
+        
+        // --- 2. Smooth Scroll Logic ---
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = document.getElementById(id);
+            if (target) {
+                const offset = 100;
+                const targetPos = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                window.scrollTo({ top: targetPos, behavior: 'smooth' });
+                closeTOC();
+            }
+        });
+
+        li.appendChild(a);
+        ul.appendChild(li);
+    });
+    container.appendChild(ul);
+
+    // --- 3. ScrollSpy (Active Highlight) ---
+    const updateActiveHeading = () => {
+        const scrollPos = window.pageYOffset + 120;
+        let activeId = null;
+
+        headings.forEach(heading => {
+            if (scrollPos >= heading.offsetTop) {
+                activeId = heading.id;
+            }
+        });
+
+        container.querySelectorAll('.m3-toc-link').forEach(link => {
+            link.classList.toggle('is-active', link.getAttribute('href') === `#${activeId}`);
+        });
+    };
+    window.addEventListener('scroll', updateActiveHeading, { passive: true });
+
+    // --- 4. Open/Close Logic ---
+    const fabIds = ['m3-back-to-top', 'm3-scroll-to-comments', 'm3-jump-to-ai', 'm3-toc-trigger'];
+    
+    const closeTOC = () => {
+        toc.classList.remove('is-active');
+        fabIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.opacity = '1';
+        });
+    };
+
+    trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toc.classList.toggle('is-active');
+        
+        if (toc.classList.contains('is-active')) {
+            fabIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && id !== 'm3-toc-trigger') el.style.opacity = '0';
+            });
+            updateActiveHeading();
+        } else {
+            closeTOC();
+        }
+    });
+
+    document.getElementById('m3-toc-close')?.addEventListener('click', closeTOC);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && toc.classList.contains('is-active')) closeTOC();
+    });
+    document.addEventListener('click', (e) => {
+        if (toc.classList.contains('is-active') && !toc.contains(e.target) && !trigger.contains(e.target)) {
+            closeTOC();
+        }
+    });
 }
 
 function initFloatingActions() {
@@ -716,7 +822,7 @@ function initFloatingActions() {
             const headerOffset = 100;
             const elementPosition = aiSummary.getBoundingClientRect().top + window.pageYOffset;
             window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
-            
+
             // Highlight effect
             aiSummary.style.transition = 'box-shadow 0.5s ease';
             aiSummary.style.boxShadow = '0 0 60px rgba(255, 153, 0, 0.6)';
@@ -727,7 +833,14 @@ function initFloatingActions() {
     // --- Scroll Visibility Logic ---
     const updateVisibility = () => {
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        const threshold = 300; // 400pxから300pxに短縮
+        const aiSummary = document.getElementById('m3-ai-summary');
+        
+        let threshold = 300;
+        if (aiSummary) {
+            const rect = aiSummary.getBoundingClientRect();
+            // AI要約ボックスの底辺を通過したら表示
+            threshold = rect.bottom + scrollY;
+        }
 
         if (scrollY > threshold) {
             actionStack.classList.add('is-visible');
@@ -759,7 +872,7 @@ function initTooltips() {
 
 function initRippleEffect() {
     document.querySelectorAll('.m3-button, .m3-fab, .m3-icon-button').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             const x = e.clientX - e.target.offsetLeft;
             const y = e.clientY - e.target.offsetTop;
             const ripple = document.createElement('span');
@@ -770,3 +883,74 @@ function initRippleEffect() {
         });
     });
 }
+
+function animateSearchClear(input, button, callback) {
+    if (typeof gsap === 'undefined') return;
+
+    // 1. Button Animation (Subtle rotation)
+    gsap.to(button, {
+        rotation: 90,
+        duration: 0.15,
+        ease: "power2.inOut",
+        onComplete: () => {
+            gsap.set(button, { rotation: 0 });
+        }
+    });
+
+    // 2. Simple Text Fade Animation
+    gsap.to(input, {
+        opacity: 0,
+        x: -5,
+        duration: 0.1,
+        ease: "power2.in",
+        onComplete: () => {
+            input.value = '';
+            if (callback) callback();
+            gsap.to(input, {
+                opacity: 1,
+                x: 0,
+                duration: 0.15,
+                delay: 0.05,
+                ease: "power2.out"
+            });
+        }
+    });
+}
+
+function initTableSorter() {
+    const tables = document.querySelectorAll('.wp-block-table.is-sortable table, .wp-block-table.is-style-sortable table, .m3-table--sortable table');
+    
+    tables.forEach(table => {
+        const headers = table.querySelectorAll('th');
+        headers.forEach((header, index) => {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', () => {
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const isAscending = header.classList.contains('is-asc');
+                
+                // Clear header classes
+                headers.forEach(h => h.classList.remove('is-asc', 'is-desc'));
+                
+                rows.sort((a, b) => {
+                    const aText = a.children[index]?.textContent.trim() || '';
+                    const bText = b.children[index]?.textContent.trim() || '';
+                    
+                    const aNum = parseFloat(aText.replace(/[^0-9.-]/g, ''));
+                    const bNum = parseFloat(bText.replace(/[^0-9.-]/g, ''));
+                    
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return isAscending ? bNum - aNum : aNum - bNum;
+                    }
+                    return isAscending ? bText.localeCompare(aText, 'ja') : aText.localeCompare(bText, 'ja');
+                });
+                
+                header.classList.add(isAscending ? 'is-desc' : 'is-asc');
+                while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+                tbody.append(...rows);
+            });
+        });
+    });
+}
+
