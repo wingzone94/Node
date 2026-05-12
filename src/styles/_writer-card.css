@@ -1,0 +1,127 @@
+/* --- Writer Card (Material 3 Elevated) --- */
+.m3-writer-card {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 24px;
+    padding: 24px;
+    margin: 32px 0;
+    box-shadow: var(--m3-elevation-1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    transition: transform 0.3s var(--m3-motion-easing), box-shadow 0.3s var(--m3-motion-easing);
+}
+
+.m3-writer-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--m3-elevation-2);
+}
+
+.m3-writer-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(135deg, var(--md-sys-color-primary-container), var(--md-sys-color-surface-variant));
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.m3-writer-card__header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.m3-writer-card__label {
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: var(--md-sys-color-primary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--md-sys-color-surface);
+    padding: 4px 12px;
+    border-radius: 100px;
+    box-shadow: var(--m3-elevation-1);
+}
+
+.m3-writer-card__body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.m3-writer-card__avatar {
+    flex-shrink: 0;
+}
+
+.m3-writer-card__avatar img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid var(--md-sys-color-surface);
+    box-shadow: var(--m3-elevation-1);
+    object-fit: cover;
+}
+
+.m3-writer-card__info {
+    flex-grow: 1;
+}
+
+.m3-writer-card__name {
+    margin: 0 0 8px 0;
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface);
+}
+
+.m3-writer-card__bio {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 16px;
+}
+
+.m3-writer-card__sns {
+    display: flex;
+    gap: 12px;
+}
+
+.m3-sns-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+    text-decoration: none;
+    transition: all 0.2s var(--m3-motion-easing);
+}
+
+.m3-sns-icon:hover {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    transform: scale(1.1);
+}
+
+@media (max-width: 600px) {
+    .m3-writer-card__body {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .m3-writer-card__sns {
+        justify-content: center;
+    }
+}

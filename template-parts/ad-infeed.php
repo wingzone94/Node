@@ -1,5 +1,4 @@
 <div class="m3-ad-area m3-ad-area--infeed">
-    <div class="m3-ad-label">スポンサーリンク</div>
     <div class="m3-ad-placeholder">
         <!-- 
         ========================================================================
@@ -8,8 +7,7 @@
         ========================================================================
         -->
         <div class="m3-ad-dummy">
-            <span class="material-symbols-outlined">ad</span>
-            <span>インフィード広告エリア</span>
+            <!-- 広告審査用: 文言を非表示 -->
         </div>
     </div>
 </div>

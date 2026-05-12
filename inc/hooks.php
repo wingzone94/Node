@@ -244,3 +244,38 @@ function node_render_theme_image( string $filename, array $args = [] ): void {
     echo '<img src="' . esc_url( $dir_uri . $filename ) . '" alt="' . esc_attr( $alt ) . '" loading="' . esc_attr( $loading ) . '" ' . $skip_attrs . '>';
     echo '</picture>';
 }
+
+/* ==========================================================================
+   7. Archive Query Adjustments
+   ========================================================================== */
+
+/**
+ * カテゴリやタグのアーカイブページで、標準の「投稿 (post)」以外の
+ * カスタム投稿タイプも表示対象に含める。
+ * これにより、カスタム投稿タイプのみが属するカテゴリで404エラーになる問題を修正。
+ *
+ * @param WP_Query $query
+ */
+function node_archive_include_cpt( $query ) {
+    if ( is_admin() || ! $query->is_main_query() ) {
+        return;
+    }
+
+    // 検索ページやフロントページでは動作させない（クエリ破壊を防止）
+    if ( $query->is_search() || $query->is_home() || $query->is_front_page() ) {
+        return;
+    }
+
+    // 必ず $query オブジェクトのメソッドを使用して判定する（グローバル関数は使わない）
+    if ( $query->is_category() || $query->is_tag() || $query->is_tax() ) {
+        // パブリックな投稿タイプをすべて取得
+        $post_types = get_post_types( array( 'public' => true ), 'names' );
+        
+        // アーカイブに含めたくない不要な投稿タイプを除外
+        unset( $post_types['page'], $post_types['attachment'] );
+        
+        $query->set( 'post_type', array_values( $post_types ) );
+    }
+}
+add_action( 'pre_get_posts', 'node_archive_include_cpt' );
+

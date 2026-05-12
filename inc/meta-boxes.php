@@ -27,6 +27,11 @@ function node_register_post_meta() {
         'single'       => true,
         'type'         => 'boolean',
     ]);
+    register_meta('post', '_node_is_ai_text_generated', [
+        'show_in_rest' => true,
+        'single'       => true,
+        'type'         => 'boolean',
+    ]);
 }
 add_action('init', 'node_register_post_meta');
 
@@ -36,6 +41,7 @@ add_action('init', 'node_register_post_meta');
 if ( ! function_exists( 'node_post_labels_callback' ) ) {
     function node_post_labels_callback($post) {
         $is_ai = get_post_meta($post->ID, '_node_is_ai_generated', true);
+        $is_ai_text = get_post_meta($post->ID, '_node_is_ai_text_generated', true);
         $is_sponsor = get_post_meta($post->ID, '_node_is_sponsor', true);
         $sponsor_text = get_post_meta($post->ID, '_node_sponsor_text', true) ?: 'SPONSORED';
         $sponsor_tooltip = get_post_meta($post->ID, '_node_sponsor_tooltip', true) ?: '本記事はスポンサー提供です。';
@@ -44,6 +50,7 @@ if ( ! function_exists( 'node_post_labels_callback' ) ) {
         
         echo '<h4>ラベル設定</h4>';
         echo '<p><label><input type="checkbox" name="node_is_ai_generated" value="1" '.checked($is_ai, '1', false).'> 生成されたメディアを含む</label></p>';
+        echo '<p><label><input type="checkbox" name="node_is_ai_text_generated" value="1" '.checked($is_ai_text, '1', false).'> 生成された文章を含む</label></p>';
         echo '<p><label><input type="checkbox" name="node_is_sponsor" value="1" '.checked($is_sponsor, '1', false).'> スポンサー記事（案件 ）</label></p>';
         echo '<p><label>スポンサーラベル文言:<br><input type="text" name="node_sponsor_text" value="'.esc_attr($sponsor_text).'" style="width:100%"></label></p>';
         echo '<p><label>スポンサー説明文 (ホバー時):<br><input type="text" name="node_sponsor_tooltip" value="'.esc_attr($sponsor_tooltip).'" style="width:100%"></label></p>';
@@ -104,11 +111,12 @@ if ( ! function_exists( 'node_save_custom_meta' ) ) {
 
         // 保存対象フィールド
         $text_fields = [
-            '_node_is_ai_generated' => 'node_is_ai_generated',
-            '_node_is_sponsor'      => 'node_is_sponsor',
-            '_node_sponsor_text'    => 'node_sponsor_text',
-            '_node_sponsor_tooltip' => 'node_sponsor_tooltip',
-            '_m3_primary_color'     => 'm3_primary_color',
+            '_node_is_ai_generated'      => 'node_is_ai_generated',
+            '_node_is_ai_text_generated' => 'node_is_ai_text_generated',
+            '_node_is_sponsor'           => 'node_is_sponsor',
+            '_node_sponsor_text'         => 'node_sponsor_text',
+            '_node_sponsor_tooltip'      => 'node_sponsor_tooltip',
+            '_m3_primary_color'          => 'm3_primary_color',
         ];
 
         foreach ($text_fields as $key => $post_key) {

@@ -1,15 +1,15 @@
-    <?php get_template_part('template-parts/ad', 'article'); ?>
+<?php get_template_part('template-parts/ad', 'article'); ?>
     <footer class="m3-footer">
         <div class="m3-footer__main">
             <div class="m3-footer__grid">
                 <!-- Brand Column -->
                 <div class="m3-footer__col m3-footer__col--brand">
                     <div class="site-branding">
-                        <span class="m3-logo-text">Luminous Core</span>
+                        <span class="m3-logo-text">Node</span>
                     </div>
                     <p class="m3-footer__tagline">AI、ガジェット、ゲームの最新情報をあなたに。</p>
                     <div class="m3-footer__social">
-                        <?php get_template_part('template-parts/social-links'); ?>
+                        <!-- Site-wide social links can be placed here if needed -->
                     </div>
                 </div>
 

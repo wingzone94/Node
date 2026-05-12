@@ -25,7 +25,12 @@ class Node_Gemini_API {
     private string $api_url_base = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
     public function __construct() {
-        $this->api_key = get_option( 'node_gemini_api_key', defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '' );
+        $user_id = get_current_user_id();
+        $this->api_key = get_user_meta( $user_id, 'node_gemini_api_key', true );
+        
+        if ( empty( $this->api_key ) ) {
+            $this->api_key = get_option( 'node_gemini_api_key', defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '' );
+        }
     }
 
     /**
@@ -43,7 +48,12 @@ class Node_Gemini_API {
             'response_mime_type' => 'text/plain',
         ]);
 
-        $model_name = get_option( 'node_gemini_model', 'gemini-3.1-pro-preview' );
+        $user_id = get_current_user_id();
+        $model_name = get_user_meta( $user_id, 'node_gemini_model', true );
+        if ( empty( $model_name ) ) {
+            $model_name = get_option( 'node_gemini_model', 'gemini-3-flash-preview' );
+        }
+        
         $url = $this->api_url_base . $model_name . ':generateContent?key=' . $this->api_key;
 
         $payload = [
@@ -62,7 +72,7 @@ class Node_Gemini_API {
         $response = wp_remote_post($url, [
             'headers' => ['Content-Type' => 'application/json'],
             'body'    => json_encode($payload),
-            'timeout' => 30 // Reduced to 30s to avoid editor timeout
+            'timeout' => 45 // タイムアウトを少し長めに設定
         ]);
 
         if (is_wp_error($response)) {
@@ -88,13 +98,15 @@ class Node_Gemini_API {
         ]);
 
         $system_prompt = "あなたは先進的な技術ブログ 'Luminous Core' の編集長です。
-        提供された記事を解析し、以下の JSON フォーマットでレスポンスしてください。
-        必ず、要約は {$options['max_lines']} 行以内、かつ {$options['max_chars']} 文字以内厳守で作成してください。
-        {
-          \"summary\": \"読者の好奇心を刺激する、情緒的で洗練された要約。\",
-          \"tone_color\": \"記事のトーンを表す色（hexコード）。\",
-          \"vibe_keywords\": [\"キーワード1\", \"キーワード2\"]
-        }";
+提供された記事を解析し、以下の JSON フォーマットでレスポンスしてください。
+・必ず、要約は {$options['max_lines']} 行以内、かつ {$options['max_chars']} 文字以内厳守で作成してください。
+・Markdownのコードブロック（```json ... ```）は絶対に使わず、生の中括弧 { } から始まる純粋なJSON文字列のみを出力してください。
+・要約内に改行を含めないでください。
+{
+  \"summary\": \"読者の好奇心を刺激する、情緒的で洗練された要約。\",
+  \"tone_color\": \"記事のトーンを表す色（hexコード）。\",
+  \"vibe_keywords\": [\"キーワード1\", \"キーワード2\"]
+}";
 
         $prompt = "以下の記事を解析し、最高の要約を生成してください：\n\n" . mb_substr($content, 0, 5000);
 
@@ -106,7 +118,7 @@ class Node_Gemini_API {
             'system_instruction' => $system_prompt,
             'response_mime_type' => 'application/json',
             'temperature' => 0.4,
-            'max_tokens' => 1000
+            'max_tokens' => 2048
         ]);
         
         return $result;

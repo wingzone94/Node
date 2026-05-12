@@ -1,0 +1,126 @@
+/* --- Game Information Card (Material 3 Filled) --- */
+.m3-game-card {
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: 28px;
+    padding: 24px;
+    margin: 32px 0;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    position: relative;
+    overflow: hidden;
+}
+
+.m3-game-card__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.m3-game-card__header .material-symbols-outlined {
+    font-size: 28px;
+    color: var(--md-sys-color-primary);
+}
+
+.m3-game-card__header h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: var(--md-sys-color-on-surface-variant);
+    text-transform: uppercase;
+}
+
+.m3-game-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.m3-game-card__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 1.2;
+    color: var(--md-sys-color-on-surface);
+}
+
+.m3-game-card__summary {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-surface-variant);
+    margin: 0;
+}
+
+/* --- Platform Brand Actions --- */
+.m3-game-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.m3-platform-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s var(--m3-motion-easing);
+    box-shadow: var(--m3-elevation-1);
+}
+
+.m3-platform-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--m3-elevation-2);
+}
+
+/* Platform Colors (Official Brand Colors) */
+.m3-platform-button--windows {
+    background-color: #0078D4;
+    color: #ffffff;
+}
+
+.m3-platform-button--playstation {
+    background-color: #003791;
+    color: #ffffff;
+}
+
+.m3-platform-button--xbox {
+    background-color: #107C10;
+    color: #ffffff;
+}
+
+.m3-platform-button--nintendo {
+    background-color: #E60012;
+    color: #ffffff;
+}
+
+.m3-platform-button--ios {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.m3-platform-button--android {
+    background-color: #3DDC84;
+    color: #073042;
+}
+
+.m3-platform-button--steam {
+    background-color: #1b2838;
+    color: #ffffff;
+}
+
+@media (max-width: 600px) {
+    .m3-game-card {
+        border-radius: 20px;
+        padding: 20px;
+    }
+    
+    .m3-platform-button {
+        width: 100%;
+        justify-content: center;
+    }
+}

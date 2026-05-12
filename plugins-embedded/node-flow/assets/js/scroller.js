@@ -14,14 +14,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const pagination = document.querySelector('.m3-navigation');
     const archivePill = document.querySelector('.m3-archive-pill-wrapper');
 
+    // コンテナが存在しない場合は早期リターン
     if (!container) return;
+
+    // 次のページが存在しない（ページネーションリンクがない）場合は無限スクロールを初期化しない
+    const hasNextPage = (pagination && pagination.querySelector('.next')) || archivePill;
+    if (!hasNextPage) {
+        return;
+    }
 
     let currentPage = 1;
     let isLoading = false;
     let hasMore = true;
 
     // 【プログレッシブ・エンハンスメント】
-    // JSが実行されたので、標準のページネーションリンクやアーカイブボタンを非表示にする
+    // JSが実行され、かつ次ページがある場合のみ標準のページネーションを非表示にする
     if (pagination) pagination.style.display = 'none';
     if (archivePill) archivePill.style.display = 'none';
 
@@ -101,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Node Flow: Error loading posts.', error);
-            triggerEl.innerHTML = '読み込みに失敗しました。ページをリロードしてください。';
+            triggerEl.innerHTML = '';
         } finally {
             isLoading = false;
         }

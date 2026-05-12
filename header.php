@@ -12,22 +12,24 @@
     <link rel="icon" type="image/svg+xml" href="<?php echo get_template_directory_uri(); ?>/Luminouscore.svg">
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//kit.fontawesome.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     
     <!-- High Performance Font Loading Pattern -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap">
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
-    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
     
+    <script src="https://kit.fontawesome.com/d2db209f03.js" crossorigin="anonymous"></script>
+
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <style>
+            body { opacity: 1 !important; visibility: visible !important; }
+        </style>
     </noscript>
     <script>
     if ('serviceWorker' in navigator) {
@@ -53,8 +55,8 @@
             <div class="site-branding">
                 <?php if (has_custom_logo()) : the_custom_logo(); else : ?>
                     <a href="<?php echo esc_url(home_url('/')); ?>" rel="home" class="m3-header__logo-link">
-                        <img src="<?php echo esc_url(get_theme_file_uri('LuminusCore-300x300.webp')); ?>" alt="Luminous Core" class="m3-header__logo-img">
-                        <span class="m3-logo-text">Luminous Core</span>
+                        <img src="<?php echo esc_url(get_theme_file_uri('node-logo.svg')); ?>" alt="LUMINOUS CORE" class="m3-header__logo-img" width="32" height="32">
+                        <span class="m3-logo-text">LUMINOUS CORE</span>
                     </a>
                 <?php endif; ?>
             </div>

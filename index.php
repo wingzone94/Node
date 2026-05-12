@@ -7,32 +7,27 @@
     node_the_breadcrumbs();
     ?>
 
-    <?php if ( is_home() || is_archive() || is_search() ) : ?>
-        <header class="m3-archive-header m3-surface m3-surface--variant m3-reveal-group">
-            <h1 class="m3-section-title">
-                <?php 
-                if ( is_home() && ! is_paged() ) {
-                    echo 'Luminous Core';
-                } else {
-                    echo esc_html( node_get_archive_title() );
-                }
-                ?>
-            </h1>
-            <?php if ( ( ! is_home() || is_paged() ) && get_the_archive_description() ) : ?>
-                <div class="m3-archive-description"><?php the_archive_description(); ?></div>
-            <?php endif; ?>
-        </header>
-    <?php endif; ?>
+
 
     <?php if ((is_home() || is_front_page()) && !is_paged()) : 
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
         if (!empty($spotlight_cats)) :
     ?>
         <section class="special-features m3-surface m3-section-spacing" aria-labelledby="spotlight-title">
-            <h2 id="spotlight-title" class="m3-section-title">
-                <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
-                SPOTLIGHT <span class="m3-section-title__sub">特集</span>
-            </h2>
+            <div class="m3-headlines__header" style="margin-bottom: 24px; padding: 0;">
+                <h2 id="spotlight-title" class="m3-section-title" style="margin-bottom: 0;">
+                    <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
+                    SPOTLIGHT <span class="m3-section-title__sub">特集</span>
+                </h2>
+                <?php 
+                $spotlight_cat_obj = get_category_by_slug('spotlight');
+                $spotlight_link = $spotlight_cat_obj ? get_category_link($spotlight_cat_obj->term_id) : home_url('/');
+                ?>
+                <a href="<?php echo esc_url($spotlight_link); ?>" class="m3-headlines__more m3-button m3-button--text">
+                    すべて見る
+                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+            </div>
             <div class="special-features__pills">
                 <?php foreach ($spotlight_cats as $cat) : ?>
                     <a href="<?php echo esc_url($cat['url']); ?>" 
@@ -48,30 +43,39 @@
     <?php 
         endif;
 
-        // HEADLINES
-        $headline_query = new WP_Query([
-            'category_name'  => 'news',
+        // HEADLINE (News by Name logic)
+        $news_cat = get_term_by('name', 'ニュース', 'category');
+        $headline_args = [
             'posts_per_page' => 5,
             'ignore_sticky_posts' => true
-        ]);
+        ];
+        if ($news_cat) {
+            $headline_args['cat'] = $news_cat->term_id;
+        }
+        
+        $headline_query = new WP_Query($headline_args);
         if ($headline_query->have_posts()) :
     ?>
-        <section class="m3-headlines m3-surface m3-section-spacing" aria-labelledby="headlines-title">
+        <section class="m3-headlines m3-surface m3-section-spacing" aria-labelledby="headline-title">
             <div class="m3-headlines__header">
-                <h2 id="headlines-title" class="m3-headlines__title m3-section-title">
+                <h2 id="headline-title" class="m3-headlines__title m3-section-title">
                     <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
-                    HEADLINES
+                    HEADLINE
                     <span class="m3-section-title__sub">速報</span>
                 </h2>
-                <a href="<?php echo esc_url(get_category_link(get_category_by_slug('news'))); ?>" class="m3-headlines__more m3-button m3-button--text">
+                <?php 
+                $news_cat_obj = get_category_by_slug('news');
+                $news_link = $news_cat_obj ? get_category_link($news_cat_obj->term_id) : home_url('/');
+                ?>
+                <a href="<?php echo esc_url($news_link); ?>" class="m3-headlines__more m3-button m3-button--text">
                     すべて見る
                     <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                 </a>
             </div>
-            <div class="m3-headlines__list" role="list">
+            <div class="m3-post-grid__container" role="list">
                 <?php 
                 while ($headline_query->have_posts()) : $headline_query->the_post();
-                    get_template_part('template-parts/card-headline');
+                    get_template_part('template-parts/card', null, ['card_class' => 'card-standard', 'show_ai' => false]);
                 endwhile;
                 wp_reset_postdata();
                 ?>
@@ -106,7 +110,6 @@
             <?php
             global $wp_query;
             $post_count = $wp_query->post_count;
-            $has_featured_split = ($is_first_page && $post_count > 4);
             $switched = false;
 
             while (have_posts()) : the_post();
@@ -141,6 +144,15 @@
                     </a>
                 </div>
             <?php endif; ?>
+        </section>
+    <?php else : ?>
+        <section class="m3-no-posts m3-surface m3-section-spacing">
+            <div class="m3-no-posts__content">
+                <span class="material-symbols-outlined m3-no-posts__icon">sentiment_dissatisfied</span>
+                <h2 class="m3-no-posts__title">記事が見つかりませんでした</h2>
+                <p class="m3-no-posts__text">投稿された記事がまだないか、条件に一致する記事がありません。</p>
+                <a href="<?php echo esc_url(home_url('/')); ?>" class="m3-button m3-button--filled">トップへ戻る</a>
+            </div>
         </section>
     <?php endif; ?>
 

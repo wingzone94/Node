@@ -11,6 +11,16 @@ body {
     overflow-x: hidden;
     overflow-wrap: break-word; /* 長い単語での横漏れを防止 */
     letter-spacing: -0.01em; /* 全体的にわずかにカーニングを詰める */
+    
+    /* FOUC / CLS Mitigation */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+body.is-loaded {
+    opacity: 1;
+    visibility: visible;
 }
 
 input, select, textarea {

@@ -64,7 +64,7 @@ function node_theme_setup() {
 	add_theme_support( 'editor-styles' );
 
 	// ブロックエディタに Vite の CSS を適用
-	add_editor_style( 'assets/css/style.css' );
+	// add_editor_style( 'assets/css/style.css' );
 
 	// フィードリンク
 	add_theme_support( 'automatic-feed-links' );

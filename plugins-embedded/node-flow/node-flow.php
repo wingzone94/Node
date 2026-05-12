@@ -4,7 +4,7 @@
  * Plugin URI: https://example.com
  * Description: フロントエンドUXと動的ルーティングを担当するプラグイン。ハイブリッド・スクローラー機能などを提供します。
  * Version: 1.0.0
- * Author: Luminous Core
+ * Author: Luminous Core Teams
  * Text Domain: node-flow
  */
 
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'NODE_FLOW_VERSION', '1.0.0' );
 define( 'NODE_FLOW_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'NODE_FLOW_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'NODE_FLOW_PLUGIN_URL', get_template_directory_uri() . '/plugins-embedded/node-flow/' );
 
 // 簡易オートローダー
 spl_autoload_register( function ( $class ) {

@@ -182,14 +182,12 @@ function node_the_category_labels($post_id = null) {
         $style_attr = '';
         if (preg_match('/#[a-fA-F0-9]{6}/', $cat_desc, $matches)) {
             $custom_color = $matches[0];
-            $style_attr = 'style="background-color: ' . esc_attr($custom_color) . '; color: #ffffff;"';
         }
 
         echo '<a href="' . esc_url(get_category_link($cat->term_id)) . '" ';
         echo 'class="m3-label--category" ';
         echo 'data-color="' . esc_attr($custom_color) . '" ';
         echo 'data-thumb="' . esc_url($thumb_url) . '" ';
-        echo $style_attr;
         echo '>';
         echo esc_html($cat->name) . '</a>';
     }
@@ -201,29 +199,52 @@ function node_the_category_labels($post_id = null) {
     echo '</div>';
 }
 
-function node_the_post_badges($post_id = null, $mode = 'compact') {
+function node_the_post_badges($post_id = null, $mode = 'compact', $types = ['ai', 'sponsor']) {
     if (!$post_id) $post_id = get_the_ID();
     
-    // AI生成ラベル
-    if (get_post_meta($post_id, '_node_is_ai_generated', true) === '1') {
-        $ai_tooltip = '生成されたメディアを含みます';
+    // --- AI生成コンテンツの統合判定 ---
+    $has_ai_media = get_post_meta($post_id, '_node_is_ai_generated', true) === '1';
+    $has_ai_text  = get_post_meta($post_id, '_node_is_ai_text_generated', true) === '1';
+
+    if (in_array('ai', $types) && ($has_ai_media || $has_ai_text)) {
+        // 文言の決定
+        if ($has_ai_media && $has_ai_text) {
+            $ai_label = '生成されたメディア・テキストを含む';
+        } elseif ($has_ai_text) {
+            $ai_label = '生成された文章を含む';
+        } else {
+            $ai_label = '生成されたメディアを含む';
+        }
+
         $ai_class = 'm3-label--ai m3-tooltip-target';
+        if (!$has_ai_media && $has_ai_text) {
+            $ai_class .= ' is-text-only';
+        }
+        
         $pos_attr = '';
         if ($mode === 'compact') {
             $ai_class .= ' m3-label--icon-only';
             $pos_attr = ' data-tooltip-pos="left"';
+        } elseif ($mode === 'expressive') {
+            $ai_class .= ' m3-article__ai-disclosure-expressive';
         }
 
-        echo '<span class="' . esc_attr($ai_class) . '" data-tooltip="' . esc_attr($ai_tooltip) . '" title="' . esc_attr($ai_tooltip) . '" aria-label="' . esc_attr($ai_tooltip) . '"' . $pos_attr . '>';
-        echo '<span class="material-symbols-outlined">auto_awesome</span>';
-        if ($mode === 'full') {
-            echo '<span class="m3-label__text">生成されたメディアを含む</span>';
+        echo '<span class="' . esc_attr($ai_class) . '" data-tooltip="' . esc_attr($ai_label) . '" title="' . esc_attr($ai_label) . '" aria-label="' . esc_attr($ai_label) . '"' . $pos_attr . '>';
+        if ($mode === 'expressive') {
+            echo '<span class="m3-ai-disclosure__glow"></span>';
+            echo '<span class="material-symbols-outlined m3-ai-disclosure__icon">auto_awesome</span>';
+            echo '<span class="m3-ai-disclosure__text">' . esc_html($ai_label) . '</span>';
+        } else {
+            echo '<span class="material-symbols-outlined">auto_awesome</span>';
+            if ($mode === 'full') {
+                echo '<span class="m3-label__text">' . esc_html($ai_label) . '</span>';
+            }
         }
         echo '</span>';
     }
 
     // スポンサーラベル
-    if (get_post_meta($post_id, '_node_is_sponsor', true) === '1') {
+    if (in_array('sponsor', $types) && get_post_meta($post_id, '_node_is_sponsor', true) === '1') {
         $sponsor_text = get_post_meta($post_id, '_node_sponsor_text', true) ?: 'SPONSORED';
         
         if ($mode === 'full') {

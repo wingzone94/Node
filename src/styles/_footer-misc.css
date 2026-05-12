@@ -233,7 +233,8 @@ figure.aligncenter iframe {
 /* --- Global Utilities & Components --- */
 .m3-archive-header {
     text-align: center;
-    padding: 64px 24px 48px;
+    padding: 0;
+    display: none;
 }
 
 .m3-archive-title {
@@ -571,13 +572,29 @@ body {
 }
 
 /* --- Layout Utilities (M3 Expressive) --- */
+/* --- Layout Utilities (M3 Expressive) --- */
 .m3-surface {
-    background-color: var(--md-sys-color-surface-container-low);
     border-radius: 40px;
     padding: 32px;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: none; /* Remove border */
     box-shadow: var(--m3-elevation-1);
     margin-bottom: 32px;
+}
+
+/* SPOTLIGHT ゾーン: 最も軽いコンテナ色 */
+.special-features.m3-surface {
+    background-color: var(--md-sys-color-surface-container-lowest);
+    border: none;
+}
+
+/* LATEST ゾーン: 標準的なサーフェス色 */
+.m3-surface--latest {
+    background-color: var(--md-sys-color-surface-container-low);
+}
+
+/* ARTICLES ゾーン: 少し深い色で強調 */
+.m3-surface--articles {
+    background-color: var(--md-sys-color-surface-container-high);
 }
 
 .m3-surface--variant {
@@ -585,8 +602,8 @@ body {
 }
 
 .m3-section-spacing {
-    margin-top: 48px;
-    margin-bottom: 64px;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 @media (max-width: 600px) {
@@ -596,8 +613,8 @@ body {
         margin-bottom: 24px;
     }
     .m3-section-spacing {
-        margin-top: 32px;
-        margin-bottom: 40px;
+        margin-top: 0;
+        margin-bottom: 0;
     }
 }
 

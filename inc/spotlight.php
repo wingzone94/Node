@@ -3,12 +3,20 @@
  * SPOTLIGHT記事を取得する (スラッグ 'spotlight' のカテゴリとその子)
  */
 function node_get_spotlight_categories() {
+    $cache_key = 'node_spotlight_categories_cache';
+    $cached_result = get_transient($cache_key);
+
+    if (false !== $cached_result) {
+        return $cached_result;
+    }
+
     $parent = get_category_by_slug('spotlight');
     if (!$parent) return [];
 
     $args = [
         'parent' => $parent->term_id,
-        'hide_empty' => true // 記事がない特集カテゴリは非表示
+        'hide_empty' => true,
+        'update_term_meta_cache' => true
     ];
 
     $categories = get_terms('category', $args);
@@ -21,7 +29,6 @@ function node_get_spotlight_categories() {
                 $color = 'var(--md-sys-color-primary)';
             }
             $result[] = [
-                // 「文字の設定等は禁止」の要件通り、自動で「カテゴリ名＋特集」を生成
                 'name' => $cat->name . '特集',
                 'url' => get_category_link($cat->term_id),
                 'color' => $color
@@ -29,8 +36,24 @@ function node_get_spotlight_categories() {
         }
     }
 
+    // 12時間キャッシュ
+    set_transient($cache_key, $result, 12 * HOUR_IN_SECONDS);
+
     return $result;
 }
+
+/**
+ * キャッシュのクリア
+ */
+function node_clear_spotlight_cache() {
+    delete_transient('node_spotlight_categories_cache');
+}
+add_action('create_category', 'node_clear_spotlight_cache');
+add_action('edit_category', 'node_clear_spotlight_cache');
+add_action('delete_category', 'node_clear_spotlight_cache');
+add_action('edited_category', 'node_clear_spotlight_cache');
+// 記事が更新された際（hide_emptyの状態が変わる可能性があるため）もクリア
+add_action('save_post', 'node_clear_spotlight_cache');
 
 /**
  * 管理画面の投稿一覧に『SPOTLIGHT』列を追加

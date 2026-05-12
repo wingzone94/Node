@@ -52,28 +52,53 @@
 
 /* Sticky TOC Panel */
 .m3-sticky-toc {
+    position: fixed;
+    bottom: 84px;
+    right: 24px;
     width: 320px;
-    max-height: 480px;
-    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 95%, transparent);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    max-height: 50vh;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 98%, transparent);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     border-radius: var(--m3-radius-large);
     border: 1px solid var(--md-sys-color-outline-variant);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: transform 0.5s cubic-bezier(0.3, 0, 0.1, 1), opacity 0.4s ease, visibility 0.4s;
+    z-index: 10001 !important;
+    transform-origin: bottom right;
+    transition: transform 0.6s cubic-bezier(0.3, 0, 0.1, 1), opacity 0.4s ease, visibility 0.4s;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(30px) scale(0.95);
-    margin-bottom: var(--m3-spacing-s);
+    transform: translateY(40px) scale(0.9);
 }
 
 .m3-sticky-toc.is-active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
+}
+
+/* Hide other FABs when TOC is active */
+body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: scale(0.8) !important;
+}
+
+@media (max-width: 1000px) {
+    .m3-sticky-toc {
+        bottom: calc(84px + env(safe-area-inset-bottom));
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: calc(100% - 24px);
+        border-radius: 28px;
+        transform-origin: bottom center;
+        max-height: 60vh;
+    }
 }
 
 .m3-sticky-toc__header {

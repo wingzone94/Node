@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'LUMINOUS_BLOCKS_VERSION', '1.0.0' );
 define( 'LUMINOUS_BLOCKS_DIR', plugin_dir_path( __FILE__ ) );
-define( 'LUMINOUS_BLOCKS_URL', plugin_dir_url( __FILE__ ) );
+define( 'LUMINOUS_BLOCKS_URL', get_template_directory_uri() . '/plugins-embedded/luminous-blocks/' );
 
 /**
  * プラグイン初期化
@@ -64,11 +64,11 @@ final class Luminous_Blocks {
 	}
 
 	public function register_blocks(): void {
-		luminous_blocks_register_all();
+		node_register_m3_blocks();
 	}
 
 	public function register_oembed_handlers(): void {
-		luminous_blocks_register_oembed_handlers();
+		node_register_oembed_handlers();
 	}
 
 	public function enqueue_frontend_assets(): void {

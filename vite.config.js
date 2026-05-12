@@ -20,6 +20,14 @@ export default defineConfig({
             return 'css/[name].[ext]';
           }
           return '[ext]/[name].[ext]';
+        },
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('gsap')) {
+              return 'vendor-gsap';
+            }
+            return 'vendor';
+          }
         }
       }
     }

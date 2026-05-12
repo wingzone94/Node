@@ -1,3 +1,19 @@
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: local('Noto Sans JP'), local('NotoSansJP-Regular');
+}
+
+@font-face {
+    font-family: 'Shin Go';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: local('Shin Go'), local('Shingo');
+}
+
 :root {
     /* --- Material 3 Palette (Light) --- */
     --md-sys-color-primary: #FF9900;

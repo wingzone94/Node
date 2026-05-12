@@ -1,4 +1,8 @@
 {
+  "_vendor.js": {
+    "file": "js/vendor.js",
+    "name": "vendor"
+  },
   "src/editor.js": {
     "file": "js/editor.js",
     "name": "editor",
@@ -9,7 +13,10 @@
     "file": "js/main.js",
     "name": "main",
     "src": "src/main.js",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_vendor.js"
+    ]
   },
   "src/styles/style.css": {
     "file": "css/style.css",

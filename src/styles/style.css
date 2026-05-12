@@ -22,3 +22,18 @@
 @import './_loading.css';
 @import './_adblock-modal.css';
 @import './_ai-summary.css';
+@import './_writer-card.css';
+@import './_game-card.css';
+
+/* ===== TOC/FAB Bug Fix ===== */
+
+/* [Fix 1] toc-readyクラスで強制表示（is-visibleなしでもTOCトリガーを表示） */
+#m3-toc-trigger.toc-ready{opacity:1!important;visibility:visible!important;transform:scale(1)!important}
+
+/* [Fix 2] PC版TOCパネル位置をFABスタックの真上に補正 */
+ @media(min-width:1001px){.m3-sticky-toc{bottom:104px!important;right:24px!important;width:320px!important}}
+
+/* [Fix 3] is-active-toc時に他FABを非表示（specificity強化） */
+body.is-active-toc .m3-action-stack .m3-fab:not(#m3-toc-trigger){opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:scale(.8)!important;transition:opacity .2s ease,transform .2s ease!important}
+
+/* ===== End Bug Fix ===== */

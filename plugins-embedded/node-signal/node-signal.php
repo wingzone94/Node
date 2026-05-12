@@ -4,7 +4,7 @@
  * Plugin URI: https://example.com
  * Description: メディアの収益化とユーザビリティを両立するためのマネタイズ・検知層プラグイン。報酬レート管理や広告ブロック検知UIを提供します。
  * Version: 1.0.0
- * Author: Luminous Core
+ * Author: Luminous Core Teams
  * Text Domain: node-signal
  */
 
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'NODE_SIGNAL_VERSION', '1.0.0' );
 define( 'NODE_SIGNAL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'NODE_SIGNAL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'NODE_SIGNAL_PLUGIN_URL', get_template_directory_uri() . '/plugins-embedded/node-signal/' );
 
 // 簡易オートローダー
 spl_autoload_register( function ( $class ) {

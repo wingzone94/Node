@@ -21,6 +21,12 @@ const balanceGrid = (container) => {
     // 表示すべき総数（列数の倍数）を算出
     const totalToDisplay = Math.floor(cards.length / columns) * columns;
 
+    // もし総数が列数未満なら（1行目すら満たしていない場合）、すべて表示して端数隠しをキャンセル
+    if (totalToDisplay === 0) {
+        cards.forEach(card => card.style.display = '');
+        return;
+    }
+
     cards.forEach((card, index) => {
         if (index < totalToDisplay) {
             card.style.display = '';
@@ -33,7 +39,7 @@ const balanceGrid = (container) => {
 export const initCardAnimations = () => {
     if (typeof gsap === 'undefined') return;
 
-    const gridContainer = document.querySelector('.m3-post-grid__container');
+    const gridContainers = document.querySelectorAll('.m3-post-grid__container');
     const selectors = [
         '.m3-card',
         '.m3-elevated-nav-card',
@@ -46,10 +52,12 @@ export const initCardAnimations = () => {
     const cards = document.querySelectorAll(selectors.join(', '));
     
     if (cards.length > 0) {
-        // グリッドのバランス調整を実行
-        if (gridContainer) {
-            balanceGrid(gridContainer);
-            window.addEventListener('resize', () => balanceGrid(gridContainer), { passive: true });
+        // グリッドのバランス調整を実行 (ページ内のすべてのコンテナに対して)
+        if (gridContainers.length > 0) {
+            gridContainers.forEach(container => {
+                balanceGrid(container);
+                window.addEventListener('resize', () => balanceGrid(container), { passive: true });
+            });
         }
 
         // 初期状態（高速化のため y移動を控えめに）

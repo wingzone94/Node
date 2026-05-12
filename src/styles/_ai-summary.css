@@ -79,7 +79,13 @@
 }
 
 .ai-summary-single:not(.is-collapsed) .expand-icon {
-    transform: rotate(180deg);
+    animation: m3IconBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes m3IconBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
 }
 
 .ai-summary-collapsible {

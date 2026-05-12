@@ -25,9 +25,13 @@
                     'tone_color' => $tone_color,
                     'keywords'   => is_array( $keywords ) ? $keywords : array(),
                 );
-                if ( ! empty( $ai_summary ) ) {
+                $current_page = (get_query_var('page')) ? get_query_var('page') : 1;
+                if ( ! empty( $ai_summary ) && $current_page === 1 ) {
                     get_template_part( 'template-parts/ai-summary', null, $ai_args );
                 }
+
+                // プラグイン等からの拡張表示（Node Library等）
+                luminous_after_article_header(get_the_ID());
             ?>
             <div class="m3-article__body m3-reveal">
                 <?php 

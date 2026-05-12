@@ -4,9 +4,29 @@
  */
 ?>
 <div class="m3-article__header-card <?php echo has_post_thumbnail() ? 'has-thumbnail' : 'has-no-thumbnail'; ?>">
-    <?php if (has_post_thumbnail()) : ?>
+    <?php 
+    global $post;
+    $current_post_id = $post->ID ?? get_the_ID();
+    $has_thumb = has_post_thumbnail($current_post_id);
+    ?>
+
+    <?php if ($has_thumb) : ?>
         <div class="m3-article__featured-image">
-            <?php echo get_the_post_thumbnail(get_the_ID(), 'full', ['class' => 'm3-article__featured-img']); ?>
+            <?php 
+            $thumbnail_id = get_post_thumbnail_id($current_post_id);
+            $image_data   = wp_get_attachment_image_src($thumbnail_id, 'full');
+            
+            if ($image_data) :
+                $image_url    = $image_data[0];
+                $image_alt    = get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true) ?: get_the_title();
+            ?>
+                <img src="<?php echo esc_url($image_url); ?>" 
+                     alt="<?php echo esc_attr($image_alt); ?>" 
+                     class="m3-article__featured-img"
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="sync">
+            <?php endif; ?>
             <div class="m3-article__featured-gradient"></div>
         </div>
     <?php endif; ?>
@@ -18,11 +38,22 @@
         <div class="m3-article__cat-top">
             <?php node_the_category_labels(); ?>
         </div>
+
+        <!-- AI生成コンテンツの開示 (M3 Expressive) -->
+        <?php 
+        $has_ai_media = get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1';
+        $has_ai_text  = get_post_meta(get_the_ID(), '_node_is_ai_text_generated', true) === '1';
+        if ($has_ai_media || $has_ai_text) : 
+        ?>
+            <div class="m3-article__ai-disclosure-wrapper">
+                <?php node_the_post_badges(get_the_ID(), 'expressive', ['ai']); ?>
+            </div>
+        <?php endif; ?>
         
         <!-- タイトルの上の吹き出しスポンサー表示 -->
         <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
             <div class="m3-article__sponsor-bubble-wrapper">
-                <?php node_the_post_badges(get_the_ID(), 'full'); ?>
+                <?php node_the_post_badges(get_the_ID(), 'full', ['sponsor']); ?>
             </div>
         <?php endif; ?>
 
@@ -122,12 +153,17 @@
                     </svg>
                     <span class="material-symbols-outlined" aria-hidden="true">timer</span>
                 </div>
-                <span class="m3-reading-badge-text">
-                    <?php echo esc_html($reading_time_display); ?> (約<?php echo esc_html($reading_info['chars']); ?>文字)
-                </span>
-                <span class="m3-reading-badge-label">
-                    <span class="m3-badge-label-main"><?php echo esc_html($reading_info['label']); ?></span>
-                </span>
+                <div class="m3-reading-badge-content">
+                    <span class="m3-reading-badge-text m3-reading-badge-text--main">
+                        <?php echo esc_html($reading_time_display); ?> (約<?php echo esc_html($reading_info['chars']); ?>文字)
+                        <span class="m3-reading-badge-label">
+                            <span class="m3-badge-label-main"><?php echo esc_html($reading_info['label']); ?></span>
+                        </span>
+                    </span>
+                    <span class="m3-reading-badge-text m3-reading-badge-text--desc" style="display: none;">
+                        読了目安：文字数と画像から計算しています
+                    </span>
+                </div>
             </div>
 
             <!-- Reading Info Panel (Mobile: below card, Desktop: side bubble) -->

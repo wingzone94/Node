@@ -17,13 +17,8 @@ class Luminous_Nexus_Settings {
 	}
 
 	public function add_settings_menu(): void {
-		add_options_page(
-			'Luminous Nexus 設定',
-			'Luminous Nexus',
-			'manage_options',
-			'luminous-nexus-settings',
-			[ $this, 'render_settings_page' ]
-		);
+		// テーマ側の Luminous Settings に統合されたため、ここではメニューを追加しません
+		return;
 	}
 
 	public function register_settings(): void {

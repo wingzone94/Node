@@ -660,8 +660,7 @@ function initHandyMode() {
     const tocBtn = document.getElementById('m3-handy-toc-trigger');
     if (tocBtn) {
         tocBtn.addEventListener('click', () => {
-            const toc = document.getElementById('m3-toc-trigger');
-            toc?.click();
+            document.dispatchEvent(new CustomEvent("m3:toc:toggle"));
         });
     }
 
@@ -676,32 +675,38 @@ function initHandyMode() {
             }
         });
     }
-
-    const topBtn = document.getElementById('m3-back-to-top-handy');
-    if (topBtn) {
+            if (topBtn) {
         topBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 }
 
-function initShareFeatures() {
-    // Share actions are handled in scripts/share-actions.js
-}
-
 function initTableOfContents() {
-    const trigger = document.getElementById('m3-toc-trigger');
-    const toc = document.getElementById('m3-sticky-toc');
+    console.log('TOC: Starting initialization...');
     const container = document.getElementById('m3-toc-container');
+    const toc = document.getElementById('m3-sticky-toc');
     const article = document.querySelector('.m3-article__body');
+    const trigger = document.getElementById('m3-toc-trigger');
+    const handyTrigger = document.getElementById('m3-handy-toc-trigger');
+    const closeBtn = document.getElementById('m3-toc-close');
 
-    if (!trigger || !toc || !container || !article) return;
+    if (!container || !toc || !article) {
+        console.warn('TOC: Required elements not found', { container: !!container, toc: !!toc, article: !!article });
+        return;
+    }
 
     // --- 1. TOC Content Generation ---
     const headings = article.querySelectorAll('h1, h2, h3, h4, h5');
+    console.log(`TOC: Found ${headings.length} headings`);
+
     if (headings.length === 0) {
-        trigger.style.display = 'none';
+        if (trigger) trigger.style.display = 'none';
+        if (handyTrigger) handyTrigger.style.display = 'none';
         return;
+    } else {
+        if (trigger) trigger.style.display = 'flex';
+        if (handyTrigger) handyTrigger.style.display = 'flex';
     }
 
     container.innerHTML = '';
@@ -728,7 +733,7 @@ function initTableOfContents() {
                 const offset = 100;
                 const targetPos = target.getBoundingClientRect().top + window.pageYOffset - offset;
                 window.scrollTo({ top: targetPos, behavior: 'smooth' });
-                closeTOC();
+                if (typeof closeTOC !== 'undefined') closeTOC();
             }
         });
 
@@ -737,7 +742,7 @@ function initTableOfContents() {
     });
     container.appendChild(ul);
 
-    // --- 3. ScrollSpy (Active Highlight) ---
+    // --- 2. ScrollSpy ---
     const updateActiveHeading = () => {
         const scrollPos = window.pageYOffset + 120;
         let activeId = null;
@@ -754,42 +759,40 @@ function initTableOfContents() {
     };
     window.addEventListener('scroll', updateActiveHeading, { passive: true });
 
-    // --- 4. Open/Close Logic ---
-    const fabIds = ['m3-back-to-top', 'm3-scroll-to-comments', 'm3-jump-to-ai', 'm3-toc-trigger'];
-    
+    // --- 3. Open/Close Logic ---
     const closeTOC = () => {
+        console.log('TOC: Closing');
         toc.classList.remove('is-active');
-        fabIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.opacity = '1';
-        });
+        document.body.classList.remove('is-active-toc');
     };
 
-    trigger.addEventListener('click', (e) => {
+    const toggleTOC = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toc.classList.toggle('is-active');
-        
+        const isActive = toc.classList.toggle('is-active');
+        console.log('TOC: Toggle state =', isActive);
+        document.body.classList.toggle('is-active-toc', isActive);
+        if (isActive) updateActiveHeading();
+    };
+
+    if (trigger) trigger.addEventListener('click', toggleTOC);
+    if (handyTrigger) handyTrigger.addEventListener('click', toggleTOC);
+    if (closeBtn) closeBtn.addEventListener('click', closeTOC);
+
+    document.addEventListener('click', (e) => {
         if (toc.classList.contains('is-active')) {
-            fabIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el && id !== 'm3-toc-trigger') el.style.opacity = '0';
-            });
-            updateActiveHeading();
-        } else {
-            closeTOC();
+            const isClickInside = toc.contains(e.target);
+            const isClickOnTrigger = (trigger && trigger.contains(e.target)) || (handyTrigger && handyTrigger.contains(e.target));
+            if (!isClickInside && !isClickOnTrigger) {
+                closeTOC();
+            }
         }
     });
 
-    document.getElementById('m3-toc-close')?.addEventListener('click', closeTOC);
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && toc.classList.contains('is-active')) closeTOC();
     });
-    document.addEventListener('click', (e) => {
-        if (toc.classList.contains('is-active') && !toc.contains(e.target) && !trigger.contains(e.target)) {
-            closeTOC();
-        }
-    });
+    console.log('TOC: Initialization complete');
 }
 
 function initFloatingActions() {
@@ -833,14 +836,7 @@ function initFloatingActions() {
     // --- Scroll Visibility Logic ---
     const updateVisibility = () => {
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        const aiSummary = document.getElementById('m3-ai-summary');
-        
-        let threshold = 300;
-        if (aiSummary) {
-            const rect = aiSummary.getBoundingClientRect();
-            // AI要約ボックスの底辺を通過したら表示
-            threshold = rect.bottom + scrollY;
-        }
+        const threshold = 200; 
 
         if (scrollY > threshold) {
             actionStack.classList.add('is-visible');
@@ -954,3 +950,5 @@ function initTableSorter() {
     });
 }
 
+
+window.__vite_ae_ce_fix = "ae,ce";

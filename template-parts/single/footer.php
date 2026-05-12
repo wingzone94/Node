@@ -22,6 +22,11 @@
     <?php get_template_part('template-parts/social-share'); ?>
     
     <?php get_template_part('template-parts/card-writer'); ?>
+    
+    <?php 
+    // ライター情報の後にコンテンツを挿入するアクション（Node Library等）
+    do_action('luminous_after_writer', get_the_ID()); 
+    ?>
 
     <!-- 前後の記事ナビゲーション -->
     <?php
