@@ -253,6 +253,29 @@ function node_render_settings_page() {
                 </table>
             </div>
 
+            <!-- テーマのアップデート -->
+            <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-update"></span> テーマのアップデート
+                </h2>
+                <p class="description">GitHub から最新の `node-theme-production.zip` を取得して自動インストールします。</p>
+                
+                <div id="luminous-update-info" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <p>現在のバージョン: <strong><?php echo wp_get_theme()->get('Version'); ?></strong></p>
+                    <div id="update-check-result"></div>
+                </div>
+
+                <button type="button" id="luminous-check-update" class="button button-secondary">アップデートを確認</button>
+                <button type="button" id="luminous-install-update" class="button button-primary" style="display:none;">最新版をインストール</button>
+                
+                <div id="update-progress-container" style="display:none; margin-top: 20px;">
+                    <div style="width: 100%; background: #eee; border-radius: 10px; height: 10px; overflow: hidden;">
+                        <div id="update-progress-bar" style="width: 0%; height: 100%; background: #FF9900; transition: width 0.3s ease;"></div>
+                    </div>
+                    <p id="update-status-text" style="margin-top: 10px; font-weight: bold;"></p>
+                </div>
+            </div>
+
             <?php submit_button('すべての設定を保存'); ?>
 
             <script>
@@ -279,6 +302,82 @@ function node_render_settings_page() {
                         $($(this).data('target')).val('');
                         $($(this).data('preview')).empty();
                     });
+                }
+
+                // --- テーマアップデート機能 ---
+                $('#luminous-check-update').on('click', function() {
+                    var btn = $(this);
+                    btn.prop('disabled', true).text('確認中...');
+                    $('#update-check-result').html('');
+
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'luminous_check_update',
+                            nonce: '<?php echo wp_create_nonce("luminous_update_nonce"); ?>'
+                        },
+                        success: function(response) {
+                            btn.prop('disabled', false).text('アップデートを確認');
+                            if (response.success) {
+                                var remote = response.data.remote_version;
+                                var local = response.data.local_version;
+                                if (response.data.update_available) {
+                                    $('#update-check-result').html('<p style="color: #FF9900; font-weight: bold;">新しいバージョン (v' + remote + ') が見つかりました！</p>');
+                                    $('#luminous-install-update').show();
+                                } else {
+                                    $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。</p>');
+                                    $('#luminous-install-update').hide();
+                                }
+                            } else {
+                                $('#update-check-result').html('<p style="color: #f44336;">エラー: ' + response.data + '</p>');
+                            }
+                        },
+                        error: function() {
+                            btn.prop('disabled', false).text('アップデートを確認');
+                            $('#update-check-result').html('<p style="color: #f44336;">ネットワークエラーが発生しました。</p>');
+                        }
+                    });
+                });
+
+                $('#luminous-install-update').on('click', function() {
+                    if (!confirm('テーマを最新バージョンに更新しますか？\n(現在のファイルが上書きされます)')) return;
+
+                    var btn = $(this);
+                    btn.prop('disabled', true);
+                    $('#luminous-check-update').hide();
+                    $('#update-progress-container').show();
+                    
+                    updateStatus('最新版のダウンロードを開始しています...', 20);
+
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'luminous_install_update',
+                            nonce: '<?php echo wp_create_nonce("luminous_update_nonce"); ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                updateStatus('インストール完了！ページをリロードします...', 100);
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            } else {
+                                updateStatus('エラー: ' + response.data, 0);
+                                btn.prop('disabled', false);
+                            }
+                        },
+                        error: function() {
+                            updateStatus('インストール中に致命的なエラーが発生しました。', 0);
+                            btn.prop('disabled', false);
+                        }
+                    });
+                });
+
+                function updateStatus(text, progress) {
+                    $('#update-status-text').text(text);
+                    $('#update-progress-bar').css('width', progress + '%');
                 }
             });
             </script>

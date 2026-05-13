@@ -836,7 +836,7 @@ function initFloatingActions() {
     // --- Scroll Visibility Logic ---
     const updateVisibility = () => {
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        const threshold = 200; 
+        const threshold = 100; // Lowered from 200 to 100 for better responsiveness
 
         if (scrollY > threshold) {
             actionStack.classList.add('is-visible');
@@ -846,7 +846,8 @@ function initFloatingActions() {
     };
 
     window.addEventListener('scroll', updateVisibility, { passive: true });
-    updateVisibility();
+    // Initial check in case page is already scrolled or has a fragment identifier
+    setTimeout(updateVisibility, 500); 
 }
 
 function initOverdriveScroll() {

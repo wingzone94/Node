@@ -10,8 +10,8 @@
     ?>
     <div class="m3-article__tags">
         <span class="m3-article__footer-label">
-            <span class="material-symbols-outlined">sell</span>
-            タグ
+            <span class="material-symbols-outlined">tag</span>
+            TAGS
         </span>
         <?php foreach ($post_tags as $tag) : ?>
             <a href="<?php echo esc_url(get_tag_link($tag->term_id)); ?>" class="m3-filter-chip">#<?php echo esc_html($tag->name); ?></a>
