@@ -262,7 +262,7 @@
 
 .m3-label--ai .material-symbols-outlined {
     font-size: 16px;
-    color: #FF9800;
+    color: #FFFFFF !important;
     font-variation-settings: 'FILL' 1, 'wght' 400;
 }
 
