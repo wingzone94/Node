@@ -257,7 +257,7 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
     font-variation-settings: 'FILL' 1;
 }
 
-/* Text is hidden by default (PC) */
+/* Text is hidden by default (PC) - We will show it for extended FABs */
 .m3-fab-text {
     display: none;
 }
@@ -265,10 +265,18 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
 /* Base style for variations - Default to circle on PC */
 .m3-fab--extended,
 .m3-fab--ai-expressive {
-    width: 56px !important;
+    width: auto !important;
     min-width: 56px !important;
     border-radius: 28px !important;
-    padding: 0 !important;
+    padding: 0 20px 0 16px !important;
+}
+
+.m3-fab--extended .m3-fab-text,
+.m3-fab--ai-expressive .m3-fab-text {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 800;
+    margin-left: 8px;
 }
 
 .m3-fab--ai-expressive::after {

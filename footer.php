@@ -38,7 +38,7 @@
     </footer>
 </div><!-- .m3-page-container -->
 
-<div class="m3-action-stack">
+<div class="m3-action-stack <?php echo is_singular() ? 'is-singular' : ''; ?>">
     <!-- 1. Back to Top -->
     <button id="m3-back-to-top" class="m3-fab m3-fab--extended m3-fab--mobile-hidden">
         <span class="material-symbols-outlined">arrow_upward</span>

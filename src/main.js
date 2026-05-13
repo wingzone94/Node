@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         initHeroInfoBubble,
         initScrollAnimations,
         initHeaderClock,
-        initTableSorter
+        initTableSorter,
+        initCommentForm
     ];
 
     initializers.forEach(init => {
@@ -793,6 +794,21 @@ function initTableOfContents() {
         if (e.key === 'Escape' && toc.classList.contains('is-active')) closeTOC();
     });
     console.log('TOC: Initialization complete');
+}
+
+function initCommentForm() {
+    const commentForm = document.getElementById('commentform');
+    if (commentForm) {
+        commentForm.addEventListener('submit', (e) => {
+            const submitBtn = commentForm.querySelector('.m3-comment-submit-btn');
+            if (submitBtn) {
+                submitBtn.classList.add('is-submitting');
+                submitBtn.innerHTML = '送信中...<span class="material-symbols-outlined">schedule</span>';
+                submitBtn.style.backgroundColor = '#2196F3';
+                submitBtn.style.pointerEvents = 'none';
+            }
+        });
+    }
 }
 
 function initFloatingActions() {

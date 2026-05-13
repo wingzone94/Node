@@ -122,3 +122,30 @@
     border-color: var(--md-sys-color-primary);
 }
  
+/* Comment Submit Button */
+.m3-comment-submit-btn {
+    background-color: #FF9900 !important;
+    color: #FFFFFF !important;
+    border-radius: 28px !important;
+    padding: 0 24px !important;
+    gap: 10px !important;
+    font-weight: 900 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.m3-comment-submit-btn:hover,
+.m3-comment-submit-btn:focus,
+.m3-comment-submit-btn:active {
+    background-color: #2196F3 !important; /* Blue on interaction */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.m3-comment-submit-btn .material-symbols-outlined {
+    font-size: 20px;
+    transition: transform 0.3s ease;
+}
+
+.m3-comment-submit-btn:hover .material-symbols-outlined {
+    transform: translateX(4px) rotate(-15deg);
+}
