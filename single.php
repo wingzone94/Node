@@ -36,6 +36,7 @@
             <div class="m3-article__body m3-reveal">
                 <?php 
                 the_content(); 
+                ?>
                 
                 <div class="m3-article__pagination-container">
                     <div class="m3-article__pagination-row">
@@ -54,7 +55,6 @@
                         <span class="m3-pagination-top-btn__text">TOP</span>
                     </button>
                 </div>
-                ?>
             </div>
 
 
