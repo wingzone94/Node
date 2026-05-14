@@ -81,7 +81,7 @@
                 </div>
                 <!-- コメント数表示 -->
                 <?php if (comments_open() || get_comments_number() > 0) : ?>
-                <div class="m3-article__meta-item m3-article__comments">
+                <div class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger" style="cursor: pointer;">
                     <span class="material-symbols-outlined">chat_bubble</span>
                     <span><?php echo get_comments_number(); ?></span>
                 </div>
