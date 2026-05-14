@@ -937,8 +937,19 @@
 .m3-header__progress-container.is-visible { opacity: 1; }
 
 .m3-header__progress-bar {
-    height: 100%; width: 0%; background: #FF9900;
-    box-shadow: 0 0 15px rgba(255,153,0,0.8); transition: width 0.1s ease-out;
+    height: 100%; 
+    width: 0%; 
+    background: linear-gradient(to right, #FF9900, #FFCC00, #FF9900);
+    background-size: 200% 100%;
+    animation: m3-progress-shimmer 2s infinite linear;
+    box-shadow: 0 0 20px rgba(255, 153, 0, 0.6); 
+    transition: width 0.1s ease-out;
+    border-radius: 0 2px 2px 0;
+}
+
+@keyframes m3-progress-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 /* Gauge Shatter Effect */

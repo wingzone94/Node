@@ -147,7 +147,7 @@ function initScrollAnimations() {
 async function initReadingProgress() {
     const progressBar = document.querySelector('.m3-header__progress-bar');
     const container = document.querySelector('.m3-header__progress-container');
-    const article = document.querySelector('.m3-article__body');
+    const article = document.querySelector('.m3-article__body') || document.querySelector('.site-main');
 
     if (!progressBar || !article) return;
 
@@ -158,20 +158,23 @@ async function initReadingProgress() {
         const articleHeight = rect.height;
         const windowHeight = window.innerHeight;
         
-        // ヘッダー高さ分（64px）を考慮
-        const scrollStart = articleTop - 64; 
+        // ヘッダー高さ分を考慮
+        const headerHeight = 64;
+        const scrollStart = Math.max(0, articleTop - headerHeight);
         
         let progress = 0;
         if (scrollY > scrollStart) {
-            progress = ((scrollY - scrollStart) / (articleHeight - windowHeight)) * 100;
+            const scrollDistance = scrollY - scrollStart;
+            const scrollableHeight = articleHeight - windowHeight + headerHeight;
+            progress = (scrollDistance / Math.max(1, scrollableHeight)) * 100;
         }
         
         progress = Math.min(100, Math.max(0, progress));
         progressBar.style.width = `${progress}%`;
 
-        // バーの表示・非表示 (1%以上で表示)
+        // バーの表示・非表示 (わずかにスクロールしたら表示)
         if (container) {
-            if (progress > 1) {
+            if (progress > 0.5) {
                 container.classList.add('is-visible');
             } else {
                 container.classList.remove('is-visible');
@@ -180,6 +183,7 @@ async function initReadingProgress() {
     };
 
     window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress, { passive: true });
     updateProgress();
 }
 
