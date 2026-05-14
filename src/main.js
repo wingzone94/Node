@@ -755,8 +755,32 @@ function initTableOfContents() {
 function initCommentForm() {
     const commentForm = document.getElementById('commentform');
     if (commentForm) {
+        const submitBtn = commentForm.querySelector('.m3-comment-submit-btn');
+        const requiredFields = commentForm.querySelectorAll('[required]');
+        
+        // 1. Validation Logic
+        const checkValidity = () => {
+            let isValid = true;
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) isValid = false;
+            });
+            
+            if (isValid) {
+                submitBtn.removeAttribute('disabled');
+                submitBtn.classList.add('is-ready');
+            } else {
+                submitBtn.setAttribute('disabled', 'disabled');
+                submitBtn.classList.remove('is-ready');
+            }
+        };
+
+        // Input listeners for real-time validation
+        requiredFields.forEach(field => {
+            field.addEventListener('input', checkValidity);
+        });
+
+        // 2. Submit Logic
         commentForm.addEventListener('submit', (e) => {
-            const submitBtn = commentForm.querySelector('.m3-comment-submit-btn');
             if (submitBtn) {
                 submitBtn.classList.add('is-submitting');
                 submitBtn.innerHTML = '送信中...<span class="material-symbols-outlined">schedule</span>';
@@ -764,6 +788,9 @@ function initCommentForm() {
                 submitBtn.style.pointerEvents = 'none';
             }
         });
+
+        // Initial check
+        checkValidity();
     }
 }
 

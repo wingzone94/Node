@@ -1,13 +1,16 @@
 <?php
 /**
  * The template for displaying comments
+ * Reverted to 0.7.x logic with Material 3 styling.
  */
 
 if ( post_password_required() ) {
     return;
 }
 
-// カスタムコメントコールバック (吹き出しデザイン)
+/**
+ * Custom Comment Callback
+ */
 function node_comment_callback($comment, $args, $depth) {
     ?>
     <li <?php comment_class('m3-comment-item'); ?> id="comment-<?php comment_ID(); ?>">
@@ -42,27 +45,6 @@ function node_comment_callback($comment, $args, $depth) {
     </li>
     <?php
 }
-
-// comment_form_fields フィルターで表示順を強制する
-function node_reorder_comment_fields( $fields ) {
-    $order = array( 'author', 'email', 'url' );
-    $reordered = array();
-
-    foreach ( $order as $key ) {
-        if ( isset( $fields[ $key ] ) ) {
-            $reordered[ $key ] = $fields[ $key ];
-        }
-    }
-
-    foreach ( $fields as $key => $value ) {
-        if ( ! isset( $reordered[ $key ] ) ) {
-            $reordered[ $key ] = $value;
-        }
-    }
-
-    return $reordered;
-}
-add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
 ?>
 
 <div id="comments" class="comments-area m3-comments-section">
@@ -99,44 +81,39 @@ add_filter( 'comment_form_fields', 'node_reorder_comment_fields' );
     <?php endif; ?>
 
     <?php
-    // フォームの設定
+    // Form Setup
     $node_commenter = wp_get_current_commenter();
     $node_req       = get_option( 'require_name_email' );
     $node_html_req  = ( $node_req ? " required='required'" : '' );
 
-    // 補助フィールド（author / email / url）
     $node_fields = array(
         'author' => '<div class="m3-textfield">
                         <label for="author" class="m3-textfield__label">' . esc_html__( 'お名前', 'node' ) . ( $node_req ? ' *' : ' (任意)' ) . '</label>
-                        <input id="author" name="author" type="text" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author'] ) . '"' . $node_html_req . ' placeholder="ななしさん" maxlength="100">
+                        <input id="author" name="author" type="text" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author'] ) . '"' . $node_html_req . ' placeholder="ななしさん">
                     </div>',
         'email'  => '<div class="m3-textfield">
-                        <label for="email" class="m3-textfield__label">' . esc_html__( 'メールアドレス', 'node' ) . ' (任意)</label>
-                        <input id="email" name="email" type="email" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author_email'] ) . '" placeholder="user@example.com" maxlength="200">
+                        <label for="email" class="m3-textfield__label">' . esc_html__( 'メールアドレス', 'node' ) . ( $node_req ? ' *' : ' (非公開)' ) . '</label>
+                        <input id="email" name="email" type="email" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author_email'] ) . '"' . $node_html_req . ' placeholder="user@example.com">
                     </div>',
         'url'    => '<div class="m3-textfield">
                         <label for="url" class="m3-textfield__label">' . esc_html__( 'ウェブサイト', 'node' ) . '</label>
-                        <input id="url" name="url" type="url" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author_url'] ) . '" placeholder="https://..." maxlength="200">
+                        <input id="url" name="url" type="url" class="m3-textfield__input" value="' . esc_attr( $node_commenter['comment_author_url'] ) . '" placeholder="https://...">
                     </div>',
     );
 
-    // コメント本文フィールド
     $node_comment_field = '
         <div class="m3-textfield m3-textfield--textarea">
             <label for="comment" class="m3-textfield__label">' . _x( 'コメント内容', 'noun', 'node' ) . ' *</label>
-
-            <textarea id="comment" name="comment" class="m3-textfield__input" placeholder="温かいコメントをお待ちしております..." required aria-required="true" minlength="2" maxlength="5000"></textarea>
+            <textarea id="comment" name="comment" class="m3-textfield__input" placeholder="温かいコメントをお待ちしております..." required aria-required="true"></textarea>
         </div>';
 
     comment_form( array(
         'title_reply'          => esc_html__( 'コメントを投稿する', 'node' ),
-        'title_reply_to'       => esc_html__( '%s への返信', 'node' ),
-        'cancel_reply_link'    => esc_html__( 'キャンセル', 'node' ),
         'label_submit'         => esc_html__( '送信する', 'node' ),
         'fields'               => $node_fields,
         'comment_field'        => $node_comment_field,
         'class_form'           => 'm3-comment-form',
-        'submit_button'        => '<button name="%1$s" type="submit" id="%2$s" class="m3-button m3-button--filled m3-comment-submit-btn">%4$s<span class="material-symbols-outlined">send</span></button>',
+        'submit_button'        => '<button name="%1$s" type="submit" id="%2$s" class="m3-button m3-button--filled m3-comment-submit-btn" disabled>%4$s<span class="material-symbols-outlined">send</span></button>',
         'title_reply_before'   => '<h3 id="reply-title" class="comment-reply-title m3-title-medium">',
         'title_reply_after'    => '</h3>',
     ) );

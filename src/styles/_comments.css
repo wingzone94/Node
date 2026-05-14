@@ -124,21 +124,37 @@
  
 /* Comment Submit Button */
 .m3-comment-submit-btn {
-    background-color: #FF9900 !important;
-    color: #FFFFFF !important;
+    background-color: var(--md-sys-color-surface-container-highest, #e0e0e0) !important;
+    color: var(--md-sys-color-on-surface-variant, #757575) !important;
+    border: none !important;
     border-radius: 28px !important;
-    padding: 0 24px !important;
+    padding: 0 28px !important;
+    height: 52px !important;
     gap: 10px !important;
     font-weight: 900 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
-.m3-comment-submit-btn:hover,
-.m3-comment-submit-btn:focus,
-.m3-comment-submit-btn:active {
-    background-color: #2196F3 !important; /* Blue on interaction */
+/* 送信可能状態 (Ready) - 青色に塗りつぶし */
+.m3-comment-submit-btn.is-ready {
+    background-color: #0061A4 !important; /* Material Blue */
+    color: #FFFFFF !important;
+    cursor: pointer;
+    opacity: 1;
+    box-shadow: 0 4px 12px rgba(0, 97, 164, 0.2);
+}
+
+.m3-comment-submit-btn.is-ready:hover,
+.m3-comment-submit-btn.is-ready:focus {
+    background-color: #0078CC !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 97, 164, 0.3);
+}
+
+.m3-comment-submit-btn.is-ready:active {
+    transform: scale(0.96);
 }
 
 .m3-comment-submit-btn .material-symbols-outlined {
@@ -148,4 +164,15 @@
 
 .m3-comment-submit-btn:hover .material-symbols-outlined {
     transform: translateX(4px) rotate(-15deg);
+}
+
+/* Hide common CAPTCHA/Image Auth from plugins (User requested removal) */
+#siteguard_captcha_area, 
+.siteguard_captcha, 
+.captcha-image, 
+.wp-captcha-image, 
+.gglcptch, 
+#captcha_image, 
+.si_captcha_char {
+    display: none !important;
 }
