@@ -2,6 +2,11 @@
 Theme Name: Node
 Author: Luminous Core Teams
 Description: Material 3 Expansive with Optimized Dark Mode and Abstract Spotlight navigation.
-Version: 0.8.10
+Version: 0.8.13
 Text Domain: node
+*/
+
+/* 
+  Vite/SCSS compiled styles are imported in the theme's enqueue functions, 
+  but WordPress still requires this style.css for theme metadata.
 */

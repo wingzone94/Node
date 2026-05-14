@@ -3,6 +3,8 @@ import { generateM3Colors } from './theme';
 import { storage } from './storage';
 import './scripts/card-animation';
 import './scripts/share-actions';
+import { initFloatingActions } from './scripts/floating-actions';
+import { initHandyMode } from './scripts/handy-mode';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof gsap !== 'undefined') gsap.config({ force3D: true });
@@ -298,14 +300,14 @@ function initSearchBar() {
     const updateClearBtn = () => {
         if (searchClear) searchClear.style.display = searchInput.value ? 'flex' : 'none';
     };
-    
+
     // Initialize state
     updateClearBtn();
-    
+
     searchInput.addEventListener('input', updateClearBtn);
     searchInput.addEventListener('change', updateClearBtn);
     searchInput.addEventListener('search', updateClearBtn); // For 'x' in type="search" browsers
-    
+
     searchClear?.addEventListener('click', () => {
         if (searchInput.value) {
             animateSearchClear(searchInput, searchClear, () => {
@@ -657,32 +659,6 @@ function initViewSwitcher() {
     });
 }
 
-function initHandyMode() {
-    const tocBtn = document.getElementById('m3-handy-toc-trigger');
-    if (tocBtn) {
-        tocBtn.addEventListener('click', () => {
-            document.dispatchEvent(new CustomEvent("m3:toc:toggle"));
-        });
-    }
-
-    const commentsBtn = document.getElementById('m3-bottom-comments-trigger');
-    if (commentsBtn) {
-        commentsBtn.addEventListener('click', () => {
-            const comments = document.getElementById('comments') || document.getElementById('respond');
-            if (comments) {
-                const headerOffset = 100;
-                const elementPosition = comments.getBoundingClientRect().top + window.pageYOffset;
-                window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
-            }
-        });
-    }
-            if (topBtn) {
-        topBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
-}
-
 function initTableOfContents() {
     console.log('TOC: Starting initialization...');
     const container = document.getElementById('m3-toc-container');
@@ -720,12 +696,12 @@ function initTableOfContents() {
 
         const li = document.createElement('li');
         li.className = `m3-toc-item m3-toc-item--${heading.tagName.toLowerCase()}`;
-        
+
         const a = document.createElement('a');
         a.href = `#${id}`;
         a.className = 'm3-toc-link';
         a.textContent = heading.innerText || heading.textContent;
-        
+
         // --- 2. Smooth Scroll Logic ---
         a.addEventListener('click', (e) => {
             e.preventDefault();
@@ -811,61 +787,6 @@ function initCommentForm() {
     }
 }
 
-function initFloatingActions() {
-    const actionStack = document.querySelector('.m3-action-stack');
-    if (!actionStack) return;
-
-    const backToTop = document.getElementById('m3-back-to-top');
-    const scrollToComments = document.getElementById('m3-scroll-to-comments');
-    const jumpToAI = document.getElementById('m3-jump-to-ai');
-
-    // --- Back to Top ---
-    backToTop?.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    // --- Scroll to Comments ---
-    scrollToComments?.addEventListener('click', () => {
-        const comments = document.getElementById('comments') || document.getElementById('respond');
-        if (comments) {
-            const headerOffset = 100;
-            const elementPosition = comments.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
-        }
-    });
-
-    // --- Jump to AI Summary ---
-    jumpToAI?.addEventListener('click', () => {
-        const aiSummary = document.getElementById('m3-ai-summary');
-        if (aiSummary) {
-            const headerOffset = 100;
-            const elementPosition = aiSummary.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
-
-            // Highlight effect
-            aiSummary.style.transition = 'box-shadow 0.5s ease';
-            aiSummary.style.boxShadow = '0 0 60px rgba(255, 153, 0, 0.6)';
-            setTimeout(() => { aiSummary.style.boxShadow = ''; }, 2000);
-        }
-    });
-
-    // --- Scroll Visibility Logic ---
-    const updateVisibility = () => {
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        const threshold = 100; // Lowered from 200 to 100 for better responsiveness
-
-        if (scrollY > threshold) {
-            actionStack.classList.add('is-visible');
-        } else {
-            actionStack.classList.remove('is-visible');
-        }
-    };
-
-    window.addEventListener('scroll', updateVisibility, { passive: true });
-    // Initial check in case page is already scrolled or has a fragment identifier
-    setTimeout(updateVisibility, 500); 
-}
-
 function initOverdriveScroll() {
     // Scroll behavior handled via GSAP in scripts/card-animation.js
 }
@@ -932,7 +853,7 @@ function animateSearchClear(input, button, callback) {
 
 function initTableSorter() {
     const tables = document.querySelectorAll('.wp-block-table.is-sortable table, .wp-block-table.is-style-sortable table, .m3-table--sortable table');
-    
+
     tables.forEach(table => {
         const headers = table.querySelectorAll('th');
         headers.forEach((header, index) => {
@@ -942,23 +863,23 @@ function initTableSorter() {
                 if (!tbody) return;
                 const rows = Array.from(tbody.querySelectorAll('tr'));
                 const isAscending = header.classList.contains('is-asc');
-                
+
                 // Clear header classes
                 headers.forEach(h => h.classList.remove('is-asc', 'is-desc'));
-                
+
                 rows.sort((a, b) => {
                     const aText = a.children[index]?.textContent.trim() || '';
                     const bText = b.children[index]?.textContent.trim() || '';
-                    
+
                     const aNum = parseFloat(aText.replace(/[^0-9.-]/g, ''));
                     const bNum = parseFloat(bText.replace(/[^0-9.-]/g, ''));
-                    
+
                     if (!isNaN(aNum) && !isNaN(bNum)) {
                         return isAscending ? bNum - aNum : aNum - bNum;
                     }
                     return isAscending ? bText.localeCompare(aText, 'ja') : aText.localeCompare(bText, 'ja');
                 });
-                
+
                 header.classList.add(isAscending ? 'is-desc' : 'is-asc');
                 while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
                 tbody.append(...rows);
