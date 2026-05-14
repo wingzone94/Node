@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         initKeyboardShortcuts,
         initTooltips,
         initRippleEffect,
+        initAdaptiveHeader,
         initReadingProgress,
+        initArticleNavigation,
         initHeroInfoBubble,
         initScrollAnimations,
         initHeaderClock,
@@ -179,6 +181,15 @@ async function initReadingProgress() {
 
     window.addEventListener('scroll', updateProgress, { passive: true });
     updateProgress();
+}
+
+function initArticleNavigation() {
+    const staticTopBtn = document.getElementById('m3-article-top-anchor');
+    if (staticTopBtn) {
+        staticTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 }
 
 

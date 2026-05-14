@@ -37,13 +37,23 @@
                 <?php 
                 the_content(); 
                 
-                wp_link_pages( array(
-                    'before'      => '<nav class="m3-pagination m3-pagination--split"><span class="m3-pagination__label"><span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>PAGES</span>',
-                    'after'       => '</nav>',
-                    'link_before' => '<span class="m3-pagination__number">',
-                    'link_after'  => '</span>',
-                    'separator'   => ' ',
-                ) );
+                <div class="m3-article__pagination-container">
+                    <div class="m3-article__pagination-row">
+                        <?php 
+                        wp_link_pages( array(
+                            'before'      => '<nav class="m3-pagination m3-pagination--split"><span class="m3-pagination__label"><span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>PAGES</span>',
+                            'after'       => '</nav>',
+                            'link_before' => '<span class="m3-pagination__number">',
+                            'link_after'  => '</span>',
+                            'separator'   => ' ',
+                        ) );
+                        ?>
+                    </div>
+                    <button id="m3-article-top-anchor" class="m3-pagination-top-btn" aria-label="最上部へ戻る">
+                        <span class="material-symbols-outlined">arrow_upward</span>
+                        <span class="m3-pagination-top-btn__text">TOP</span>
+                    </button>
+                </div>
                 ?>
             </div>
 
