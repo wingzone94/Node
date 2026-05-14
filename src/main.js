@@ -3,7 +3,6 @@ import { generateM3Colors } from './theme';
 import { storage } from './storage';
 import './scripts/card-animation';
 import './scripts/share-actions';
-import { initFloatingActions } from './scripts/floating-actions';
 import { initHandyMode } from './scripts/handy-mode';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         initViewSwitcher,
         initHandyMode,
         initShareFeatures,
-        initFloatingActions,
         initTableOfContents,
         initOverdriveScroll,
         initKeyboardShortcuts,
@@ -151,36 +149,30 @@ async function initReadingProgress() {
 
     if (!progressBar || !article) return;
 
-    let shattered = false;
-
     const updateProgress = () => {
+        const scrollY = window.scrollY || window.pageYOffset;
         const rect = article.getBoundingClientRect();
-        const articleTop = rect.top + window.pageYOffset;
+        const articleTop = rect.top + scrollY;
         const articleHeight = rect.height;
         const windowHeight = window.innerHeight;
-        const currentScroll = window.pageYOffset;
-        const scrollStart = articleTop - 64;
-
-        let progress = currentScroll > scrollStart ? ((currentScroll - scrollStart) / (articleHeight - windowHeight)) * 100 : 0;
-        progress = Math.min(100, Math.max(0, progress));
-
-        // 可逆性の実装: 上にスクロールして100%未満になったら復活させる
-        if (progress < 99.5 && shattered) {
-            shattered = false;
-            gsap.to(progressBar, { opacity: 1, scaleY: 1, duration: 0.3, ease: "power2.out" });
+        
+        // ヘッダー高さ分（64px）を考慮
+        const scrollStart = articleTop - 64; 
+        
+        let progress = 0;
+        if (scrollY > scrollStart) {
+            progress = ((scrollY - scrollStart) / (articleHeight - windowHeight)) * 100;
         }
+        
+        progress = Math.min(100, Math.max(0, progress));
+        progressBar.style.width = `${progress}%`;
 
-        if (!shattered) {
-            progressBar.style.width = `${progress}%`;
-            if (container) {
-                if (progress > 0) container.classList.add('is-visible');
-                else container.classList.remove('is-visible');
-            }
-
-            // 100%到達時の粉砕アニメーション
-            if (progress >= 99.9 && !shattered) {
-                shattered = true;
-                shatterProgressBar(progressBar);
+        // バーの表示・非表示 (1%以上で表示)
+        if (container) {
+            if (progress > 1) {
+                container.classList.add('is-visible');
+            } else {
+                container.classList.remove('is-visible');
             }
         }
     };
@@ -189,33 +181,7 @@ async function initReadingProgress() {
     updateProgress();
 }
 
-function shatterProgressBar(el) {
-    if (typeof gsap === 'undefined') return;
 
-    const rect = el.getBoundingClientRect();
-    const shards = 12;
-
-    for (let i = 0; i < shards; i++) {
-        const shard = document.createElement('div');
-        shard.className = 'm3-gauge-shard';
-        shard.style.backgroundColor = '#FF9900';
-        shard.style.left = `${rect.left + (Math.random() * rect.width)}px`;
-        shard.style.top = `${rect.top}px`;
-        document.body.appendChild(shard);
-
-        gsap.to(shard, {
-            x: (Math.random() - 0.5) * 300,
-            y: Math.random() * 500 + 100,
-            rotation: Math.random() * 720,
-            opacity: 0,
-            duration: 1.5,
-            ease: "power2.out",
-            onComplete: () => shard.remove()
-        });
-    }
-
-    gsap.to(el, { opacity: 0, scaleY: 0, duration: 0.2 });
-}
 
 
 function initColorExtraction() {

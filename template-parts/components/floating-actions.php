@@ -1,6 +1,6 @@
 <div class="m3-action-stack <?php echo is_singular() ? 'is-singular' : ''; ?>">
     <!-- 1. Back to Top -->
-    <button id="m3-back-to-top" class="m3-fab m3-fab--extended">
+    <button id="m3-back-to-top" class="m3-fab m3-fab--extended m3-fab--pc-hidden">
         <span class="material-symbols-outlined">arrow_upward</span>
         <span class="m3-fab-text">トップへ</span>
         <span class="m3-fab-label-top">トップへ戻る</span>
