@@ -66,20 +66,6 @@
     display: none; /* Chrome/Safari */
 }
 
-/* FAB positioning & Colors */
-#m3-toc-trigger,
-.m3-fab {
-    background: #FF9900 !important;
-    color: #ffffff !important;
-}
-
-#m3-toc-trigger {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 1999;
-}
-
 
 /* --- TOC Card --- */
 .m3-toc-card {

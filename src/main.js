@@ -682,7 +682,10 @@ function initTableOfContents() {
         if (handyTrigger) handyTrigger.style.display = 'none';
         return;
     } else {
-        if (trigger) trigger.style.display = 'flex';
+        if (trigger) {
+            trigger.style.display = 'flex';
+            trigger.classList.add('toc-ready'); // Always show TOC button if headings exist
+        }
         if (handyTrigger) handyTrigger.style.display = 'flex';
     }
 

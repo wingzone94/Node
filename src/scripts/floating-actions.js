@@ -32,7 +32,10 @@ export function initFloatingActions() {
         }
     });
 
-    const updateVisibility = () => actionStack.classList.toggle('is-visible', window.pageYOffset > 100);
+    const updateVisibility = () => {
+        const scrollPos = window.scrollY || window.pageYOffset;
+        actionStack.classList.toggle('is-visible', scrollPos > 60);
+    };
     window.addEventListener('scroll', updateVisibility, { passive: true });
     setTimeout(updateVisibility, 100);
 }
