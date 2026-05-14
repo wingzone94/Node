@@ -391,3 +391,10 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
         right: var(--m3-spacing-s);
     }
 }
+/* PC Overrides (> 1000px) */
+@media screen and (min-width: 1001px) {
+    .m3-fab--pc-hidden {
+        display: none !important;
+    }
+}
+

@@ -13,7 +13,7 @@
     ?>
     <!-- 2. Comment Trigger -->
     <?php if ($has_comments) : ?>
-    <button id="m3-scroll-to-comments" class="m3-fab m3-fab--extended m3-fab--mobile-hidden">
+    <button id="m3-scroll-to-comments" class="m3-fab m3-fab--extended m3-fab--mobile-hidden m3-fab--pc-hidden">
         <span class="material-symbols-outlined">chat_bubble</span>
         <span class="m3-fab-text">コメント</span>
         <span class="m3-fab-label-top">コメント欄へ</span>
@@ -22,7 +22,7 @@
 
     <!-- 3. AI Summary Jump -->
     <?php if ($has_ai) : ?>
-    <button id="m3-jump-to-ai" class="m3-fab m3-fab--ai-expressive">
+    <button id="m3-jump-to-ai" class="m3-fab m3-fab--ai-expressive m3-fab--pc-hidden">
         <span class="material-symbols-outlined">auto_awesome</span>
         <span class="m3-fab-text">AI要約</span>
         <span class="m3-fab-label-top">AI要約へ</span>
@@ -30,7 +30,7 @@
     <?php endif; ?>
 
     <!-- 4. TOC Trigger (Bottom-most) -->
-    <button id="m3-toc-trigger" class="m3-fab m3-fab--extended m3-fab--mobile-hidden">
+    <button id="m3-toc-trigger" class="m3-fab m3-fab--extended m3-fab--mobile-hidden m3-fab--pc-hidden">
         <span class="material-symbols-outlined">list</span>
         <span class="m3-fab-text">目次</span>
         <span class="m3-fab-label-top">目次を表示</span>
