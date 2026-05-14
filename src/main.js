@@ -198,9 +198,15 @@ function initArticleNavigation() {
         const commentTrigger = e.target.closest('#m3-hero-comment-trigger');
         if (commentTrigger) {
             e.preventDefault();
-            const commentsSection = document.getElementById('comments');
-            if (commentsSection) {
-                commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            console.log('Main: Hero Comment Clicked');
+            const target = document.getElementById('comments');
+            if (target) {
+                const headerOffset = 120; // 余裕を持たせたオフセット
+                const elementPosition = target.getBoundingClientRect().top + window.scrollY;
+                window.scrollTo({
+                    top: elementPosition - headerOffset,
+                    behavior: 'smooth'
+                });
             }
         }
     });

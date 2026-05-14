@@ -66,7 +66,7 @@
 
         <?php get_template_part('template-parts/single/related'); ?>
 
-        <section id="comments" class="m3-comments-section m3-reveal">
+        <section id="comments-section" class="m3-comments-section m3-reveal">
             <?php if (comments_open() || get_comments_number()) :
                 comments_template();
             endif; ?>
