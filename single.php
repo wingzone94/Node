@@ -38,6 +38,8 @@
                 the_content(); 
                 ?>
                 
+                <div class="m3-article__body-footer-clear"></div>
+
                 <div class="m3-article__pagination-container">
                     <div class="m3-article__pagination-row">
                         <?php 
@@ -50,10 +52,10 @@
                         ) );
                         ?>
                     </div>
-                    <button id="m3-article-top-anchor" class="m3-pagination-top-btn" aria-label="最上部へ戻る">
+                    <a href="#" id="m3-article-top-anchor" class="m3-pagination-top-btn" aria-label="最上部へ戻る">
                         <span class="material-symbols-outlined">arrow_upward</span>
                         <span class="m3-pagination-top-btn__text">TOP</span>
-                    </button>
+                    </a>
                 </div>
             </div>
 

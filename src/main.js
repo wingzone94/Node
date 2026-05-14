@@ -184,31 +184,26 @@ async function initReadingProgress() {
 }
 
 function initArticleNavigation() {
-    // 1. Pagination "TOP" button
-    const staticTopBtn = document.getElementById('m3-article-top-anchor');
-    if (staticTopBtn) {
-        staticTopBtn.addEventListener('click', (e) => {
+    // Event delegation for better reliability
+    document.addEventListener('click', (e) => {
+        // 1. Pagination "TOP" button
+        const topBtn = e.target.closest('#m3-article-top-anchor');
+        if (topBtn) {
             e.preventDefault();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
+            return;
+        }
 
-    // 2. Hero Comment Trigger
-    const commentTrigger = document.getElementById('m3-hero-comment-trigger');
-    if (commentTrigger) {
-        commentTrigger.addEventListener('click', (e) => {
+        // 2. Hero Comment Trigger
+        const commentTrigger = e.target.closest('#m3-hero-comment-trigger');
+        if (commentTrigger) {
             e.preventDefault();
             const commentsSection = document.getElementById('comments');
             if (commentsSection) {
-                const headerOffset = 100;
-                const elementPosition = commentsSection.getBoundingClientRect().top + window.pageYOffset;
-                window.scrollTo({ 
-                    top: elementPosition - headerOffset, 
-                    behavior: 'smooth' 
-                });
+                commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        });
-    }
+        }
+    });
 }
 
 
