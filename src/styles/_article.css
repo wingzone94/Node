@@ -1366,10 +1366,7 @@
     justify-content: space-between;
     gap: 16px;
     margin: var(--m3-spacing-xl) 0;
-    padding: 12px 16px;
-    background: var(--md-sys-color-surface-container-low);
-    border-radius: 28px;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    padding: 12px 0;
     transition: transform 0.3s ease;
 }
 
@@ -1420,8 +1417,7 @@
     .m3-article__pagination-container {
         flex-direction: column;
         align-items: stretch;
-        border-radius: 24px;
-        padding: 16px;
+        padding: 16px 0;
     }
     .m3-pagination-top-btn {
         justify-content: center;
