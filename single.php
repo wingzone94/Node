@@ -43,14 +43,43 @@
                 <div class="m3-article__pagination-container">
                     <div class="m3-article__pagination-row">
                         <?php 
-                        wp_link_pages( array(
-                            'before'      => '<nav class="m3-pagination m3-pagination--split"><span class="m3-pagination__label"><span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>PAGES</span>',
-                            'after'       => '</nav>',
-                            'link_before' => '<span class="m3-pagination__number">',
-                            'link_after'  => '</span>',
-                            'separator'   => ' ',
-                        ) );
-                        ?>
+                        global $numpages, $page;
+                        if ( $numpages > 1 ) : ?>
+                            <nav class="m3-pagination m3-pagination--split">
+                                <span class="m3-pagination__label">
+                                    <span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>
+                                    PAGES
+                                </span>
+                                <div class="m3-pagination__controls">
+                                    <div class="m3-pagination__select-wrapper">
+                                        <select id="m3-page-selector" class="m3-pagination__select" aria-label="ページを選択">
+                                            <?php for ( $i = 1; $i <= $numpages; $i++ ) : ?>
+                                                <?php 
+                                                $link = _wp_link_page( $i );
+                                                preg_match( '/href="([^"]+)"/', $link, $match );
+                                                $url = $match[1] ?? '';
+                                                ?>
+                                                <option value="<?php echo esc_url( $url ); ?>" <?php selected( $i, $page ); ?>>
+                                                    Page <?php echo $i; ?> / <?php echo $numpages; ?>
+                                                </option>
+                                            <?php endfor; ?>
+                                        </select>
+                                        <span class="material-symbols-outlined m3-select-chevron">expand_more</span>
+                                    </div>
+                                    <div class="m3-pagination__numbers">
+                                        <?php
+                                        wp_link_pages( array(
+                                            'before'      => '',
+                                            'after'       => '',
+                                            'link_before' => '<span class="m3-pagination__number">',
+                                            'link_after'  => '</span>',
+                                            'separator'   => '',
+                                        ) );
+                                        ?>
+                                    </div>
+                                </div>
+                            </nav>
+                        <?php endif; ?>
                     </div>
                     <a href="#" id="m3-article-top-anchor" class="m3-pagination-top-btn" aria-label="最上部へ戻る">
                         <span class="material-symbols-outlined">arrow_upward</span>

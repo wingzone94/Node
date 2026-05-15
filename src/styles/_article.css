@@ -1339,18 +1339,62 @@
     font-weight: 900;
     font-size: 1rem;
     text-decoration: none;
-    background: #FF9900;
-    color: #ffffff;
+    background: var(--md-sys-color-surface-container-highest, #e0e0e0);
+    color: var(--md-sys-color-on-surface);
     box-shadow: var(--m3-elevation-1);
-    /* Hover effects removed as requested */
+    transition: all 0.2s ease;
 }
 
+/* 現在読んでいるページのサークルを青に変更 */
 .m3-pagination__number:not(a) {
-    background: #FF7700;
-    color: #ffffff;
-    box-shadow: 0 8px 20px rgba(255, 119, 0, 0.4);
+    background: #0061A4 !important; /* Material Blue */
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(0, 97, 164, 0.3);
     transform: scale(1.1);
     z-index: 2;
+}
+
+/* Page Selector Dropdown */
+.m3-pagination__select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 20px;
+    padding: 0 16px;
+    margin-right: 12px;
+    height: 42px;
+}
+
+.m3-pagination__select {
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding-right: 24px;
+    cursor: pointer;
+    outline: none;
+}
+
+.m3-pagination__select-wrapper .m3-select-chevron {
+    position: absolute;
+    right: 12px;
+    pointer-events: none;
+    font-size: 20px;
+    color: var(--md-sys-color-primary);
+}
+
+.m3-pagination__controls {
+    display: flex;
+    align-items: center;
+}
+
+.m3-pagination__numbers {
+    display: flex;
+    gap: 8px;
 }
 
 .m3-article__body-footer-clear {

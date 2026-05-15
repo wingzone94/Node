@@ -214,6 +214,16 @@ function initArticleNavigation() {
             }
         }
     });
+
+    // 3. Page Selector Dropdown
+    const pageSelector = document.getElementById('m3-page-selector');
+    if (pageSelector) {
+        pageSelector.addEventListener('change', (e) => {
+            if (e.target.value) {
+                window.location.href = e.target.value;
+            }
+        });
+    }
 }
 
 
