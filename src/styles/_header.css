@@ -226,6 +226,33 @@
     background: var(--md-sys-color-surface-variant); 
 }
 
+.m3-social-button i {
+    font-size: 1.25rem;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.m3-social-button:hover i {
+    transform: scale(1.15);
+}
+
+.m3-x-button:hover {
+    color: #000000 !important;
+}
+
+[data-theme="dark"] .m3-x-button:hover {
+    color: #ffffff !important;
+}
+
+.m3-discord-button:hover {
+    color: #5865F2 !important;
+}
+
+@media (max-width: 600px) {
+    .m3-social-button {
+        display: none !important; /* Hide on mobile to keep header clean */
+    }
+}
+
 /* --- Theme Controls & Popover --- */
 #m3-theme-controls { position: relative; }
 .m3-popover {

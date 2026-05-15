@@ -1,6 +1,6 @@
-# Technical Stack: Luminous Core v0.3
+# Technical Stack: Node v0.9.1
 
-Luminous Core は、最高峰のパフォーマンスと視覚体験を両立するため、以下の技術スタックで構成されています。
+Node は、最高峰のパフォーマンスと視覚体験を両立するため、以下の技術スタックで構成されています。
 
 ## 🎨 UI / Design System
 - **Material Design 3 (Expressive):** デザイントークンに基づいた一貫性のある色体系とスペーシング。

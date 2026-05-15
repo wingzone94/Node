@@ -54,11 +54,11 @@
 .m3-pagination .page-numbers.current,
 .m3-navigation span.current,
 .m3-pagination span.current {
-    background: #FF9900 !important;
+    background: #0061A4 !important; /* Material Blue */
     color: #ffffff !important;
-    /* White text on orange */
-    transform: none !important;
-    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 12px rgba(0, 97, 164, 0.3) !important;
+    z-index: 2;
 }
 
 .m3-navigation .dots,

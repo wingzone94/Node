@@ -33,79 +33,102 @@
                 // プラグイン等からの拡張表示（Node Library等）
                 luminous_after_article_header(get_the_ID());
             ?>
-            <div class="m3-article__body m3-reveal">
-                <?php 
-                the_content(); 
-                ?>
-                
-                <div class="m3-article__body-footer-clear"></div>
-
-                <div class="m3-article__pagination-container">
-                    <div class="m3-article__pagination-row">
+            <div class="m3-article-layout">
+                <div class="m3-article-layout__main">
+                    <div class="m3-article__body m3-reveal">
                         <?php 
-                        global $numpages, $page;
-                        if ( $numpages > 1 ) : ?>
-                            <nav class="m3-pagination m3-pagination--split">
-                                <span class="m3-pagination__label">
-                                    <span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>
-                                    PAGES
-                                </span>
-                                <div class="m3-pagination__controls">
-                                    <div class="m3-pagination__select-wrapper">
-                                        <select id="m3-page-selector" class="m3-pagination__select" aria-label="ページを選択">
-                                            <?php for ( $i = 1; $i <= $numpages; $i++ ) : ?>
-                                                <?php 
-                                                $link = _wp_link_page( $i );
-                                                preg_match( '/href="([^"]+)"/', $link, $match );
-                                                $url = $match[1] ?? '';
+                        the_content(); 
+                        ?>
+                        
+                        <div class="m3-article__body-footer-clear"></div>
+
+                        <div class="m3-article__pagination-container m3-reveal">
+                            <div class="m3-article__pagination-row">
+                                <?php 
+                                global $numpages, $page;
+                                $current_multipage = max( 1, (int) $page );
+                                $get_multipage_url = static function ( $page_number ) {
+                                    $link = _wp_link_page( (int) $page_number );
+
+                                    if ( preg_match( '/href=(["\'])(.*?)\1/', $link, $match ) ) {
+                                        return html_entity_decode( $match[2], ENT_QUOTES, get_bloginfo( 'charset' ) );
+                                    }
+
+                                    return get_permalink();
+                                };
+
+                                if ( $numpages > 1 ) : ?>
+                                    <nav class="m3-article-pagination m3-pagination--split">
+                                        <span class="m3-pagination__label">
+                                            <span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>
+                                            PAGES
+                                        </span>
+                                        <div class="m3-pagination__controls">
+                                            <div class="m3-pagination__select-wrapper">
+                                                <select id="m3-page-selector" class="m3-pagination__select" aria-label="ページを選択">
+                                                    <?php for ( $i = 1; $i <= $numpages; $i++ ) : ?>
+                                                        <option value="<?php echo esc_url( $get_multipage_url( $i ) ); ?>" <?php selected( $i, $current_multipage ); ?>>
+                                                            Page <?php echo $i; ?> / <?php echo $numpages; ?>
+                                                        </option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                                <span class="material-symbols-outlined m3-select-chevron">expand_more</span>
+                                            </div>
+                                            <div class="m3-pagination__numbers">
+                                                <?php
+                                                $first_url = $get_multipage_url( 1 );
+
+                                                if ( $current_multipage > 1 ) {
+                                                    echo '<a href="' . esc_url( $first_url ) . '" class="m3-pagination__number m3-pagination__number--icon" aria-label="最初のページへ"><span class="material-symbols-outlined">first_page</span></a>';
+                                                } else {
+                                                    echo '<span class="m3-pagination__number m3-pagination__number--icon is-disabled" aria-hidden="true"><span class="material-symbols-outlined">first_page</span></span>';
+                                                }
+
+                                                for ( $i = 1; $i <= $numpages; $i++ ) {
+                                                    $is_current = ( $i === $current_multipage );
+                                                    $classes    = array( 'm3-pagination__number' );
+
+                                                    if ( $is_current ) {
+                                                        $classes[] = 'is-current';
+                                                    } elseif ( $i >= 2 ) {
+                                                        $classes[] = 'is-page-after-first';
+                                                    }
+
+                                                    $class_attr = esc_attr( implode( ' ', $classes ) );
+
+                                                    if ( $is_current ) {
+                                                        echo '<span class="' . $class_attr . '" aria-current="page">' . esc_html( $i ) . '</span>';
+                                                    } else {
+                                                        echo '<a href="' . esc_url( $get_multipage_url( $i ) ) . '" class="' . $class_attr . '" aria-label="' . esc_attr( sprintf( 'ページ %d へ', $i ) ) . '">' . esc_html( $i ) . '</a>';
+                                                    }
+                                                }
+
+                                                $last_url = $get_multipage_url( $numpages );
+
+                                                if ( $current_multipage < $numpages ) {
+                                                    echo '<a href="' . esc_url( $last_url ) . '" class="m3-pagination__number m3-pagination__number--icon" aria-label="最後のページへ"><span class="material-symbols-outlined">last_page</span></a>';
+                                                } else {
+                                                    echo '<span class="m3-pagination__number m3-pagination__number--icon is-disabled" aria-hidden="true"><span class="material-symbols-outlined">last_page</span></span>';
+                                                }
                                                 ?>
-                                                <option value="<?php echo esc_url( $url ); ?>" <?php selected( $i, $page ); ?>>
-                                                    Page <?php echo $i; ?> / <?php echo $numpages; ?>
-                                                </option>
-                                            <?php endfor; ?>
-                                        </select>
-                                        <span class="material-symbols-outlined m3-select-chevron">expand_more</span>
-                                    </div>
-                                    <div class="m3-pagination__numbers">
-                                        <?php
-                                        // First Page Button
-                                        if ( $page > 1 ) {
-                                            $first_link = _wp_link_page( 1 );
-                                            preg_match( '/href="([^"]+)"/', $first_link, $first_match );
-                                            $first_url = $first_match[1] ?? '';
-                                            echo '<a href="' . esc_url( $first_url ) . '" class="m3-pagination__number" aria-label="最初のページへ"><span class="material-symbols-outlined">first_page</span></a>';
-                                        }
-
-                                        wp_link_pages( array(
-                                            'before'      => '',
-                                            'after'       => '',
-                                            'link_before' => '<span class="m3-pagination__number">',
-                                            'link_after'  => '</span>',
-                                            'separator'   => '',
-                                        ) );
-
-                                        // Last Page Button
-                                        if ( $page < $numpages ) {
-                                            $last_link = _wp_link_page( $numpages );
-                                            preg_match( '/href="([^"]+)"/', $last_link, $last_match );
-                                            $last_url = $last_match[1] ?? '';
-                                            echo '<a href="' . esc_url( $last_url ) . '" class="m3-pagination__number" aria-label="最後のページへ"><span class="material-symbols-outlined">last_page</span></a>';
-                                        }
-                                        ?>
-                                    </div>
-                                </div>
-                            </nav>
-                        <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </nav>
+                                <?php endif; ?>
+                            </div>
+                            <a href="#" id="m3-article-top-anchor" class="m3-pagination-top-btn" aria-label="最上部へ戻る">
+                                <span class="material-symbols-outlined">arrow_upward</span>
+                                <span class="m3-pagination-top-btn__text">TOP</span>
+                            </a>
+                        </div>
                     </div>
-                    <a href="#" id="m3-article-top-anchor" class="m3-pagination-top-btn" aria-label="最上部へ戻る">
-                        <span class="material-symbols-outlined">arrow_upward</span>
-                        <span class="m3-pagination-top-btn__text">TOP</span>
-                    </a>
+                    <?php get_template_part('template-parts/single/footer'); ?>
                 </div>
+
+                <aside class="m3-article-layout__sidebar">
+                    <?php get_template_part('template-parts/single/toc-sidebar'); ?>
+                </aside>
             </div>
-
-
-            <?php get_template_part('template-parts/single/footer'); ?>
             
         </article>
 

@@ -1324,38 +1324,62 @@
     cursor: default;
 }
 
-.m3-pagination__label-icon {
-    font-size: 18px !important;
+.m3-article-pagination .m3-pagination__label-icon {
+    font-size: 18px;
 }
 
-.m3-pagination__number,
-.m3-pagination--split a {
+.m3-article-pagination .m3-pagination__number {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 42px;
-    height: 42px;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
     border-radius: 50%;
     font-weight: 900;
     font-size: 1rem;
     text-decoration: none;
-    background: var(--md-sys-color-surface-container-highest, #e0e0e0);
+    background: var(--md-sys-color-surface-container-high);
     color: var(--md-sys-color-on-surface);
-    box-shadow: var(--m3-elevation-1);
-    transition: all 0.2s ease;
+    transition: all 0.3s var(--m3-motion-easing);
+    border: none;
+    box-shadow: none;
 }
 
-.m3-pagination__number .material-symbols-outlined {
-    font-size: 24px;
+.m3-article-pagination a.m3-pagination__number,
+.m3-article-pagination span.m3-pagination__number {
+    width: 48px;
+    height: 48px;
+    padding: 0;
 }
 
-/* 現在読んでいるページのサークルを青に変更 */
-.m3-pagination__number:not(a) {
-    background: #0061A4 !important; /* Material Blue */
-    color: #ffffff !important;
-    box-shadow: 0 8px 20px rgba(0, 97, 164, 0.3);
+.m3-article-pagination .m3-pagination__number.is-current {
+    background: var(--m3-pagination-current);
+    color: var(--m3-pagination-on-current);
+    box-shadow: 0 4px 12px var(--m3-pagination-current-shadow);
     transform: scale(1.1);
     z-index: 2;
+}
+
+.m3-article-pagination .m3-pagination__number.is-page-after-first {
+    background: var(--m3-pagination-after-first);
+    color: var(--m3-pagination-on-after-first);
+    box-shadow: 0 4px 12px var(--m3-pagination-after-first-shadow);
+}
+
+/* ホバー時のアニメーション (Material 3 Expressive) */
+.m3-article-pagination .m3-pagination__number:hover:not(.is-disabled):not(.is-current) {
+    background: var(--md-sys-color-surface-container-highest);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--m3-elevation-2);
+}
+
+/* 無効な状態 (First/Lastボタン用) */
+.m3-article-pagination .m3-pagination__number.is-disabled {
+    opacity: 0.3;
+    background: transparent;
+    cursor: default;
+    box-shadow: none;
 }
 
 /* Page Selector Dropdown */

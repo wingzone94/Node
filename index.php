@@ -10,6 +10,7 @@
 
 
     <?php if ((is_home() || is_front_page()) && !is_paged()) : 
+        $news_cat = get_term_by('name', 'ニュース', 'category');
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
         if (!empty($spotlight_cats)) :
     ?>
@@ -20,8 +21,7 @@
                     SPOTLIGHT <span class="m3-section-title__sub">特集</span>
                 </h2>
                 <?php 
-                $spotlight_cat_obj = get_category_by_slug('spotlight');
-                $spotlight_link = $spotlight_cat_obj ? get_category_link($spotlight_cat_obj->term_id) : home_url('/');
+                $spotlight_link = $news_cat ? get_category_link($news_cat->term_id) : home_url('/');
                 ?>
                 <a href="<?php echo esc_url($spotlight_link); ?>" class="m3-headlines__more m3-button m3-button--text">
                     すべて見る
@@ -44,7 +44,6 @@
         endif;
 
         // HEADLINE (News by Name logic)
-        $news_cat = get_term_by('name', 'ニュース', 'category');
         $headline_args = [
             'posts_per_page' => 5,
             'ignore_sticky_posts' => true
@@ -64,8 +63,8 @@
                     <span class="m3-section-title__sub">速報</span>
                 </h2>
                 <?php 
-                $news_cat_obj = get_category_by_slug('news');
-                $news_link = $news_cat_obj ? get_category_link($news_cat_obj->term_id) : home_url('/');
+                // $news_cat は Spotlight セクションまたは line 47 で取得済み
+                $news_link = $news_cat ? get_category_link($news_cat->term_id) : home_url('/');
                 ?>
                 <a href="<?php echo esc_url($news_link); ?>" class="m3-headlines__more m3-button m3-button--text">
                     すべて見る

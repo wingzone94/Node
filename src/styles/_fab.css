@@ -172,11 +172,13 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
 .m3-toc-item--h3 { padding-left: 20px; font-size: 0.95rem; opacity: 0.95; position: relative; }
 .m3-toc-item--h4 { padding-left: 36px; font-size: 0.9rem; opacity: 0.85; position: relative; }
 .m3-toc-item--h5 { padding-left: 52px; font-size: 0.85rem; opacity: 0.75; position: relative; }
+.m3-toc-item--h6 { padding-left: 68px; font-size: 0.82rem; opacity: 0.72; position: relative; }
 
 /* Subtle markers for nested items */
 .m3-toc-item--h3::before,
 .m3-toc-item--h4::before,
-.m3-toc-item--h5::before {
+.m3-toc-item--h5::before,
+.m3-toc-item--h6::before {
     content: '';
     position: absolute;
     left: 8px;
@@ -191,6 +193,7 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
 
 .m3-toc-item--h4::before { left: 24px; }
 .m3-toc-item--h5::before { left: 40px; }
+.m3-toc-item--h6::before { left: 56px; }
 
 .m3-toc-link.is-active {
     color: var(--md-sys-color-primary) !important;
@@ -397,4 +400,3 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
         display: none !important;
     }
 }
-

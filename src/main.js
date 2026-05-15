@@ -4,25 +4,29 @@ import { storage } from './storage';
 import './scripts/card-animation';
 import './scripts/share-actions';
 import { initHandyMode } from './scripts/handy-mode';
+import { initPagination } from './scripts/pagination';
+import { initThemeManager } from './scripts/theme-manager';
+import { initTOCManager } from './scripts/toc-manager';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof gsap !== 'undefined') gsap.config({ force3D: true });
 
     const initializers = [
         initColorExtraction,
-        initDarkMode,
+        initThemeManager,
         initSearchBar,
         initDrawer,
         initViewSwitcher,
         initHandyMode,
         initShareFeatures,
-        initTableOfContents,
+        initTOCManager,
         initOverdriveScroll,
         initKeyboardShortcuts,
         initTooltips,
         initRippleEffect,
         initAdaptiveHeader,
         initReadingProgress,
+        initPagination,
         initArticleNavigation,
         initHeroInfoBubble,
         initScrollAnimations,
@@ -190,15 +194,7 @@ async function initReadingProgress() {
 function initArticleNavigation() {
     // Event delegation for better reliability
     document.addEventListener('click', (e) => {
-        // 1. Pagination "TOP" button
-        const topBtn = e.target.closest('#m3-article-top-anchor');
-        if (topBtn) {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-
-        // 2. Hero Comment Trigger
+        // Hero Comment Trigger
         const commentTrigger = e.target.closest('#m3-hero-comment-trigger');
         if (commentTrigger) {
             e.preventDefault();
@@ -214,16 +210,6 @@ function initArticleNavigation() {
             }
         }
     });
-
-    // 3. Page Selector Dropdown
-    const pageSelector = document.getElementById('m3-page-selector');
-    if (pageSelector) {
-        pageSelector.addEventListener('change', (e) => {
-            if (e.target.value) {
-                window.location.href = e.target.value;
-            }
-        });
-    }
 }
 
 
@@ -245,39 +231,6 @@ function initColorExtraction() {
     });
 }
 
-function initDarkMode() {
-    const toggle = document.getElementById('theme-toggle');
-    if (!toggle) return;
-
-    const updateTheme = () => {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        const icon = toggle.querySelector('.material-symbols-outlined');
-
-        // 常に「明るさ（brightness_6）」アイコンを使用
-        if (icon) {
-            icon.textContent = 'brightness_6';
-        }
-
-        storage.set('theme', isDark ? 'dark' : 'light');
-    };
-
-    toggle.addEventListener('click', () => {
-        const current = document.body.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-theme', next);
-        updateTheme();
-    });
-
-    const bottomToggleBtn = document.getElementById('m3-theme-toggle-handy');
-    const toggleFunc = () => {
-        const current = document.body.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-theme', next);
-        updateTheme();
-    };
-    bottomToggleBtn?.addEventListener('click', toggleFunc);
-    updateTheme();
-}
 
 function initSearchBar() {
     console.log('Search Bar: Initializing Full Version...');
@@ -668,122 +621,6 @@ function initViewSwitcher() {
         storage.set('view-mode', next);
         location.reload();
     });
-}
-
-function initTableOfContents() {
-    console.log('TOC: Starting initialization...');
-    const container = document.getElementById('m3-toc-container');
-    const toc = document.getElementById('m3-sticky-toc');
-    const article = document.querySelector('.m3-article__body');
-    const trigger = document.getElementById('m3-toc-trigger');
-    const handyTrigger = document.getElementById('m3-handy-toc-trigger');
-    const closeBtn = document.getElementById('m3-toc-close');
-
-    if (!container || !toc || !article) {
-        console.warn('TOC: Required elements not found', { container: !!container, toc: !!toc, article: !!article });
-        return;
-    }
-
-    // --- 1. TOC Content Generation ---
-    const headings = article.querySelectorAll('h1, h2, h3, h4, h5');
-    console.log(`TOC: Found ${headings.length} headings`);
-
-    if (headings.length === 0) {
-        if (trigger) trigger.style.display = 'none';
-        if (handyTrigger) handyTrigger.style.display = 'none';
-        return;
-    } else {
-        if (trigger) {
-            trigger.style.display = 'flex';
-            trigger.classList.add('toc-ready'); // Always show TOC button if headings exist
-        }
-        if (handyTrigger) handyTrigger.style.display = 'flex';
-    }
-
-    container.innerHTML = '';
-    const ul = document.createElement('ul');
-    ul.className = 'm3-toc-list';
-
-    headings.forEach((heading, index) => {
-        const id = heading.id || `m3-heading-${index}`;
-        heading.id = id;
-
-        const li = document.createElement('li');
-        li.className = `m3-toc-item m3-toc-item--${heading.tagName.toLowerCase()}`;
-
-        const a = document.createElement('a');
-        a.href = `#${id}`;
-        a.className = 'm3-toc-link';
-        a.textContent = heading.innerText || heading.textContent;
-
-        // --- 2. Smooth Scroll Logic ---
-        a.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = document.getElementById(id);
-            if (target) {
-                const offset = 100;
-                const targetPos = target.getBoundingClientRect().top + window.pageYOffset - offset;
-                window.scrollTo({ top: targetPos, behavior: 'smooth' });
-                if (typeof closeTOC !== 'undefined') closeTOC();
-            }
-        });
-
-        li.appendChild(a);
-        ul.appendChild(li);
-    });
-    container.appendChild(ul);
-
-    // --- 2. ScrollSpy ---
-    const updateActiveHeading = () => {
-        const scrollPos = window.pageYOffset + 120;
-        let activeId = null;
-
-        headings.forEach(heading => {
-            if (scrollPos >= heading.offsetTop) {
-                activeId = heading.id;
-            }
-        });
-
-        container.querySelectorAll('.m3-toc-link').forEach(link => {
-            link.classList.toggle('is-active', link.getAttribute('href') === `#${activeId}`);
-        });
-    };
-    window.addEventListener('scroll', updateActiveHeading, { passive: true });
-
-    // --- 3. Open/Close Logic ---
-    const closeTOC = () => {
-        console.log('TOC: Closing');
-        toc.classList.remove('is-active');
-        document.body.classList.remove('is-active-toc');
-    };
-
-    const toggleTOC = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const isActive = toc.classList.toggle('is-active');
-        console.log('TOC: Toggle state =', isActive);
-        document.body.classList.toggle('is-active-toc', isActive);
-        if (isActive) updateActiveHeading();
-    };
-
-    if (trigger) trigger.addEventListener('click', toggleTOC);
-    if (handyTrigger) handyTrigger.addEventListener('click', toggleTOC);
-    if (closeBtn) closeBtn.addEventListener('click', closeTOC);
-
-    document.addEventListener('click', (e) => {
-        if (toc.classList.contains('is-active')) {
-            const isClickInside = toc.contains(e.target);
-            const isClickOnTrigger = (trigger && trigger.contains(e.target)) || (handyTrigger && handyTrigger.contains(e.target));
-            if (!isClickInside && !isClickOnTrigger) {
-                closeTOC();
-            }
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && toc.classList.contains('is-active')) closeTOC();
-    });
-    console.log('TOC: Initialization complete');
 }
 
 function initCommentForm() {

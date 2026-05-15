@@ -5,10 +5,24 @@ global $wp_query; // 全〇〇件 を取得するために必須
 
 <main id="primary" class="site-main">
 
-<?php 
+    <?php 
     // SEO: パンくずリスト
     node_the_breadcrumbs();
     ?>
+    
+    <section class="m3-archive-header m3-surface m3-section-spacing" aria-labelledby="archive-title">
+        <div class="m3-headlines__header" style="border-bottom: none; margin-bottom: 0;">
+            <h1 id="archive-title" class="m3-headlines__title m3-section-title" style="margin-bottom: 0;">
+                <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 1.2em; vertical-align: middle;">category</span>
+                <?php single_cat_title(); ?> <span class="m3-section-title__sub">アーカイブ</span>
+            </h1>
+        </div>
+        <?php if (category_description()) : ?>
+            <div class="m3-archive-header__desc" style="margin-top: 16px; color: var(--md-sys-color-on-surface-variant);">
+                <?php echo category_description(); ?>
+            </div>
+        <?php endif; ?>
+    </section>
 
     <div class="m3-post-grid">
         <?php if (have_posts()) : ?>

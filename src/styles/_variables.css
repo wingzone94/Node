@@ -57,6 +57,14 @@
     --rank-medium-short: #00E5FF;
     --rank-medium-long: #2979FF;
 
+    /* --- Article Pagination Colors --- */
+    --m3-pagination-current: #0061A4;
+    --m3-pagination-on-current: #ffffff;
+    --m3-pagination-current-shadow: rgba(0, 97, 164, 0.3);
+    --m3-pagination-after-first: #F57C00;
+    --m3-pagination-on-after-first: #ffffff;
+    --m3-pagination-after-first-shadow: rgba(245, 124, 0, 0.24);
+
     /* --- Material 3 Spacing --- */
     --m3-spacing-xs: 4px;
     --m3-spacing-s: 8px;

@@ -32,13 +32,48 @@
         </style>
     </noscript>
     <script>
-    if ('serviceWorker' in navigator) {
+    (function() {
+        const THEME_KEY = 'node_theme';
+        const applyTheme = (theme) => {
+            console.log('[Theme] Applying:', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-theme', theme);
+            try {
+                localStorage.setItem(THEME_KEY, theme);
+            } catch (e) {}
+        };
+
+        // --- 1. Initial Load ---
+        try {
+            const saved = localStorage.getItem(THEME_KEY);
+            if (saved === 'dark' || saved === 'light') {
+                applyTheme(saved);
+            }
+        } catch (e) {}
+
+        // --- 2. Toggle Handler (Robust Delegation) ---
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('<?php echo get_template_directory_uri(); ?>/sw.js')
-                .then(reg => console.log('Service Worker registered'))
-                .catch(err => console.log('Service Worker registration failed: ', err));
+            console.log('[Theme] Initializing toggle...');
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('#theme-toggle, #m3-theme-toggle-handy');
+                if (btn) {
+                    console.log('[Theme] Toggle clicked');
+                    const current = document.body.getAttribute('data-theme') || document.documentElement.getAttribute('data-theme') || 'light';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    applyTheme(next);
+                }
+            });
         });
-    }
+
+        // --- 3. SW ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('<?php echo get_template_directory_uri(); ?>/sw.js')
+                    .then(reg => console.log('Node SW registered'))
+                    .catch(err => console.log('SW failed', err));
+            });
+        }
+    })();
     </script>
     <?php wp_head(); ?>
 </head>
@@ -90,6 +125,16 @@
             <!-- RSS -->
             <a href="<?php bloginfo('rss2_url'); ?>" class="m3-icon-button m3-tooltip-target m3-rss-button" id="m3-rss-trigger" aria-label="RSS" data-tooltip="RSSフィード">
                 <span class="material-symbols-outlined">rss_feed</span>
+            </a>
+
+            <!-- X (Twitter) -->
+            <a href="https://x.com/LumiousCoreJP" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-x-button" aria-label="Official X" data-tooltip="公式X">
+                <i class="fa-brands fa-x-twitter"></i>
+            </a>
+
+            <!-- Discord -->
+            <a href="https://discord.gg/QPr4RPxfAA" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-discord-button" aria-label="Official Discord" data-tooltip="公式Discord">
+                <i class="fa-brands fa-discord"></i>
             </a>
             
             <!-- Theme -->

@@ -1,0 +1,52 @@
+/**
+ * Pagination and Article Navigation Logic
+ */
+
+export function initPagination() {
+    // 1. Page Selector Dropdown (for multi-page posts)
+    const pageSelector = document.getElementById('m3-page-selector');
+    if (pageSelector) {
+        pageSelector.addEventListener('change', (e) => {
+            if (e.target.value) {
+                // Add a small delay for better feel
+                setTimeout(() => {
+                    window.location.href = e.target.value;
+                }, 100);
+            }
+        });
+    }
+
+    // 2. Smooth Scroll for Pagination Links (if they are on the same page, though usually they aren't in WP)
+    // But we handle the TOP button here as well for consistency
+    document.addEventListener('click', (e) => {
+        const topBtn = e.target.closest('#m3-article-top-anchor');
+        if (topBtn) {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+    });
+
+    // 3. Animation for pagination numbers on hover (Expressive style)
+    const paginationNumbers = document.querySelectorAll('.m3-pagination__number');
+    paginationNumbers.forEach(num => {
+        num.addEventListener('mouseenter', () => {
+            if (typeof gsap !== 'undefined' && num.tagName === 'A') {
+                gsap.to(num, {
+                    scale: 1.1,
+                    duration: 0.3,
+                    ease: "power2.out"
+                });
+            }
+        });
+        num.addEventListener('mouseleave', () => {
+            if (typeof gsap !== 'undefined' && num.tagName === 'A') {
+                gsap.to(num, {
+                    scale: 1,
+                    duration: 0.3,
+                    ease: "power2.out"
+                });
+            }
+        });
+    });
+}

@@ -85,8 +85,8 @@ function node_enqueue_assets() {
 			wp_enqueue_script(
 				'node-main-js',
 				NODE_THEME_URI . '/assets/' . $manifest['src/main.js']['file'],
-				array( 'node-gsap', 'node-gsap-scroll' ),
-				NODE_THEME_VERSION,
+				array(), // Removed GSAP dependency to prevent blocking if CDN is slow/down
+				time(), // Force refresh for production bug fix
 				true
 			);
 			
