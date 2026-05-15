@@ -278,4 +278,15 @@ function node_archive_include_cpt( $query ) {
     }
 }
 add_action( 'pre_get_posts', 'node_archive_include_cpt' );
-
+/**
+ * Remove CAPTCHA and Image Authentication from comment form (e.g. SiteGuard WP Plugin)
+ */
+function node_remove_comment_captcha_hooks() {
+    // SiteGuard WP Plugin
+    remove_action( 'comment_form_after_fields', 'siteguard_comment_form_after_fields', 10 );
+    remove_action( 'comment_form_logged_in_after', 'siteguard_comment_form_logged_in_after', 10 );
+    
+    // Really Simple CAPTCHA or others that might use these hooks
+    remove_action( 'comment_form_after_fields', 'show_captcha_field', 10 );
+}
+add_action( 'init', 'node_remove_comment_captcha_hooks' );
