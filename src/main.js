@@ -9,9 +9,23 @@ import { initThemeManager } from './scripts/theme-manager';
 import { initTOCManager } from './scripts/toc-manager';
 import { initFloatingActions } from './scripts/floating-actions';
 import { initReadingProgress } from './scripts/reading-progress';
+import { debugLog } from './scripts/debug-log';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof gsap !== 'undefined') gsap.config({ force3D: true });
+
+    // #region agent log
+    debugLog('main.js:boot', 'DOMContentLoaded', {
+        runId: 'post-fix',
+        gsapDefined: typeof gsap !== 'undefined',
+        bodyClass: document.body.className,
+        viewport: window.innerWidth,
+        isSingular: document.body.classList.contains('single'),
+        hasArticleBody: !!document.querySelector('.m3-article__body'),
+        hasProgressBar: !!document.querySelector('.m3-header__progress-bar'),
+        storageHasRemove: typeof storage.remove === 'function',
+    }, 'B');
+    // #endregion
 
     const initializers = [
         initColorExtraction,
@@ -38,13 +52,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         initCommentForm
     ];
 
+    const failed = [];
     initializers.forEach(init => {
         try {
             init();
         } catch (e) {
+            failed.push({ name: init.name, error: String(e) });
             console.error(`Initializer failed: ${init.name}`, e);
         }
     });
+
+    // #region agent log
+    debugLog('main.js:init-complete', 'Initializers finished', { failed, failedCount: failed.length }, 'D');
+    // #endregion
 });
 
 function initHeroInfoBubble() {

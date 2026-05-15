@@ -423,12 +423,12 @@ body:has(.m3-modal.is-active) .m3-bottom-nav {
     }
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
     .m3-bottom-nav {
         display: flex !important;
     }
 
-    /* ボトムバーでコンテンツが隠れないように調整 */
+    /* ボトムバーでコンテンツが隠れないように調整（サイドバー非表示帯と同期） */
     .site-main {
         padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
     }

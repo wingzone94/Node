@@ -77,6 +77,25 @@ function node_enqueue_assets() {
 
 	$manifest_path = NODE_THEME_DIR . '/assets/.vite/manifest.json';
 
+	// GSAP (CDN) — register してから enqueue（読了ゲージ粉砕・カードアニメ等）
+	wp_register_script(
+		'node-gsap',
+		'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
+		array(),
+		'3.12.5',
+		true
+	);
+
+	wp_register_script(
+		'node-gsap-scroll',
+		'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js',
+		array( 'node-gsap' ),
+		'3.12.5',
+		true
+	);
+
+	wp_enqueue_script( 'node-gsap' );
+
 	if ( file_exists( $manifest_path ) ) {
 		$manifest = json_decode( file_get_contents( $manifest_path ), true );
 
@@ -85,7 +104,7 @@ function node_enqueue_assets() {
 			wp_enqueue_script(
 				'node-main-js',
 				NODE_THEME_URI . '/assets/' . $manifest['src/main.js']['file'],
-				array(), // Removed GSAP dependency to prevent blocking if CDN is slow/down
+				array( 'node-gsap' ),
 				time(), // Force refresh for production bug fix
 				true
 			);
@@ -121,24 +140,6 @@ function node_enqueue_assets() {
 	}
 
 	// Google Fonts & Material Symbols are now handled in header.php for performance.
-
-	// GSAP (CDN)
-	wp_register_script(
-		'node-gsap',
-		'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
-		array(),
-		'3.12.5',
-		true
-	);
-	
-	// ScrollToPlugin (CDN)
-	wp_register_script(
-		'node-gsap-scroll',
-		'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js',
-		array('node-gsap'),
-		'3.12.5',
-		true
-	);
 }
 add_action( 'wp_enqueue_scripts', 'node_enqueue_assets' );
 

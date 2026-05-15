@@ -4,6 +4,8 @@
  * Scroll-spy and progress follow v0.8.x behavior, with sidebar link auto-scroll.
  */
 
+import { debugLog } from './debug-log';
+
 const SCROLL_OFFSET = 120;
 const DESKTOP_SIDEBAR_MQ = '(min-width: 1101px)';
 const SIDEBAR_COLLAPSED_KEY = 'm3-toc-sidebar-collapsed';
@@ -30,7 +32,16 @@ export function initTOCManager() {
     const closeBtn = document.getElementById('m3-toc-close');
     const actionStack = document.querySelector('.m3-action-stack');
 
-    if (!article || (!sidebarContainer && !floatingContainer)) return;
+    if (!article || (!sidebarContainer && !floatingContainer)) {
+        // #region agent log
+        debugLog('toc-manager.js:init', 'TOC init aborted', {
+            hasArticle: !!article,
+            hasSidebar: !!sidebarContainer,
+            hasFloating: !!floatingContainer,
+        }, 'C');
+        // #endregion
+        return;
+    }
 
     const headings = Array.from(article.querySelectorAll('h1, h2, h3, h4, h5, h6'))
         .filter((heading) => heading.textContent.trim().length > 0);
@@ -58,6 +69,17 @@ export function initTOCManager() {
 
     updateMobileTocTriggers();
     window.matchMedia(DESKTOP_SIDEBAR_MQ).addEventListener('change', updateMobileTocTriggers);
+
+    // #region agent log
+    debugLog('toc-manager.js:init', 'TOC init OK', {
+        headingCount: headings.length,
+        isDesktopSidebar: isDesktopSidebar(),
+        viewport: window.innerWidth,
+        fabHidden: fabTrigger?.hidden,
+        handyHidden: handyTrigger?.hidden,
+        sidebarCollapsed: sidebar?.classList.contains('is-collapsed'),
+    }, 'C');
+    // #endregion
 
     actionStack?.classList.add('is-has-toc');
 

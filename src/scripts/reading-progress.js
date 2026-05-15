@@ -3,6 +3,8 @@
  * Bar at bottom of header.php with shimmer + shatter animation at 100%.
  */
 
+import { debugLog } from './debug-log';
+
 const HEADER_OFFSET = 64;
 const SHATTER_THRESHOLD = 99.8;
 const RESTORE_THRESHOLD = 99.5;
@@ -12,9 +14,26 @@ export function initReadingProgress() {
     const container = document.querySelector('.m3-header__progress-container');
     const article = document.querySelector('.m3-article__body') || document.querySelector('.site-main');
 
-    if (!progressBar || !article) return;
+    if (!progressBar || !article) {
+        // #region agent log
+        debugLog('reading-progress.js:init', 'Init aborted — missing DOM', {
+            hasProgressBar: !!progressBar,
+            hasArticle: !!article,
+            articleSelector: article ? article.className : null,
+        }, 'A');
+        // #endregion
+        return;
+    }
+
+    // #region agent log
+    debugLog('reading-progress.js:init', 'Init OK', {
+        gsapDefined: typeof gsap !== 'undefined',
+        articleHeight: article.offsetHeight,
+    }, 'B');
+    // #endregion
 
     let shattered = false;
+    let lastLoggedVisible = null;
 
     const updateProgress = () => {
         const scrollY = window.scrollY || window.pageYOffset;
@@ -23,7 +42,7 @@ export function initReadingProgress() {
         const articleHeight = rect.height;
         const windowHeight = window.innerHeight;
         const scrollStart = Math.max(0, articleTop - HEADER_OFFSET);
-        const scrollEnd = articleTop + articleHeight - 100;
+        const articleEnd = articleTop + articleHeight;
 
         let progress = 0;
         if (scrollY > scrollStart) {
@@ -50,12 +69,33 @@ export function initReadingProgress() {
 
         if (progress >= SHATTER_THRESHOLD && !shattered) {
             shattered = true;
+            // #region agent log
+            debugLog('reading-progress.js:shatter', 'Shatter triggered', {
+                progress: Math.round(progress * 10) / 10,
+                gsapDefined: typeof gsap !== 'undefined',
+                barWidth: progressBar.style.width,
+            }, 'B');
+            // #endregion
             playBarShatterAnimation(container, progressBar);
         }
 
         if (container) {
-            const inRange = scrollY > scrollStart && scrollY < scrollEnd;
-            container.classList.toggle('is-visible', inRange);
+            const inRange = scrollY > scrollStart && scrollY < articleEnd - 40;
+            const shouldShow = inRange && progress > 0;
+            container.classList.toggle('is-visible', shouldShow);
+            if (lastLoggedVisible !== shouldShow) {
+                lastLoggedVisible = shouldShow;
+                // #region agent log
+                debugLog('reading-progress.js:visibility', 'Gauge visibility changed', {
+                    inRange,
+                    progress: Math.round(progress * 10) / 10,
+                    scrollY: Math.round(scrollY),
+                    scrollStart: Math.round(scrollStart),
+                    articleEnd: Math.round(articleEnd),
+                    shouldShow,
+                }, 'E');
+                // #endregion
+            }
         }
     };
 
@@ -81,11 +121,14 @@ function playBarShatterAnimation(parent, bar) {
 
     const rect = bar.getBoundingClientRect();
     const shardCount = 20;
+    const primaryColor =
+        getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim() ||
+        '#FF9900';
 
     for (let i = 0; i < shardCount; i++) {
         const shard = document.createElement('div');
         shard.className = 'm3-gauge-shard';
-        shard.style.backgroundColor = '#FF9900';
+        shard.style.backgroundColor = primaryColor;
         shard.style.left = `${Math.random() * Math.max(rect.width, 1)}px`;
         shard.style.top = '0px';
         parent.appendChild(shard);
