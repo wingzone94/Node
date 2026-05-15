@@ -69,6 +69,47 @@ foreach ( $embedded_plugins as $plugin_file => $init_func ) {
 }
 
 /**
+ * Vite manifest の import チェーンを依存順で登録（ES module）。
+ *
+ * @param array<string, mixed> $manifest
+ * @param string               $key
+ * @param array<string, bool>  $seen
+ * @return string[] Script handles in load order.
+ */
+function node_register_vite_chain( array $manifest, string $key, array &$seen = array() ): array {
+	if ( ! isset( $manifest[ $key ] ) || isset( $seen[ $key ] ) ) {
+		return array();
+	}
+
+	$handles = array();
+
+	if ( ! empty( $manifest[ $key ]['imports'] ) && is_array( $manifest[ $key ]['imports'] ) ) {
+		foreach ( $manifest[ $key ]['imports'] as $import_key ) {
+			$handles = array_merge( $handles, node_register_vite_chain( $manifest, $import_key, $seen ) );
+		}
+	}
+
+	$slug   = sanitize_title( str_replace( array( '/', '_', '.' ), '-', $key ) );
+	$handle = 'node-vite-' . $slug;
+	$file   = $manifest[ $key ]['file'];
+	$path   = NODE_THEME_DIR . '/assets/' . $file;
+
+	wp_register_script(
+		$handle,
+		NODE_THEME_URI . '/assets/' . $file,
+		array(),
+		file_exists( $path ) ? (string) filemtime( $path ) : NODE_THEME_VERSION,
+		true
+	);
+	wp_script_add_data( $handle, 'type', 'module' );
+
+	$seen[ $key ]     = true;
+	$handles[]        = $handle;
+
+	return $handles;
+}
+
+/**
  * -------------------------------------------------------
  * 3. Vite アセット読み込み（CSS/JS）
  * -------------------------------------------------------
@@ -77,43 +118,29 @@ function node_enqueue_assets() {
 
 	$manifest_path = NODE_THEME_DIR . '/assets/.vite/manifest.json';
 
-	// GSAP (CDN) — register してから enqueue（読了ゲージ粉砕・カードアニメ等）
-	wp_register_script(
-		'node-gsap',
-		'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
-		array(),
-		'3.12.5',
-		true
-	);
-
-	wp_register_script(
-		'node-gsap-scroll',
-		'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js',
-		array( 'node-gsap' ),
-		'3.12.5',
-		true
-	);
-
-	wp_enqueue_script( 'node-gsap' );
-
 	if ( file_exists( $manifest_path ) ) {
 		$manifest = json_decode( file_get_contents( $manifest_path ), true );
 
-		// メイン JS
+		// メイン JS（vendor チャンク → main の順、type=module）
 		if ( isset( $manifest['src/main.js']['file'] ) ) {
-			wp_enqueue_script(
-				'node-main-js',
-				NODE_THEME_URI . '/assets/' . $manifest['src/main.js']['file'],
-				array( 'node-gsap' ),
-				time(), // Force refresh for production bug fix
-				true
-			);
-			
-			// AJAX用URLなどをJSに渡す
-			wp_localize_script('node-main-js', 'm3_ajax', [
-				'ajax_url' => admin_url('admin-ajax.php'),
-				'home_url' => home_url('/')
-			]);
+			$seen    = array();
+			$handles = node_register_vite_chain( $manifest, 'src/main.js', $seen );
+
+			foreach ( $handles as $handle ) {
+				wp_enqueue_script( $handle );
+			}
+
+			$main_handle = end( $handles );
+			if ( $main_handle ) {
+				wp_localize_script(
+					$main_handle,
+					'm3_ajax',
+					array(
+						'ajax_url' => admin_url( 'admin-ajax.php' ),
+						'home_url' => home_url( '/' ),
+					)
+				);
+			}
 		}
 
 		// メイン CSS (main.js に紐づくもの)

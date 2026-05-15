@@ -967,10 +967,15 @@
 .m3-header__progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(to right, #FF9900, #FFCC00, #FF9900);
+    background: linear-gradient(
+        to right,
+        var(--md-sys-color-primary),
+        var(--md-sys-color-tertiary, var(--md-sys-color-primary)),
+        var(--md-sys-color-primary)
+    );
     background-size: 200% 100%;
     animation: m3-progress-shimmer 2s infinite linear;
-    box-shadow: 0 0 20px rgba(255, 153, 0, 0.6);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent);
     transition: width 0.1s ease-out;
     border-radius: 0 2px 2px 0;
     transform-origin: center bottom;

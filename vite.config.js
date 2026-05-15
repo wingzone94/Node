@@ -23,9 +23,6 @@ export default defineConfig({
         },
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
-            if (id.includes('gsap')) {
-              return 'vendor-gsap';
-            }
             return 'vendor';
           }
         }
