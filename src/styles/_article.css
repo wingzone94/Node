@@ -1345,6 +1345,10 @@
     transition: all 0.2s ease;
 }
 
+.m3-pagination__number .material-symbols-outlined {
+    font-size: 24px;
+}
+
 /* 現在読んでいるページのサークルを青に変更 */
 .m3-pagination__number:not(a) {
     background: #0061A4 !important; /* Material Blue */

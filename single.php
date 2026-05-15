@@ -68,6 +68,14 @@
                                     </div>
                                     <div class="m3-pagination__numbers">
                                         <?php
+                                        // First Page Button
+                                        if ( $page > 1 ) {
+                                            $first_link = _wp_link_page( 1 );
+                                            preg_match( '/href="([^"]+)"/', $first_link, $first_match );
+                                            $first_url = $first_match[1] ?? '';
+                                            echo '<a href="' . esc_url( $first_url ) . '" class="m3-pagination__number" aria-label="最初のページへ"><span class="material-symbols-outlined">first_page</span></a>';
+                                        }
+
                                         wp_link_pages( array(
                                             'before'      => '',
                                             'after'       => '',
@@ -75,6 +83,14 @@
                                             'link_after'  => '</span>',
                                             'separator'   => '',
                                         ) );
+
+                                        // Last Page Button
+                                        if ( $page < $numpages ) {
+                                            $last_link = _wp_link_page( $numpages );
+                                            preg_match( '/href="([^"]+)"/', $last_link, $last_match );
+                                            $last_url = $last_match[1] ?? '';
+                                            echo '<a href="' . esc_url( $last_url ) . '" class="m3-pagination__number" aria-label="最後のページへ"><span class="material-symbols-outlined">last_page</span></a>';
+                                        }
                                         ?>
                                     </div>
                                 </div>
