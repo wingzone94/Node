@@ -29,8 +29,8 @@
     </button>
     <?php endif; ?>
 
-    <!-- 4. TOC Trigger (Bottom-most) -->
-    <button id="m3-toc-trigger" class="m3-fab m3-fab--extended">
+    <!-- 4. TOC Trigger (mobile / tablet only; PC uses sidebar) -->
+    <button id="m3-toc-trigger" class="m3-fab m3-fab--extended m3-fab--toc-mobile">
         <span class="material-symbols-outlined">list</span>
         <span class="m3-fab-text">目次</span>
         <span class="m3-fab-label-top">目次を表示</span>

@@ -848,12 +848,14 @@
 .m3-article__body h2,
 .m3-article__body h3,
 .m3-article__body h4,
-.m3-article__body h5 {
+.m3-article__body h5,
+.m3-article__body h6 {
+    font-family: var(--font-heading);
     font-weight: 900;
     margin: var(--m3-spacing-xxxl) 0 var(--m3-spacing-m);
     border-bottom: 4px solid var(--md-sys-color-primary-container);
     display: inline-block;
-    line-height: 1.2;
+    line-height: 1.25;
     letter-spacing: -0.01em;
     font-feature-settings: "palt" 1;
     color: var(--md-sys-color-on-surface);
@@ -872,7 +874,8 @@
 .m3-article__body h2 { font-size: 1.85rem; }
 .m3-article__body h3 { font-size: 1.45rem; border-bottom-width: 3px; color: var(--md-sys-color-primary); }
 .m3-article__body h4 { font-size: 1.25rem; border-bottom-width: 2px; }
-.m3-article__body h5 { font-size: 1.1rem; border-bottom-width: 2px; opacity: 0.8; }
+.m3-article__body h5 { font-size: 1.1rem; border-bottom-width: 2px; opacity: 0.85; }
+.m3-article__body h6 { font-size: 1rem; border-bottom-width: 2px; opacity: 0.75; }
 
 .m3-article__body li {
     line-height: 1.6;

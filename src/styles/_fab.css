@@ -400,3 +400,10 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
         display: none !important;
     }
 }
+
+/* PC: sidebar TOC replaces FAB trigger (>= 1101px, matches sidebar breakpoint) */
+@media screen and (min-width: 1101px) {
+    .m3-fab--toc-mobile {
+        display: none;
+    }
+}

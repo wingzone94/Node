@@ -7,6 +7,8 @@ import { initHandyMode } from './scripts/handy-mode';
 import { initPagination } from './scripts/pagination';
 import { initThemeManager } from './scripts/theme-manager';
 import { initTOCManager } from './scripts/toc-manager';
+import { initFloatingActions } from './scripts/floating-actions';
+import { initReadingProgress } from './scripts/reading-progress';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof gsap !== 'undefined') gsap.config({ force3D: true });
@@ -20,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initHandyMode,
         initShareFeatures,
         initTOCManager,
+        initFloatingActions,
         initOverdriveScroll,
         initKeyboardShortcuts,
         initTooltips,
@@ -146,49 +149,6 @@ function initScrollAnimations() {
     }, { threshold: 0.1 });
 
     document.querySelectorAll('.m3-reading-badge, .m3-reveal, .m3-reveal-group').forEach(el => observer.observe(el));
-}
-
-async function initReadingProgress() {
-    const progressBar = document.querySelector('.m3-header__progress-bar');
-    const container = document.querySelector('.m3-header__progress-container');
-    const article = document.querySelector('.m3-article__body') || document.querySelector('.site-main');
-
-    if (!progressBar || !article) return;
-
-    const updateProgress = () => {
-        const scrollY = window.scrollY || window.pageYOffset;
-        const rect = article.getBoundingClientRect();
-        const articleTop = rect.top + scrollY;
-        const articleHeight = rect.height;
-        const windowHeight = window.innerHeight;
-        
-        // ヘッダー高さ分を考慮
-        const headerHeight = 64;
-        const scrollStart = Math.max(0, articleTop - headerHeight);
-        
-        let progress = 0;
-        if (scrollY > scrollStart) {
-            const scrollDistance = scrollY - scrollStart;
-            const scrollableHeight = articleHeight - windowHeight + headerHeight;
-            progress = (scrollDistance / Math.max(1, scrollableHeight)) * 100;
-        }
-        
-        progress = Math.min(100, Math.max(0, progress));
-        progressBar.style.width = `${progress}%`;
-
-        // バーの表示・非表示 (わずかにスクロールしたら表示)
-        if (container) {
-            if (progress > 0.5) {
-                container.classList.add('is-visible');
-            } else {
-                container.classList.remove('is-visible');
-            }
-        }
-    };
-
-    window.addEventListener('scroll', updateProgress, { passive: true });
-    window.addEventListener('resize', updateProgress, { passive: true });
-    updateProgress();
 }
 
 function initArticleNavigation() {

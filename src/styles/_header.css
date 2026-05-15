@@ -1,9 +1,10 @@
 /* --- Header (Material 3 Expressive) --- */
-.m3-header { 
-    position: fixed; 
-    top: 0; 
+.m3-header {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
+    overflow: visible;
     margin: 0;
     width: 100%;
     max-width: none;
@@ -964,14 +965,16 @@
 .m3-header__progress-container.is-visible { opacity: 1; }
 
 .m3-header__progress-bar {
-    height: 100%; 
-    width: 0%; 
+    height: 100%;
+    width: 0%;
     background: linear-gradient(to right, #FF9900, #FFCC00, #FF9900);
     background-size: 200% 100%;
     animation: m3-progress-shimmer 2s infinite linear;
-    box-shadow: 0 0 20px rgba(255, 153, 0, 0.6); 
+    box-shadow: 0 0 20px rgba(255, 153, 0, 0.6);
     transition: width 0.1s ease-out;
     border-radius: 0 2px 2px 0;
+    transform-origin: center bottom;
+    will-change: width, transform, opacity;
 }
 
 @keyframes m3-progress-shimmer {

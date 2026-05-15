@@ -1,16 +1,26 @@
 <?php
 /**
- * Template part for the sidebar-integrated Table of Contents
+ * Template part for the sidebar-integrated Table of Contents (PC only)
  */
 ?>
 
 <aside id="m3-toc-sidebar" class="m3-toc-sidebar" aria-labelledby="toc-sidebar-title">
     <div class="m3-toc-sidebar__inner m3-surface-container-low">
         <div class="m3-toc-sidebar__header">
-            <span class="material-symbols-outlined" aria-hidden="true">toc</span>
+            <span class="material-symbols-outlined m3-toc-sidebar__icon" aria-hidden="true">toc</span>
             <h2 id="toc-sidebar-title" class="m3-toc-sidebar__title">目次</h2>
+            <button
+                type="button"
+                id="m3-toc-sidebar-toggle"
+                class="m3-toc-sidebar__toggle"
+                aria-expanded="true"
+                aria-controls="m3-toc-sidebar-content m3-toc-sidebar-footer"
+                aria-label="<?php esc_attr_e( '目次を折りたたむ', 'node' ); ?>"
+            >
+                <span class="material-symbols-outlined" aria-hidden="true">expand_less</span>
+            </button>
         </div>
-        
+
         <nav id="m3-toc-sidebar-content" class="m3-toc-sidebar__nav" aria-label="ページ内目次">
             <!-- TOC will be injected here by JS -->
             <div class="m3-toc-sidebar__placeholder">
@@ -20,7 +30,7 @@
             </div>
         </nav>
 
-        <div class="m3-toc-sidebar__footer">
+        <div id="m3-toc-sidebar-footer" class="m3-toc-sidebar__footer">
             <div class="m3-toc-sidebar__progress-track">
                 <div id="m3-toc-progress-bar" class="m3-toc-sidebar__progress-bar"></div>
             </div>
