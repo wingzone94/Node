@@ -38,6 +38,7 @@
     </footer>
 </div><!-- .m3-page-container -->
 
+<?php get_template_part('template-parts/components/bottom-bar'); ?>
 <?php get_template_part('template-parts/components/floating-actions'); ?>
 
 <div id="m3-ogp-tooltip" class="m3-dynamic-tooltip"></div>

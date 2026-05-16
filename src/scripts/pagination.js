@@ -19,6 +19,13 @@ export function initPagination() {
     // 2. Smooth Scroll for Pagination Links (if they are on the same page, though usually they aren't in WP)
     // But we handle the TOP button here as well for consistency
     document.addEventListener('click', (e) => {
+        const tocBtn = e.target.closest('#m3-article-toc-anchor');
+        if (tocBtn) {
+            e.preventDefault();
+            document.dispatchEvent(new CustomEvent('m3:toc:toggle'));
+            return;
+        }
+
         const topBtn = e.target.closest('#m3-article-top-anchor');
         if (topBtn) {
             e.preventDefault();

@@ -9,12 +9,13 @@
         <div class="m3-toc-sidebar__header">
             <span class="material-symbols-outlined m3-toc-sidebar__icon" aria-hidden="true">toc</span>
             <h2 id="toc-sidebar-title" class="m3-toc-sidebar__title">目次</h2>
+
             <button
                 type="button"
                 id="m3-toc-sidebar-toggle"
                 class="m3-toc-sidebar__toggle"
                 aria-expanded="true"
-                aria-controls="m3-toc-sidebar-content m3-toc-sidebar-footer"
+                aria-controls="m3-toc-sidebar-content"
                 aria-label="<?php esc_attr_e( '目次を折りたたむ', 'node' ); ?>"
             >
                 <span class="material-symbols-outlined" aria-hidden="true">expand_less</span>
@@ -22,8 +23,7 @@
         </div>
 
         <nav id="m3-toc-sidebar-content" class="m3-toc-sidebar__nav" aria-label="ページ内目次">
-            <!-- TOC will be injected here by JS -->
-            <div class="m3-toc-sidebar__placeholder">
+            <div class="m3-toc-sidebar__placeholder" aria-hidden="true">
                 <div class="m3-toc-sidebar__loading-line"></div>
                 <div class="m3-toc-sidebar__loading-line" style="width: 80%;"></div>
                 <div class="m3-toc-sidebar__loading-line" style="width: 60%;"></div>

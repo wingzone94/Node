@@ -382,10 +382,6 @@
     </div>
 </div>
 
-
-<!-- Bottom Navigation (Handy Mode Optimized - Singular Only) -->
-<?php get_template_part('template-parts/components/bottom-bar'); ?>
-
 <!-- Snackbar (Notifications) -->
 <div id="m3-snackbar" class="m3-snackbar" aria-live="polite">
     <div class="m3-snackbar__content">

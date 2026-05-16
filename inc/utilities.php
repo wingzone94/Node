@@ -220,7 +220,7 @@ function node_the_post_badges($post_id = null, $mode = 'compact', $types = ['ai'
         if (!$has_ai_media && $has_ai_text) {
             $ai_class .= ' is-text-only';
         }
-        
+
         $pos_attr = '';
         if ($mode === 'compact') {
             $ai_class .= ' m3-label--icon-only';
@@ -285,7 +285,7 @@ function node_get_short_ai_summary($text, $length = 80) {
 function node_the_ad_area($position) {
     // 広告コードは将来的に設定画面等から取得できるようにオプション設定を使用
     $ad_code = get_option('node_ad_code_' . $position, '');
-    
+
     // 広告タグが設定されていない場合は非表示（出力しない）
     if (empty(trim($ad_code))) {
         return;
@@ -300,42 +300,129 @@ function node_the_ad_area($position) {
 
 
 /**
- * プラットフォームの分類定義を取得する
+ * サイト全体の平均文字数を取得（キャッシュ付き）
  */
-function node_get_platforms_by_category() {
+function node_get_global_average_chars() {
+    $cache_key = 'node_global_average_chars';
+    $avg_chars = get_transient($cache_key);
+
+    if (false === $avg_chars) {
+        $args = array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => 50,
+            'fields'         => 'ids',
+        );
+        $post_ids = get_posts($args);
+        $total_chars = 0;
+        foreach ($post_ids as $id) {
+            $content = get_post_field('post_content', $id);
+            $total_chars += mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
+        }
+
+        if (count($post_ids) > 0) {
+            $avg_chars = ceil($total_chars / count($post_ids));
+        } else {
+            $avg_chars = 2000;
+        }
+        set_transient($cache_key, $avg_chars, DAY_IN_SECONDS);
+    }
+
+    return $avg_chars;
+}
+
+/**
+ * サイト内の最大文字数を取得（キャッシュ付き）
+ */
+function node_get_global_max_chars() {
+    $cache_key = 'node_global_max_chars';
+    $max_chars = get_transient($cache_key);
+
+    if (false === $max_chars) {
+        global $wpdb;
+        $max_chars = $wpdb->get_var("SELECT MAX(CHAR_LENGTH(post_content)) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
+
+        if (!$max_chars) {
+            $max_chars = 5000;
+        }
+        set_transient($cache_key, $max_chars, DAY_IN_SECONDS);
+    }
+
+    return $max_chars;
+}
+
+/**
+ * 記事の文字数と読了目安ランクを取得する (v0.9.1 Logic)
+ */
+function node_get_article_ranking_info($post_id = null) {
+    if (!$post_id) $post_id = get_the_ID();
+    $content = get_post_field('post_content', $post_id);
+    $chars = mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
+
+    $avg = node_get_global_average_chars();
+    $max = node_get_global_max_chars();
+
+    if ($chars < $avg * 0.4) {
+        $rank = 'short';
+        $label = '短い';
+        $color = '#C8E6C9'; $on_color = '#1B5E20';
+        $container_color = '#E8F5E9';
+        $badge_color = '#00895A';
+        $badge_bg = '#D7F8E9';
+    } elseif ($chars < $avg * 0.8) {
+        $rank = 'somewhat_short';
+        $label = 'やや短い';
+        $color = '#DCEDC8'; $on_color = '#33691E';
+        $container_color = '#F1F8E9';
+        $badge_color = '#2E9B63';
+        $badge_bg = '#E4FAEF';
+    } elseif ($chars < $avg * 1.2) {
+        $rank = 'standard';
+        $label = '標準';
+        $color = '#E3F2FD'; $on_color = '#0D47A1';
+        $container_color = '#E1F5FE';
+        $badge_color = '#0067D8';
+        $badge_bg = '#DCEBFF';
+    } elseif ($chars < $avg * 1.6) {
+        $rank = 'somewhat_long';
+        $label = 'やや長い';
+        $color = '#FFF9C4'; $on_color = '#F57F17';
+        $container_color = '#FFFDE7';
+        $badge_color = '#DE7A00';
+        $badge_bg = '#FFECCF';
+    } else {
+        $rank = 'long';
+        $label = '長い';
+        $color = '#FFDAD6'; $on_color = '#410002';
+        $container_color = '#FFEBEE';
+        $badge_color = '#CF2A2A';
+        $badge_bg = '#FFE1DD';
+    }
+
+    $progress = min(100, round(($chars / $max) * 100));
+    $site_average_chars = max(1, (int) round($avg));
+    // サイト平均文字数を「標準3分」とみなし、記事文字数に応じて秒単位で読了時間を算出
+    $seconds_per_char = (3 * 60) / $site_average_chars;
+    $reading_seconds = max(30, (int) round($chars * $seconds_per_char));
+    $reading = max(1, (int) ceil($reading_seconds / 60));
+
     return [
-        'smartphone_tablet' => [
-            'label' => 'スマートフォン・タブレット',
-            'items' => ['iOS', 'Android'],
-            'class' => 'm3-platform-chip--mobile'
-        ],
-        'pc' => [
-            'label' => 'PC',
-            'items' => ['Windows', 'Mac', 'Linux', 'Chromebook'],
-            'class' => 'm3-platform-chip--pc'
-        ],
-        'webapp' => [
-            'label' => 'Web App',
-            'items' => ['Web App'],
-            'class' => 'm3-platform-chip--webapp'
-        ]
+        'chars'           => $chars,
+        'rank'            => $rank,
+        'label'           => $label,
+        'color'           => $color,
+        'on_color'        => $on_color,
+        'container_color' => $container_color,
+        'badge_color'     => $badge_color,
+        'badge_bg'        => $badge_bg,
+        'progress'        => $progress,
+        'reading'         => $reading,
+        'reading_seconds' => $reading_seconds
     ];
 }
 
 /**
- * 個別のプラットフォーム名からカテゴリ名を取得する
- */
-function node_get_platform_category_name( $platform_name ) {
-    $all_definitions = node_get_platforms_by_category();
-    foreach ( $all_definitions as $category => $def ) {
-        if ( in_array( $platform_name, $def['items'], true ) ) {
-            return $def['label'];
-        }
-    }
-    return 'その他';
-}
-/**
- * フッターメニューのフォールバック（AdSense審査対策）
+ * フッターメニューのフォールバック
  */
 function node_footer_menu_fallback() {
     echo '<ul class="m3-footer__links">';

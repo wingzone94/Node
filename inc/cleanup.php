@@ -53,6 +53,12 @@ function luminous_core_deregister_scripts() {
 }
 add_action( 'wp_footer', 'luminous_core_deregister_scripts' );
 
+/**
+ * 5. 投稿タイトルの「非公開:」「保護中:」の文言を削除
+ */
+add_filter( 'private_title_format', function() { return '%s'; } );
+add_filter( 'protected_title_format', function() { return '%s'; } );
+
 // 4. グローバルスタイル (theme.json) のフロントエンド出力削除
 function luminous_core_remove_global_styles() {
     wp_dequeue_style( 'global-styles' );

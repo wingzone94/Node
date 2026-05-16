@@ -40,6 +40,7 @@ require_once NODE_THEME_DIR . '/inc/admin-settings.php';
 require_once NODE_THEME_DIR . '/inc/seo.php';
 require_once NODE_THEME_DIR . '/inc/scheduler.php';
 require_once NODE_THEME_DIR . '/inc/ogp-generator.php';
+require_once NODE_THEME_DIR . '/inc/toc-engine.php';
 
 /**
  * -------------------------------------------------------
@@ -287,9 +288,12 @@ add_action( 'wp_head', 'node_body_visibility_fallback', 2 );
  * -------------------------------------------------------
  */
 function node_script_loader_tag($tag, $handle, $src) {
-    // Only apply type="module" for Vite generated main JS
-    if ($handle === 'node-main-js') {
-        $tag = str_replace('<script ', '<script type="module" crossorigin ', $tag);
+    // Vite handles: node-vite-*
+    // Force module script so browser can parse `import/export` bundles.
+    if (strpos($handle, 'node-vite-') === 0) {
+        if (strpos($tag, 'type="module"') === false) {
+            $tag = str_replace('<script ', '<script type="module" crossorigin ', $tag);
+        }
     }
     return $tag;
 }

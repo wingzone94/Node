@@ -1,0 +1,104 @@
+/* --- Bottom Navigation Bar (Mobile Only) --- */
+.m3-bottom-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    height: 64px;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 85%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 32px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    display: none; /* Hidden by default */
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 5000;
+    transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), opacity 0.4s;
+}
+
+.m3-bottom-bar.is-hidden {
+    transform: translateY(120%);
+    opacity: 0;
+}
+
+.m3-bottom-bar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--md-sys-color-on-surface-variant);
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    flex: 1;
+    transition: all 0.2s ease;
+    border-radius: 16px;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.m3-bottom-bar__item .material-symbols-outlined {
+    font-size: 24px;
+    font-variation-settings: 'FILL' 0, 'wght' 400;
+    transition: font-variation-settings 0.2s ease, transform 0.2s ease;
+}
+
+.m3-bottom-bar__item:active {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.m3-bottom-bar__item:active .material-symbols-outlined {
+    transform: scale(0.9);
+}
+
+.m3-bottom-bar__label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.m3-bottom-bar__item--active {
+    color: var(--md-sys-color-primary);
+}
+
+.m3-bottom-bar__item--active .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1;
+}
+
+/* AI Special Style */
+.m3-bottom-bar__item--ai {
+    color: #FF9900;
+}
+
+.m3-bottom-bar__item--ai .material-symbols-outlined {
+    animation: m3-ai-icon-pulse 3s infinite ease-in-out;
+}
+
+@keyframes m3-ai-icon-pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px transparent); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255, 153, 0, 0.4)); }
+}
+
+/* Responsive */
+@media screen and (max-width: 1000px) {
+    .m3-bottom-bar {
+        display: none !important;
+    }
+}
+
+/* Scroll Direction Detection (JS adds these classes to body) */
+body.scroll-down .m3-bottom-bar {
+    transform: translateY(120%);
+    opacity: 0;
+}
+
+body.scroll-up .m3-bottom-bar {
+    transform: translateY(0);
+    opacity: 1;
+}

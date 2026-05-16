@@ -13,6 +13,11 @@
     transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Ensure the parent article container can accommodate the wider layout */
+.m3-article:has(.m3-article-layout) {
+    max-width: 1200px;
+}
+
 @media (min-width: 1101px) {
     .m3-article-layout:has(.m3-toc-sidebar.is-collapsed) {
         grid-template-columns: 1fr 72px;
