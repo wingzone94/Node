@@ -412,14 +412,8 @@ function node_force_default_post_status_on_save( $data, $postarr ) {
         return $data;
     }
 
-    if ( 'publish' === $incoming_status ) {
-        if ( ! current_user_can( 'publish_posts' ) ) {
-            $data['post_status'] = 'pending';
-        }
-
-        return $data;
-    }
-
+    // 新規作成時や下書き保存時のみ「レビュー待ち（pending）」に強制する
+    // publish（公開）等のその他のステータス変更には干渉せず、WordPressコアの権限チェックに委ねる
     if ( in_array( $incoming_status, array( '', 'draft' ), true ) ) {
         $data['post_status'] = 'pending';
     }

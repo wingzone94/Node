@@ -89,7 +89,7 @@ function node_post_to_x( $post_id ) {
         $summary = get_the_excerpt( $post_id );
     }
     $clean_summary = wp_strip_all_tags( $summary );
-    $excerpt = mb_strimwidth( $clean_summary, 0, 160, "..." );
+    $excerpt = mb_strimwidth( $clean_summary, 0, 160, "...", "UTF-8" );
 
     // カテゴリ（ハッシュタグ用）
     $categories = get_the_category( $post_id );
@@ -134,7 +134,7 @@ function node_post_to_x( $post_id ) {
     $response = wp_remote_post( $url_api, [
         'headers' => [
             'Authorization' => $auth_header,
-            'Content-Type'  => 'application/json',
+            'Content-Type'  => 'application/json; charset=utf-8',
         ],
         'body'    => json_encode( [ 'text' => $text ] ),
     ] );

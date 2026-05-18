@@ -38,20 +38,18 @@
         }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.addEventListener('click', async (e) => {
-            const btn = e.target.closest('.m3-share-btn');
-            if (!btn) return;
-            const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
-            const isCopyBtn = btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy');
-            if (isSystemShare || isCopyBtn) {
-                e.stopImmediatePropagation(); e.preventDefault();
-                const urlToShare = btn.dataset.url || window.location.href;
-                if (isSystemShare && navigator.share) {
-                    try { await navigator.share({ title: document.title, url: urlToShare }); }
-                    catch (err) { if (err.name !== 'AbortError') executeCopy(btn, urlToShare); }
-                } else { executeCopy(btn, urlToShare); }
-            }
-        }, { capture: true });
-    });
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.m3-share-btn');
+        if (!btn) return;
+        const isSystemShare = btn.id === 'm3-system-share-trigger' || btn.classList.contains('m3-share-btn--system');
+        const isCopyBtn = btn.id === 'm3-copy-trigger' || btn.classList.contains('m3-share-btn--copy');
+        if (isSystemShare || isCopyBtn) {
+            e.stopImmediatePropagation(); e.preventDefault();
+            const urlToShare = btn.dataset.url || window.location.href;
+            if (isSystemShare && navigator.share) {
+                try { await navigator.share({ title: document.title, url: urlToShare }); }
+                catch (err) { if (err.name !== 'AbortError') executeCopy(btn, urlToShare); }
+            } else { executeCopy(btn, urlToShare); }
+        }
+    }, { capture: true });
 })();
