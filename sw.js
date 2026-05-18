@@ -1,9 +1,7 @@
-const CACHE_NAME = 'luminous-core-v2';
+const CACHE_NAME = 'luminous-core-v3';
 const ASSETS_TO_CACHE = [
   './',
   './style.css',
-  './assets/css/style.css',
-  './assets/js/main.js',
   './manifest.json',
   './pwa-icon.png'
 ];
@@ -36,6 +34,11 @@ self.addEventListener('activate', (event) => {
 
 // ネットワーク優先、失敗したらキャッシュを返す (Network First strategy)
 self.addEventListener('fetch', (event) => {
+  if (event.request.destination === 'script' || event.request.destination === 'style') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {

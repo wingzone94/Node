@@ -3,6 +3,7 @@
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" id="m3-viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#FF9900">
@@ -65,16 +66,9 @@
             });
         });
 
-        // --- 3. SW ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('<?php echo get_template_directory_uri(); ?>/sw.js')
-                    .then(reg => console.log('Node SW registered'))
-                    .catch(err => console.log('SW failed', err));
-            });
-        }
     })();
     </script>
+<!-- node-build-id: 20260517-014351 -->
     <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>

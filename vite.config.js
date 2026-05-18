@@ -13,8 +13,8 @@ export default defineConfig({
         editor: resolve(__dirname, 'src/editor.js')
       },
       output: {
-        entryFileNames: `js/[name].js`,
-        chunkFileNames: `js/[name].js`,
+        entryFileNames: `js/[name].[hash].js`,
+        chunkFileNames: `js/[name].[hash].js`,
         assetFileNames: (assetInfo) => {
           if (assetInfo.name.endsWith('.css')) {
             return 'css/[name].[ext]';

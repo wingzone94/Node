@@ -5,7 +5,7 @@
                 <!-- Brand Column -->
                 <div class="m3-footer__col m3-footer__col--brand">
                     <div class="site-branding">
-                        <span class="m3-logo-text">Node</span>
+                        <span class="m3-logo-text"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></span>
                     </div>
                     <p class="m3-footer__tagline">AI、ガジェット、ゲームの最新情報をあなたに。</p>
                     <div class="m3-footer__social">

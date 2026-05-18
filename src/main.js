@@ -86,12 +86,12 @@ function initFloatingActionsPatched() {
     });
 
     if (!isSingle) {
-        if (tocTrigger) {
-            tocTrigger.classList.remove('toc-ready');
-            tocTrigger.style.display = 'none';
-        }
-        if (handyTocTrigger) handyTocTrigger.style.display = 'none';
+        tocTrigger?.remove();
+        handyTocTrigger?.remove();
         tocPanel?.classList.remove('is-active');
+        tocPanel?.remove();
+        document.querySelector('.m3-toc-scrim')?.remove();
+        actionStack.classList.remove('is-has-toc');
         document.body.classList.remove('is-active-toc');
     }
 
@@ -312,8 +312,33 @@ function initExpressiveFloatingTOC() {
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '');
     };
+    const getArticleTocItems = () => {
+        const source = document.getElementById('m3-article-toc-data');
+        const json = source?.textContent?.trim();
+        if (!json) return [];
+
+        try {
+            const items = JSON.parse(json);
+            if (!Array.isArray(items)) return [];
+
+            return items.map((item) => {
+                return {
+                    id: String(item.id || ''),
+                    level: String(item.level || 'h2').toLowerCase(),
+                    text: normalizeText(String(item.text || '')),
+                    href: String(item.href || ''),
+                    page: Number(item.page || 1),
+                    current: Boolean(item.current)
+                };
+            }).filter((item) => item.id && item.text);
+        } catch {
+            return [];
+        }
+    };
 
     let headings = [];
+    let tocReadyDispatched = false;
+    let lastToggleAt = 0;
 
     const getArticle = () => {
         return document.querySelector('.m3-article__body')
@@ -389,6 +414,10 @@ function initExpressiveFloatingTOC() {
             tocContainer = tocPanel.querySelector('#m3-toc-container');
         }
 
+        if (tocPanel.parentElement !== document.body) {
+            document.body.appendChild(tocPanel);
+        }
+
         if (!tocContainer && tocPanel) {
             tocContainer = document.createElement('nav');
             tocContainer.id = 'm3-toc-container';
@@ -418,11 +447,13 @@ function initExpressiveFloatingTOC() {
         });
 
         tocContainer.querySelectorAll('.m3-toc-link').forEach((link) => {
-            link.classList.toggle('is-active', link.getAttribute('href') === `#${currentId}`);
+            link.classList.toggle('is-active', link.dataset.tocTarget === currentId);
         });
     };
 
     const setPanelOpen = (open) => {
+        ensureShell();
+
         const { tocPanel, tocTrigger, handyTrigger } = getRefs();
         if (!tocPanel) return;
 
@@ -435,6 +466,12 @@ function initExpressiveFloatingTOC() {
 
         tocPanel.classList.toggle('is-active', open);
         tocPanel.setAttribute('aria-hidden', String(!open));
+        tocPanel.style.display = 'flex';
+        tocPanel.style.opacity = open ? '1' : '0';
+        tocPanel.style.visibility = open ? 'visible' : 'hidden';
+        tocPanel.style.pointerEvents = open ? 'auto' : 'none';
+        tocPanel.style.transform = open ? 'translateY(0) scale(1)' : '';
+        tocPanel.style.zIndex = '10001';
         document.body.classList.toggle('is-active-toc', open);
         scrim.classList.toggle('is-active', open);
         tocTrigger?.setAttribute('aria-expanded', String(open));
@@ -445,12 +482,35 @@ function initExpressiveFloatingTOC() {
         }
     };
 
+    const togglePanelSafely = () => {
+        const now = Date.now();
+        // Prevent duplicate toggle events in the same interaction frame.
+        if (now - lastToggleAt < 180) return;
+        lastToggleAt = now;
+        const { tocPanel } = getRefs();
+        setPanelOpen(!(tocPanel?.classList.contains('is-active')));
+    };
+
+    const bindTriggerFallback = (trigger) => {
+        if (!trigger || trigger.dataset.m3TocDirectBound === 'true') return;
+
+        trigger.dataset.m3TocDirectBound = 'true';
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation?.();
+            togglePanelSafely();
+        }, { capture: true });
+    };
+
     const renderTOC = () => {
         const article = getArticle();
         const {
             backToTopTrigger,
             actionStack
         } = getRefs();
+
+        ensureShell();
 
         if (!article) return;
 
@@ -460,19 +520,41 @@ function initExpressiveFloatingTOC() {
             }
             return Boolean(normalizeText(heading.textContent || ''));
         });
+        const articleTocItems = getArticleTocItems();
+        const currentArticleTocItems = articleTocItems.filter((item) => item.current);
 
-        if (!headings.length) {
-            const { tocPanel, tocTrigger, handyTrigger } = getRefs();
-            tocTrigger?.classList.remove('toc-ready');
-            if (tocTrigger) tocTrigger.style.display = 'none';
-            if (handyTrigger) handyTrigger.style.display = 'none';
-            actionStack?.classList.remove('is-has-toc');
-            tocPanel?.classList.remove('is-active');
-            document.body.classList.remove('is-active-toc');
+        if (!headings.length && !articleTocItems.length) {
+            const {
+                tocPanel,
+                tocContainer,
+                tocTrigger,
+                handyTrigger
+            } = getRefs();
+
+            tocPanel?.classList.add('m3-sticky-toc--expressive');
+            tocTrigger?.classList.add('toc-ready');
+            tocTrigger?.setAttribute('aria-label', '目次を表示');
+            tocTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
+            tocTrigger?.setAttribute('aria-haspopup', 'menu');
+            handyTrigger?.setAttribute('aria-label', '目次を表示');
+            handyTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
+            backToTopTrigger?.setAttribute('aria-label', '最上部へ戻る');
+            actionStack?.classList.add('is-has-toc', 'is-visible');
+            bindTriggerFallback(tocTrigger);
+            bindTriggerFallback(handyTrigger);
+
+            if (tocContainer && tocContainer.dataset.m3State !== 'empty') {
+                tocContainer.innerHTML = '<p class="m3-toc-empty">このページには見出しがありません。</p>';
+                tocContainer.dataset.m3Enhanced = 'true';
+                tocContainer.dataset.m3State = 'empty';
+            }
+
+            if (!tocReadyDispatched) {
+                document.dispatchEvent(new CustomEvent('m3:toc:ready'));
+                tocReadyDispatched = true;
+            }
             return;
         }
-
-        ensureShell();
 
         const {
             tocPanel,
@@ -490,12 +572,16 @@ function initExpressiveFloatingTOC() {
         handyTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
         backToTopTrigger?.setAttribute('aria-label', '最上部へ戻る');
         actionStack?.classList.add('is-has-toc', 'is-visible');
+        bindTriggerFallback(tocTrigger);
+        bindTriggerFallback(handyTrigger);
 
         const usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map((element) => element.id));
+        let currentHeadingIndex = 0;
         headings.forEach((heading, index) => {
             if (!heading.id) {
+                const tocItem = currentArticleTocItems[currentHeadingIndex];
                 const slug = slugify(heading.textContent || `section-${index + 1}`);
-                const baseId = slug ? `toc-${slug}` : `section-${index + 1}`;
+                const baseId = tocItem?.id || (slug ? `toc-${slug}` : `section-${index + 1}`);
                 let nextId = baseId;
                 let suffix = 2;
                 while (usedIds.has(nextId)) {
@@ -505,9 +591,69 @@ function initExpressiveFloatingTOC() {
                 heading.id = nextId;
                 usedIds.add(nextId);
             }
+            currentHeadingIndex += 1;
         });
 
         if (!tocContainer) return;
+
+        if (articleTocItems.length) {
+            const nextSignature = articleTocItems.map((item) => {
+                return `${item.level}|${item.id}|${item.text}|${item.page}|${item.href}`;
+            }).join('||');
+
+            if (tocContainer.dataset.m3Signature === nextSignature && tocContainer.dataset.m3State === 'filled') {
+                updateActiveLink();
+                if (!tocReadyDispatched) {
+                    document.dispatchEvent(new CustomEvent('m3:toc:ready'));
+                    tocReadyDispatched = true;
+                }
+                return;
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'm3-toc-list m3-toc-list--expressive';
+
+            articleTocItems.forEach((tocItem) => {
+                const item = document.createElement('li');
+                const level = tocItem.level || 'h2';
+                item.className = `m3-toc-item m3-toc-item--${level}`;
+
+                const link = document.createElement('a');
+                link.className = 'm3-toc-link';
+                link.href = tocItem.href || `#${tocItem.id}`;
+                link.dataset.tocTarget = tocItem.id;
+                link.dataset.tocPage = String(tocItem.page || 1);
+                link.textContent = tocItem.text;
+
+                item.appendChild(link);
+                list.appendChild(item);
+            });
+
+            tocContainer.innerHTML = '';
+            tocContainer.appendChild(list);
+            tocContainer.dataset.m3Enhanced = 'true';
+            tocContainer.dataset.m3Signature = nextSignature;
+            tocContainer.dataset.m3State = 'filled';
+            updateActiveLink();
+            if (!tocReadyDispatched) {
+                document.dispatchEvent(new CustomEvent('m3:toc:ready'));
+                tocReadyDispatched = true;
+            }
+            return;
+        }
+
+        const nextSignature = headings.map((heading) => {
+            return `${heading.tagName.toLowerCase()}|${heading.id}|${normalizeText(heading.textContent || '')}`;
+        }).join('||');
+
+        if (tocContainer.dataset.m3Signature === nextSignature && tocContainer.dataset.m3State === 'filled') {
+            updateActiveLink();
+            if (!tocReadyDispatched) {
+                document.dispatchEvent(new CustomEvent('m3:toc:ready'));
+                tocReadyDispatched = true;
+            }
+            return;
+        }
 
         const list = document.createElement('ul');
         list.className = 'm3-toc-list m3-toc-list--expressive';
@@ -520,6 +666,7 @@ function initExpressiveFloatingTOC() {
             const link = document.createElement('a');
             link.className = 'm3-toc-link';
             link.href = `#${heading.id}`;
+            link.dataset.tocTarget = heading.id;
             link.textContent = normalizeText(heading.textContent || '');
 
             item.appendChild(link);
@@ -529,8 +676,13 @@ function initExpressiveFloatingTOC() {
         tocContainer.innerHTML = '';
         tocContainer.appendChild(list);
         tocContainer.dataset.m3Enhanced = 'true';
+        tocContainer.dataset.m3Signature = nextSignature;
+        tocContainer.dataset.m3State = 'filled';
         updateActiveLink();
-        document.dispatchEvent(new CustomEvent('m3:toc:ready'));
+        if (!tocReadyDispatched) {
+            document.dispatchEvent(new CustomEvent('m3:toc:ready'));
+            tocReadyDispatched = true;
+        }
     };
 
     if (!root.dataset.m3TocBound) {
@@ -549,14 +701,19 @@ function initExpressiveFloatingTOC() {
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation?.();
-                const { tocPanel } = getRefs();
-                setPanelOpen(!(tocPanel?.classList.contains('is-active')));
+                togglePanelSafely();
                 return;
             }
 
-            const link = event.target.closest('#m3-toc-container a[href^="#"]');
+            const link = event.target.closest('#m3-toc-container .m3-toc-link');
             if (link) {
-                const targetId = link.getAttribute('href').slice(1);
+                const href = link.getAttribute('href') || '';
+                if (!href.startsWith('#')) {
+                    setPanelOpen(false);
+                    return;
+                }
+
+                const targetId = link.dataset.tocTarget || href.slice(1);
                 const heading = document.getElementById(targetId);
                 if (!heading) return;
                 event.preventDefault();
@@ -587,8 +744,7 @@ function initExpressiveFloatingTOC() {
             event.preventDefault?.();
             event.stopPropagation?.();
             event.stopImmediatePropagation?.();
-            const { tocPanel } = getRefs();
-            setPanelOpen(!(tocPanel?.classList.contains('is-active')));
+            togglePanelSafely();
         }, true);
 
         document.addEventListener('keydown', (event) => {
@@ -599,7 +755,16 @@ function initExpressiveFloatingTOC() {
         window.addEventListener('resize', scheduleRender, { passive: true });
         window.addEventListener('pageshow', scheduleRender);
 
-        const observer = new MutationObserver(() => scheduleRender());
+        const observer = new MutationObserver((mutations) => {
+            const isOnlyTocMutation = mutations.every((mutation) => {
+                const target = mutation.target;
+                return target instanceof Element
+                    && Boolean(target.closest('#m3-sticky-toc, .m3-toc-scrim, #m3-toc-trigger, #m3-handy-toc-trigger'));
+            });
+
+            if (isOnlyTocMutation) return;
+            scheduleRender();
+        });
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
@@ -617,13 +782,21 @@ function initColorExtraction() {
     badges.forEach(badge => {
         const thumbUrl = badge.dataset.thumb;
         if (thumbUrl) {
-            extractColorFromImage(thumbUrl).then(color => {
-                if (color) {
-                    badge.style.backgroundColor = color;
-                    badge.style.color = '#ffffff';
-                    badge.style.textShadow = '0 1px 2px rgba(0,0,0,0.3)';
-                }
-            });
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = thumbUrl;
+
+            extractColorFromImage(img)
+                .then(color => {
+                    if (color) {
+                        badge.style.backgroundColor = color;
+                        badge.style.color = '#ffffff';
+                        badge.style.textShadow = '0 1px 2px rgba(0,0,0,0.3)';
+                    }
+                })
+                .catch(() => {
+                    // 画像取得失敗時は既定スタイルを維持する。
+                });
         }
     });
 }

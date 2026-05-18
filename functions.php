@@ -94,12 +94,13 @@ function node_register_vite_chain( array $manifest, string $key, array &$seen = 
 	$handle = 'node-vite-' . $slug;
 	$file   = $manifest[ $key ]['file'];
 	$path   = NODE_THEME_DIR . '/assets/' . $file;
+	$asset_version = $manifest[ $key ]['file'] ?? (string) time();
 
 	wp_register_script(
 		$handle,
 		NODE_THEME_URI . '/assets/' . $file,
 		array(),
-		file_exists( $path ) ? (string) filemtime( $path ) : NODE_THEME_VERSION,
+		$asset_version,
 		true
 	);
 	wp_script_add_data( $handle, 'type', 'module' );
@@ -371,3 +372,54 @@ function node_fix_admin_visibility() {
 }
 add_action( 'admin_head', 'node_fix_admin_visibility' );
 add_action( 'enqueue_block_editor_assets', 'node_fix_admin_visibility' );
+
+/**
+ * -------------------------------------------------------
+ * 11. 投稿保存時のデフォルトステータス制御
+ * -------------------------------------------------------
+ * 新規投稿や下書き系からの保存時は「レビュー待ち」に固定する。
+ * 公開済み投稿の更新には影響を与えない。
+ */
+function node_is_auto_draft_placeholder_title( $title ) {
+    $normalized_title = trim( wp_strip_all_tags( (string) $title ) );
+    return in_array( $normalized_title, array( 'Auto Draft', '自動下書き' ), true );
+}
+
+function node_force_default_post_status_on_save( $data, $postarr ) {
+    if ( ! isset( $data['post_type'] ) || 'post' !== $data['post_type'] ) {
+        return $data;
+    }
+
+    $incoming_status = $data['post_status'] ?? '';
+    if ( 'auto-draft' === $incoming_status ) {
+        return $data;
+    }
+
+    if ( isset( $data['post_title'] ) && node_is_auto_draft_placeholder_title( $data['post_title'] ) ) {
+        $data['post_title'] = '';
+    }
+
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return $data;
+    }
+
+    if ( isset( $postarr['ID'] ) && wp_is_post_revision( (int) $postarr['ID'] ) ) {
+        return $data;
+    }
+
+    // 'pending' = レビュー待ち, 'private' = 非公開
+    $default_status = 'pending';
+
+    $current_status = '';
+    if ( ! empty( $postarr['ID'] ) ) {
+        $current_status = get_post_status( (int) $postarr['ID'] );
+    }
+
+    $is_draft_family = in_array( $current_status, array( '', 'auto-draft', 'draft', 'pending' ), true );
+    if ( $is_draft_family ) {
+        $data['post_status'] = $default_status;
+    }
+
+    return $data;
+}
+add_filter( 'wp_insert_post_data', 'node_force_default_post_status_on_save', 99, 2 );

@@ -159,9 +159,7 @@
             endif; ?>
         </section>
 
-        <?php if ( $is_primary_page ) : ?>
-            <?php get_template_part('template-parts/single/toc'); ?>
-        <?php endif; ?>
+        <?php get_template_part('template-parts/single/toc'); ?>
 
 <?php endwhile; ?>
 </main>

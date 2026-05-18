@@ -1,21 +1,21 @@
 {
-  "_vendor.js": {
-    "file": "js/vendor.js",
+  "_vendor.Fer7Z3ub.js": {
+    "file": "js/vendor.Fer7Z3ub.js",
     "name": "vendor"
   },
   "src/editor.js": {
-    "file": "js/editor.js",
+    "file": "js/editor.WT7LtVhF.js",
     "name": "editor",
     "src": "src/editor.js",
     "isEntry": true
   },
   "src/main.js": {
-    "file": "js/main.js",
+    "file": "js/main.B1uBRM_2.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
     "imports": [
-      "_vendor.js"
+      "_vendor.Fer7Z3ub.js"
     ]
   },
   "src/styles/style.css": {

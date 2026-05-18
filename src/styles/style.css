@@ -61,10 +61,12 @@ body.is-active-toc .m3-action-stack .m3-fab:not(#m3-toc-trigger) {
 
 /* ===== Floating TOC (Expressive) ===== */
 #m3-sticky-toc {
+    position: fixed;
     width: min(360px, calc(100vw - 32px));
     max-height: min(66vh, 640px);
     bottom: 96px;
     right: 24px;
+    z-index: 10001;
     border-radius: 28px;
     border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent);
     background:
@@ -567,3 +569,40 @@ body.front-page:not(.paged) .m3-surface--latest .m3-post-grid__container--featur
     }
 }
 /* ===== End Single Hero Seamless Title Card ===== */
+
+/* ===== Article Hyperlink Visibility ===== */
+.m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-hero-chapter-chip):not(.wp-block-button__link)
+) {
+    color: #005fcb;
+    text-decoration-line: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+    text-decoration-skip-ink: auto;
+}
+
+.m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-hero-chapter-chip):not(.wp-block-button__link)
+):hover,
+.m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-hero-chapter-chip):not(.wp-block-button__link)
+):focus-visible {
+    color: #004a9f;
+    text-decoration-thickness: 0.12em;
+}
+
+[data-theme="dark"] .m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-hero-chapter-chip):not(.wp-block-button__link)
+) {
+    color: #8ab4ff;
+}
+
+[data-theme="dark"] .m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-hero-chapter-chip):not(.wp-block-button__link)
+):hover,
+[data-theme="dark"] .m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-hero-chapter-chip):not(.wp-block-button__link)
+):focus-visible {
+    color: #b6ccff;
+}
+/* ===== End Article Hyperlink Visibility ===== */

@@ -1,16 +1,6 @@
 export function initHandyMode() {
     console.log('HandyMode: Initializing...');
     
-    // 1. TOC Trigger
-    const tocBtn = document.getElementById('m3-handy-toc-trigger');
-    if (tocBtn) {
-        tocBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('HandyMode: TOC Clicked');
-            document.dispatchEvent(new CustomEvent("m3:toc:toggle"));
-        });
-    }
-
     // 2. Comments Trigger
     const commentsBtn = document.getElementById('m3-bottom-comments-trigger');
     if (commentsBtn) {
