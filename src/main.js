@@ -10,6 +10,8 @@ import { initThemeManager } from './scripts/theme-manager';
 import { initFloatingActions } from './scripts/floating-actions';
 import { initReadingProgress } from './scripts/reading-progress';
 
+const NODE_DEBUG = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const initializers = [
         initColorExtraction,
@@ -284,7 +286,7 @@ function initArticleNavigation() {
         const commentTrigger = e.target.closest('#m3-hero-comment-trigger');
         if (commentTrigger) {
             e.preventDefault();
-            console.log('Main: Hero Comment Clicked');
+            if (NODE_DEBUG) console.log('Main: Hero Comment Clicked');
             const target = document.getElementById('comments');
             if (target) {
                 const headerOffset = 120; // 余裕を持たせたオフセット
@@ -803,7 +805,7 @@ function initColorExtraction() {
 
 
 function initSearchBar() {
-    console.log('Search Bar: Initializing Full Version...');
+    if (NODE_DEBUG) console.log('Search Bar: Initializing Full Version...');
     const searchToggle = document.getElementById('search-toggle');
     const searchBar = document.querySelector('.m3-search-bar');
     const searchInput = document.getElementById('m3-search-input');
@@ -860,7 +862,7 @@ function initSearchBar() {
     if (!modal) return;
 
     const openModal = () => {
-        console.log('Search Bar: Opening Modal...');
+        if (NODE_DEBUG) console.log('Search Bar: Opening Modal...');
         modal.classList.add('is-active');
         modal.style.display = 'flex';
         modal.style.opacity = '1';
@@ -871,7 +873,7 @@ function initSearchBar() {
         const saved = storage.get('m3-saved-search');
         const saveToggle = document.getElementById('m3-save-search-settings');
         if (saved) {
-            console.log('Search Bar: Restoring saved settings...');
+            if (NODE_DEBUG) console.log('Search Bar: Restoring saved settings...');
             modal.querySelectorAll('input, select').forEach(input => {
                 if (saved[input.name] !== undefined) {
                     if (input.type === 'checkbox') {

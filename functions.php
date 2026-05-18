@@ -148,22 +148,29 @@ function node_enqueue_assets() {
 		// メイン CSS (main.js に紐づくもの)
 		if ( isset( $manifest['src/main.js']['css'] ) ) {
 			foreach ( $manifest['src/main.js']['css'] as $css_file ) {
+				$css_path    = NODE_THEME_DIR . '/assets/' . $css_file;
+				$css_version = file_exists( $css_path ) ? (string) filemtime( $css_path ) : NODE_THEME_VERSION;
+
 				wp_enqueue_style(
 					'node-main-css',
 					NODE_THEME_URI . '/assets/' . $css_file,
 					array(),
-					time() // Force refresh
+					$css_version
 				);
 			}
 		}
 		
 		// メイン スタイルシート (src/styles/style.css)
 		if ( isset( $manifest['src/styles/style.css']['file'] ) ) {
+			$style_file    = $manifest['src/styles/style.css']['file'];
+			$style_path    = NODE_THEME_DIR . '/assets/' . $style_file;
+			$style_version = file_exists( $style_path ) ? (string) filemtime( $style_path ) : NODE_THEME_VERSION;
+
 			wp_enqueue_style(
 				'node-style-css',
-				NODE_THEME_URI . '/assets/' . $manifest['src/styles/style.css']['file'],
+				NODE_THEME_URI . '/assets/' . $style_file,
 				array(),
-				time() // Force refresh
+				$style_version
 			);
 		}
 	}
@@ -183,7 +190,7 @@ function node_register_service_worker() {
 		window.addEventListener("load", () => {
 			if ("serviceWorker" in navigator) {
 				navigator.serviceWorker.register("' . esc_url( NODE_THEME_URI . '/sw.js' ) . '")
-				.then(reg => console.log("Luminous Core SW registered"))
+				.then(() => {})
 				.catch(err => console.error("SW registration failed: ", err));
 			}
 		});
@@ -207,20 +214,18 @@ add_action('admin_init', 'node_enforce_branding_update');
 
 function luminous_brand_normalize( $value ) {
     if ( is_string( $value ) ) {
-        return str_replace( array( 'CyberNode', 'Node' ), 'Luminous Core', $value );
+        $trimmed_value = trim( $value );
+        if ( in_array( $trimmed_value, array( 'CyberNode', 'Node' ), true ) ) {
+            return 'Luminous Core';
+        }
+
+        return str_replace( 'CyberNode', 'Luminous Core', $value );
     }
     return $value;
 }
 add_filter( 'option_blogname', 'luminous_brand_normalize' );
 add_filter( 'option_blogdescription', 'luminous_brand_normalize' );
 add_filter( 'pre_get_document_title', 'luminous_brand_normalize', 999 );
-
-add_filter( 'gettext', function( $translated, $text, $domain ) {
-    if ( strpos( $translated, 'CyberNode' ) !== false || strpos( $translated, 'Node' ) !== false ) {
-        $translated = str_replace( array( 'CyberNode', 'Node' ), 'Luminous Core', $translated );
-    }
-    return $translated;
-}, 20, 3 );
 
 /**
  * -------------------------------------------------------
@@ -390,13 +395,13 @@ function node_force_default_post_status_on_save( $data, $postarr ) {
         return $data;
     }
 
+    if ( isset( $data['post_title'] ) && node_is_auto_draft_placeholder_title( $data['post_title'] ) ) {
+        $data['post_title'] = '';
+    }
+
     $incoming_status = $data['post_status'] ?? '';
     if ( 'auto-draft' === $incoming_status ) {
         return $data;
-    }
-
-    if ( isset( $data['post_title'] ) && node_is_auto_draft_placeholder_title( $data['post_title'] ) ) {
-        $data['post_title'] = '';
     }
 
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -407,17 +412,16 @@ function node_force_default_post_status_on_save( $data, $postarr ) {
         return $data;
     }
 
-    // 'pending' = レビュー待ち, 'private' = 非公開
-    $default_status = 'pending';
+    if ( 'publish' === $incoming_status ) {
+        if ( ! current_user_can( 'publish_posts' ) ) {
+            $data['post_status'] = 'pending';
+        }
 
-    $current_status = '';
-    if ( ! empty( $postarr['ID'] ) ) {
-        $current_status = get_post_status( (int) $postarr['ID'] );
+        return $data;
     }
 
-    $is_draft_family = in_array( $current_status, array( '', 'auto-draft', 'draft', 'pending' ), true );
-    if ( $is_draft_family ) {
-        $data['post_status'] = $default_status;
+    if ( in_array( $incoming_status, array( '', 'draft' ), true ) ) {
+        $data['post_status'] = 'pending';
     }
 
     return $data;

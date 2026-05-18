@@ -1,12 +1,13 @@
 export function initHandyMode() {
-    console.log('HandyMode: Initializing...');
+    const NODE_DEBUG = false;
+    if (NODE_DEBUG) console.log('HandyMode: Initializing...');
     
     // 2. Comments Trigger
     const commentsBtn = document.getElementById('m3-bottom-comments-trigger');
     if (commentsBtn) {
         commentsBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('HandyMode: Comments Clicked');
+            if (NODE_DEBUG) console.log('HandyMode: Comments Clicked');
             const comments = document.getElementById('comments') || document.getElementById('respond');
             if (comments) {
                 const headerOffset = 80; // Adjusted for mobile header
@@ -24,7 +25,7 @@ export function initHandyMode() {
     if (topBtn) {
         topBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('HandyMode: Top Clicked');
+            if (NODE_DEBUG) console.log('HandyMode: Top Clicked');
             window.scrollTo({ 
                 top: 0, 
                 behavior: 'smooth' 

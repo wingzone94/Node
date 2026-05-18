@@ -1,4 +1,4 @@
-const CACHE_NAME = 'luminous-core-v3';
+const CACHE_NAME = 'node-v4';
 const ASSETS_TO_CACHE = [
   './',
   './style.css',

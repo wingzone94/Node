@@ -258,7 +258,7 @@ function node_render_settings_page() {
                 <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
                     <span class="dashicons dashicons-update"></span> テーマのアップデート
                 </h2>
-                <p class="description">GitHub から最新の `node-theme-production.zip` を取得して自動インストールします。</p>
+                <p class="description">GitHub から最新の `node.zip` を取得して自動インストールします。</p>
                 
                 <div id="luminous-update-info" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                     <p>現在のバージョン: <strong><?php echo wp_get_theme()->get('Version'); ?></strong></p>

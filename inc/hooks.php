@@ -290,17 +290,3 @@ function node_remove_comment_captcha_hooks() {
     remove_action( 'comment_form_after_fields', 'show_captcha_field', 10 );
 }
 add_action( 'init', 'node_remove_comment_captcha_hooks' );
-
-/**
- * 記事のデフォルト公開設定を「レビュー待ち (pending)」にする
- */
-function node_set_default_post_status( $data, $postarr ) {
-    // 新規投稿の作成時、ステータスを「レビュー待ち」に強制する
-    if ( $data['post_type'] === 'post' && empty( $postarr['ID'] ) ) {
-        if ( $data['post_status'] === 'publish' || $data['post_status'] === 'draft' ) {
-            $data['post_status'] = 'pending';
-        }
-    }
-    return $data;
-}
-add_filter( 'wp_insert_post_data', 'node_set_default_post_status', 10, 2 );

@@ -2,6 +2,14 @@
 
 プロジェクト「Node」における開発ルールと設計指針を定義します。開発者はこのドキュメントを遵守し、一貫性のあるコードベースを維持してください。
 
+## 0. 命名・ブランドの正本
+- ブログ / サイトのブランド名は **Luminous Core** です。
+- WordPress テーマ名は **Node** です。
+- `style.css` の `Theme Name`、配布ZIP内のテーマディレクトリ名、GitHubリポジトリ上のテーマ名は **Node** に統一してください。
+- ヘッダー、フッター、OGP、メタ情報、サイト表示、`get_bloginfo( 'name' )` に由来する表示は **Luminous Core** を使用してください。
+- 「Luminous Core テーマ」「Luminous Core（Node）テーマ」のように、ブログ名とテーマ名を混同する表現は避けてください。
+- 例外として、文脈上どうしても併記する場合は「ブログブランド: Luminous Core / テーマ: Node」と明示してください。
+
 ## 1. コーディング規約
 ### PHP
 - [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/) に準拠します。

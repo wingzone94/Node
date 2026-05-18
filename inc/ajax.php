@@ -39,7 +39,7 @@ add_action('wp_ajax_luminous_install_update', function() {
     if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
 
     // GitHubのZIP直接URL
-    $zip_url = 'https://github.com/wingzone94/Node/raw/master/node-theme-production.zip';
+    $zip_url = 'https://github.com/wingzone94/Node/raw/master/node.zip';
     
     error_log('Luminous Update: Starting update from ' . $zip_url);
 
@@ -78,7 +78,10 @@ add_action('wp_ajax_luminous_install_update', function() {
 
     // 4. Move files
     // ZIPのルートに直接ファイルがある場合と、フォルダにラップされている場合の両方に対応
-    $source_dir = $temp_extract_dir . '/node-theme-production/';
+    $source_dir = $temp_extract_dir . '/node/';
+    if (!$wp_filesystem->exists($source_dir)) {
+        $source_dir = $temp_extract_dir . '/node-theme-production/';
+    }
     if (!$wp_filesystem->exists($source_dir)) {
         $source_dir = $temp_extract_dir . '/';
     }
@@ -94,6 +97,6 @@ add_action('wp_ajax_luminous_install_update', function() {
         wp_send_json_error('Copy failed: ' . $copy_result->get_error_message());
     }
 
-    error_log('Luminous Update: Update installed successfully to v0.9.0');
+    error_log('Luminous Update: Update installed successfully');
     wp_send_json_success('Update installed successfully');
 });

@@ -1,13 +1,17 @@
 # Node Theme リリース手順
 
-このドキュメントでは、テーマ編集後に本番用のZIPファイル (`node-theme-production.zip`) を生成し、GitHubにプッシュするまでの手順を説明します。
+このドキュメントでは、テーマ編集後に本番用のZIPファイル (`node.zip`) を生成し、GitHubにプッシュするまでの手順を説明します。
+
+## 0. 命名・ブランド
+- ブログ / サイトのブランド名は **Luminous Core** です。
+- WordPress テーマ名は **Node** です。
+- 配布ZIPのファイル名は **node.zip**、ZIP内のテーマルートディレクトリは **node/** に統一します。
+- `style.css` の `Theme Name` は **Node** のまま維持します。
 
 ## 1. アセットのビルド
 テーマ内のCSSやJavaScriptを変更した場合は、必ずビルドを実行して最新のアセットを生成します。
 
 ```bash
-npm run build
-# または
 bun run build
 ```
 
@@ -15,10 +19,24 @@ bun run build
 開発時のキャッシュファイルや不要な`.DS_Store`ファイルなどが混入しないよう整理します。
 
 ## 3. 本番用ZIPファイルの生成
-プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node-theme-production.zip` を出力します。
+プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
 
 ```bash
-zip -r node-theme-production.zip . -x "node_modules/*" -x ".git/*" -x "src/*" -x ".gemini/*" -x "scratch/*" -x "*.zip"
+rm -f node.zip
+repo_dir=$(pwd)
+tmpdir=$(mktemp -d)
+rsync -a \
+  --exclude='.git/' \
+  --exclude='node_modules/' \
+  --exclude='*.zip' \
+  --exclude='.DS_Store' \
+  --exclude='.!*!.DS_Store' \
+  --exclude='.cursor/' \
+  --exclude='.gemini/' \
+  --exclude='scratch/' \
+  ./ "$tmpdir/node/"
+(cd "$tmpdir" && zip -qr "$repo_dir/node.zip" node)
+rm -rf "$tmpdir"
 ```
 
 ## 4. Git へのコミットとプッシュ
@@ -29,10 +47,10 @@ zip -r node-theme-production.zip . -x "node_modules/*" -x ".git/*" -x "src/*" -x
 git add .
 
 # コミットを作成
-git commit -m "chore: release version 0.8.10 and update production zip"
+git commit -m "chore: release Node theme"
 
 # GitHubへプッシュ
-git push origin main
+git push origin master
 ```
 
 ---

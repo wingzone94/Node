@@ -35,8 +35,9 @@
     <script>
     (function() {
         const THEME_KEY = 'node_theme';
+        const NODE_DEBUG = false;
         const applyTheme = (theme) => {
-            console.log('[Theme] Applying:', theme);
+            if (NODE_DEBUG) console.log('[Theme] Applying:', theme);
             document.documentElement.setAttribute('data-theme', theme);
             document.body.setAttribute('data-theme', theme);
             try {
@@ -54,11 +55,11 @@
 
         // --- 2. Toggle Handler (Robust Delegation) ---
         window.addEventListener('load', () => {
-            console.log('[Theme] Initializing toggle...');
+            if (NODE_DEBUG) console.log('[Theme] Initializing toggle...');
             document.addEventListener('click', (e) => {
                 const btn = e.target.closest('#theme-toggle, #m3-theme-toggle-handy');
                 if (btn) {
-                    console.log('[Theme] Toggle clicked');
+                    if (NODE_DEBUG) console.log('[Theme] Toggle clicked');
                     const current = document.body.getAttribute('data-theme') || document.documentElement.getAttribute('data-theme') || 'light';
                     const next = current === 'dark' ? 'light' : 'dark';
                     applyTheme(next);
@@ -68,7 +69,7 @@
 
     })();
     </script>
-<!-- node-build-id: 20260517-014351 -->
+<!-- node-build-id: 20260518-182307 -->
     <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
