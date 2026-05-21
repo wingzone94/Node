@@ -1,0 +1,66 @@
+name: Auto Tag Theme Version
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - style.css
+
+permissions:
+  contents: write
+
+jobs:
+  tag-from-style-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from style.css
+        id: version
+        shell: bash
+        run: |
+          version="$(sed -n 's/^Version:[[:space:]]*//p' style.css | head -n 1 | tr -d '\r' | xargs)"
+          if [ -z "$version" ]; then
+            echo "Version not found in style.css"
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Gate by minimum version
+        id: gate
+        shell: bash
+        run: |
+          min_version="1.0.0"
+          version="${{ steps.version.outputs.version }}"
+          lowest="$(printf '%s\n%s\n' "$min_version" "$version" | sort -V | head -n 1)"
+
+          if [ "$lowest" != "$min_version" ]; then
+            echo "allow=false" >> "$GITHUB_OUTPUT"
+            echo "Skip: $version is below $min_version"
+          else
+            echo "allow=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag when missing
+        if: steps.gate.outputs.allow == 'true'
+        shell: bash
+        run: |
+          tag="${{ steps.version.outputs.tag }}"
+
+          if git ls-remote --tags origin "refs/tags/$tag" | grep -q "refs/tags/$tag$"; then
+            echo "Tag already exists: $tag"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$tag" -m "release: $tag"
+          git push origin "$tag"

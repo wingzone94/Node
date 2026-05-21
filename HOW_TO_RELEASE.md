@@ -53,5 +53,11 @@ git commit -m "chore: release Node theme"
 git push origin master
 ```
 
+## 5. バージョンと自動タグ運用（GitHub）
+- `style.css` の `Version` をリリース版に更新してからコミットします（例: `1.0.1`）。
+- `master` への push 時に GitHub Actions が `style.css` を読み取り、`v<Version>` タグを自動作成します。
+- 既に同名タグが存在する場合は自動スキップされます。
+- 自動タグの対象は `1.0.0` 以上です（`v1.0.0` から運用）。
+
 ---
 ※ この手順は、作業完了時に自動エージェントによって実行されるように設計されています。
