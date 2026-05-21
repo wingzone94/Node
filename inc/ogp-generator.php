@@ -136,7 +136,7 @@ class Node_OGP_Generator {
                 $y += $line_height;
             }
         } else {
-            imagestring( $image, 5, 100, 300, $title, $text_color );
+            error_log( 'Luminous Core: OGP font file not found at ' . $font_path . '. Title text rendering skipped to prevent encoding corruption.' );
         }
 
         // Save to uploads

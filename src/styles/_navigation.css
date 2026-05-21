@@ -310,8 +310,8 @@
     box-shadow: 16px 0 32px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    padding-top: var(--safe-area-top);
-    padding-bottom: var(--safe-area-bottom);
+    padding-top: calc(16px + var(--safe-area-top));
+    padding-bottom: calc(16px + var(--safe-area-bottom));
 }
 
 .m3-drawer.is-open {

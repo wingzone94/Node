@@ -129,7 +129,7 @@
 .m3-headline-card__date {
     font-size: 0.8rem;
     font-weight: 900;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .m3-headline-card__category {

@@ -20,6 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'NODE_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
 define( 'NODE_THEME_DIR', get_template_directory() );
 define( 'NODE_THEME_URI', get_template_directory_uri() );
+define( 'NODE_ALL_ARTICLES_SLUG', 'all-articles' );
+define( 'NODE_ALL_ARTICLES_PER_PAGE', 24 );
+define( 'NODE_ALL_ARTICLES_TOTAL_LIMIT', 240 );
 
 /**
  * -------------------------------------------------------
@@ -134,16 +137,17 @@ function node_enqueue_assets() {
 
 			$main_handle = end( $handles );
 			if ( $main_handle ) {
-				wp_localize_script(
-					$main_handle,
-					'm3_ajax',
-					array(
-						'ajax_url' => admin_url( 'admin-ajax.php' ),
-						'home_url' => home_url( '/' ),
-					)
-				);
+					wp_localize_script(
+						$main_handle,
+						'm3_ajax',
+						array(
+							'ajax_url' => admin_url( 'admin-ajax.php' ),
+							'home_url' => home_url( '/' ),
+							'all_articles_url' => node_get_all_articles_url(),
+						)
+					);
+				}
 			}
-		}
 
 		// メイン CSS (main.js に紐づくもの)
 		if ( isset( $manifest['src/main.js']['css'] ) ) {
@@ -178,6 +182,77 @@ function node_enqueue_assets() {
 	// Google Fonts & Material Symbols are now handled in header.php for performance.
 }
 add_action( 'wp_enqueue_scripts', 'node_enqueue_assets' );
+
+/**
+ * 全記事一覧ページ（上限付き）のURLを返す。
+ */
+function node_get_all_articles_url() {
+	return home_url( '/' . trim( NODE_ALL_ARTICLES_SLUG, '/' ) . '/' );
+}
+
+/**
+ * 全記事一覧専用のリライトルールを登録する。
+ */
+function node_register_all_articles_rewrite_rule() {
+	add_rewrite_tag( '%node_all_articles%', '1' );
+	add_rewrite_rule(
+		'^' . preg_quote( NODE_ALL_ARTICLES_SLUG, '/' ) . '/?$',
+		'index.php?node_all_articles=1',
+		'top'
+	);
+	add_rewrite_rule(
+		'^' . preg_quote( NODE_ALL_ARTICLES_SLUG, '/' ) . '/page/([0-9]{1,})/?$',
+		'index.php?node_all_articles=1&paged=$matches[1]',
+		'top'
+	);
+}
+add_action( 'init', 'node_register_all_articles_rewrite_rule' );
+
+/**
+ * クエリ変数を明示的に公開する。
+ */
+function node_add_all_articles_query_var( $vars ) {
+	$vars[] = 'node_all_articles';
+	return $vars;
+}
+add_filter( 'query_vars', 'node_add_all_articles_query_var' );
+
+/**
+ * 専用一覧テンプレートに差し替える。
+ */
+function node_use_all_articles_template( $template ) {
+	if ( ! get_query_var( 'node_all_articles' ) ) {
+		return $template;
+	}
+
+	$custom_template = NODE_THEME_DIR . '/template-parts/all-articles.php';
+	if ( file_exists( $custom_template ) ) {
+		return $custom_template;
+	}
+
+	return $template;
+}
+add_filter( 'template_include', 'node_use_all_articles_template', 99 );
+
+/**
+ * リライトルールを一度だけフラッシュする（本番運用向け）。
+ */
+function node_maybe_flush_rewrite_rules_for_all_articles() {
+	$rewrite_version = 'node_all_articles_v1';
+	if ( get_option( 'node_rewrite_rules_version' ) === $rewrite_version ) {
+		return;
+	}
+
+	if ( wp_installing() ) {
+		return;
+	}
+
+	node_register_all_articles_rewrite_rule();
+	flush_rewrite_rules( false );
+	update_option( 'node_rewrite_rules_version', $rewrite_version );
+}
+add_action( 'after_switch_theme', 'node_maybe_flush_rewrite_rules_for_all_articles' );
+add_action( 'init', 'node_maybe_flush_rewrite_rules_for_all_articles', 20 );
 
 /**
  * -------------------------------------------------------
@@ -421,3 +496,125 @@ function node_force_default_post_status_on_save( $data, $postarr ) {
     return $data;
 }
 add_filter( 'wp_insert_post_data', 'node_force_default_post_status_on_save', 99, 2 );
+
+/**
+ * RSS GUID を常に正規パーマリンクにそろえる。
+ * これにより localhost / staging / 一時ドメイン由来の GUID 残存を防ぐ。
+ */
+function node_normalize_feed_guid( $guid, $post_id ) {
+    if ( ! is_feed() ) {
+        return $guid;
+    }
+
+    $post_id = absint( $post_id );
+    if ( $post_id <= 0 ) {
+        return $guid;
+    }
+
+    $permalink = get_permalink( $post_id );
+    if ( ! $permalink ) {
+        return $guid;
+    }
+
+    return $permalink;
+}
+add_filter( 'the_guid', 'node_normalize_feed_guid', 10, 2 );
+
+/**
+ * フッターメニュー内に残っている仮URLを正規URLへ補正する。
+ */
+function node_fix_footer_menu_placeholder_urls( $items, $args ) {
+    if ( empty( $args->theme_location ) || 'footer' !== $args->theme_location ) {
+        return $items;
+    }
+
+    foreach ( $items as $item ) {
+        if ( ! isset( $item->url ) ) {
+            continue;
+        }
+
+        if ( false !== strpos( $item->url, '/sample-page-2/' ) ) {
+            $item->url = home_url( '/privacy-policy/' );
+            continue;
+        }
+
+        if ( false !== strpos( $item->url, '/post-0-2/' ) ) {
+            $item->url = home_url( '/contact/' );
+        }
+    }
+
+    return $items;
+}
+add_filter( 'wp_nav_menu_objects', 'node_fix_footer_menu_placeholder_urls', 10, 2 );
+
+/**
+ * Aboutページの公開文面を正規表記へ補正する。
+ * ※ 固定ページ本文が管理画面で未更新でも、公開画面では適切な文面を表示する。
+ */
+function node_normalize_about_page_content( $content ) {
+    if ( is_admin() || ! is_page() ) {
+        return $content;
+    }
+
+    $about_page = get_page_by_path( 'about' );
+    if ( ! $about_page || get_queried_object_id() !== (int) $about_page->ID ) {
+        return $content;
+    }
+
+    $keep_first_paragraph = static function( string $html, string $text ): string {
+        $pattern = '#<p>\s*' . preg_quote( $text, '#' ) . '\s*</p>#u';
+        $seen    = 0;
+        return (string) preg_replace_callback(
+            $pattern,
+            static function( $matches ) use ( &$seen ) {
+                $seen++;
+                return 1 === $seen ? $matches[0] : '';
+            },
+            $html
+        );
+    };
+
+    $duplicate_targets = array(
+        'Luminous Coreは、ガジェット、ゲーム、Webサービス、AIに関する最新情報や商品レビューなどをお伝えするブログメディアです。',
+        'ブログのロゴはガジェット、ゲーム、AI・Webサービスを構成する３つの光が交差し、その交点を表す部分を切り取り、作成したものです。',
+        'ブログ名のLuminous Coreはこれらを構成するイメージカラーから着想を経て、命名したものであり、赤が「ゲーム」、青が「ガジェット」、緑が「Webサービス・AI」を司ることを意味しています。',
+    );
+    foreach ( $duplicate_targets as $target ) {
+        $content = $keep_first_paragraph( $content, $target );
+    }
+
+    $replacements = array(
+        'wingzone94を中心とする複数のメンバーで複製され、日々、記事制作に取り組んでいます。'
+            => 'wingzone94を中心とする複数のメンバーで構成され、日々、記事制作に取り組んでいます。',
+        '<strong>2026年5月下旬</strong>：正式サービス開始（予定）Luminous Coreは、ガジェット、ゲーム、Webサービス、AIに関する最新情報や商品レビューなどをお伝えするブログメディアです。'
+            => '<strong>2026年5月下旬</strong>：正式サービス開始（予定）。Luminous Coreは、ガジェット、ゲーム、Webサービス、AIに関する最新情報や商品レビューなどをお伝えするブログメディアです。',
+        '略称（才能）の響きが自分たちのスタイルに対して少し主張が強すぎると感じたため、'
+            => '旧ブログ名の略称の響きが自分たちのスタイルに対して少し主張が強すぎると感じたため、',
+        'Server：Conoha Wing'
+            => 'Server: Conoha Wing',
+        'Server：'
+            => 'Server: ',
+    );
+    $content = str_replace( array_keys( $replacements ), array_values( $replacements ), $content );
+
+    $content = (string) preg_replace(
+        '#<td>\s*X(?:\s*<br\s*/?>\s*Threads)?\s*</td>#u',
+        '<td><a href="https://x.com/LuminousCoreJP" target="_blank" rel="noopener noreferrer">X</a></td>',
+        $content
+    );
+
+    // 「Threads」を案内文や運営情報表から完全に除去する。
+    $content = str_replace(
+        array( '公式SNS：X / Threads', '公式SNS: X / Threads', 'X / Threads', 'Threads' ),
+        array( '公式SNS：X', '公式SNS: X', 'X', '' ),
+        $content
+    );
+
+    return $content;
+}
+add_filter( 'the_content', 'node_normalize_about_page_content', 30 );
+
+/**
+ * Disable default inline HTML margin injection by the WordPress Admin Bar
+ */
+add_theme_support( 'admin-bar', array( 'callback' => '__return_false' ) );

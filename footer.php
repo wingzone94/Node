@@ -26,6 +26,13 @@
                         )
                     );
                     ?>
+                    <?php if ( current_user_can( 'edit_posts' ) ) : ?>
+                        <ul class="m3-footer__links">
+                            <li class="menu-item menu-item--staff-login">
+                                <a href="<?php echo esc_url( wp_login_url( admin_url() ) ); ?>">関係者ログイン</a>
+                            </li>
+                        </ul>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

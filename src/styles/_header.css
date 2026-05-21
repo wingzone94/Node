@@ -83,6 +83,9 @@
     align-items: center; 
     gap: 8px; 
 }
+.m3-header__menu {
+    display: none !important;
+}
 @media (max-width: 600px) {
     .m3-header__actions {
         gap: 2px;
@@ -90,6 +93,12 @@
     .m3-header__actions .m3-icon-button {
         width: 40px;
         height: 40px;
+    }
+    .m3-social-button, .m3-rss-button {
+        display: none !important;
+    }
+    .m3-header__menu {
+        display: inline-flex !important;
     }
 }
 
@@ -313,9 +322,9 @@
         align-items: flex-end; 
     }
     .m3-modal__content {
-        width: 100vw;
-        height: 85vh;
-        max-height: 85vh;
+        width: 100%;
+        height: 90vh;
+        max-height: 90vh;
         border-radius: 36px 36px 0 0; /* More expressive rounding */
         margin: 0;
         transform: translateY(100%);
@@ -561,7 +570,7 @@
         align-items: flex-start;
     }
     .m3-modal__page { 
-        padding: 24px 20px 180px; 
+        padding: 24px 20px calc(80px + env(safe-area-inset-bottom)); 
         height: auto; /* ALLOW to grow with content */
         overflow-y: visible;
     }
@@ -820,7 +829,7 @@
 .m3-char-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
 .m3-char-input-field { display: flex; flex-direction: column; gap: 8px; }
 .m3-char-input-label { font-size: 0.75rem; font-weight: 800; color: var(--md-sys-color-on-surface-variant); margin-left: 8px; }
-.m3-char-input { text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 900; background: var(--md-sys-color-surface-container-low) !important; }
+.m3-char-input { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 900; background: var(--md-sys-color-surface-container-low) !important; }
 .m3-platform-chip:hover span { background: var(--md-sys-color-surface-container-highest); transform: translateY(-2px); }
 
 .m3-button--filled.is-error-shake {
@@ -1111,7 +1120,7 @@
     color: var(--md-sys-color-on-surface-variant);
     opacity: 0;
     pointer-events: none;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-main);
     letter-spacing: 0.05em;
     z-index: 5;
 }

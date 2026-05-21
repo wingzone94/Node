@@ -19,15 +19,15 @@
     <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     
     <!-- High Performance Font Loading Pattern -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" media="print" onload="this.media='all'">
     
     <script src="https://kit.fontawesome.com/d2db209f03.js" crossorigin="anonymous"></script>
-
+ 
     <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@700&family=Manrope:wght@200..800&family=Oswald:wght@400;700;900&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
         <style>
             body { opacity: 1 !important; visibility: visible !important; }
         </style>
@@ -123,7 +123,7 @@
             </a>
 
             <!-- X (Twitter) -->
-            <a href="https://x.com/LumiousCoreJP" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-x-button" aria-label="Official X" data-tooltip="公式X">
+            <a href="https://x.com/LuminousCoreJP" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-x-button" aria-label="Official X" data-tooltip="公式X">
                 <i class="fa-brands fa-x-twitter"></i>
             </a>
 
@@ -149,6 +149,11 @@
                 <span class="material-symbols-outlined">devices</span>
             </button>
             <?php endif; ?>
+
+            <!-- Menu Drawer Button (Mobile Only) -->
+            <button class="m3-icon-button m3-header__menu m3-mobile-only" id="m3-drawer-trigger" aria-label="メニューを開く">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
         </div>
     </div>
 
@@ -386,6 +391,34 @@
             <button class="m3-icon-button" id="m3-snackbar-close" aria-label="閉じる">
                 <span class="material-symbols-outlined">close</span>
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Navigation Drawer (Material 3) -->
+<div id="m3-drawer-scrim" class="m3-drawer-scrim"></div>
+<div id="m3-drawer" class="m3-drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="メニュー">
+    <div class="m3-drawer__header">
+        <span class="m3-drawer__logo">Luminous Core</span>
+        <button type="button" class="m3-icon-button" id="m3-drawer-close" aria-label="メニューを閉じる">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    <div class="m3-drawer__content">
+        <nav class="m3-drawer__nav">
+            <?php
+            wp_nav_menu(
+                array(
+                    'theme_location' => 'primary',
+                    'menu_class'     => 'm3-drawer-menu',
+                    'container'      => false,
+                    'fallback_cb'    => 'node_primary_menu_fallback',
+                )
+            );
+            ?>
+        </nav>
+        <div class="m3-drawer__footer">
+            <p>&copy; <?php echo date('Y'); ?> Luminous Core.</p>
         </div>
     </div>
 </div>

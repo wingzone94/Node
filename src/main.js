@@ -6,7 +6,6 @@ import './scripts/card-animation';
 import './scripts/share-actions';
 import { initHandyMode } from './scripts/handy-mode';
 import { initPagination } from './scripts/pagination';
-import { initThemeManager } from './scripts/theme-manager';
 import { initFloatingActions } from './scripts/floating-actions';
 import { initReadingProgress } from './scripts/reading-progress';
 
@@ -15,19 +14,22 @@ const NODE_DEBUG = false;
 document.addEventListener('DOMContentLoaded', async () => {
     const initializers = [
         initColorExtraction,
-        initThemeManager,
         initSearchBar,
         initDrawer,
         initViewSwitcher,
+        initKeyboardSnackbar,
         initHandyMode,
         initExpressiveFloatingTOC,
         initFloatingActionsPatched,
+        initMobileHeaderStickyGuard,
+        initSingleHeaderStickyGuard,
         initOverdriveScroll,
         initKeyboardShortcuts,
         initTooltips,
         initRippleEffect,
         initReadingProgressSingleOnly,
         initPagination,
+        initSectionArchiveLinks,
         initLatestGridExpansion,
         initArticleNavigation,
         initHeroInfoBubble,
@@ -59,6 +61,35 @@ function isIndexOrArchiveView() {
         || body.classList.contains('tag')
         || body.classList.contains('date')
         || body.classList.contains('author');
+}
+
+function parseCssPixels(value) {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getAdminBarOffsetPx() {
+    const offset = getComputedStyle(document.body)
+        .getPropertyValue('--wp-admin-bar-offset')
+        .trim();
+    return parseCssPixels(offset);
+}
+
+function hardPinHeader(header) {
+    if (!header) return;
+
+    const desiredTop = getAdminBarOffsetPx();
+
+    header.style.position = 'fixed';
+    header.style.left = '0';
+    header.style.right = '0';
+    header.style.width = '100%';
+    header.style.margin = '0';
+    header.style.zIndex = '1400';
+    header.style.transform = 'none';
+    header.style.willChange = 'auto';
+    header.style.top = `${desiredTop}px`;
+    document.documentElement.style.setProperty('--m3-header-runtime-top', `${desiredTop}px`);
 }
 
 function initReadingProgressSingleOnly() {
@@ -117,6 +148,68 @@ function initFloatingActionsPatched() {
     setTimeout(updateVisibility, 150);
 }
 
+function initSingleHeaderStickyGuard() {
+    if (!isSinglePostView()) return;
+
+    const header = document.querySelector('.m3-header');
+    if (!header) return;
+
+    document.body.classList.add('is-single-header-sticky');
+
+    const pinHeader = () => hardPinHeader(header);
+
+    pinHeader();
+    window.addEventListener('resize', pinHeader, { passive: true });
+    window.addEventListener('orientationchange', pinHeader, { passive: true });
+    window.addEventListener('pageshow', pinHeader);
+    window.visualViewport?.addEventListener('resize', pinHeader, { passive: true });
+}
+
+function initMobileHeaderStickyGuard() {
+    if (isSinglePostView()) return;
+
+    const header = document.querySelector('.m3-header');
+    if (!header) return;
+
+    const isMobileViewport = () => window.matchMedia('(max-width: 1000px)').matches;
+    let rafId = 0;
+
+    const apply = () => {
+        rafId = 0;
+
+        if (!isMobileViewport()) {
+            document.body.classList.remove('is-mobile-header-sticky');
+            document.documentElement.style.removeProperty('--m3-header-runtime-top');
+            header.style.removeProperty('position');
+            header.style.removeProperty('left');
+            header.style.removeProperty('right');
+            header.style.removeProperty('top');
+            header.style.removeProperty('width');
+            header.style.removeProperty('margin');
+            header.style.removeProperty('z-index');
+            header.style.removeProperty('transform');
+            header.style.removeProperty('will-change');
+            return;
+        }
+
+        document.body.classList.add('is-mobile-header-sticky');
+        hardPinHeader(header);
+    };
+
+    const schedule = () => {
+        if (rafId) return;
+        rafId = window.requestAnimationFrame(apply);
+    };
+
+    apply();
+
+    window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('orientationchange', schedule, { passive: true });
+    window.addEventListener('pageshow', schedule);
+    document.addEventListener('visibilitychange', schedule);
+    window.visualViewport?.addEventListener('resize', schedule, { passive: true });
+}
+
 function initLatestGridExpansion() {
     const body = document.body;
     const isLatestPage = (body.classList.contains('home')
@@ -153,9 +246,24 @@ function initLatestGridExpansion() {
         }
 
         if (!latestSurface.querySelector('.m3-latest-see-all')) {
-            const sourceLink = document.querySelector('.m3-archive-pill-button')?.getAttribute('href')
-                || document.querySelector('.m3-headlines__more')?.getAttribute('href')
-                || new URL('page/2/', window.location.href).toString();
+            const normalizeArchiveUrl = (href) => {
+                if (!href) return null;
+                try {
+                    const url = new URL(href, window.location.href);
+                    url.hash = '';
+                    url.pathname = url.pathname.replace(/\/page\/\d+\/?$/i, '/');
+                    url.searchParams.delete('paged');
+                    return url.toString();
+                } catch {
+                    return null;
+                }
+            };
+
+            const sourceLink = normalizeArchiveUrl(window.m3_ajax?.all_articles_url)
+                || normalizeArchiveUrl(window.m3_ajax?.home_url)
+                || normalizeArchiveUrl(document.querySelector('.m3-archive-pill-button')?.getAttribute('href'))
+                || normalizeArchiveUrl(window.location.origin + '/')
+                || window.location.href;
 
             const seeAllLink = document.createElement('a');
             seeAllLink.className = 'm3-latest-see-all m3-button m3-button--text';
@@ -172,6 +280,36 @@ function initLatestGridExpansion() {
 
     applyLatestLayout();
     setTimeout(applyLatestLayout, 180);
+}
+
+function initSectionArchiveLinks() {
+    const body = document.body;
+    const isLatestPage = (body.classList.contains('home')
+        || body.classList.contains('blog')
+        || body.classList.contains('front-page'))
+        && !body.classList.contains('paged');
+
+    if (!isLatestPage) return;
+
+    const newsMoreLink = document.querySelector('.m3-headlines[aria-labelledby="headline-title"] .m3-headlines__more');
+    const spotlightMoreLink = document.querySelector('.special-features .m3-headlines__more');
+
+    if (!spotlightMoreLink) return;
+
+    const toAbsolute = (href) => {
+        if (!href) return null;
+        try {
+            return new URL(href, window.location.href);
+        } catch {
+            return null;
+        }
+    };
+
+    const newsUrl = toAbsolute(newsMoreLink?.getAttribute('href'));
+    const categoryBase = newsUrl
+        ? `${newsUrl.origin}${newsUrl.pathname.replace(/\/category\/[^/]*\/?$/i, '/category/')}`
+        : `${window.location.origin}/category/`;
+    spotlightMoreLink.href = `${categoryBase}spotlight/`;
 }
 
 function initHeroInfoBubble() {
@@ -1077,7 +1215,7 @@ function initSearchBar() {
             });
 
             const params = new URLSearchParams(data);
-            params.append('action', 'm3_get_search_hit_count');
+            params.append('action', 'node_get_search_count');
 
             const counter = document.getElementById('m3-search-hit-count');
             const applyBtn = document.getElementById('m3-advanced-search-apply');
@@ -1173,14 +1311,16 @@ function initDrawer() {
     const menuBtn = document.querySelector('.m3-header__menu');
     const drawer = document.getElementById('m3-drawer');
     const scrim = document.getElementById('m3-drawer-scrim');
+    const closeBtn = document.getElementById('m3-drawer-close');
     if (menuBtn && drawer && scrim) {
         const toggle = (open) => {
-            drawer.classList.toggle('is-active', open);
-            scrim.classList.toggle('is-active', open);
+            drawer.classList.toggle('is-open', open);
+            scrim.classList.toggle('is-visible', open);
             document.body.style.overflow = open ? 'hidden' : '';
         };
         menuBtn.addEventListener('click', () => toggle(true));
         scrim.addEventListener('click', () => toggle(false));
+        closeBtn?.addEventListener('click', () => toggle(false));
     }
 }
 
@@ -1338,5 +1478,42 @@ function initTableSorter() {
     });
 }
 
+function initKeyboardSnackbar() {
+    const snackbar = document.getElementById('m3-snackbar');
+    const actionBtn = document.getElementById('m3-snackbar-action');
+    const closeBtn = document.getElementById('m3-snackbar-close');
+    if (!snackbar) return;
+    
+    // Check if it is a touch device to avoid showing on normal desktop PCs
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) return;
+    
+    const showSnackbar = () => {
+        snackbar.classList.add('is-visible');
+        setTimeout(() => snackbar.classList.remove('is-visible'), 8000);
+    };
+    
+    const handleKeydown = (e) => {
+        // Detect typical text/number character key inputs
+        if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const currentMode = storage.get('view-mode') || 'mobile';
+            if (currentMode === 'mobile') {
+                showSnackbar();
+                window.removeEventListener('keydown', handleKeydown);
+            }
+        }
+    };
+    
+    window.addEventListener('keydown', handleKeydown);
+    
+    actionBtn?.addEventListener('click', () => {
+        storage.set('view-mode', 'pc');
+        location.reload();
+    });
+    
+    closeBtn?.addEventListener('click', () => {
+        snackbar.classList.remove('is-visible');
+    });
+}
 
 window.__vite_ae_ce_fix = "ae,ce";

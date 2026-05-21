@@ -2,7 +2,6 @@
 namespace Node\Signal\Core;
 
 use Node\Signal\Admin\RateManager;
-use Node\Signal\Frontend\AdBlockDetector;
 
 class Plugin {
     private static $instance = null;
@@ -24,9 +23,6 @@ class Plugin {
             RateManager::get_instance();
         }
 
-        // フロントエンドの機能
-        if ( ! is_admin() ) {
-            AdBlockDetector::get_instance();
-        }
+        // フロントエンドの AdBlock 検知は廃止
     }
 }

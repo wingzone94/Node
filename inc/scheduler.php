@@ -171,7 +171,7 @@ function node_render_x_rss_feed() {
         <item>
             <title><?php echo get_the_title( $post->ID ); ?></title>
             <link><?php echo get_permalink( $post->ID ); ?></link>
-            <guid><?php echo $post->ID; ?></guid>
+            <guid><?php echo esc_url( get_permalink( $post->ID ) ); ?></guid>
             <pubDate><?php echo mysql2date( 'D, d M Y H:i:s +0000', $post->post_date_gmt, false ); ?></pubDate>
             <description>
                 <![CDATA[

@@ -1,9 +1,11 @@
-const CACHE_NAME = 'node-v4';
+const CACHE_NAME = 'node-v5';
 const ASSETS_TO_CACHE = [
   './',
   './style.css',
   './manifest.json',
-  './pwa-icon.png'
+  './pwa-icon-192.png',
+  './pwa-icon-512.png',
+  './pwa-maskable-512.png'
 ];
 
 // インストール時にリソースをキャッシュ

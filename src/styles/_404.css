@@ -63,7 +63,7 @@
 }
 
 .m3-404-title-large {
-    font-family: 'Press Start 2P', cursive;
+    font-family: monospace;
     font-size: clamp(3rem, 10vw, 6.5rem);
     color: #fff;
     text-shadow: 6px 6px 0px #000;
@@ -71,7 +71,7 @@
 }
 
 .m3-404-subtitle {
-    font-family: 'VT323', monospace;
+    font-family: monospace;
     font-size: 2.8rem;
     color: #ff9900;
     text-shadow: 2px 2px 0px #000;
@@ -87,7 +87,7 @@
 
 /* --- Minecraft Buttons (Global Default) --- */
 .m3-mc-button {
-    font-family: 'VT323', monospace;
+    font-family: monospace;
     font-size: 1.8rem;
     background-color: #7e7e7e;
     color: #fff !important;
@@ -130,7 +130,7 @@
 }
 
 .m3-mc-death-msg {
-    font-family: 'Press Start 2P', cursive;
+    font-family: monospace;
     font-size: clamp(1.2rem, 4vw, 2.5rem);
     color: #fff;
     text-shadow: 4px 4px 0 #000;
@@ -194,7 +194,7 @@
 }
 
 .m3-404--fortnite .m3-fortnite-rank {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading);
     font-size: 6rem;
     font-weight: 900;
     color: #fff;
@@ -204,7 +204,7 @@
 }
 
 .m3-404--fortnite .m3-fortnite-label {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading);
     font-size: 1.2rem;
     font-weight: 700;
     color: #aaa;
@@ -214,7 +214,7 @@
 
 .m3-404--fortnite .m3-fortnite-eliminated {
     margin-top: 24px;
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading);
     font-size: 2.5rem;
     font-weight: 800;
     color: #fff;
@@ -227,7 +227,7 @@
 }
 
 .m3-404--fortnite .m3-mc-button {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading);
     background: #0078ff;
     border: none;
     border-radius: 4px;
@@ -518,7 +518,7 @@
 }
 
 .m3-404-recent-title {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading);
     font-size: 1.5rem;
     font-weight: 800;
     color: #ff9900;

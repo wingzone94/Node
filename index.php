@@ -5,6 +5,7 @@
     <?php
     if ((is_home() || is_front_page()) && !is_paged()) {
         $news_cat = get_term_by('name', 'ニュース', 'category');
+        $spotlight_cat = get_category_by_slug('spotlight');
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
 
         if (!empty($spotlight_cats)) : ?>
@@ -14,7 +15,11 @@
                         <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
                         SPOTLIGHT <span class="m3-section-title__sub">特集</span>
                     </h2>
-                    <?php $spotlight_link = $news_cat ? get_category_link($news_cat->term_id) : home_url('/'); ?>
+                    <?php
+                    $spotlight_link = $spotlight_cat
+                        ? get_category_link($spotlight_cat->term_id)
+                        : home_url('/category/spotlight/');
+                    ?>
                     <a href="<?php echo esc_url($spotlight_link); ?>" class="m3-headlines__more m3-button m3-button--text">
                         すべて見る<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </a>
@@ -94,8 +99,8 @@
             </div>
             <?php if (get_next_posts_link()) : ?>
                 <div class="m3-archive-pill-wrapper m3-section-spacing">
-                    <a href="<?php echo esc_url(next_posts(0, false)); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="過去の記事をさらに読み込む">
-                        <span class="m3-archive-pill-button__text">もっと過去の記事を見る</span>
+                    <a href="<?php echo esc_url(node_get_all_articles_url()); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="全ての記事を見る">
+                        <span class="m3-archive-pill-button__text">すべての記事を見る</span>
                         <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></div>
                     </a>
                 </div>

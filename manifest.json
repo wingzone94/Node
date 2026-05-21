@@ -1,7 +1,7 @@
 {
-  "name": "Node",
-  "short_name": "Node",
-  "description": "Powerful Material Design 3 WordPress Theme",
+  "name": "Luminous Core",
+  "short_name": "Luminous",
+  "description": "Luminous Core",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#FF9900",
@@ -9,16 +9,22 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "pwa-icon.png",
-      "sizes": "512x512",
+      "src": "pwa-icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "node-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [

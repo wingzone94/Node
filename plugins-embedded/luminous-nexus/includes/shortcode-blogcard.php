@@ -71,7 +71,8 @@ function luminous_nexus_get_ogp_data( $url ) {
 
 	$dom = new DOMDocument();
 	libxml_use_internal_errors( true );
-	@$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $html );
+	$html_entities = mb_convert_encoding( $html, 'HTML-ENTITIES', 'UTF-8' );
+	@$dom->loadHTML( $html_entities );
 	libxml_clear_errors();
 	
 	$xpath = new DOMXPath( $dom );
