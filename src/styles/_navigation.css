@@ -56,7 +56,6 @@
 .m3-pagination span.current {
     background: #0061A4 !important; /* Material Blue */
     color: #ffffff !important;
-    transform: scale(1.05) !important;
     box-shadow: 0 4px 12px rgba(0, 97, 164, 0.3) !important;
     z-index: 2;
 }
@@ -73,6 +72,71 @@
 .m3-navigation .material-symbols-outlined,
 .m3-pagination .material-symbols-outlined {
     font-size: 28px !important;
+}
+
+/* --- Simple Pager (Prev / Next Buttons) --- */
+.m3-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 4rem 2rem;
+    width: 100%;
+}
+
+.m3-pager__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 100px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+}
+
+.m3-pager__btn:hover {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.m3-pager__btn--disabled {
+    opacity: 0.35;
+    pointer-events: none;
+    cursor: default;
+}
+
+.m3-pager__btn .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.m3-pager__indicator {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface-variant);
+    letter-spacing: 0.05em;
+    min-width: 48px;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .m3-pager {
+        gap: 12px;
+        padding: 3rem 1rem;
+    }
+    .m3-pager__btn {
+        padding: 12px 20px;
+        font-size: 0.85rem;
+    }
 }
 
 /* Badge */
@@ -204,17 +268,17 @@
 }
 
 .m3-elevated-nav-card--plain .m3-elevated-nav-card__title {
-    color: #111111;
+    color: var(--md-sys-color-on-surface);
     text-shadow: none;
 }
 
 [data-theme="light"] .m3-elevated-nav-card--plain .m3-elevated-nav-card__title,
 [data-theme="dark"] .m3-elevated-nav-card--plain .m3-elevated-nav-card__title {
-    color: #111111;
+    color: var(--md-sys-color-on-surface);
 }
 
 .m3-elevated-nav-card--plain .m3-elevated-nav-card__label {
-    color: #111111;
+    color: var(--md-sys-color-on-surface);
     background: transparent;
     padding: 0;
 }

@@ -40,9 +40,10 @@
 }
 
 .m3-writer-card__label {
-    font-size: 0.7rem;
-    font-weight: 900;
-    color: #000000;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--md-sys-color-on-surface);
+    margin: 0 0 6px 0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     background: var(--md-sys-color-surface);

@@ -191,6 +191,13 @@ function node_get_all_articles_url() {
 }
 
 /**
+ * ヘッドライン一覧ページのURLを返す。
+ */
+function node_get_headlines_url() {
+	return home_url( '/headlines/' );
+}
+
+/**
  * 全記事一覧専用のリライトルールを登録する。
  */
 function node_register_all_articles_rewrite_rule() {
@@ -205,6 +212,19 @@ function node_register_all_articles_rewrite_rule() {
 		'index.php?node_all_articles=1&paged=$matches[1]',
 		'top'
 	);
+
+	// ヘッドライン専用のリライトルール
+	add_rewrite_tag( '%node_headlines%', '1' );
+	add_rewrite_rule(
+		'^headlines/?$',
+		'index.php?node_headlines=1',
+		'top'
+	);
+	add_rewrite_rule(
+		'^headlines/page/([0-9]{1,})/?$',
+		'index.php?node_headlines=1&paged=$matches[1]',
+		'top'
+	);
 }
 add_action( 'init', 'node_register_all_articles_rewrite_rule' );
 
@@ -213,6 +233,7 @@ add_action( 'init', 'node_register_all_articles_rewrite_rule' );
  */
 function node_add_all_articles_query_var( $vars ) {
 	$vars[] = 'node_all_articles';
+	$vars[] = 'node_headlines';
 	return $vars;
 }
 add_filter( 'query_vars', 'node_add_all_articles_query_var' );
@@ -221,13 +242,18 @@ add_filter( 'query_vars', 'node_add_all_articles_query_var' );
  * 専用一覧テンプレートに差し替える。
  */
 function node_use_all_articles_template( $template ) {
-	if ( ! get_query_var( 'node_all_articles' ) ) {
-		return $template;
+	if ( get_query_var( 'node_all_articles' ) ) {
+		$custom_template = NODE_THEME_DIR . '/template-parts/all-articles.php';
+		if ( file_exists( $custom_template ) ) {
+			return $custom_template;
+		}
 	}
 
-	$custom_template = NODE_THEME_DIR . '/template-parts/all-articles.php';
-	if ( file_exists( $custom_template ) ) {
-		return $custom_template;
+	if ( get_query_var( 'node_headlines' ) ) {
+		$custom_template = NODE_THEME_DIR . '/template-parts/headlines.php';
+		if ( file_exists( $custom_template ) ) {
+			return $custom_template;
+		}
 	}
 
 	return $template;
@@ -238,7 +264,7 @@ add_filter( 'template_include', 'node_use_all_articles_template', 99 );
  * リライトルールを一度だけフラッシュする（本番運用向け）。
  */
 function node_maybe_flush_rewrite_rules_for_all_articles() {
-	$rewrite_version = 'node_all_articles_v1';
+	$rewrite_version = 'node_all_articles_v2';
 	if ( get_option( 'node_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
@@ -618,3 +644,35 @@ add_filter( 'the_content', 'node_normalize_about_page_content', 30 );
  * Disable default inline HTML margin injection by the WordPress Admin Bar
  */
 add_theme_support( 'admin-bar', array( 'callback' => '__return_false' ) );
+
+/**
+ * -------------------------------------------------------
+ * 12. 記事表示数の制御 (トップ/アーカイブ)
+ * -------------------------------------------------------
+ */
+function node_custom_posts_per_page( $query ) {
+    if ( ! is_admin() && $query->is_main_query() ) {
+        if ( is_home() || is_front_page() ) {
+            $query->set( 'posts_per_page', 12 );
+        } elseif ( is_archive() || is_search() || $query->is_paged() ) {
+            $query->set( 'posts_per_page', 24 );
+        }
+    }
+}
+add_action( 'pre_get_posts', 'node_custom_posts_per_page' );
+
+/**
+ * -------------------------------------------------------
+ * 13. HEADLINE専用ページのメインクエリ制御
+ * -------------------------------------------------------
+ */
+function node_headlines_pre_get_posts( $query ) {
+    if ( ! is_admin() && $query->is_main_query() && $query->get( 'node_headlines' ) ) {
+        $news_cat = get_term_by( 'name', 'ニュース', 'category' );
+        if ( $news_cat ) {
+            $query->set( 'cat', $news_cat->term_id );
+        }
+        $query->set( 'posts_per_page', 24 );
+    }
+}
+add_action( 'pre_get_posts', 'node_headlines_pre_get_posts' );

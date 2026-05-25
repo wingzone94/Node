@@ -236,9 +236,9 @@
 }
 
 .m3-reading-badge-text--desc {
-    font-size: 0.82rem;
-    color: #335a95;
-    display: block;
+    font-size: 1.5rem;
+    color: var(--md-sys-color-on-surface);
+    display: inline-block;
     max-width: 0;
     max-height: 0;
     opacity: 0;
@@ -415,7 +415,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--m3-spacing-m);
+    margin-bottom: var(--m3-spacing-l);
+    color: var(--md-sys-color-on-surface);
 }
 
 .m3-ai-summary__title {
@@ -433,8 +434,8 @@
     align-items: center;
     gap: 8px;
     font-size: 0.85rem;
-    font-weight: 900;
-    color: #000000;
+    line-height: 1.4;
+    color: var(--md-sys-color-on-surface);
     margin-bottom: 12px;
 }
 
@@ -960,7 +961,7 @@
     line-height: 1.25;
     letter-spacing: -0.01em;
     font-feature-settings: "palt" 1;
-    color: #000000;
+    color: var(--md-sys-color-on-surface);
 }
 
 /* 見出しが連続する場合の余白調整 */
@@ -974,7 +975,7 @@
 
 .m3-article__body h1 { font-size: 2.2rem; }
 .m3-article__body h2 { font-size: 1.85rem; }
-.m3-article__body h3 { font-size: 1.45rem; border-bottom-width: 3px; color: #000000; }
+.m3-article__body h3 { font-size: 1.45rem; border-bottom-width: 3px; }
 .m3-article__body h4 { font-size: 1.25rem; border-bottom-width: 2px; }
 .m3-article__body h5 { font-size: 1.1rem; border-bottom-width: 2px; opacity: 0.85; }
 .m3-article__body h6 { font-size: 1rem; border-bottom-width: 2px; opacity: 0.75; }
@@ -1792,4 +1793,23 @@
     max-width: 100% !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
+}
+
+/* --- Image Captions --- */
+.wp-caption,
+.wp-block-image figcaption,
+figcaption,
+.wp-element-caption {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant, #666);
+    margin-top: 12px;
+    margin-bottom: 24px;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+}
+
+.wp-caption img {
+    margin-bottom: 8px;
 }

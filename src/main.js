@@ -21,8 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initHandyMode,
         initExpressiveFloatingTOC,
         initFloatingActionsPatched,
-        initMobileHeaderStickyGuard,
-        initSingleHeaderStickyGuard,
+        initSmartHeader,
         initOverdriveScroll,
         initKeyboardShortcuts,
         initTooltips,
@@ -73,23 +72,6 @@ function getAdminBarOffsetPx() {
         .getPropertyValue('--wp-admin-bar-offset')
         .trim();
     return parseCssPixels(offset);
-}
-
-function hardPinHeader(header) {
-    if (!header) return;
-
-    const desiredTop = getAdminBarOffsetPx();
-
-    header.style.position = 'fixed';
-    header.style.left = '0';
-    header.style.right = '0';
-    header.style.width = '100%';
-    header.style.margin = '0';
-    header.style.zIndex = '1400';
-    header.style.transform = 'none';
-    header.style.willChange = 'auto';
-    header.style.top = `${desiredTop}px`;
-    document.documentElement.style.setProperty('--m3-header-runtime-top', `${desiredTop}px`);
 }
 
 function initReadingProgressSingleOnly() {
@@ -148,66 +130,44 @@ function initFloatingActionsPatched() {
     setTimeout(updateVisibility, 150);
 }
 
-function initSingleHeaderStickyGuard() {
-    if (!isSinglePostView()) return;
-
+function initSmartHeader() {
     const header = document.querySelector('.m3-header');
     if (!header) return;
 
-    document.body.classList.add('is-single-header-sticky');
+    let lastScrollY = window.scrollY || window.pageYOffset;
+    let ticking = false;
+    // 検索入力中などはヘッダーを隠さない
+    const isSearchActive = () => document.querySelector('.m3-search-bar.is-active') !== null;
+    const isModalActive = () => document.querySelector('.m3-modal.is-active') !== null;
 
-    const pinHeader = () => hardPinHeader(header);
-
-    pinHeader();
-    window.addEventListener('resize', pinHeader, { passive: true });
-    window.addEventListener('orientationchange', pinHeader, { passive: true });
-    window.addEventListener('pageshow', pinHeader);
-    window.visualViewport?.addEventListener('resize', pinHeader, { passive: true });
-}
-
-function initMobileHeaderStickyGuard() {
-    if (isSinglePostView()) return;
-
-    const header = document.querySelector('.m3-header');
-    if (!header) return;
-
-    const isMobileViewport = () => window.matchMedia('(max-width: 1000px)').matches;
-    let rafId = 0;
-
-    const apply = () => {
-        rafId = 0;
-
-        if (!isMobileViewport()) {
-            document.body.classList.remove('is-mobile-header-sticky');
-            document.documentElement.style.removeProperty('--m3-header-runtime-top');
-            header.style.removeProperty('position');
-            header.style.removeProperty('left');
-            header.style.removeProperty('right');
-            header.style.removeProperty('top');
-            header.style.removeProperty('width');
-            header.style.removeProperty('margin');
-            header.style.removeProperty('z-index');
-            header.style.removeProperty('transform');
-            header.style.removeProperty('will-change');
-            return;
+    const updateHeader = () => {
+        const currentScrollY = window.scrollY || window.pageYOffset;
+        
+        // トップ付近にいる場合は常に表示
+        if (currentScrollY <= 80) {
+            header.classList.remove('is-hidden');
+        } else if (currentScrollY > lastScrollY && !isSearchActive() && !isModalActive()) {
+            // 下にスクロールした場合は隠す（マージンを持たせてガクガク防止）
+            if (currentScrollY - lastScrollY > 10) {
+                header.classList.add('is-hidden');
+            }
+        } else {
+            // 上にスクロールした場合は表示
+            if (lastScrollY - currentScrollY > 10) {
+                header.classList.remove('is-hidden');
+            }
         }
 
-        document.body.classList.add('is-mobile-header-sticky');
-        hardPinHeader(header);
+        lastScrollY = currentScrollY;
+        ticking = false;
     };
 
-    const schedule = () => {
-        if (rafId) return;
-        rafId = window.requestAnimationFrame(apply);
-    };
-
-    apply();
-
-    window.addEventListener('resize', schedule, { passive: true });
-    window.addEventListener('orientationchange', schedule, { passive: true });
-    window.addEventListener('pageshow', schedule);
-    document.addEventListener('visibilitychange', schedule);
-    window.visualViewport?.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(updateHeader);
+            ticking = true;
+        }
+    }, { passive: true });
 }
 
 function initLatestGridExpansion() {
@@ -314,39 +274,14 @@ function initSectionArchiveLinks() {
 
 function initHeroInfoBubble() {
     const trigger = document.getElementById('m3-hero-reading-badge');
-    const panel = document.getElementById('m3-hero-info-panel');
     if (!trigger) return;
 
-    const showInfo = () => {
-        trigger.classList.add('is-info-active');
-        trigger.setAttribute('aria-expanded', 'true');
-        panel?.classList.add('is-active');
-    };
-
-    trigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (trigger.classList.contains('is-info-active')) {
-            trigger.classList.remove('is-info-active');
-            trigger.setAttribute('aria-expanded', 'false');
-            panel?.classList.remove('is-active');
-        } else {
-            showInfo();
-        }
-    });
-
-    trigger.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        e.preventDefault();
-        trigger.click();
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!trigger.contains(e.target) && (!panel || !panel.contains(e.target))) {
-            trigger.classList.remove('is-info-active');
-            trigger.setAttribute('aria-expanded', 'false');
-            panel?.classList.remove('is-active');
-        }
-    });
+    trigger.classList.remove('is-info-active');
+    trigger.removeAttribute('role');
+    trigger.removeAttribute('tabindex');
+    trigger.removeAttribute('aria-expanded');
+    trigger.removeAttribute('aria-controls');
+    document.getElementById('m3-hero-info-panel')?.classList.remove('is-active');
 }
 
 function initHeaderClock() {

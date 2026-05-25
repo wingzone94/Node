@@ -92,9 +92,9 @@
 }
 
 .m3-headlines__list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
 }
 
 /* --- Headline Card --- */
@@ -164,6 +164,9 @@
     .m3-headlines {
         margin: 16px 12px;
         padding: 16px;
+    }
+    .m3-headlines__list {
+        grid-template-columns: 1fr;
     }
     .m3-headline-card {
         padding: 10px 12px;

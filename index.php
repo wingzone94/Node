@@ -40,7 +40,7 @@
 
         // HEADLINE
         $headline_args = [
-            'posts_per_page' => 5,
+            'posts_per_page' => 4,
             'ignore_sticky_posts' => true,
         ];
         if ($news_cat) {
@@ -54,12 +54,12 @@
                         <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
                         HEADLINE <span class="m3-section-title__sub">速報</span>
                     </h2>
-                    <?php $news_link = $news_cat ? get_category_link($news_cat->term_id) : home_url('/'); ?>
+                    <?php $news_link = node_get_headlines_url(); ?>
                     <a href="<?php echo esc_url($news_link); ?>" class="m3-headlines__more m3-button m3-button--text">
                         すべて見る<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </a>
                 </div>
-                <div class="m3-post-grid__container" role="list">
+                <div class="m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list" role="list">
                     <?php while ($headline_query->have_posts()) : $headline_query->the_post(); ?>
                         <?php get_template_part('template-parts/card', null, ['card_class' => 'card-standard', 'show_ai' => false]); ?>
                     <?php endwhile; wp_reset_postdata(); ?>
@@ -78,7 +78,7 @@
                     <div class="m3-post-grid__container m3-post-grid__container--featured">
             <?php else : ?>
                 <div class="m3-surface m3-surface--articles m3-section-spacing">
-                    <h2 id="articles-title" class="m3-section-title"><span class="material-symbols-outlined" aria-hidden="true">article</span> ARTICLES <span class="m3-section-title__sub">記事一覧</span></h2>
+                    
                     <div class="m3-post-grid__container is-articles-grid">
             <?php endif; ?>
 
@@ -88,7 +88,7 @@
                 if ($is_first_page && $wp_query->current_post === 4 && !$switched) {
                     echo '</div></div>'; // close featured container & surface
                     echo '<div class="m3-divider-wrapper"><hr class="m3-divider m3-divider--expressive" aria-hidden="true"></div>';
-                    echo '<div class="m3-surface m3-surface--articles m3-section-spacing"><h2 id="articles-title" class="m3-section-title"><span class="material-symbols-outlined" aria-hidden="true">schedule</span> ARTICLES <span class="m3-section-title__sub">記事一覧</span></h2><div class="m3-post-grid__container is-articles-grid">';
+                    echo '<div class="m3-surface m3-surface--articles m3-section-spacing"><div class="m3-post-grid__container is-articles-grid">';
                     $switched = true;
                 }
                 $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
@@ -99,10 +99,20 @@
             </div>
             <?php if (get_next_posts_link()) : ?>
                 <div class="m3-archive-pill-wrapper m3-section-spacing">
-                    <a href="<?php echo esc_url(node_get_all_articles_url()); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="全ての記事を見る">
-                        <span class="m3-archive-pill-button__text">すべての記事を見る</span>
-                        <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></div>
-                    </a>
+                    <?php if ($is_first_page) : ?>
+                        <a href="<?php echo esc_url(node_get_all_articles_url()); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="全ての記事を見る">
+                            <span class="m3-archive-pill-button__text">すべての記事を見る</span>
+                            <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></div>
+                        </a>
+                    <?php else : ?>
+                        <?php
+                            $next_link = get_next_posts_page_link($wp_query->max_num_pages);
+                        ?>
+                        <a href="<?php echo esc_url($next_link); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="もっと見る">
+                            <span class="m3-archive-pill-button__text">もっと見る</span>
+                            <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></div>
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </section>

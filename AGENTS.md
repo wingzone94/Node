@@ -10,6 +10,77 @@
 - ヘッダー、フッター、OGP、メタ情報、サイト表示、`get_bloginfo( 'name' )` 由来の表示は **Luminous Core** を使用すること
 - 「Luminous Core テーマ」「Luminous Core（Node）テーマ」のように、ブログ名とテーマ名を混同しないこと
 - 併記が必要な場合は「ブログブランド: Luminous Core / テーマ: Node」と明記すること
+## 作業開始時のルール【最重要】
+
+- **作業に取りかかる前に、必ずこの AGENTS.md を最初から最後まで一読すること**
+- 読まずに作業を始めることは禁止。ユーザーから指摘された場合は即座に読み直すこと
+
+---
+
+## 開発ルーチン（テスト → ZIP）
+
+すべてのテーマ変更は、以下の順序で行うこと。**ZIP出力はテスト確認後にのみ実行すること。**
+
+### Step 1: コード変更・ビルド
+```bash
+bun x vite build
+```
+
+### Step 2: ローカルテスト環境（cybernode.local）へデプロイ
+```bash
+# テーマファイルを同期（ZIPではなく直接コピー）
+rsync -a \
+  --exclude='.git/' \
+  --exclude='node_modules/' \
+  --exclude='*.zip' \
+  --exclude='.DS_Store' \
+  --exclude='.cursor/' \
+  --exclude='.gemini/' \
+  --exclude='scratch/' \
+  --delete \
+  ./ "/Users/saitoutatsuya/Local Sites/cybernode/app/public/wp-content/themes/node/"
+
+# 【必須】plugins-embedded を削除（プラグインとの二重読み込みを回避）
+rm -rf "/Users/saitoutatsuya/Local Sites/cybernode/app/public/wp-content/themes/node/plugins-embedded"
+
+# OPcache 対策: 変更ファイルの mtime を更新
+find "/Users/saitoutatsuya/Local Sites/cybernode/app/public/wp-content/themes/node/" \
+  -name '*.php' -newer /tmp/.node_last_deploy -exec touch {} + 2>/dev/null || true
+touch /tmp/.node_last_deploy
+```
+
+### Step 3: cybernode.local で動作確認
+- ブラウザまたは Puppeteer で `http://cybernode.local` にアクセスし、変更箇所を目視確認
+- エラー（Fatal error 等）がないことを `curl -s http://cybernode.local/ | grep -i 'error'` で確認
+- **問題があれば Step 1 に戻って修正。ZIP出力に進まないこと**
+
+### Step 4: テスト確認後に ZIP 出力
+テスト環境で問題がないことを確認してから、`HOW_TO_RELEASE.md` に従い ZIP を生成する。
+```bash
+rm -f node.zip
+repo_dir=$(pwd)
+tmpdir=$(mktemp -d)
+rsync -a \
+  --exclude='.git/' \
+  --exclude='node_modules/' \
+  --exclude='*.zip' \
+  --exclude='.DS_Store' \
+  --exclude='.!*!.DS_Store' \
+  --exclude='.cursor/' \
+  --exclude='.gemini/' \
+  --exclude='scratch/' \
+  ./ "$tmpdir/node/"
+(cd "$tmpdir" && zip -qr "$repo_dir/node.zip" node)
+rm -rf "$tmpdir"
+```
+
+### テスト環境に関する注意事項
+- **テスト環境パス**: `/Users/saitoutatsuya/Local Sites/cybernode/app/public/wp-content/themes/node/`
+- **テスト環境URL**: `http://cybernode.local`
+- **plugins-embedded の競合**: テスト環境では `node-signal`・`node-flow`・`node-ai-tools` がシンボリックリンクで `/wp-content/plugins/` にも存在する。テーマ側の `plugins-embedded/` を残すと `Cannot redeclare` Fatal Error が発生するため、**デプロイ後に必ず削除すること**
+- **OPcache**: LocalWP の PHP が古い `.php` をキャッシュする場合がある。変更が反映されない場合は `touch` でタイムスタンプを更新するか、LocalWP の PHP を再起動すること
+
+---
 
 ## 役割と制約
 

@@ -19,6 +19,12 @@
     display: flex; 
     align-items: flex-end; /* セーフエリア分を下側に寄せる */
     padding-bottom: 0;
+    
+    transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s ease;
+}
+
+.m3-header.is-hidden {
+    transform: translateY(-100%);
 }
 
 .m3-header__inner { 
@@ -100,6 +106,10 @@
     .m3-header__menu {
         display: inline-flex !important;
     }
+}
+
+.m3-rss-button:hover .material-symbols-outlined {
+    color: #f26522;
 }
 
 /* --- Search Bar --- */

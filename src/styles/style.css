@@ -439,6 +439,150 @@ body.archive.category #archive-title {
     font-feature-settings: "palt" 1, "kern" 1;
 }
 
+/* ===== Compact Reading Badge ===== */
+.m3-article__reading-badge-expressive {
+    overflow: hidden;
+    gap: 9px;
+    padding: 5px 10px 5px 7px;
+    margin: 10px auto 18px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--reading-color, #2457ab) 18%, transparent);
+    background:
+        radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.72), transparent 34%),
+        linear-gradient(135deg, color-mix(in srgb, var(--reading-bg, #dbe9f6) 92%, #ffffff 8%), color-mix(in srgb, var(--reading-color, #2457ab) 10%, var(--reading-bg, #dbe9f6) 90%));
+    color: color-mix(in srgb, var(--reading-color, #184a9f) 72%, #111111 28%);
+    cursor: default;
+    pointer-events: none;
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--reading-color, #2457ab) 18%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    transition: opacity 0.25s ease, box-shadow 0.25s ease;
+    transform: translateZ(0);
+}
+
+.m3-article__reading-badge-expressive:hover {
+    filter: none;
+    transform: translateZ(0);
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge__gauge {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: color-mix(in srgb, #ffffff 68%, var(--reading-bg, #dbe9f6) 32%);
+    box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.88), 0 2px 8px color-mix(in srgb, var(--reading-color, #2457ab) 16%, transparent);
+}
+
+.m3-article__reading-badge-expressive .m3-reading-circle__svg {
+    width: 30px;
+    height: 30px;
+}
+
+.m3-article__reading-badge-expressive .m3-reading-circle__bg {
+    stroke: color-mix(in srgb, var(--reading-color, #2457ab) 16%, transparent);
+}
+
+.m3-article__reading-badge-expressive .m3-reading-circle__progress {
+    stroke: var(--reading-color, #2457ab);
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge__gauge .material-symbols-outlined {
+    font-size: 17px;
+    color: var(--reading-color, #2457ab);
+    animation: none;
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge-content {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge-text--main {
+    font-size: clamp(0.82rem, 1.25vw, 0.98rem);
+    line-height: 1;
+    color: color-mix(in srgb, var(--reading-color, #184a9f) 74%, #111111 26%);
+}
+
+.m3-article__reading-badge-expressive .m3-reading-chars {
+    font-size: 0.9em;
+    opacity: 0.72;
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge-label {
+    display: inline-flex !important;
+    width: auto;
+    min-width: 0;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--reading-rank-bg, #e5eff9) 84%, #ffffff 16%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.m3-article__reading-badge-expressive .m3-badge-label-main {
+    color: var(--reading-rank-color, var(--reading-color, #184a9f));
+    font-size: clamp(0.68rem, 1vw, 0.78rem);
+    line-height: 1;
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge-text--desc {
+    display: none !important;
+}
+
+.m3-article__reading-badge-expressive.is-info-active {
+    padding: 5px 10px 5px 7px;
+    max-width: min(100%, 360px);
+}
+
+@media (max-width: 600px) {
+    .m3-article__reading-badge-expressive {
+        gap: 7px;
+        padding: 5px 9px 5px 7px;
+        margin: 0 auto 16px;
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-badge-text--main {
+        font-size: 0.8rem;
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-badge-content {
+        gap: 6px;
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-badge-label {
+        padding: 3px 7px;
+    }
+}
+
+@media (max-width: 380px) {
+    .m3-article__reading-badge-expressive {
+        max-width: min(100%, 92vw);
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-badge-content {
+        min-width: 0;
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-badge-text--main {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-chars {
+        font-size: 0.84em;
+    }
+
+    .m3-article__reading-badge-expressive .m3-reading-badge-label {
+        flex-shrink: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .m3-article__reading-badge-expressive,
+    .m3-article__reading-badge-expressive .m3-reading-circle__progress {
+        animation: none !important;
+    }
+}
+/* ===== End Compact Reading Badge ===== */
+
 body.home:not(.paged) .m3-surface--latest,
 body.blog:not(.paged) .m3-surface--latest,
 body.front-page:not(.paged) .m3-surface--latest {
@@ -763,8 +907,6 @@ body.is-single-header-sticky .m3-page-container {
         background: #000;
     }
 
-    .single .m3-article__body .wp-block-video,
-    .single-post .m3-article__body .wp-block-video,
     .single .m3-article__body .wp-block-embed.is-type-video .wp-block-embed__wrapper,
     .single-post .m3-article__body .wp-block-embed.is-type-video .wp-block-embed__wrapper {
         width: 100%;
@@ -777,3 +919,81 @@ body.is-single-header-sticky .m3-page-container {
     }
 }
 /* ===== End Single Mobile Video Improvement ===== */
+
+/* ===== TOC Dark Mode (Expressive) ===== */
+[data-theme="dark"] #m3-sticky-toc {
+    border-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+    background:
+        linear-gradient(160deg, color-mix(in srgb, var(--md-sys-color-surface-container-highest) 78%, #4a2800 22%), color-mix(in srgb, var(--md-sys-color-surface-container-high) 86%, #6a3c00 14%));
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-sticky-toc__header {
+    border-bottom: 1px solid color-mix(in srgb, #fff 10%, transparent);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-sticky-toc__title,
+[data-theme="dark"] #m3-sticky-toc .m3-toc-icon,
+[data-theme="dark"] #m3-sticky-toc .m3-toc-close-btn {
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-toc-close-btn:hover {
+    background: color-mix(in srgb, #fff 10%, transparent);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-toc-body::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, #fff 20%, transparent);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-toc-link {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-toc-link:hover {
+    background: color-mix(in srgb, #fff 10%, transparent);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] #m3-sticky-toc .m3-toc-link.is-active {
+    color: var(--md-sys-color-on-surface);
+    background: color-mix(in srgb, #fff 15%, transparent);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive {
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-primary-container) 10%, transparent) 0 78px, transparent 78px),
+        color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, #ffffff 2%);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive::after {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, #ffffff 2%);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive .m3-toc-icon {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 82%, #ffffff 10%);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive .m3-toc-close-btn {
+    color: var(--md-sys-color-on-surface);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 50%, transparent);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive .m3-toc-link {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive .m3-toc-link:hover,
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive .m3-toc-link:focus-visible {
+    color: var(--md-sys-color-on-surface);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 50%, transparent);
+}
+
+[data-theme="dark"] #m3-sticky-toc.m3-sticky-toc--expressive .m3-toc-link.is-active {
+    color: var(--md-sys-color-on-surface);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--md-sys-color-surface-container-highest) 78%, transparent 22%), color-mix(in srgb, var(--md-sys-color-surface-container) 55%, transparent 45%));
+    box-shadow: inset 4px 0 0 color-mix(in srgb, var(--md-sys-color-primary) 82%, #fff 18%);
+}
+/* ===== End TOC Dark Mode (Expressive) ===== */

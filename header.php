@@ -123,7 +123,7 @@
             </a>
 
             <!-- X (Twitter) -->
-            <a href="https://x.com/LuminousCoreJP" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-x-button" aria-label="Official X" data-tooltip="公式X">
+            <a href="https://x.com/Luminous_Core_" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-x-button" aria-label="Official X" data-tooltip="公式X">
                 <i class="fa-brands fa-x-twitter"></i>
             </a>
 
