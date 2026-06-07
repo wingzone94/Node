@@ -48,24 +48,24 @@
 
             <div class="m3-article__body-footer-clear"></div>
 
-            <div class="m3-article__pagination-container m3-reveal">
-                <!-- 1行目: ページネーションとTOPボタン -->
-                <div class="m3-article__pagination-main-row">
-                    <div class="m3-article__pagination-row">
-                        <?php
-                            global $numpages, $page;
-                            $current_multipage = max( 1, (int) $page );
-                            $get_multipage_url = static function ( $page_number ) {
-                                $link = _wp_link_page( (int) $page_number );
+            <?php
+                global $numpages, $page;
+                $current_multipage = max( 1, (int) $page );
 
-                                if ( preg_match( '/href=(["\'])(.*?)\1/', $link, $match ) ) {
-                                    return html_entity_decode( $match[2], ENT_QUOTES, get_bloginfo( 'charset' ) );
-                                }
+                if ( $numpages > 1 ) :
+                    $get_multipage_url = static function ( $page_number ) {
+                        $link = _wp_link_page( (int) $page_number );
 
-                                return get_permalink();
-                            };
+                        if ( preg_match( '/href=(["\'])(.*?)\1/', $link, $match ) ) {
+                            return html_entity_decode( $match[2], ENT_QUOTES, get_bloginfo( 'charset' ) );
+                        }
 
-                            if ( $numpages > 1 ) : ?>
+                        return get_permalink();
+                    };
+            ?>
+                <div class="m3-article__pagination-container m3-reveal">
+                    <div class="m3-article__pagination-main-row">
+                        <div class="m3-article__pagination-row">
                                 <nav class="m3-article-pagination m3-pagination--split">
                                     <span class="m3-pagination__label">
                                         <span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>
@@ -141,12 +141,10 @@
                                         </div>
                                     </div>
                                 </nav>
-                            <?php endif; ?>
                         </div>
-
                     </div>
-
                 </div>
+            <?php endif; ?>
             <?php get_template_part('template-parts/single/footer'); ?>
             
         </article>

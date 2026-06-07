@@ -1,4 +1,4 @@
-# AGENTS.md — Node テーマ / Luminous Core ブランド TOC/FAB バグ修正
+# AGENTS.md — Node テーマ / Luminous Core ブランド 軽量化・刷新方針
 # Codex デスクトップアプリ（Mac）用コンテキストファイル
 # プロジェクトルートに配置して使用する
 
@@ -85,179 +85,82 @@ rm -rf "$tmpdir"
 ## 役割と制約
 
 WordPressテーマ開発・Vite/Bunビルド・バニラJS UIのエキスパートとして動作すること。
-- **変更するファイルは下記2ファイルのみ**。それ以外は一切触らないこと
-- スコープ外の改善（TypeScript化・ESLint追加・リファクタ等）は行わないこと
+
+このテーマでは、古い限定パッチの遵守よりも、**Luminous Core 向けテーマ Node を軽く、保守しやすく、安全に刷新することを優先する**。
+
+- 未実装機能、コード残骸、古いビルド成果物、不要な配布ZIP、`.DS_Store` などは棚卸しし、不要と判断できるものから整理してよい
+- `src/main.js` のモジュール化は推奨する。既存の `src/scripts/` 構成を優先し、機能単位で分割すること
+- CSS は既存の `src/styles/*` 分割方針に従い、必要に応じて整理・統合・削除してよい
+- PHP テンプレート、`inc/`、`template-parts/`、Vite設定、リリース関連ファイルも、軽量化・未使用整理・依存関係整理に必要であれば変更してよい
+- ただし、無関係な全面リライト、TypeScript化、フレームワーク導入、大規模な設計変更は、明確な必要性がある場合のみ行うこと
 - ビルドには必ず `bun` を使うこと（npm・yarn・pnpm は禁止）
 - `vite.config.js` が存在しない場合は新規作成しないこと
+- 動作削除を伴う場合は、削除理由と確認結果を簡潔に残すこと
 
 ## プロジェクト情報
 
 - ブログブランド: Luminous Core
 - テーマ: Node v1.0.0
 - ビルド: `bun x vite build`（Bun v1.3.13 + Vite v5）
-- ソース: `src/main.js` と `src/styles/style.css`
-- 出力先: `assets/js/main.js` と `assets/css/style.css`
+- 主要ソース: `src/main.js`、`src/scripts/*`、`src/styles/style.css`、`src/styles/*`
+- 出力先: `assets/js/*`、`assets/css/*`、`assets/.vite/manifest.json`
 - `src/` がない場合は `assets/` を直接編集して上書き保存すること
 
-## 修正対象ファイル
+## 軽量化・刷新の基本方針
 
-1. `src/main.js`（なければ `assets/js/main.js`）
-2. `src/styles/style.css`（なければ `assets/css/style.css`）
+### 1. まず棚卸し
 
----
+- `src/main.js` 内の機能を、ページ共通、単一記事、ホーム/アーカイブ、検索、TOC/FAB、管理・補助機能に分類する
+- PHP 側の出力と JS/CSS 側のセレクタを照合し、実際に使われていない UI とコードを特定する
+- `assets/js/main.*.js` などの古いハッシュ付き成果物、古いZIP、作業用ディレクトリ、`.DS_Store` は配布対象から除外・削除候補にする
 
-## Bug 1 — 初期化順序が逆【最重要】
+### 2. `src/main.js` のモジュール化
 
-`src/main.js`（または `assets/js/main.js`）を編集。
+- 既存の `src/scripts/` を活用し、機能単位で切り出す
+- 推奨分割例:
+  - `search-bar`
+  - `smart-header`
+  - `expressive-toc`
+  - `article-navigation`
+  - `home-layout`
+  - `scroll-animations`
+  - `comments`
+  - `header-clock`
+- `src/main.js` は import と初期化順序の管理に寄せる
+- 既存挙動を残す必要がある場合も、重複する旧ロジックと新ロジックが同時に走らないようにする
 
-検索:
-```
-initShareFeatures,ce,ae,
-```
-置換:
-```
-initShareFeatures,ae,ce,
-```
+### 3. 条件付き初期化・条件付きロード
 
-**理由:** `ce()`（FAB表示）が `ae()`（TOC初期化）より先に走り、
-TOCトリガーのdisplayが未設定のまま非表示判定される。
+- 単一記事だけで必要な処理は `body.single` / `body.single-post` などで限定する
+- ホーム・アーカイブ専用処理は該当ページでのみ動かす
+- 検索モーダル、TOC、読了進捗、記事ページ用UIなどは DOM の存在確認だけでなく、ページ種別も見て初期化する
+- 可能であれば dynamic import を使い、初回ロードで不要な機能を読み込まない
 
----
+### 4. CSS整理
 
-## Bug 2 — FAB初期判定タイミングが早すぎる
+- `src/styles/style.css` の import 構成を正本とする
+- 未使用セレクタは PHP/JS 出力と照合してから削除する
+- 追加パッチを末尾に積み続けず、責務に合う partial へ移す
+- `!important` は既存仕様維持に必要な場合に限定し、刷新時には段階的に減らす
 
-`src/main.js`（または `assets/js/main.js`）を編集。
+### 5. 残骸整理
 
-**修正A — `t()` 関数の中身を置換**
+- 古い配布ZIP、作業用ディレクトリ、不要なハッシュ付き成果物、`.DS_Store`、一時スクリーンショットは削除候補にする
+- 削除前に、`functions.php`、`inc/`、`template-parts/`、Vite manifest、ライブHTMLとの参照関係を確認する
+- 配布ZIPに含めるべきものと、リポジトリ作業用に留めるものを分ける
 
-検索:
-```
-(window.pageYOffset||document.documentElement.scrollTop)>200?o.classList.add("is-visible"):o.classList.remove("is-visible")
-```
-置換:
-```
-{const scrollY=window.pageYOffset||document.documentElement.scrollTop;const tocReady=document.querySelector("#m3-toc-trigger.toc-ready");(scrollY>200||tocReady)?o.classList.add("is-visible"):o.classList.remove("is-visible")}
-```
+## 検証方針
 
-**修正B — 即時実行を150ms遅延に変更**
+軽量化・モジュール化後は、最低限以下を確認する。
 
-検索:
-```
-window.addEventListener("scroll",t,{passive:!0}),t()}
-```
-置換:
-```
-window.addEventListener("scroll",t,{passive:!0}),setTimeout(t,150)}
-```
+1. `bun x vite build`
+2. `assets/.vite/manifest.json`、`assets/js/*`、`assets/css/*` が更新内容と整合していること
+3. cybernode.local へ同期して、トップページ・単一記事・検索・TOC/FAB・ホーム/アーカイブ表示を確認
+4. `curl -s http://cybernode.local/ | grep -i 'error'` で Fatal error 等が出ていないこと
+5. ZIP を作る場合は、Local 検証後に `HOW_TO_RELEASE.md` に従って生成すること
 
----
+## 旧 TOC/FAB パッチについて
 
-## Bug 3 — 見出しありでもTOCトリガーが非表示のまま
+このファイルに以前記載されていた TOC/FAB の文字列置換手順は、過去の緊急パッチであり、今後の刷新作業の制約にはしない。
 
-`src/main.js`（または `assets/js/main.js`）を編集。
-
-**修正A — `toc-ready` クラス付与**
-
-検索:
-```
-s&&(s.style.display="flex"),t&&(t.style.display="flex")
-```
-置換:
-```
-s&&(s.style.display="flex",s.classList.add("toc-ready")),t&&(t.style.display="flex")
-```
-
-**修正B — `is-has-toc` クラスを action-stack に付与**
-
-検索:
-```
-console.log("TOC: Initialization complete")
-```
-置換:
-```
-document.querySelector(".m3-action-stack")?.classList.add("is-has-toc");console.log("TOC: Initialization complete")
-```
-
----
-
-## Bug 4 — スマホ用トリガーが二重発火してTOCが即閉じる
-
-`src/main.js`（または `assets/js/main.js`）を編集。
-
-**修正A — `se()` 内をカスタムイベント発火に変更**
-
-検索:
-```
-const o=document.getElementById("m3-handy-toc-trigger");o&&o.addEventListener("click",()=>{const s=document.getElementById("m3-toc-trigger");s==null||s.click()})
-```
-置換:
-```
-const o=document.getElementById("m3-handy-toc-trigger");o&&o.addEventListener("click",()=>{document.dispatchEvent(new CustomEvent("m3:toc:toggle"))})
-```
-
-**修正B — `ae()` 内の直接バインドをカスタムイベントリスナーに変更**
-
-検索:
-```
-s&&s.addEventListener("click",L),t&&t.addEventListener("click",L)
-```
-置換:
-```
-s&&s.addEventListener("click",L),document.addEventListener("m3:toc:toggle",L)
-```
-
----
-
-## Bug 5 — PC版TOCパネルの位置がFABとズレる
-
-`src/styles/style.css`（または `assets/css/style.css`）の**末尾に追記**すること
-（既存ルールは変更しない）。
-
-```css
-/* ===== TOC/FAB Bug Fix ===== */
-#m3-toc-trigger.toc-ready{opacity:1!important;visibility:visible!important;transform:scale(1)!important}
-@media(min-width:1001px){.m3-sticky-toc{bottom:104px!important;right:24px!important;width:320px!important}}
-body.is-active-toc .m3-action-stack .m3-fab:not(#m3-toc-trigger){opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:scale(.8)!important;transition:opacity .2s ease,transform .2s ease!important}
-/* ===== End Bug Fix ===== */
-```
-
----
-
-## ビルド・検証・ZIP出力
-
-### Step 1: 依存関係インストール
-```bash
-bun install
-```
-
-### Step 2: ビルド
-```bash
-bun x vite build
-```
-`src/` がない場合はスキップ。
-
-### Step 3: 検証（必須・ZIPの前に実行）
-```bash
-echo "=== 検証 ==="
-grep -c "ae,ce"           assets/js/main.js && echo "✅ Bug1" || echo "❌ Bug1"
-grep -c "toc-ready"       assets/js/main.js && echo "✅ Bug3" || echo "❌ Bug3"
-grep -c "m3:toc:toggle"   assets/js/main.js && echo "✅ Bug4" || echo "❌ Bug4"
-grep -c "is-has-toc"      assets/js/main.js && echo "✅ Bug3b" || echo "❌ Bug3b"
-grep -c "setTimeout.*150" assets/js/main.js && echo "✅ Bug2" || echo "❌ Bug2"
-grep -c "toc-ready"       assets/css/style.css && echo "✅ Bug5" || echo "❌ Bug5"
-echo "=== 完了 ==="
-```
-
-❌ が1件でもある場合は該当Bugを再修正してから進むこと。
-
-### Step 4: ZIP生成
-```bash
-zip -r "node-theme-toc-fix-$(date +%Y%m%d).zip" \
-  assets/js/main.js \
-  assets/js/vendor.js \
-  assets/css/style.css \
-  assets/.vite/manifest.json \
-  src/main.js \
-  src/styles/style.css
-```
-`src/` がない場合は `src/main.js` と `src/styles/style.css` の行を除いて実行。
+同種の不具合を扱う場合は、圧縮後の `assets/js/main.js` を直接文字列置換するのではなく、原則として `src/main.js` または切り出し後の `src/scripts/*` を修正し、`bun x vite build` で成果物を更新する。

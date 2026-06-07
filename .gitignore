@@ -1,6 +1,10 @@
 .DS_Store
 .!*!.DS_Store
 node_modules/
+*.zip
+.tmp*/
+scratch/
+production_plugins/*.zip
 color_script*.js
 .gemini/
 dist/

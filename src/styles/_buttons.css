@@ -1,0 +1,267 @@
+/* --- Material 3 Expressive Button Polish --- */
+.m3-button,
+.m3-button--filled,
+.m3-button--text,
+.m3-icon-button,
+.m3-fab,
+.m3-share-btn,
+.m3-platform-button,
+.m3-archive-pill-button,
+.m3-pagination-top-btn,
+.m3-pager__btn,
+.wp-block-button__link {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-width: 40px;
+    letter-spacing: 0;
+    font-weight: 850;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        background-color 0.22s var(--m3-motion-easing),
+        border-color 0.22s var(--m3-motion-easing),
+        color 0.22s var(--m3-motion-easing),
+        box-shadow 0.28s var(--m3-motion-easing),
+        transform 0.28s var(--m3-motion-easing),
+        filter 0.22s ease;
+}
+
+.m3-button,
+.m3-button--filled,
+.m3-button--text,
+.m3-archive-pill-button,
+.m3-pagination-top-btn,
+.m3-pager__btn,
+.wp-block-button__link {
+    border-radius: var(--m3-radius-full);
+}
+
+.m3-button--filled,
+.m3-button.m3-button--filled,
+.m3-comment-form .m3-button,
+.wp-block-button__link {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 74%, #ffd35c 26%) !important;
+    color: var(--md-sys-color-on-primary-container, #2b1700) !important;
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 58%, #ffffff 42%) !important;
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
+}
+
+.m3-button--text {
+    color: color-mix(in srgb, var(--md-sys-color-primary) 72%, var(--md-sys-color-on-surface) 28%);
+    background: color-mix(in srgb, var(--md-sys-color-primary-container, #fedcbe) 46%, transparent);
+}
+
+.m3-icon-button {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high, #fff4e5) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #d6c2b1) 58%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-primary) 70%, var(--md-sys-color-on-surface) 30%);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+}
+
+.m3-fab,
+.m3-pagination-top-btn {
+    border-radius: 18px !important;
+    background-color: color-mix(in srgb, var(--md-sys-color-primary) 78%, #ffd35c 22%) !important;
+    color: var(--md-sys-color-on-primary-container, #2b1700) !important;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
+.m3-archive-pill-button {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 74%, #ffd35c 26%);
+    color: var(--md-sys-color-on-primary-container, #2b1700);
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 54%, #ffffff 46%);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+}
+
+.m3-platform-button,
+.m3-share-buttons .m3-share-btn {
+    border-radius: var(--m3-radius-full) !important;
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16) !important;
+}
+
+.m3-button::before,
+.m3-button--filled::before,
+.m3-button--text::before,
+.m3-icon-button::before,
+.m3-fab::before,
+.m3-archive-pill-button::before,
+.m3-pagination-top-btn::before,
+.m3-pager__btn::before,
+.wp-block-button__link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.m3-button:hover::before,
+.m3-button--filled:hover::before,
+.m3-button--text:hover::before,
+.m3-icon-button:hover::before,
+.m3-fab:hover::before,
+.m3-archive-pill-button:hover::before,
+.m3-pagination-top-btn:hover::before,
+.m3-pager__btn:hover::before,
+.wp-block-button__link:hover::before {
+    opacity: 0.1;
+}
+
+.m3-button:active::before,
+.m3-button--filled:active::before,
+.m3-button--text:active::before,
+.m3-icon-button:active::before,
+.m3-fab:active::before,
+.m3-archive-pill-button:active::before,
+.m3-pagination-top-btn:active::before,
+.m3-pager__btn:active::before,
+.wp-block-button__link:active::before {
+    opacity: 0.16;
+}
+
+.m3-button--filled:hover,
+.m3-button.m3-button--filled:hover,
+.m3-comment-form .m3-button:hover,
+.wp-block-button__link:hover {
+    filter: none;
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--md-sys-color-primary) 34%, transparent);
+}
+
+.m3-button--text:hover,
+.m3-icon-button:hover,
+.m3-archive-pill-button:hover,
+.m3-pagination-top-btn:hover,
+.m3-pager__btn:hover {
+    filter: none;
+    transform: translateY(-2px);
+    background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #fedcbe) 76%, #ffffff 24%);
+    color: var(--md-sys-color-on-primary-container, #2b1700);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.m3-fab:hover {
+    filter: none;
+    transform: translateY(-2px) scale(1.03);
+    background-color: color-mix(in srgb, var(--md-sys-color-primary) 68%, #ffd35c 32%) !important;
+    box-shadow: 0 18px 36px color-mix(in srgb, var(--md-sys-color-primary) 34%, transparent);
+}
+
+.m3-icon-button:active,
+.m3-fab:active,
+.m3-pagination-top-btn:active,
+.m3-archive-pill-button:active,
+.m3-button:active,
+.m3-button--filled:active,
+.m3-button--text:active,
+.wp-block-button__link:active {
+    transform: scale(0.96);
+}
+
+.m3-share-buttons .m3-share-btn:hover,
+.m3-platform-button:hover {
+    filter: saturate(1.08) brightness(1.04);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+.m3-button:focus-visible,
+.m3-button--filled:focus-visible,
+.m3-button--text:focus-visible,
+.m3-icon-button:focus-visible,
+.m3-fab:focus-visible,
+.m3-share-btn:focus-visible,
+.m3-platform-button:focus-visible,
+.m3-archive-pill-button:focus-visible,
+.m3-pagination-top-btn:focus-visible,
+.m3-pager__btn:focus-visible,
+.wp-block-button__link:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--md-sys-color-primary) 64%, #ffffff 36%);
+    outline-offset: 3px;
+}
+
+[data-theme="dark"] .m3-button--filled,
+[data-theme="dark"] .m3-button.m3-button--filled,
+[data-theme="dark"] .m3-comment-form .m3-button,
+[data-theme="dark"] .wp-block-button__link,
+[data-theme="dark"] .m3-fab,
+[data-theme="dark"] .m3-pagination-top-btn,
+[data-theme="dark"] .m3-archive-pill-button {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 78%, #ffcf6b 22%) !important;
+    color: var(--md-sys-color-on-primary, #4a2800) !important;
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 48%, #ffffff 18%) !important;
+}
+
+[data-theme="dark"] .m3-icon-button,
+[data-theme="dark"] .m3-button--text {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-highest, #3d372e) 78%, transparent);
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 28%, var(--md-sys-color-outline-variant) 72%);
+    color: var(--md-sys-color-on-surface);
+}
+
+.m3-header .m3-icon-button {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-header .m3-icon-button:hover,
+.m3-header .m3-icon-button:focus-visible {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #fedcbe) 46%, transparent) !important;
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent) !important;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent) !important;
+    color: color-mix(in srgb, var(--md-sys-color-primary) 72%, var(--md-sys-color-on-surface) 28%);
+}
+
+.m3-header .m3-icon-button:active {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #fedcbe) 58%, transparent) !important;
+    box-shadow: none !important;
+}
+
+.m3-header .m3-x-button:hover {
+    color: #000000 !important;
+}
+
+[data-theme="dark"] .m3-header .m3-icon-button {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .m3-header .m3-icon-button:hover,
+[data-theme="dark"] .m3-header .m3-icon-button:focus-visible {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary) 14%, var(--md-sys-color-surface-container-highest) 86%) !important;
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 26%, transparent) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .2) !important;
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .m3-header .m3-x-button:hover {
+    color: #ffffff !important;
+}
+
+.m3-header .m3-discord-button:hover {
+    color: #5865f2 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .m3-button,
+    .m3-button--filled,
+    .m3-button--text,
+    .m3-icon-button,
+    .m3-fab,
+    .m3-share-btn,
+    .m3-platform-button,
+    .m3-archive-pill-button,
+    .m3-pagination-top-btn,
+    .m3-pager__btn,
+    .wp-block-button__link {
+        transition: none !important;
+    }
+}

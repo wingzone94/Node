@@ -30,6 +30,10 @@ function node_sanitize_category_color( $color ) {
 
 	$hex = sanitize_hex_color( $color );
 
+	if ( $hex && function_exists( 'node_is_default_category_color' ) && node_is_default_category_color( $hex ) ) {
+		return '';
+	}
+
 	return $hex ? $hex : '';
 }
 

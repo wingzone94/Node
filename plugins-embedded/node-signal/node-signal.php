@@ -14,7 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'NODE_SIGNAL_VERSION', '1.0.0' );
 define( 'NODE_SIGNAL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'NODE_SIGNAL_PLUGIN_URL', get_template_directory_uri() . '/plugins-embedded/node-signal/' );
+
+$node_signal_embedded_dir = get_template_directory() . '/plugins-embedded/node-signal/';
+define(
+    'NODE_SIGNAL_PLUGIN_URL',
+    is_dir( $node_signal_embedded_dir )
+        ? get_template_directory_uri() . '/plugins-embedded/node-signal/'
+        : content_url( '/plugins/node-signal/' )
+);
 
 // 簡易オートローダー
 spl_autoload_register( function ( $class ) {

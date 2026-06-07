@@ -4,6 +4,7 @@
  */
 
 import gsap from 'gsap';
+import { isSinglePostView } from './page-state';
 
 const SHATTER_THRESHOLD = 99.8;
 const RESTORE_THRESHOLD = 99.5;
@@ -62,6 +63,16 @@ export function initReadingProgress() {
     window.addEventListener('scroll', updateProgress, { passive: true });
     window.addEventListener('resize', updateProgress, { passive: true });
     updateProgress();
+}
+
+export function initReadingProgressSingleOnly() {
+    const progressContainer = document.getElementById('m3-reading-progress');
+    if (!isSinglePostView()) {
+        if (progressContainer) progressContainer.style.display = 'none';
+        return;
+    }
+
+    initReadingProgress();
 }
 
 function playBarShatterAnimation(parent, bar) {

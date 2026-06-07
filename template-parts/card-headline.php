@@ -11,7 +11,14 @@ $post_id = get_the_ID();
         $categories = get_the_category();
         if (!empty($categories)) :
             $cat = $categories[0];
-            echo '<span class="m3-headline-card__category" style="color: var(--md-sys-color-primary);">' . esc_html($cat->name) . '</span>';
+            echo node_render_category_label(
+                $cat,
+                array(
+                    'tag'   => 'span',
+                    'class' => 'm3-headline-card__category',
+                    'href'  => false,
+                )
+            );
         endif;
         ?>
     </div>

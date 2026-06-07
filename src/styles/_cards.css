@@ -232,8 +232,8 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background-color: #FF9900; /* Theme Orange */
-    color: #FFFFFF !important;
+    background-color: var(--category-color, #FF9900);
+    color: var(--category-on-color, #FFFFFF) !important;
     padding: 6px 14px;
     border-radius: 12px;
     font-size: 0.75rem;

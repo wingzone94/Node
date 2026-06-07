@@ -1,0 +1,156 @@
+/* ===== Single Hero Seamless Title Card ===== */
+.single .m3-article__header-card.has-thumbnail,
+.single-post .m3-article__header-card.has-thumbnail {
+    border: 0;
+    background: var(--md-sys-color-surface-container-low);
+    box-shadow: 0 18px 46px rgba(43, 23, 0, 0.14);
+    overflow: hidden;
+}
+
+.single .m3-article__header-card.has-thumbnail .m3-article__featured-image,
+.single-post .m3-article__header-card.has-thumbnail .m3-article__featured-image {
+    border-radius: 32px 32px 0 0;
+    margin-bottom: 0;
+}
+
+.single .m3-article__header-card.has-thumbnail .m3-article__featured-gradient,
+.single-post .m3-article__header-card.has-thumbnail .m3-article__featured-gradient {
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0) 48%,
+            color-mix(in srgb, var(--md-sys-color-surface-container-low) 30%, transparent) 70%,
+            var(--md-sys-color-surface-container-low) 100%
+        );
+}
+
+.single .m3-article__header-card.has-thumbnail .m3-article__header--overlap,
+.single-post .m3-article__header-card.has-thumbnail .m3-article__header--overlap {
+    margin: -104px 0 0;
+    padding: 118px 36px 44px;
+    border: 0;
+    border-radius: 0 0 32px 32px;
+    background:
+        linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--md-sys-color-surface-container-low) 0%, transparent) 0,
+            color-mix(in srgb, var(--md-sys-color-surface-container-low) 74%, transparent) 42px,
+            var(--md-sys-color-surface-container-low) 118px
+        );
+    box-shadow: none;
+}
+
+.single .m3-article__header-card.has-thumbnail .m3-article__title,
+.single-post .m3-article__header-card.has-thumbnail .m3-article__title {
+    letter-spacing: 0;
+}
+
+[data-theme="dark"] .single .m3-article__header-card.has-thumbnail,
+[data-theme="dark"] .single-post .m3-article__header-card.has-thumbnail {
+    box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme="dark"] .single .m3-article__header-card.has-thumbnail .m3-article__featured-gradient,
+[data-theme="dark"] .single-post .m3-article__header-card.has-thumbnail .m3-article__featured-gradient {
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 48%,
+            color-mix(in srgb, var(--md-sys-color-surface-container-low) 34%, transparent) 70%,
+            var(--md-sys-color-surface-container-low) 100%
+        );
+}
+
+@media (max-width: 600px) {
+    .single .m3-article__header-card.has-thumbnail,
+    .single-post .m3-article__header-card.has-thumbnail {
+        border-radius: 24px;
+    }
+
+    .single .m3-article__header-card.has-thumbnail .m3-article__featured-image,
+    .single-post .m3-article__header-card.has-thumbnail .m3-article__featured-image,
+    .single .m3-article__header-card.has-thumbnail .m3-article__featured-img,
+    .single-post .m3-article__header-card.has-thumbnail .m3-article__featured-img {
+        border-radius: 24px 24px 0 0;
+    }
+
+    .single .m3-article__header-card.has-thumbnail .m3-article__header--overlap,
+    .single-post .m3-article__header-card.has-thumbnail .m3-article__header--overlap {
+        margin-top: -72px;
+        padding: 84px 20px 32px;
+        border-radius: 0 0 24px 24px;
+    }
+}
+/* ===== End Single Hero Seamless Title Card ===== */
+
+/* ===== Article Hyperlink Visibility ===== */
+.m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+) {
+    color: #005fcb;
+    text-decoration-line: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+    text-decoration-skip-ink: auto;
+}
+
+.m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+):hover,
+.m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+):focus-visible {
+    color: #004a9f;
+    text-decoration-thickness: 0.12em;
+}
+
+[data-theme="dark"] .m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+) {
+    color: #8ab4ff;
+}
+
+[data-theme="dark"] .m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+):hover,
+[data-theme="dark"] .m3-article__body a:where(
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__link):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+):focus-visible {
+    color: #b6ccff;
+}
+/* ===== End Article Hyperlink Visibility ===== */
+
+/* ===== Single Mobile Video Improvement ===== */
+@media (max-width: 600px) {
+    .single .m3-article__body .wp-block-video video,
+    .single-post .m3-article__body .wp-block-video video,
+    .single .m3-article__body video.wp-video-shortcode,
+    .single-post .m3-article__body video.wp-video-shortcode,
+    .single .m3-article__body iframe[src*="youtube.com"],
+    .single-post .m3-article__body iframe[src*="youtube.com"],
+    .single .m3-article__body iframe[src*="youtu.be"],
+    .single-post .m3-article__body iframe[src*="youtu.be"],
+    .single .m3-article__body iframe[src*="vimeo.com"],
+    .single-post .m3-article__body iframe[src*="vimeo.com"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        aspect-ratio: 16 / 9;
+        height: auto !important;
+        display: block;
+        border: 0;
+        border-radius: 16px;
+        background: #000;
+    }
+
+    .single .m3-article__body .wp-block-embed.is-type-video .wp-block-embed__wrapper,
+    .single-post .m3-article__body .wp-block-embed.is-type-video .wp-block-embed__wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        border-radius: 16px;
+        margin-left: 0;
+        margin-right: 0;
+        background: #000;
+    }
+}
+/* ===== End Single Mobile Video Improvement ===== */

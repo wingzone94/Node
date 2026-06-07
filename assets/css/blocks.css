@@ -20,7 +20,8 @@
 /* ==========================================================================
    1. Smart Sort Table
    ========================================================================== */
-.m3-sort-table-wrapper {
+.m3-sort-table-wrapper,
+.m3-table-container {
     overflow-x: auto;
     border-radius: var(--m3-radius-card);
     border: 1px solid var(--md-sys-color-outline-variant);
@@ -28,12 +29,14 @@
     margin-bottom: 24px;
 }
 
-.m3-sort-table {
+.m3-sort-table,
+.m3-sortable-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.m3-sort-table th {
+.m3-sort-table th,
+.m3-sortable-table th {
     background: var(--md-sys-color-surface-container-high);
     padding: 12px 16px;
     text-align: left;
@@ -45,10 +48,13 @@
     transition: background 0.2s;
 }
 
-.m3-sort-table th:hover { background: var(--md-sys-color-surface-container-highest); }
-.m3-sort-table th.is-sorting { color: var(--md-sys-color-primary); }
+.m3-sort-table th:hover,
+.m3-sortable-table th:hover { background: var(--md-sys-color-surface-container-highest); }
+.m3-sort-table th.is-sorting,
+.m3-sortable-table th.is-sorting { color: var(--md-sys-color-primary); }
 
-.m3-sort-table th::after {
+.m3-sort-table th::after,
+.m3-sortable-table th::after {
     content: 'expand_more';
     font-family: 'Material Symbols Outlined';
     font-size: 18px;
@@ -57,10 +63,13 @@
     opacity: 0.3;
 }
 
-.m3-sort-table th.sort-asc::after  { content: 'arrow_upward';   opacity: 1; }
-.m3-sort-table th.sort-desc::after { content: 'arrow_downward'; opacity: 1; }
+.m3-sort-table th.sort-asc::after,
+.m3-sortable-table th.sort-asc::after  { content: 'arrow_upward';   opacity: 1; }
+.m3-sort-table th.sort-desc::after,
+.m3-sortable-table th.sort-desc::after { content: 'arrow_downward'; opacity: 1; }
 
-.m3-sort-table td {
+.m3-sort-table td,
+.m3-sortable-table td {
     padding: 12px 16px;
     border-top: 1px solid var(--md-sys-color-outline-variant);
 }

@@ -19,7 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'NODE_AI_VERSION', '1.0.0' );
 define( 'NODE_AI_DIR', plugin_dir_path( __FILE__ ) );
-define( 'NODE_AI_URL', get_template_directory_uri() . '/plugins-embedded/node-ai-tools/' );
+
+$node_ai_embedded_dir = get_template_directory() . '/plugins-embedded/node-ai-tools/';
+define(
+	'NODE_AI_URL',
+	is_dir( $node_ai_embedded_dir )
+		? get_template_directory_uri() . '/plugins-embedded/node-ai-tools/'
+		: content_url( '/plugins/node-ai-tools/' )
+);
 
 /**
  * プラグイン初期化

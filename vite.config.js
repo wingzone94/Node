@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  base: './',
   build: {
     manifest: true,
     outDir: 'assets',
@@ -23,6 +24,16 @@ export default defineConfig({
         },
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
+            if (
+              id.includes('node_modules/colorthief')
+              || id.includes('node_modules/@lokesh.dhakar')
+              || id.includes('node_modules/ndarray')
+              || id.includes('node_modules/cwise-compiler')
+              || id.includes('node_modules/uniq')
+              || id.includes('node_modules/iota-array')
+            ) {
+              return 'color-tools';
+            }
             return 'vendor';
           }
         }

@@ -14,7 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'NODE_FLOW_VERSION', '1.0.0' );
 define( 'NODE_FLOW_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'NODE_FLOW_PLUGIN_URL', get_template_directory_uri() . '/plugins-embedded/node-flow/' );
+
+$node_flow_embedded_dir = get_template_directory() . '/plugins-embedded/node-flow/';
+define(
+    'NODE_FLOW_PLUGIN_URL',
+    is_dir( $node_flow_embedded_dir )
+        ? get_template_directory_uri() . '/plugins-embedded/node-flow/'
+        : content_url( '/plugins/node-flow/' )
+);
 
 // 簡易オートローダー
 spl_autoload_register( function ( $class ) {

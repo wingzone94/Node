@@ -4,20 +4,7 @@
  */
 ?>
 <footer class="m3-article__footer">
-    <?php
-    $post_tags = get_the_tags();
-    if ($post_tags) :
-    ?>
-    <div class="m3-article__tags">
-        <span class="m3-article__footer-label">
-            <span class="material-symbols-outlined">tag</span>
-            TAGS
-        </span>
-        <?php foreach ($post_tags as $tag) : ?>
-            <a href="<?php echo esc_url(get_tag_link($tag->term_id)); ?>" class="m3-filter-chip">#<?php echo esc_html($tag->name); ?></a>
-        <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
+    <?php node_the_tag_labels(); ?>
 
     <?php get_template_part('template-parts/social-share'); ?>
     

@@ -5,6 +5,13 @@
 export function initPagination() {
     // 1. Page Selector Dropdown (for multi-page posts)
     const pageSelector = document.getElementById('m3-page-selector');
+    const paginationNumbers = document.querySelectorAll('.m3-pagination__number');
+    const hasArticleActions = document.getElementById('m3-article-toc-anchor') || document.getElementById('m3-article-top-anchor');
+
+    if (!pageSelector && !paginationNumbers.length && !hasArticleActions) {
+        return;
+    }
+
     if (pageSelector) {
         pageSelector.addEventListener('change', (e) => {
             if (e.target.value) {
@@ -35,7 +42,6 @@ export function initPagination() {
     });
 
     // 3. Animation for pagination numbers on hover (Expressive style)
-    const paginationNumbers = document.querySelectorAll('.m3-pagination__number');
     paginationNumbers.forEach(num => {
         num.addEventListener('mouseenter', () => {
             if (typeof gsap !== 'undefined' && num.tagName === 'A') {

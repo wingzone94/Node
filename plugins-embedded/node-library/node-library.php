@@ -18,6 +18,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'NODE_LIBRARY_VERSION', '1.3.0' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 
+$node_library_embedded_dir = get_template_directory() . '/plugins-embedded/node-library/';
+define(
+	'NODE_LIBRARY_URL',
+	is_dir( $node_library_embedded_dir )
+		? get_template_directory_uri() . '/plugins-embedded/node-library/'
+		: content_url( '/plugins/node-library/' )
+);
+
 /**
  * Node Library Main Class
  */
@@ -276,7 +284,7 @@ final class Node_Library {
 	public function enqueue_block_assets(): void {
 		wp_enqueue_script(
 			'node-library-block-editor',
-			get_template_directory_uri() . '/plugins-embedded/node-library/assets/js/block-editor.js',
+			NODE_LIBRARY_URL . 'assets/js/block-editor.js',
 			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-block-editor' ],
 			NODE_LIBRARY_VERSION,
 			true

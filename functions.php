@@ -62,6 +62,10 @@ $embedded_plugins = [
 
 foreach ( $embedded_plugins as $plugin_file => $init_func ) {
 	$path = NODE_THEME_DIR . '/plugins-embedded/' . $plugin_file;
+
+	if ( function_exists( $init_func ) ) {
+		continue;
+	}
 	
 	if ( file_exists( $path ) ) {
 		require_once $path;
@@ -180,6 +184,7 @@ function node_enqueue_assets() {
 	}
 
 	// Google Fonts & Material Symbols are now handled in header.php for performance.
+	luminous_enqueue_plugin_scripts();
 }
 add_action( 'wp_enqueue_scripts', 'node_enqueue_assets' );
 

@@ -19,7 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'LUMINOUS_BLOCKS_VERSION', '1.0.0' );
 define( 'LUMINOUS_BLOCKS_DIR', plugin_dir_path( __FILE__ ) );
-define( 'LUMINOUS_BLOCKS_URL', get_template_directory_uri() . '/plugins-embedded/luminous-blocks/' );
+
+$luminous_blocks_embedded_dir = get_template_directory() . '/plugins-embedded/luminous-blocks/';
+define(
+	'LUMINOUS_BLOCKS_URL',
+	is_dir( $luminous_blocks_embedded_dir )
+		? get_template_directory_uri() . '/plugins-embedded/luminous-blocks/'
+		: content_url( '/plugins/luminous-blocks/' )
+);
 
 /**
  * プラグイン初期化
@@ -72,29 +79,71 @@ final class Luminous_Blocks {
 	}
 
 	public function enqueue_frontend_assets(): void {
-		wp_enqueue_style(
-			'luminous-blocks',
-			LUMINOUS_BLOCKS_URL . 'assets/css/blocks.css',
-			[],
-			LUMINOUS_BLOCKS_VERSION
-		);
+		$style_asset = $this->resolve_asset( 'assets/css/blocks.css', 'assets/css/blocks.css' );
+		$script_asset = $this->resolve_asset( 'assets/js/blocks.js', 'assets/js/blocks.js' );
+
+		if ( $style_asset ) {
+			wp_enqueue_style(
+				'luminous-blocks',
+				$style_asset['url'],
+				[],
+				$style_asset['version']
+			);
+		}
+
+		if ( $script_asset ) {
+			wp_enqueue_script(
+				'luminous-blocks',
+				$script_asset['url'],
+				[],
+				$script_asset['version'],
+				true
+			);
+		}
+	}
+
+	public function enqueue_editor_assets(): void {
+		$editor_asset = $this->resolve_asset( 'assets/js/editor.js', 'assets/js/editor.js' );
+
+		if ( ! $editor_asset ) {
+			return;
+		}
+
 		wp_enqueue_script(
-			'luminous-blocks',
-			LUMINOUS_BLOCKS_URL . 'assets/js/blocks.js',
-			[ 'gsap' ],
-			LUMINOUS_BLOCKS_VERSION,
+			'luminous-blocks-editor',
+			$editor_asset['url'],
+			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post' ],
+			$editor_asset['version'],
 			true
 		);
 	}
 
-	public function enqueue_editor_assets(): void {
-		wp_enqueue_script(
-			'luminous-blocks-editor',
-			LUMINOUS_BLOCKS_URL . 'assets/js/editor.js',
-			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post' ],
-			LUMINOUS_BLOCKS_VERSION,
-			true
-		);
+	/**
+	 * Embedded plugin assets used to live under the theme-level assets directory.
+	 * Resolve both locations so production ZIPs stay compact without breaking old installs.
+	 *
+	 * @return array{url:string, version:string}|null
+	 */
+	private function resolve_asset( string $embedded_relative_path, string $theme_relative_path ): ?array {
+		$embedded_path = LUMINOUS_BLOCKS_DIR . $embedded_relative_path;
+
+		if ( file_exists( $embedded_path ) ) {
+			return [
+				'url'     => LUMINOUS_BLOCKS_URL . $embedded_relative_path,
+				'version' => (string) filemtime( $embedded_path ),
+			];
+		}
+
+		$theme_path = get_template_directory() . '/' . ltrim( $theme_relative_path, '/' );
+
+		if ( ! file_exists( $theme_path ) ) {
+			return null;
+		}
+
+		return [
+			'url'     => get_template_directory_uri() . '/' . ltrim( $theme_relative_path, '/' ),
+			'version' => (string) filemtime( $theme_path ),
+		];
 	}
 }
 

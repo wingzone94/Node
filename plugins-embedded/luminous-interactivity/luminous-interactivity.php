@@ -19,7 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'LUMINOUS_INTER_VERSION', '1.0.0' );
 define( 'LUMINOUS_INTER_DIR', plugin_dir_path( __FILE__ ) );
-define( 'LUMINOUS_INTER_URL', get_template_directory_uri() . '/plugins-embedded/luminous-interactivity/' );
+
+$luminous_inter_embedded_dir = get_template_directory() . '/plugins-embedded/luminous-interactivity/';
+define(
+	'LUMINOUS_INTER_URL',
+	is_dir( $luminous_inter_embedded_dir )
+		? get_template_directory_uri() . '/plugins-embedded/luminous-interactivity/'
+		: content_url( '/plugins/luminous-interactivity/' )
+);
 
 /**
  * プラグイン初期化

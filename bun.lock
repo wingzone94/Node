@@ -5,7 +5,6 @@
     "": {
       "name": "node-material-you-theme",
       "dependencies": {
-        "@material/material-color-utilities": "^0.2.7",
         "colorthief": "^2.4.0",
         "gsap": "^3.15.0",
       },
@@ -102,8 +101,6 @@
     "@img/sharp-win32-x64": ["@img/sharp-win32-x64@0.33.5", "", { "os": "win32", "cpu": "x64" }, "sha512-MpY/o8/8kj+EcnxwvrP4aTJSWw/aZ7JIGR4aBeZkZw5B7/Jn+tY9/VNwtcoGmdT7GfggGIU4kygOMSbYnOrAbg=="],
 
     "@lokesh.dhakar/quantize": ["@lokesh.dhakar/quantize@1.4.0", "", {}, "sha512-+//cqVWKis//t0YH62EDtwaFSPG/CDtYNg4CZmzNmG2d5W17Iu3fuDAdpQXCDHUDrrU9q0veze4A7tPZXlR/mg=="],
-
-    "@material/material-color-utilities": ["@material/material-color-utilities@0.2.7", "", {}, "sha512-0FCeqG6WvK4/Cc06F/xXMd/pv4FeisI0c1tUpBbfhA2n9Y8eZEv4Karjbmf2ZqQCPUWMrGp8A571tCjizxoTiQ=="],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.60.2", "", { "os": "android", "cpu": "arm" }, "sha512-dnlp69efPPg6Uaw2dVqzWRfAWRnYVb1XJ8CyyhIbZeaq4CA5/mLeZ1IEt9QqQxmbdvagjLIm2ZL8BxXv5lH4Yw=="],
 

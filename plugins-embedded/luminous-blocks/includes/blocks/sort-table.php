@@ -12,8 +12,8 @@ if ( ! function_exists( 'node_render_sort_table_block' ) ) {
 
         ob_start();
         ?>
-        <div class="m3-table-container">
-            <table class="m3-sortable-table">
+        <div class="m3-sort-table-wrapper m3-table-container">
+            <table class="m3-sort-table m3-sortable-table" data-sort-enabled="true">
                 <thead>
                     <tr>
                         <?php foreach ($data[0] as $cell) : ?>

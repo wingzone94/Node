@@ -8,14 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
     initVotingParticles();
 });
 
+const getGsap = () => (typeof window !== 'undefined' && window.gsap ? window.gsap : null);
+
+const setStyles = (element, styles) => {
+    Object.entries(styles).forEach(([property, value]) => {
+        element.style[property] = value;
+    });
+};
+
 /**
  * 1. Smart Sort Table (Lightweight Vanilla Logic)
  */
 function initSmartSortTables() {
-    const tables = document.querySelectorAll('.m3-sort-table');
+    const tables = document.querySelectorAll('.m3-sort-table, .m3-sortable-table');
     
     tables.forEach(table => {
-        if (table.dataset.sortEnabled !== 'true') return;
+        if (table.dataset.sortEnabled === 'false') return;
         
         const headers = table.querySelectorAll('th');
         headers.forEach((header, index) => {
@@ -66,21 +74,39 @@ function initMediaLabels() {
         if (!checkbox || !label) return;
 
         checkbox.addEventListener('change', () => {
+            const gsap = getGsap();
+
             if (checkbox.checked) {
-                gsap.to(label, {
-                    opacity: 1,
-                    scale: 1,
-                    y: -10,
-                    duration: 0.5,
-                    ease: "back.out(1.7)"
+                if (gsap) {
+                    gsap.to(label, {
+                        opacity: 1,
+                        scale: 1,
+                        y: -10,
+                        duration: 0.5,
+                        ease: "back.out(1.7)"
+                    });
+                    return;
+                }
+
+                setStyles(label, {
+                    opacity: '1',
+                    transform: 'translateY(-10px) scale(1)'
                 });
             } else {
-                gsap.to(label, {
-                    opacity: 0,
-                    scale: 0.8,
-                    y: 0,
-                    duration: 0.3,
-                    ease: "power2.in"
+                if (gsap) {
+                    gsap.to(label, {
+                        opacity: 0,
+                        scale: 0.8,
+                        y: 0,
+                        duration: 0.3,
+                        ease: "power2.in"
+                    });
+                    return;
+                }
+
+                setStyles(label, {
+                    opacity: '0',
+                    transform: 'translateY(0) scale(0.8)'
                 });
             }
         });
@@ -98,10 +124,20 @@ function initVotingParticles() {
         const buttons = card.querySelectorAll('.m3-voting-button');
         buttons.forEach(button => {
             button.addEventListener('click', () => {
+                const gsap = getGsap();
                 const results = card.querySelectorAll('.m3-voting-result-container');
+
                 results.forEach(res => {
                     res.style.display = 'flex';
-                    gsap.from(res, { opacity: 0, y: 10, duration: 0.4 });
+                    if (gsap) {
+                        gsap.from(res, { opacity: 0, y: 10, duration: 0.4 });
+                        return;
+                    }
+
+                    setStyles(res, {
+                        opacity: '1',
+                        transform: 'translateY(0)'
+                    });
                 });
             });
         });

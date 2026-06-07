@@ -67,6 +67,153 @@ function node_get_image_seed_color($attachment_id) {
     imagedestroy($pixel);
     return $hex;
 }
+
+function node_get_readable_text_color($hex_color) {
+    $hex_color = sanitize_hex_color($hex_color);
+    if (!$hex_color) {
+        return '#ffffff';
+    }
+
+    $hex = ltrim($hex_color, '#');
+    if (3 === strlen($hex)) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+
+    $red   = hexdec(substr($hex, 0, 2));
+    $green = hexdec(substr($hex, 2, 2));
+    $blue  = hexdec(substr($hex, 4, 2));
+    $yiq   = (($red * 299) + ($green * 587) + ($blue * 114)) / 1000;
+
+    return $yiq >= 150 ? '#2b1700' : '#ffffff';
+}
+
+function node_mix_hex_color($hex_color, $target_color = '#ffffff', $target_ratio = 0.5) {
+    $hex_color    = sanitize_hex_color($hex_color);
+    $target_color = sanitize_hex_color($target_color);
+
+    if (!$hex_color || !$target_color) {
+        return $hex_color ?: '#FF9900';
+    }
+
+    $target_ratio = max(0, min(1, (float) $target_ratio));
+    $source_ratio = 1 - $target_ratio;
+
+    $source = ltrim($hex_color, '#');
+    $target = ltrim($target_color, '#');
+
+    if (3 === strlen($source)) {
+        $source = $source[0] . $source[0] . $source[1] . $source[1] . $source[2] . $source[2];
+    }
+    if (3 === strlen($target)) {
+        $target = $target[0] . $target[0] . $target[1] . $target[1] . $target[2] . $target[2];
+    }
+
+    $mixed = [];
+    for ($i = 0; $i < 3; $i++) {
+        $source_value = hexdec(substr($source, $i * 2, 2));
+        $target_value = hexdec(substr($target, $i * 2, 2));
+        $mixed[] = (int) round(($source_value * $source_ratio) + ($target_value * $target_ratio));
+    }
+
+    return sprintf('#%02x%02x%02x', $mixed[0], $mixed[1], $mixed[2]);
+}
+
+function node_get_category_color($term) {
+    $term_id = is_object($term) && isset($term->term_id) ? (int) $term->term_id : absint($term);
+    if (!$term_id) {
+        return '';
+    }
+
+    $saved_color = sanitize_hex_color(get_term_meta($term_id, '_m3_color', true));
+    if ($saved_color) {
+        return $saved_color;
+    }
+
+    $term_object = is_object($term) ? $term : get_term($term_id, 'category');
+    if ($term_object && !is_wp_error($term_object) && !empty($term_object->description)) {
+        if (preg_match('/#[a-fA-F0-9]{6}/', $term_object->description, $matches)) {
+            $legacy_color = sanitize_hex_color($matches[0]);
+            if ($legacy_color) {
+                return $legacy_color;
+            }
+        }
+    }
+
+    return '';
+}
+
+function node_is_default_category_color($hex_color) {
+    $hex_color = sanitize_hex_color($hex_color);
+
+    return $hex_color && 0 === strcasecmp($hex_color, '#FF9900');
+}
+
+function node_get_category_label_props($term) {
+    $custom_color = node_get_category_color($term);
+    $is_default   = empty($custom_color) || node_is_default_category_color($custom_color);
+    $color        = $is_default ? '#FF9900' : $custom_color;
+
+    return array(
+        'color'      => $color,
+        'on_color'   => $is_default ? '#ffffff' : node_get_readable_text_color($color),
+        'data_color' => $is_default ? '' : $color,
+    );
+}
+
+function node_get_category_label_style($term_or_props) {
+    $props = is_array($term_or_props) ? $term_or_props : node_get_category_label_props($term_or_props);
+
+    return sprintf(
+        '--category-color:%s;--category-on-color:%s;',
+        esc_attr($props['color']),
+        esc_attr($props['on_color'])
+    );
+}
+
+function node_render_category_label($term, $args = array()) {
+    $term = is_object($term) ? $term : get_term(absint($term), 'category');
+    if (!$term || is_wp_error($term)) {
+        return '';
+    }
+
+    $args = wp_parse_args(
+        $args,
+        array(
+            'tag'   => 'a',
+            'class' => 'm3-label--category',
+            'href'  => true,
+        )
+    );
+
+    $tag = in_array($args['tag'], array('a', 'span'), true) ? $args['tag'] : 'span';
+    $label_props = node_get_category_label_props($term);
+    $attrs = array(
+        'class'            => trim($args['class']),
+        'data-category-id' => $term->term_id,
+        'style'            => node_get_category_label_style($label_props),
+    );
+
+    if (!empty($label_props['data_color'])) {
+        $attrs['data-color'] = $label_props['data_color'];
+    }
+
+    if ('a' === $tag && $args['href']) {
+        $attrs['href'] = get_category_link($term->term_id);
+    }
+
+    $attr_html = '';
+    foreach ($attrs as $name => $value) {
+        if ('' === $value || null === $value) {
+            continue;
+        }
+
+        $attr_html .= ' ' . esc_attr($name) . '="';
+        $attr_html .= 'href' === $name ? esc_url($value) : esc_attr($value);
+        $attr_html .= '"';
+    }
+
+    return '<' . $tag . $attr_html . '>' . esc_html($term->name) . '</' . $tag . '>';
+}
 /**
  * 投稿・カテゴリのカラー設定を優先し、M3シードカラーを動的に生成する。
  * 優先順位: 投稿個別カラー > カテゴリカラー > アイキャッチ画像抽出色 > デフォルト
@@ -94,7 +241,7 @@ function node_generate_m3_colors() {
         if (empty($seed_color)) {
             $categories = get_the_category($post_id);
             if (!empty($categories)) {
-                $cat_color = get_term_meta($categories[0]->term_id, '_m3_color', true);
+                $cat_color = node_get_category_color($categories[0]);
                 if (!empty($cat_color)) {
                     $seed_color = sanitize_hex_color($cat_color);
                 }
@@ -115,7 +262,7 @@ function node_generate_m3_colors() {
 
     // アーカイブページ: カテゴリカラーを使用
     if (is_category()) {
-        $cat_color = get_term_meta(get_queried_object_id(), '_m3_color', true);
+        $cat_color = node_get_category_color(get_queried_object_id());
         if (!empty($cat_color)) {
             $seed_color = sanitize_hex_color($cat_color);
         }
@@ -126,15 +273,21 @@ function node_generate_m3_colors() {
         $seed_color = $default_primary;
     }
     if (empty($seed_color_dark)) {
-        $seed_color_dark = $default_primary_dark;
+        $seed_color_dark = node_mix_hex_color($seed_color ?: $default_primary, '#ffffff', 0.36);
     }
+    $on_primary                 = node_get_readable_text_color($seed_color);
+    $primary_container          = node_mix_hex_color($seed_color, '#fff4e5', 0.78);
+    $on_primary_container       = node_get_readable_text_color($primary_container);
+    $dark_on_primary            = node_get_readable_text_color($seed_color_dark);
+    $dark_primary_container     = node_mix_hex_color($seed_color, '#1e1b16', 0.54);
+    $dark_on_primary_container  = node_get_readable_text_color($dark_primary_container);
     ?>
     <style id="m3-dynamic-colors">
         :root {
             --md-sys-color-primary: <?php echo esc_attr($seed_color); ?>;
-            --md-sys-color-on-primary: #ffffff;
-            --md-sys-color-primary-container: #ffdcbe;
-            --md-sys-color-on-primary-container: #2c1600;
+            --md-sys-color-on-primary: <?php echo esc_attr($on_primary); ?>;
+            --md-sys-color-primary-container: <?php echo esc_attr($primary_container); ?>;
+            --md-sys-color-on-primary-container: <?php echo esc_attr($on_primary_container); ?>;
             --md-sys-color-surface: #FFF4E5; /* Warm Orange Background */
             --md-sys-color-on-surface: #2b1700;
             --md-sys-color-surface-container-low: #ffffff;
@@ -145,7 +298,9 @@ function node_generate_m3_colors() {
         }
         [data-theme="dark"] {
             --md-sys-color-primary: <?php echo esc_attr($seed_color_dark); ?>;
-            --md-sys-color-on-primary: #4a2800;
+            --md-sys-color-on-primary: <?php echo esc_attr($dark_on_primary); ?>;
+            --md-sys-color-primary-container: <?php echo esc_attr($dark_primary_container); ?>;
+            --md-sys-color-on-primary-container: <?php echo esc_attr($dark_on_primary_container); ?>;
             --md-sys-color-surface: #1e1b16;
             --md-sys-color-on-surface: #ebe0d9;
             --md-sys-color-surface-container-low: #25221b;
@@ -161,9 +316,6 @@ function node_the_category_labels($post_id = null) {
     $categories = get_the_category($post_id);
     if (empty($categories)) return;
     
-    // JSのカラー抽出用にアイキャッチURLを取得
-    $thumb_url = get_the_post_thumbnail_url($post_id, 'thumbnail') ?: '';
-    
     $is_card = !is_single();
     // カード表示なら3つ、シングルページならすべて（999個）表示
     $limit = $is_card ? 3 : 999;
@@ -176,26 +328,46 @@ function node_the_category_labels($post_id = null) {
     }
     
     foreach ($display_cats as $cat) {
-        // カテゴリの説明欄に #FFFFFF 形式の色指定があればそれを使う
-        $cat_desc = $cat->description;
-        $custom_color = 'auto';
-        $style_attr = '';
-        if (preg_match('/#[a-fA-F0-9]{6}/', $cat_desc, $matches)) {
-            $custom_color = $matches[0];
-        }
-
-        echo '<a href="' . esc_url(get_category_link($cat->term_id)) . '" ';
-        echo 'class="m3-label--category" ';
-        echo 'data-color="' . esc_attr($custom_color) . '" ';
-        echo 'data-thumb="' . esc_url($thumb_url) . '" ';
-        echo '>';
-        echo esc_html($cat->name) . '</a>';
+        echo node_render_category_label($cat);
     }
     
     if ($count > $limit) {
         $remaining = $count - $limit;
         echo '<span class="m3-label--category-more" title="さらに ' . $remaining . ' 件のカテゴリがあります">+' . $remaining . '</span>';
     }
+    echo '</div>';
+}
+
+function node_render_tag_chip($tag) {
+    $tag = is_object($tag) ? $tag : get_term(absint($tag), 'post_tag');
+    if (!$tag || is_wp_error($tag)) {
+        return '';
+    }
+
+    return sprintf(
+        '<a href="%s" class="m3-filter-chip m3-article__tag-chip">#%s</a>',
+        esc_url(get_tag_link($tag->term_id)),
+        esc_html($tag->name)
+    );
+}
+
+function node_the_tag_labels($post_id = null) {
+    $post_id = $post_id ?: get_the_ID();
+    $post_tags = get_the_tags($post_id);
+    if (!$post_tags) {
+        return;
+    }
+
+    echo '<div class="m3-article__tags">';
+    echo '<span class="m3-article__footer-label">';
+    echo '<span class="material-symbols-outlined" aria-hidden="true">sell</span>';
+    echo 'TAGS';
+    echo '</span>';
+
+    foreach ($post_tags as $tag) {
+        echo node_render_tag_chip($tag);
+    }
+
     echo '</div>';
 }
 

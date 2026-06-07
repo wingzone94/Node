@@ -2,7 +2,8 @@
   "name": "Luminous Core",
   "short_name": "Luminous",
   "description": "Luminous Core",
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FF9900",
   "theme_color": "#FF9900",
@@ -30,7 +31,7 @@
   "shortcuts": [
     {
       "name": "最新記事",
-      "url": "./",
+      "url": "/",
       "description": "最新の記事をチェックします"
     }
   ]

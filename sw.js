@@ -1,7 +1,5 @@
-const CACHE_NAME = 'node-v5';
+const CACHE_NAME = 'node-v6';
 const ASSETS_TO_CACHE = [
-  './',
-  './style.css',
   './manifest.json',
   './pwa-icon-192.png',
   './pwa-icon-512.png',
@@ -42,11 +40,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('./');
-      })
-    );
+    event.respondWith(fetch(event.request));
     return;
   }
 

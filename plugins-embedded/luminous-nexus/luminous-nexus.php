@@ -19,7 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'LUMINOUS_NEXUS_VERSION', '1.0.0' );
 define( 'LUMINOUS_NEXUS_DIR', plugin_dir_path( __FILE__ ) );
-define( 'LUMINOUS_NEXUS_URL', get_template_directory_uri() . '/plugins-embedded/luminous-nexus/' );
+
+$luminous_nexus_embedded_dir = get_template_directory() . '/plugins-embedded/luminous-nexus/';
+define(
+	'LUMINOUS_NEXUS_URL',
+	is_dir( $luminous_nexus_embedded_dir )
+		? get_template_directory_uri() . '/plugins-embedded/luminous-nexus/'
+		: content_url( '/plugins/luminous-nexus/' )
+);
 
 /**
  * プラグイン初期化

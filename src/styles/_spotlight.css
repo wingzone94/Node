@@ -133,10 +133,23 @@
 }
 
 .m3-headline-card__category {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 86px;
+    margin-top: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--category-color, #FF9900);
+    color: var(--category-on-color, #ffffff);
     font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .m3-headline-card__title {

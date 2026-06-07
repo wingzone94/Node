@@ -1,6 +1,10 @@
 {
-  "_vendor.Fer7Z3ub.js": {
-    "file": "js/vendor.Fer7Z3ub.js",
+  "_color-tools.DO17jA51.js": {
+    "file": "js/color-tools.DO17jA51.js",
+    "name": "color-tools"
+  },
+  "_vendor.SFc2wnMY.js": {
+    "file": "js/vendor.SFc2wnMY.js",
     "name": "vendor"
   },
   "src/editor.js": {
@@ -10,13 +14,60 @@
     "isEntry": true
   },
   "src/main.js": {
-    "file": "js/main.ByKx3Vfp.js",
+    "file": "js/main.6zl1kmhK.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
     "imports": [
-      "_vendor.Fer7Z3ub.js"
+      "_vendor.SFc2wnMY.js"
+    ],
+    "dynamicImports": [
+      "src/scripts/color-extraction.js",
+      "src/scripts/comment-form.js",
+      "src/scripts/header-clock.js",
+      "src/scripts/table-sorter.js",
+      "src/scripts/pagination.js",
+      "src/scripts/reading-badge-animation.js"
     ]
+  },
+  "src/scripts/color-extraction.js": {
+    "file": "js/color-extraction.DqIBLTER.js",
+    "name": "color-extraction",
+    "src": "src/scripts/color-extraction.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_color-tools.DO17jA51.js"
+    ]
+  },
+  "src/scripts/comment-form.js": {
+    "file": "js/comment-form.BMiWK0ug.js",
+    "name": "comment-form",
+    "src": "src/scripts/comment-form.js",
+    "isDynamicEntry": true
+  },
+  "src/scripts/header-clock.js": {
+    "file": "js/header-clock.BibnQfL9.js",
+    "name": "header-clock",
+    "src": "src/scripts/header-clock.js",
+    "isDynamicEntry": true
+  },
+  "src/scripts/pagination.js": {
+    "file": "js/pagination.CLy-ngJF.js",
+    "name": "pagination",
+    "src": "src/scripts/pagination.js",
+    "isDynamicEntry": true
+  },
+  "src/scripts/reading-badge-animation.js": {
+    "file": "js/reading-badge-animation.DxfofZvk.js",
+    "name": "reading-badge-animation",
+    "src": "src/scripts/reading-badge-animation.js",
+    "isDynamicEntry": true
+  },
+  "src/scripts/table-sorter.js": {
+    "file": "js/table-sorter.BQQKJp4j.js",
+    "name": "table-sorter",
+    "src": "src/scripts/table-sorter.js",
+    "isDynamicEntry": true
   },
   "src/styles/style.css": {
     "file": "css/style.css",

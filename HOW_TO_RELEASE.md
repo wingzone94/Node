@@ -5,14 +5,15 @@
 ## 0. 命名・ブランド
 - ブログ / サイトのブランド名は **Luminous Core** です。
 - WordPress テーマ名は **Node** です。
-- 配布ZIPのファイル名は **node.zip**、ZIP内のテーマルートディレクトリは **node/** に統一します。
+- 配布ZIPのファイル名は **node.zip**、ZIP内のテーマルートディレクトリは **Node/** に統一します。
+- ConoHa WING 本番環境は Linux のため、既存テーマURL `/wp-content/themes/Node/` と同じ大文字小文字を維持します。
 - `style.css` の `Theme Name` は **Node** のまま維持します。
 
 ## 1. アセットのビルド
 テーマ内のCSSやJavaScriptを変更した場合は、必ずビルドを実行して最新のアセットを生成します。
 
 ```bash
-bun run build
+bun x vite build
 ```
 
 ## 2. 不要なファイルのクリーンアップ（任意）
@@ -31,11 +32,31 @@ rsync -a \
   --exclude='*.zip' \
   --exclude='.DS_Store' \
   --exclude='.!*!.DS_Store' \
+  --exclude='.tmp*/' \
   --exclude='.cursor/' \
   --exclude='.gemini/' \
+  --exclude='.codex/' \
+  --exclude='.agents/' \
   --exclude='scratch/' \
-  ./ "$tmpdir/node/"
-(cd "$tmpdir" && zip -qr "$repo_dir/node.zip" node)
+  --exclude='production_plugins/' \
+  --exclude='src/' \
+  --exclude='AGENTS.md' \
+  --exclude='GEMINI.md' \
+  --exclude='AI.md' \
+  --exclude='TECHNOLOGIES.md' \
+  --exclude='skills-lock.json' \
+  --exclude='gemini_targets.txt' \
+  --exclude='package.json' \
+  --exclude='bun.lock' \
+  --exclude='vite.config.js' \
+  --exclude='HOW_TO_RELEASE.md' \
+  --exclude='CHANGELOG.md' \
+  --exclude='.gitignore' \
+  --exclude='.gitattributes' \
+  --exclude='assets/css/main.css' \
+  --exclude='assets/css/material3.css' \
+  ./ "$tmpdir/Node/"
+(cd "$tmpdir" && zip -qr "$repo_dir/node.zip" Node)
 rm -rf "$tmpdir"
 ```
 

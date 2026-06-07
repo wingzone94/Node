@@ -90,6 +90,10 @@
             $reading_time_display = $minutes > 0
                 ? sprintf('%d分%02d秒', $minutes, $seconds)
                 : sprintf('%d秒', $seconds);
+            $reading_progress = isset($reading_info['progress'])
+                ? min(100, max(0, (float) $reading_info['progress']))
+                : 0;
+            $reading_angle = round($reading_progress * 3.6, 2);
             ?>
 
             <!-- v0.9.1 Style Reading Badge (Restored from Git) -->
@@ -105,12 +109,16 @@
                      aria-expanded="false"
                      aria-controls="m3-reading-badge-desc">
                     <div class="m3-reading-badge__gauge">
-                        <svg viewBox="0 0 36 36" class="m3-reading-circle__svg" aria-hidden="true" focusable="false">
+                        <svg viewBox="0 0 36 36"
+                             class="m3-reading-circle__svg"
+                             style="--target-progress: <?php echo esc_attr($reading_progress); ?>; --target-angle: <?php echo esc_attr($reading_angle); ?>deg;"
+                             aria-hidden="true"
+                             focusable="false">
                             <path class="m3-reading-circle__bg" pathLength="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             <path class="m3-reading-circle__progress"
-                                  style="--target-progress: <?php echo esc_attr($reading_info['progress']); ?>;"
                                   pathLength="100"
                                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <circle class="m3-reading-circle__head" cx="18" cy="2.0845" r="2.15" />
                         </svg>
                         <span class="material-symbols-outlined" aria-hidden="true">timer</span>
                     </div>
