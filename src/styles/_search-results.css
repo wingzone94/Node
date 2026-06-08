@@ -1,4 +1,11 @@
 /* Search Results Page Styles */
+.site-main.m3-search-layout {
+    padding-top: 0;
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
 .m3-search-results-header {
     background: var(--md-sys-color-surface-container-low);
     padding: 80px 24px 64px;

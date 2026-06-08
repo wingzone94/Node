@@ -4,7 +4,7 @@
  */
 get_header(); ?>
 
-<main id="primary" class="site-main">
+<main id="primary" class="site-main m3-archive-layout m3-search-layout">
 
     <header class="m3-search-results-header">
         <div class="m3-search-results-header__inner">

@@ -45,7 +45,7 @@ export const initCardAnimations = () => {
         '.m3-elevated-nav-card',
         '.special-features__item',
         '.m3-nexus-card',
-        '.m3-blog-card',
+        '.m3-blogcard',
         '.m3-product-card'
     ];
 

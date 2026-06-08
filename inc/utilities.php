@@ -239,7 +239,7 @@ function node_generate_m3_colors() {
 
         // 2. カテゴリカラー
         if (empty($seed_color)) {
-            $categories = get_the_category($post_id);
+            $categories = node_get_post_categories_for_display( $post_id );
             if (!empty($categories)) {
                 $cat_color = node_get_category_color($categories[0]);
                 if (!empty($cat_color)) {
@@ -311,9 +311,74 @@ function node_generate_m3_colors() {
     <?php
 }
 add_action('wp_head', 'node_generate_m3_colors');
+
+/**
+ * 表示用カテゴリから祖先カテゴリを除外する。
+ * 例: SPOTLIGHT 親と BLEACH 子が両方付与されている場合、子のみ残す。
+ *
+ * @param array<int, WP_Term> $categories Post categories.
+ * @return array<int, WP_Term>
+ */
+function node_deduplicate_post_categories( $categories ) {
+    if ( empty( $categories ) || ! is_array( $categories ) ) {
+        return array();
+    }
+
+    $categories = array_values(
+        array_filter(
+            $categories,
+            static function ( $term ) {
+                return $term && ! is_wp_error( $term ) && isset( $term->term_id );
+            }
+        )
+    );
+
+    if ( count( $categories ) <= 1 ) {
+        return $categories;
+    }
+
+    $filtered = array();
+
+    foreach ( $categories as $cat ) {
+        $is_ancestor = false;
+
+        foreach ( $categories as $other ) {
+            if ( (int) $cat->term_id === (int) $other->term_id ) {
+                continue;
+            }
+
+            if ( term_is_ancestor_of( (int) $cat->term_id, (int) $other->term_id, 'category' ) ) {
+                $is_ancestor = true;
+                break;
+            }
+        }
+
+        if ( ! $is_ancestor ) {
+            $filtered[] = $cat;
+        }
+    }
+
+    return $filtered;
+}
+
+/**
+ * 記事に付与されたカテゴリのうち、フロント表示用に整理した一覧を返す。
+ *
+ * @param int|null $post_id Post ID.
+ * @return array<int, WP_Term>
+ */
+function node_get_post_categories_for_display( $post_id = null ) {
+    $post_id = $post_id ? (int) $post_id : (int) get_the_ID();
+    if ( ! $post_id ) {
+        return array();
+    }
+
+    return node_deduplicate_post_categories( get_the_category( $post_id ) );
+}
+
 function node_the_category_labels($post_id = null) {
     if (!$post_id) $post_id = get_the_ID();
-    $categories = get_the_category($post_id);
+    $categories = node_get_post_categories_for_display( $post_id );
     if (empty($categories)) return;
     
     $is_card = !is_single();

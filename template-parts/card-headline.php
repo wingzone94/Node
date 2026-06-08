@@ -8,7 +8,9 @@ $post_id = get_the_ID();
     <div class="m3-headline-card__meta">
         <span class="m3-headline-card__date"><?php echo get_the_date('m.d'); ?></span>
         <?php
-        $categories = get_the_category();
+        $categories = function_exists( 'node_get_post_categories_for_display' )
+            ? node_get_post_categories_for_display( $post_id )
+            : get_the_category( $post_id );
         if (!empty($categories)) :
             $cat = $categories[0];
             echo node_render_category_label(

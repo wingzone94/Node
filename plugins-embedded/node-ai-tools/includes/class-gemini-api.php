@@ -24,21 +24,32 @@ class Node_Gemini_API {
      */
     private string $api_url_base = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
-    public function __construct() {
-        $user_id = get_current_user_id();
-        $this->api_key = get_user_meta( $user_id, 'node_gemini_api_key', true );
-        
-        if ( empty( $this->api_key ) ) {
-            $this->api_key = get_option( 'node_gemini_api_key', defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '' );
+    public function __construct( ?int $user_id = null ) {
+        $user_id = $user_id ?? get_current_user_id();
+
+        if ( function_exists( 'node_get_user_gemini_api_key' ) && $user_id > 0 ) {
+            $this->api_key = node_get_user_gemini_api_key( $user_id );
+        } else {
+            $this->api_key = $user_id > 0
+                ? (string) get_user_meta( $user_id, 'node_gemini_api_key', true )
+                : '';
+        }
+
+        // 開発環境のみ: wp-config.php の GEMINI_API_KEY 定数をフォールバック
+        if ( empty( $this->api_key ) && defined( 'GEMINI_API_KEY' ) && GEMINI_API_KEY ) {
+            $this->api_key = (string) GEMINI_API_KEY;
         }
     }
 
     /**
      * 高度なコンテンツ生成 (システム指示対応)
      */
-    public function generate_content(string $prompt, array $options = []): string|WP_Error {
+    public function generate_content(string $prompt, array $options = []): string|array|WP_Error {
         if (empty($this->api_key)) {
-            return new WP_Error('missing_api_key', 'GEMINI_API_KEYが設定されていません。Luminous Settingsから設定してください。');
+            return new WP_Error(
+                'missing_api_key',
+                'Gemini API キーが設定されていません。ユーザー → プロフィール の「Gemini API（個人設定）」から、あなた専用のキーを登録してください。'
+            );
         }
 
         $options = wp_parse_args($options, [
@@ -46,12 +57,18 @@ class Node_Gemini_API {
             'max_tokens'  => 400,
             'temperature' => 0.7,
             'response_mime_type' => 'text/plain',
+            'google_search_grounding' => false,
+            'return_metadata' => false,
+            'timeout' => 45,
         ]);
 
         $user_id = get_current_user_id();
-        $model_name = get_user_meta( $user_id, 'node_gemini_model', true );
-        if ( empty( $model_name ) ) {
-            $model_name = get_option( 'node_gemini_model', 'gemini-3-flash-preview' );
+        if ( function_exists( 'node_get_user_gemini_model' ) && $user_id > 0 ) {
+            $model_name = node_get_user_gemini_model( $user_id );
+        } else {
+            $model_name = function_exists( 'node_get_default_gemini_model' )
+                ? node_get_default_gemini_model()
+                : 'gemini-2.0-flash';
         }
         
         $url = $this->api_url_base . $model_name . ':generateContent?key=' . $this->api_key;
@@ -69,10 +86,17 @@ class Node_Gemini_API {
                 'responseMimeType' => $options['response_mime_type'],
             ]
         ];
+
+        if ( ! empty( $options['google_search_grounding'] ) ) {
+            $payload['tools'] = array(
+                array( 'google_search' => new \stdClass() ),
+            );
+        }
+
         $response = wp_remote_post($url, [
             'headers' => ['Content-Type' => 'application/json'],
             'body'    => json_encode($payload),
-            'timeout' => 45 // タイムアウトを少し長めに設定
+            'timeout' => (int) $options['timeout'],
         ]);
 
         if (is_wp_error($response)) {
@@ -82,7 +106,16 @@ class Node_Gemini_API {
         $data = json_decode(wp_remote_retrieve_body($response), true);
         
         if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            return trim($data['candidates'][0]['content']['parts'][0]['text']);
+            $text = trim($data['candidates'][0]['content']['parts'][0]['text']);
+
+            if ( ! empty( $options['return_metadata'] ) ) {
+                return array(
+                    'text'      => $text,
+                    'grounding' => $data['candidates'][0]['groundingMetadata'] ?? array(),
+                );
+            }
+
+            return $text;
         }
 
         return new WP_Error('api_error', 'APIから有効なレスポンスが得られませんでした。: ' . wp_remote_retrieve_body($response));
@@ -122,6 +155,74 @@ class Node_Gemini_API {
         ]);
         
         return $result;
+    }
+
+    /**
+     * 記事本文のファクトチェック（編集者向け・要手動確認）
+     */
+    public function fact_check( string $content, string $title = '' ): array|WP_Error {
+        $guidelines_block = '';
+        $guidelines_used  = false;
+
+        if ( function_exists( 'node_ai_fetch_guidelines' ) ) {
+            $guidelines = node_ai_fetch_guidelines();
+            if ( is_string( $guidelines ) && '' !== $guidelines ) {
+                $guidelines_used  = true;
+                $guidelines_block = "\n\n【Luminous Core 運営ガイドライン（Google ドキュメント）】\n" . $guidelines;
+            }
+        }
+
+        $system_prompt = 'あなたはテクニカルブログ「Luminous Core」のファクトチェック補助アシスタントです。
+Google Search の検索結果を参照し、記事内の事実関係に関わる主張を抽出して検証してください。
+あわせて、提供される Luminous Core 運営ガイドラインに照らし、コンプライアンス違反の可能性がある記述も指摘してください。
+ガイドライン違反は status を uncertain または likely_incorrect とし、note に該当ルールを簡潔に記載してください。
+以下の JSON 形式のみで回答してください。
+・Markdown のコードブロック（```json ... ```）は絶対に使わず、生の中括弧 { } から始まる純粋な JSON のみを出力してください。
+・推測で断定せず、不確実な場合は status を uncertain または unverifiable にしてください。
+・最大 8 件の主張に絞ってください。
+・note には検索結果・ガイドラインに基づく根拠・確認方法・注意点を簡潔に書いてください。
+
+{
+  "summary": "全体所見（2〜3文、日本語）",
+  "overall_risk": "low または medium または high",
+  "claims": [
+    {
+      "claim": "記事中の主張（原文に近い形）",
+      "status": "likely_correct / uncertain / likely_incorrect / unverifiable のいずれか",
+      "confidence": "high / medium / low のいずれか",
+      "note": "根拠・補足（日本語）"
+    }
+  ]
+}' . $guidelines_block;
+
+        $prompt = '以下の記事をファクトチェックしてください。可能な限り Google Search の情報を参照してください。';
+        if ( ! empty( $title ) ) {
+            $prompt .= "\n\n【タイトル】\n" . $title;
+        }
+        $prompt .= "\n\n【本文】\n" . mb_substr( $content, 0, 8000 );
+
+        $result = $this->generate_content(
+            $prompt,
+            array(
+                'system_instruction'        => $system_prompt,
+                'response_mime_type'      => 'application/json',
+                'temperature'             => 0.2,
+                'max_tokens'              => 4096,
+                'google_search_grounding' => true,
+                'return_metadata'         => true,
+                'timeout'                 => 60,
+            )
+        );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return array(
+            'text'             => (string) ( $result['text'] ?? '' ),
+            'grounding'        => is_array( $result['grounding'] ?? null ) ? $result['grounding'] : array(),
+            'guidelines_used'  => $guidelines_used,
+        );
     }
 
     /**

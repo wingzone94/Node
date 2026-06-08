@@ -1,0 +1,393 @@
+/* ==========================================================================
+   Archive Pages — Material 3 Expressive
+   Hero moment / shape contrast / rich color / motion
+   ========================================================================== */
+
+.m3-archive-layout {
+    --m3-archive-hero-radius: 48px;
+    --m3-archive-panel-radius: 28px;
+    --m3-archive-accent: var(--category-color, var(--md-sys-color-primary));
+
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: var(--m3-spacing-m);
+    padding-right: var(--m3-spacing-m);
+    padding-bottom: var(--m3-spacing-xl);
+}
+
+.m3-archive-layout .m3-breadcrumbs {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* ----- Expressive hero (full-bleed) ----- */
+.m3-archive-header--expressive {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0 calc(50% - 50vw) var(--m3-spacing-m);
+    padding:
+        clamp(28px, 5vw, 48px)
+        max(var(--m3-spacing-m), calc(50vw - 550px))
+        clamp(32px, 6vw, 56px);
+    border: none;
+    border-radius: 0 0 var(--m3-archive-hero-radius) var(--m3-archive-hero-radius);
+    background:
+        radial-gradient(
+            120% 90% at 100% 0%,
+            color-mix(in srgb, var(--m3-archive-accent) 22%, transparent) 0%,
+            transparent 58%
+        ),
+        radial-gradient(
+            80% 70% at 0% 100%,
+            color-mix(in srgb, var(--md-sys-color-secondary-container) 70%, transparent) 0%,
+            transparent 62%
+        ),
+        linear-gradient(
+            160deg,
+            color-mix(in srgb, var(--m3-archive-accent) 10%, var(--md-sys-color-surface-container-low)) 0%,
+            var(--md-sys-color-surface-container-low) 48%,
+            color-mix(in srgb, var(--md-sys-color-surface-container) 55%, var(--md-sys-color-surface-container-low)) 100%
+        );
+    box-shadow:
+        0 18px 48px color-mix(in srgb, var(--m3-archive-accent) 12%, transparent),
+        0 2px 0 color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent) inset;
+}
+
+.m3-archive-header__glow {
+    position: absolute;
+    top: -30%;
+    right: -8%;
+    width: min(420px, 55vw);
+    height: min(420px, 55vw);
+    border-radius: 50%;
+    background: radial-gradient(
+        circle,
+        color-mix(in srgb, var(--m3-archive-accent) 28%, transparent) 0%,
+        transparent 68%
+    );
+    filter: blur(8px);
+    pointer-events: none;
+}
+
+.m3-archive-header__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 3vw, 28px);
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.m3-archive-header__hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(16px, 3vw, 28px);
+    align-items: center;
+}
+
+/* Archive type icon — category Material You color */
+.m3-archive-header__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(72px, 11vw, 96px);
+    height: clamp(72px, 11vw, 96px);
+    border-radius: 24px;
+    color: var(--category-on-color, var(--md-sys-color-on-primary));
+    background: var(--category-color, var(--m3-archive-accent, var(--md-sys-color-primary)));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--category-color, var(--m3-archive-accent)) 28%, transparent);
+}
+
+.m3-archive-header__icon .material-symbols-outlined {
+    font-size: clamp(36px, 5vw, 48px);
+    font-variation-settings: 'FILL' 1, 'wght' 500;
+}
+
+.m3-archive-header__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.m3-archive-header__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin: 0;
+    padding: 6px 14px;
+    border-radius: var(--m3-radius-full);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--category-color, var(--m3-archive-accent));
+    background: color-mix(in srgb, var(--category-color, var(--m3-archive-accent)) 12%, var(--md-sys-color-surface-container-high));
+    border: none;
+}
+
+.m3-archive-header__title {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 3.25rem);
+    font-weight: 950;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    color: var(--md-sys-color-on-surface);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.m3-archive-header__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.m3-archive-header__count {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 16px;
+    border-radius: var(--m3-radius-full);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--category-on-color, var(--md-sys-color-on-primary-container));
+    background: var(--category-color, var(--md-sys-color-primary));
+    border: none;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--category-color, var(--m3-archive-accent)) 22%, transparent);
+}
+
+.m3-archive-header__count .material-symbols-outlined {
+    font-size: 1.05rem;
+}
+
+.m3-archive-header__desc {
+    padding: 16px 20px;
+    border-radius: var(--m3-archive-panel-radius);
+    font-size: 0.96rem;
+    line-height: 1.75;
+    color: var(--md-sys-color-on-surface-variant);
+    max-width: 72ch;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 55%, transparent);
+    border: none;
+    backdrop-filter: blur(8px);
+}
+
+.m3-archive-header__desc p:first-child {
+    margin-top: 0;
+}
+
+.m3-archive-header__desc p:last-child {
+    margin-bottom: 0;
+}
+
+/* ----- Feed panel ----- */
+.m3-archive-feed {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.m3-archive-layout .m3-archive-post-grid {
+    margin: 0;
+    padding: 0;
+}
+
+.m3-archive-post-grid__cards {
+    gap: clamp(20px, 3vw, 28px);
+}
+
+.m3-archive-post-grid__cards .m3-card {
+    border-radius: var(--m3-radius-large);
+    transition:
+        transform 0.35s var(--m3-motion-easing, cubic-bezier(0.2, 0, 0, 1)),
+        box-shadow 0.35s var(--m3-motion-easing, cubic-bezier(0.2, 0, 0, 1));
+}
+
+.m3-archive-post-grid__cards .m3-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent);
+}
+
+.m3-navigation.m3-archive-navigation {
+    max-width: 1100px;
+    margin: clamp(24px, 4vw, 40px) auto 0;
+    padding: 12px 16px;
+    border-radius: 20px;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-navigation.m3-archive-navigation:empty {
+    display: none;
+}
+
+/* ----- Empty state ----- */
+.m3-archive-no-results {
+    padding: var(--m3-spacing-xl) var(--m3-spacing-l);
+    text-align: center;
+    border-radius: var(--m3-archive-panel-radius);
+    background:
+        linear-gradient(
+            160deg,
+            var(--md-sys-color-surface-container-low) 0%,
+            color-mix(in srgb, var(--md-sys-color-surface-container) 45%, var(--md-sys-color-surface-container-low)) 100%
+        );
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent);
+}
+
+.m3-archive-no-results .m3-no-results__icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.m3-archive-no-results .m3-no-results__icon .material-symbols-outlined {
+    font-size: 2.2rem;
+    color: var(--md-sys-color-primary);
+}
+
+/* ----- SPOTLIGHT pills ----- */
+.m3-archive-spotlight-pills {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto var(--m3-spacing-l);
+    padding: clamp(18px, 3vw, 24px);
+    border-radius: var(--m3-archive-panel-radius);
+    background:
+        linear-gradient(
+            145deg,
+            color-mix(in srgb, var(--md-sys-color-primary) 8%, var(--md-sys-color-surface-container-low)) 0%,
+            var(--md-sys-color-surface-container-low) 100%
+        );
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent);
+    overflow: hidden;
+}
+
+.m3-archive-spotlight-pills::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 120px;
+    height: 4px;
+    border-radius: 0 0 8px 0;
+    background: linear-gradient(90deg, var(--md-sys-color-primary), color-mix(in srgb, var(--md-sys-color-primary) 40%, #fbbc05));
+}
+
+.m3-archive-spotlight-pills__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 var(--m3-spacing-m);
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: var(--md-sys-color-on-surface);
+}
+
+.m3-archive-spotlight-pills .special-features__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.m3-archive-headlines {
+    max-width: 1100px;
+    margin: 0 auto var(--m3-spacing-l);
+    padding: clamp(16px, 3vw, 24px);
+    border-radius: var(--m3-archive-panel-radius);
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* ----- Dark mode ----- */
+[data-theme="dark"] .m3-archive-header--expressive {
+    box-shadow:
+        0 20px 52px rgba(0, 0, 0, 0.42),
+        0 1px 0 color-mix(in srgb, #fff 6%, transparent) inset;
+}
+
+[data-theme="dark"] .m3-archive-header__mark-svg {
+    filter: drop-shadow(0 12px 24px color-mix(in srgb, var(--category-color, var(--m3-archive-accent)) 34%, transparent));
+}
+
+[data-theme="dark"] .m3-archive-header__desc {
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 72%, transparent);
+}
+
+/* ----- Responsive ----- */
+@media screen and (max-width: 700px) {
+    .m3-archive-layout {
+        --m3-archive-hero-radius: 32px;
+        --m3-archive-panel-radius: 22px;
+    }
+
+    .m3-archive-header__hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .m3-archive-header__icon {
+        margin: 0 auto;
+    }
+
+    .m3-archive-header__eyebrow,
+    .m3-archive-header__meta {
+        justify-content: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .m3-archive-header__desc {
+        text-align: left;
+    }
+
+}
+
+@media screen and (max-width: 600px) {
+    .m3-archive-layout {
+        padding-left: var(--m3-spacing-s);
+        padding-right: var(--m3-spacing-s);
+    }
+
+    .m3-archive-header--expressive {
+        margin-bottom: var(--m3-spacing-l);
+    }
+
+    .m3-archive-header__title {
+        font-size: clamp(1.7rem, 8vw, 2.2rem);
+    }
+
+    .m3-archive-spotlight-pills {
+        padding: var(--m3-spacing-m);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .m3-archive-header--expressive,
+    .m3-archive-post-grid__cards .m3-card {
+        transition: none;
+    }
+
+    .m3-archive-post-grid__cards .m3-card:hover {
+        transform: none;
+    }
+}
+
+/* ===== End Archive Pages ===== */

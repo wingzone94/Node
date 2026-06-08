@@ -9,11 +9,6 @@ body:not(.single):not(.single-post) #m3-sticky-toc {
     display: none !important;
 }
 
-body.archive.category #archive-title {
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 900;
-}
 
 body.home:not(.paged) .m3-surface--latest,
 body.blog:not(.paged) .m3-surface--latest,
@@ -83,12 +78,14 @@ body.admin-bar .m3-header {
 /* ===== End WordPress Admin Bar Header Offset ===== */
 
 /* ===== Fixed Header Content Offset ===== */
-.m3-home-layout {
+.m3-home-layout,
+.m3-archive-layout {
     padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + 12px);
 }
 
 @media screen and (max-width: 600px) {
-    .m3-home-layout {
+    .m3-home-layout,
+    .m3-archive-layout {
         padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + 12px);
     }
 }

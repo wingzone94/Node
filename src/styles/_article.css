@@ -922,12 +922,6 @@
     transform: translateY(-2px);
 }
 
-.m3-archive-header {
-    text-align: center;
-    padding: 0;
-    display: none;
-}
-
 .m3-article__header {
     text-align: center;
     margin-bottom: var(--m3-spacing-xl);
@@ -1172,11 +1166,6 @@
 
 .m3-breadcrumbs__separator .material-symbols-outlined {
     font-size: 14px;
-}
-
-.m3-archive-header {
-    margin: 0;
-    display: none; /* Removed from templates, but hide anyway to prevent layout shift */
 }
 
 .m3-archive-description {

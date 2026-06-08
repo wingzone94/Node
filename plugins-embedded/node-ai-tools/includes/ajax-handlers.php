@@ -95,5 +95,102 @@ if ( ! function_exists( 'node_ai_ajax_generate_summary' ) ) {
     }
 }
 
-// 以前の名称（node_ajax_generate_ai_summary）が残っている場合はここから削除
+if ( ! function_exists( 'node_ai_parse_json_response' ) ) {
+    /**
+     * Gemini レスポンスから JSON を抽出する
+     *
+     * @param string $raw API 生レスポンス。
+     * @return array<string, mixed>|null
+     */
+    function node_ai_parse_json_response( string $raw ): ?array {
+        $clean = preg_replace( '/^```(?:json)?\s*/i', '', $raw );
+        $clean = preg_replace( '/```\s*$/', '', (string) $clean );
+        $clean = trim( (string) $clean );
+        $data  = json_decode( $clean, true );
+
+        return ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) ? $data : null;
+    }
+}
+
+if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
+    /**
+     * ファクトチェック AJAX ハンドラ
+     */
+    function node_ai_ajax_fact_check(): void {
+        check_ajax_referer( 'node_ai_fact_check_action', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( array( 'message' => '権限がありません。' ) );
+        }
+
+        $post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+        if ( ! $post_id ) {
+            wp_send_json_error( array( 'message' => '不正な投稿IDです。' ) );
+        }
+
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            wp_send_json_error( array( 'message' => '記事が見つかりません。' ) );
+        }
+
+        $content = strip_shortcodes( strip_tags( $post->post_content ) );
+        if ( empty( trim( $content ) ) ) {
+            wp_send_json_error( array( 'message' => '記事本文が空です。' ) );
+        }
+
+        if ( ! class_exists( 'Node_Gemini_API' ) ) {
+            wp_send_json_error( array( 'message' => 'APIクラスが見つかりません。' ) );
+        }
+
+        $api    = new Node_Gemini_API();
+        $result = $api->fact_check( $content, $post->post_title );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+        }
+
+        $data = node_ai_parse_json_response( (string) ( $result['text'] ?? '' ) );
+        if ( null === $data || empty( $data['claims'] ) || ! is_array( $data['claims'] ) ) {
+            wp_send_json_error( array( 'message' => 'ファクトチェック結果の解析に失敗しました。' ) );
+        }
+
+        $grounding = is_array( $result['grounding'] ?? null ) ? $result['grounding'] : array();
+        $sources   = function_exists( 'node_ai_extract_grounding_sources' )
+            ? node_ai_extract_grounding_sources( $grounding )
+            : array();
+
+        $payload = array(
+            'summary'         => sanitize_text_field( (string) ( $data['summary'] ?? '' ) ),
+            'overall_risk'    => sanitize_key( (string) ( $data['overall_risk'] ?? 'medium' ) ),
+            'claims'          => array(),
+            'sources'         => $sources,
+            'search_queries'  => array_map( 'sanitize_text_field', (array) ( $grounding['webSearchQueries'] ?? array() ) ),
+            'grounded'        => ! empty( $sources ) || ! empty( $grounding['webSearchQueries'] ),
+            'guidelines_used' => ! empty( $result['guidelines_used'] ),
+            'checked_at'      => current_time( 'mysql' ),
+        );
+
+        foreach ( $data['claims'] as $claim ) {
+            if ( ! is_array( $claim ) ) {
+                continue;
+            }
+            $payload['claims'][] = array(
+                'claim'      => sanitize_text_field( (string) ( $claim['claim'] ?? '' ) ),
+                'status'     => sanitize_key( (string) ( $claim['status'] ?? 'uncertain' ) ),
+                'confidence' => sanitize_key( (string) ( $claim['confidence'] ?? 'low' ) ),
+                'note'       => sanitize_textarea_field( (string) ( $claim['note'] ?? '' ) ),
+            );
+        }
+
+        if ( empty( $payload['claims'] ) ) {
+            wp_send_json_error( array( 'message' => '検証対象の主張が見つかりませんでした。' ) );
+        }
+
+        update_post_meta( $post_id, '_node_ai_fact_check', wp_json_encode( $payload, JSON_UNESCAPED_UNICODE ) );
+        update_post_meta( $post_id, '_node_ai_fact_check_approved', '' );
+
+        wp_send_json_success( $payload );
+    }
+}
+
 // 登録はプラグインのメインファイルで行う

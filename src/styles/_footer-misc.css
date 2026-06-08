@@ -231,12 +231,6 @@ figure.aligncenter iframe {
 }
 
 /* --- Global Utilities & Components --- */
-.m3-archive-header {
-    text-align: center;
-    padding: 0;
-    display: none;
-}
-
 .m3-archive-title {
     display: flex;
     align-items: center;

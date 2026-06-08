@@ -35,15 +35,19 @@ require_once NODE_THEME_DIR . '/inc/meta-boxes.php';
 require_once NODE_THEME_DIR . '/inc/category-meta.php';
 require_once NODE_THEME_DIR . '/inc/ajax.php';
 require_once NODE_THEME_DIR . '/inc/spotlight.php';
+require_once NODE_THEME_DIR . '/inc/archive-helpers.php';
 require_once NODE_THEME_DIR . '/inc/media.php';
 require_once NODE_THEME_DIR . '/inc/search.php';
 require_once NODE_THEME_DIR . '/inc/utilities.php';
 require_once NODE_THEME_DIR . '/inc/gemini-helper.php';
+require_once NODE_THEME_DIR . '/inc/gemini-models.php';
+require_once NODE_THEME_DIR . '/inc/gemini-user-settings.php';
 require_once NODE_THEME_DIR . '/inc/admin-settings.php';
 require_once NODE_THEME_DIR . '/inc/seo.php';
 require_once NODE_THEME_DIR . '/inc/scheduler.php';
 require_once NODE_THEME_DIR . '/inc/ogp-generator.php';
 require_once NODE_THEME_DIR . '/inc/toc-engine.php';
+require_once NODE_THEME_DIR . '/inc/blogcard.php';
 
 /**
  * -------------------------------------------------------

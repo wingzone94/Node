@@ -48,8 +48,8 @@ final class Node_Library {
 		// テーマのフックに応答（ライター情報の下に表示）
 		add_action( 'luminous_after_writer', [ $this, 'render_library_card_on_post' ] );
 
-		// 管理画面用スタイル
-		add_action( 'admin_head', [ $this, 'admin_styles' ] );
+		// 管理画面用アセット
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
 
 		// Gutenberg ブロックの登録
 		add_action( 'init', [ $this, 'register_gutenberg_block' ] );
@@ -71,6 +71,45 @@ final class Node_Library {
 				'url' => [ 'required' => true, 'sanitize_callback' => 'esc_url_raw' ],
 			],
 		] );
+
+		register_rest_route( 'node-library/v1', '/items', [
+			'methods'             => 'GET',
+			'callback'            => [ $this, 'handle_list_items' ],
+			'permission_callback' => function() { return current_user_can( 'edit_posts' ); },
+		] );
+	}
+
+	/**
+	 * ライブラリ項目一覧（ブロックエディタ用）
+	 */
+	public function handle_list_items( $request ) {
+		$posts = get_posts(
+			array(
+				'post_type'      => 'node_library',
+				'post_status'    => 'publish',
+				'posts_per_page' => 200,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+		$items = array_map(
+			static function ( $post ) {
+				$summary = (string) get_post_meta( $post->ID, '_node_library_summary', true );
+				$links   = get_post_meta( $post->ID, '_node_library_links', true );
+				$link_count = is_array( $links ) ? count( $links ) : 0;
+
+				return array(
+					'id'         => $post->ID,
+					'title'      => $post->post_title,
+					'summary'    => $summary,
+					'link_count' => $link_count,
+				);
+			},
+			$posts
+		);
+
+		return rest_ensure_response( $items );
 	}
 
 	/**
@@ -270,7 +309,10 @@ final class Node_Library {
 		$url = $attributes['url'] ?? '';
 		if ( empty( $url ) ) return '';
 
-		// Luminous Nexus のショートコード関数を呼び出す
+		if ( function_exists( 'node_render_blogcard' ) ) {
+			return node_render_blogcard( $url );
+		}
+
 		if ( function_exists( 'luminous_nexus_blogcard_shortcode' ) ) {
 			return luminous_nexus_blogcard_shortcode( [ 'url' => $url ] );
 		}
@@ -288,6 +330,47 @@ final class Node_Library {
 			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-block-editor' ],
 			NODE_LIBRARY_VERSION,
 			true
+		);
+
+		wp_localize_script(
+			'node-library-block-editor',
+			'nodeLibraryEditor',
+			array(
+				'adminNewUrl'  => admin_url( 'post-new.php?post_type=node_library' ),
+				'adminListUrl' => admin_url( 'edit.php?post_type=node_library' ),
+			)
+		);
+	}
+
+	/**
+	 * 管理画面用スクリプト（ライブラリ編集・投稿紐付け）
+	 */
+	public function enqueue_admin_assets( string $hook ): void {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen ) {
+			return;
+		}
+
+		$allowed = array( 'node_library', 'post' );
+		if ( ! in_array( $screen->post_type, $allowed, true ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'node-library-admin-meta',
+			NODE_LIBRARY_URL . 'assets/js/admin-meta.js',
+			array(),
+			NODE_LIBRARY_VERSION,
+			true
+		);
+
+		wp_add_inline_style(
+			'wp-admin',
+			'.node-library-admin-fields .link-row.is-hidden{display:none}
+			.node-library-metabox-help{color:#646970;font-size:12px;line-height:1.6;margin:8px 0 0}
+			.node-library-metabox-preview{margin-top:10px;padding:10px 12px;background:#f6f7f7;border-radius:8px;border:1px solid #dcdcde}
+			.node-library-metabox-links{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
+			.node-library-metabox-links a{font-size:12px}'
 		);
 	}
 
@@ -391,19 +474,26 @@ final class Node_Library {
 			
 			<div id="node-library-links-editor">
 				<label><strong>ストア・配信ページリンク:</strong></label>
-				<div class="links-container" style="margin-top:10px;">
-					<?php for ( $i = 0; $i < 10; $i++ ) : 
-						$p = $links[$i]['platform'] ?? '';
-						$u = $links[$i]['url'] ?? '';
+				<div class="links-container" style="margin-top:10px;" data-max-rows="10">
+					<?php
+					$filled_count = is_array( $links ) ? count( $links ) : 0;
+					$visible_rows = max( 2, min( 10, $filled_count + 1 ) );
+					for ( $i = 0; $i < 10; $i++ ) :
+						$p       = $links[ $i ]['platform'] ?? '';
+						$u       = $links[ $i ]['url'] ?? '';
+						$hidden  = $i >= $visible_rows ? ' is-hidden' : '';
 					?>
-						<div class="link-row" style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
+						<div class="link-row<?php echo esc_attr( $hidden ); ?>" style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
 							<span style="min-width:20px; font-weight:bold; color:#666;"><?php echo $i + 1; ?>.</span>
-							<input type="text" name="node_library_links[<?php echo $i; ?>][platform]" value="<?php echo esc_attr($p); ?>" placeholder="ストア名 (例: Steam, App Store)" style="flex:1;">
-							<input type="text" name="node_library_links[<?php echo $i; ?>][url]" value="<?php echo esc_url($u); ?>" placeholder="https://..." style="flex:2;">
+							<input type="text" name="node_library_links[<?php echo $i; ?>][platform]" value="<?php echo esc_attr( $p ); ?>" placeholder="ストア名 (例: Steam, Nintendo Switch)" style="flex:1;">
+							<input type="text" name="node_library_links[<?php echo $i; ?>][url]" value="<?php echo esc_url( $u ); ?>" placeholder="https://..." style="flex:2;">
 						</div>
 					<?php endfor; ?>
 				</div>
-				<p class="description">※ 入力されたストア名に基づいて、アイコンが自動的に選択されます。</p>
+				<p style="margin-top:8px;">
+					<button type="button" class="button button-secondary" id="node-library-add-link">リンク行を追加</button>
+				</p>
+				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation, Xbox, Nintendo Switch, App Store）</p>
 			</div>
 		</div>
 		<?php
@@ -423,15 +513,38 @@ final class Node_Library {
 			'order'          => 'ASC'
 		]);
 
+		$preview_summary = '';
+		if ( $selected_id ) {
+			$preview_summary = (string) get_post_meta( (int) $selected_id, '_node_library_summary', true );
+		}
 		?>
-		<select name="node_linked_library_id" style="width:100%;">
-			<option value="">-- 連携しない --</option>
-			<?php foreach ( $libraries as $lib ) : ?>
-				<option value="<?php echo $lib->ID; ?>" <?php selected( $selected_id, $lib->ID ); ?>>
+		<p class="node-library-metabox-help">
+			紐付けると、記事フッター（ライター情報の下）にゲーム・アプリカードが<strong>自動表示</strong>されます。<br>
+			本文の任意位置に入れたい場合は、ブロック追加 → <strong>Node</strong> カテゴリ →「ライブラリカード」を使ってください。
+		</p>
+		<select name="node_linked_library_id" id="node-linked-library-select" style="width:100%; margin-top:8px;">
+			<option value="">— 連携しない —</option>
+			<?php foreach ( $libraries as $lib ) :
+				$lib_summary = (string) get_post_meta( $lib->ID, '_node_library_summary', true );
+			?>
+				<option value="<?php echo esc_attr( (string) $lib->ID ); ?>" data-summary="<?php echo esc_attr( wp_trim_words( $lib_summary, 40 ) ); ?>" <?php selected( (string) $selected_id, (string) $lib->ID ); ?>>
 					<?php echo esc_html( $lib->post_title ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
+		<?php if ( empty( $libraries ) ) : ?>
+			<p class="node-library-metabox-help" style="margin-top:10px;">
+				ライブラリ項目がまだありません。先に項目を登録してください。
+			</p>
+		<?php endif; ?>
+		<div id="node-library-metabox-preview" class="node-library-metabox-preview" <?php echo $selected_id ? '' : 'style="display:none;"'; ?>>
+			<strong>選択中の紹介文:</strong>
+			<span id="node-library-metabox-preview-text"><?php echo esc_html( $preview_summary ? wp_trim_words( $preview_summary, 40 ) : '（紹介文なし）' ); ?></span>
+		</div>
+		<div class="node-library-metabox-links">
+			<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=node_library' ) ); ?>">ライブラリ一覧</a>
+			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=node_library' ) ); ?>">新規項目を追加</a>
+		</div>
 		<?php
 	}
 
@@ -494,11 +607,6 @@ final class Node_Library {
 		include NODE_LIBRARY_DIR . 'templates/card-library.php';
 	}
 
-	public function admin_styles(): void {
-		echo '<style>
-			.node-library-admin-fields label { display: block; margin-bottom: 5px; }
-		</style>';
-	}
 }
 
 /**

@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * URLからOGP情報を取得する（キャッシュ対応）
  */
+if ( ! function_exists( 'luminous_nexus_get_ogp_data' ) ) :
 function luminous_nexus_get_ogp_data( $url ) {
 	$transient_key = 'luminous_ogp_' . md5( $url );
 	$cached = get_transient( $transient_key );
@@ -89,10 +90,12 @@ function luminous_nexus_get_ogp_data( $url ) {
 	set_transient( $transient_key, $ogp, WEEK_IN_SECONDS );
 	return $ogp;
 }
+endif;
 
 /**
  * ブログカードショートコード本体
  */
+if ( ! function_exists( 'luminous_nexus_blogcard_shortcode' ) ) :
 function luminous_nexus_blogcard_shortcode( $atts ) {
 	$atts = shortcode_atts( [ 'url' => '' ], $atts, 'blogcard' );
 	if ( empty( $atts['url'] ) ) {
@@ -138,5 +141,6 @@ function luminous_nexus_blogcard_shortcode( $atts ) {
 	<?php
 	return ob_get_clean();
 }
+endif;
 // 自動変換フィルターを削除（ユーザーの意図しない変換を防止）
 // add_filter( 'the_content', 'luminous_nexus_auto_blogcard', 11 );

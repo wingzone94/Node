@@ -67,5 +67,10 @@ if ( ! function_exists( 'node_ai_save_meta' ) ) {
                 update_post_meta($post_id, '_node_ai_max_chars', intval($_POST['node_ai_max_chars']));
             }
         }
+
+        if (isset($_POST['node_ai_fact_check_nonce']) && wp_verify_nonce($_POST['node_ai_fact_check_nonce'], 'node_ai_fact_check_action')) {
+            $approved = ! empty($_POST['node_ai_fact_check_approved']) ? '1' : '';
+            update_post_meta($post_id, '_node_ai_fact_check_approved', $approved);
+        }
     }
 }

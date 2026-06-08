@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Luminous AI Tools
  * Plugin URI:   https://github.com/wingzone94/Node
- * Description:  Gemini API 連携による AI 要約生成・読了時間自動計算。Luminous Core テーマと連携。
+ * Description:  Gemini API 連携による AI 要約生成・ファクトチェック補助・読了時間自動計算。Luminous Core テーマと連携。
  * Version:      1.0.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
@@ -48,12 +48,16 @@ final class Node_AI_Tools {
 	}
 
 	private function load_dependencies(): void {
+		require_once NODE_AI_DIR . 'includes/guidelines-fetcher.php';
 		require_once NODE_AI_DIR . 'includes/class-gemini-api.php';
+		require_once NODE_AI_DIR . 'includes/fact-check-render.php';
 		require_once NODE_AI_DIR . 'includes/ajax-handlers.php';
 		require_once NODE_AI_DIR . 'includes/meta-handlers.php';
 
 		if ( is_admin() ) {
 			require_once NODE_AI_DIR . 'admin/meta-box-ai-summary.php';
+			require_once NODE_AI_DIR . 'admin/meta-box-fact-check.php';
+			require_once NODE_AI_DIR . 'admin/meta-box-featured-image-ai.php';
 		}
 	}
 
@@ -72,13 +76,61 @@ final class Node_AI_Tools {
 
         // AJAX ハンドラの登録
         add_action( 'wp_ajax_node_generate_ai_summary', 'node_ai_ajax_generate_summary' );
+        add_action( 'wp_ajax_node_ai_fact_check', 'node_ai_ajax_fact_check' );
 
-        // メタボックス登録
+        // フロント: 編集者確認済みファクトチェックを記事ヘッダー直後に表示
+        add_action( 'luminous_after_article_header', [ $this, 'render_front_fact_check' ], 12 );
+
+        // メタボックス・エディタ拡張
         if ( is_admin() ) {
             add_action( 'add_meta_boxes', [ $this, 'add_ai_meta_boxes' ] );
             add_action( 'save_post', 'node_ai_save_meta' );
+            add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
         }
 	}
+
+    /**
+     * ブロックエディタ用アセット
+     */
+    public function enqueue_block_editor_assets(): void {
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+        if ( ! $screen || 'post' !== $screen->post_type ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'node-ai-editor-featured-image',
+            NODE_AI_URL . 'assets/js/editor-featured-image.js',
+            array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data' ),
+            NODE_AI_VERSION,
+            true
+        );
+    }
+
+    /**
+     * 単一記事ページにファクトチェックを表示
+     *
+     * @param int $post_id 投稿ID。
+     */
+    public function render_front_fact_check( int $post_id ): void {
+        if ( ! is_singular( 'post' ) || ! $post_id ) {
+            return;
+        }
+
+        if ( max( 1, (int) get_query_var( 'page' ) ) !== 1 ) {
+            return;
+        }
+
+        node_ai_render_fact_check_front( $post_id );
+    }
+
+    /**
+     * 投稿タイプでブロックエディタが有効か
+     */
+    private function uses_block_editor_for_posts(): bool {
+        return function_exists( 'use_block_editor_for_post_type' )
+            && use_block_editor_for_post_type( 'post' );
+    }
 
     public function add_ai_meta_boxes(): void {
         add_meta_box(
@@ -89,6 +141,26 @@ final class Node_AI_Tools {
             'side',
             'high'
         );
+        add_meta_box(
+            'node_ai_fact_check',
+            'Fact Check (ファクトチェック)',
+            'node_ai_render_fact_check_meta_box',
+            'post',
+            'normal',
+            'default'
+        );
+
+        // ブロックエディタでは PluginDocumentSettingPanel を使うためメタボックスは出さない
+        if ( ! $this->uses_block_editor_for_posts() ) {
+            add_meta_box(
+                'node_ai_featured_image',
+                'AI アイキャッチ',
+                'node_ai_render_featured_image_meta_box',
+                'post',
+                'side',
+                'low'
+            );
+        }
     }
 
 	public function provide_ai_summary( string $summary, int $post_id ): string {

@@ -1,0 +1,88 @@
+/* ==========================================================================
+   Article Content Flow
+   本文コンテナは .m3-article (max-width:864px; margin:0 auto) で既に中央配置済み。
+   ここでは「毎回ブロックごとに中央揃えを指定しなくても自然に整う」状態を作る。
+   - 本文テキスト（段落・リスト等）は左揃えのまま
+   - 画像・figure・埋め込みなどブロックメディアは本文幅内で自然に中央配置
+   - .has-text-align-* / .alignwide / .alignfull は wp-block-library が dequeue
+     されているため、フロントで効くようテーマ側で補完する
+   ========================================================================== */
+
+:root {
+    /* .m3-article の max-width に一致（情報用・将来の調整起点） */
+    --node-content-width: 864px;
+    /* alignwide 時の最大幅 */
+    --node-wide-width: 1080px;
+}
+
+/* --- ブロックメディアの自然な中央配置 ---
+   align 系クラス（alignleft/alignright/alignwide/alignfull/aligncenter）が
+   付いたブロックは除外し、ユーザー指定の配置・回り込みを尊重する。
+   text-align のみで inline 要素（img / iframe）を中央化するため、
+   本文テキストの配置には影響しない。 */
+.m3-article__body > figure:not([class*="align"]),
+.m3-article__body > .wp-block-image:not([class*="align"]),
+.m3-article__body > .wp-block-embed:not([class*="align"]),
+.m3-article__body > .wp-block-video:not([class*="align"]) {
+    text-align: center;
+}
+
+/* ブログカードは本文幅内で自然に収まる（手動中央揃え不要） */
+.m3-article__body .m3-blogcard,
+.m3-article__body .m3-blogcard__link {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+}
+
+/* 画像・埋め込みは本文幅を超えない（スマホ横スクロール防止の保険） */
+.m3-article__body .wp-block-image img,
+.m3-article__body .wp-block-embed iframe,
+.m3-article__body .wp-block-video video {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --- ユーザーが明示指定したテキスト揃えを尊重（コアCSS dequeue の補完） --- */
+.m3-article__body .has-text-align-center {
+    text-align: center;
+}
+
+.m3-article__body .has-text-align-left {
+    text-align: left;
+}
+
+.m3-article__body .has-text-align-right {
+    text-align: right;
+}
+
+/* --- Wide / Full 配置（コアCSS dequeue の補完） ---
+   通常幅以下では 100%（=本文幅）に収まり、横スクロールは発生しない。
+   full-bleed は html/body/.m3-page-container の overflow-x:hidden に保護される。 */
+.m3-article__body > .alignwide,
+.m3-article__body > .alignfull {
+    margin-inline: auto;
+}
+
+/* alignfull: 画面幅いっぱい（中央配置済みコンテナ基準のフルブリード） */
+.m3-article__body > .alignfull {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+
+/* alignfull 内の画像はフル幅まで広げる */
+.m3-article__body > .alignfull img {
+    width: 100%;
+}
+
+/* alignwide: 本文より広く、画面に収まる範囲のみ拡張（PC向け） */
+@media (min-width: 1112px) {
+    .m3-article__body > .alignwide {
+        width: var(--node-wide-width, 1080px);
+        max-width: var(--node-wide-width, 1080px);
+        margin-left: calc(50% - var(--node-wide-width, 1080px) / 2);
+        margin-right: calc(50% - var(--node-wide-width, 1080px) / 2);
+    }
+}

@@ -61,13 +61,17 @@ final class Luminous_Nexus {
 		// テーマの Hook に応答: 記事ヘッダー直後に Nexus カードを挿入
 		add_action( 'luminous_after_article_header', [ $this, 'render_nexus_card' ] );
 
-		// ショートコード登録
-		add_shortcode( 'blogcard', 'luminous_nexus_blogcard_shortcode' );
+		// ショートコード登録（テーマ inc/blogcard.php が先に登録済みの場合はスキップ）
+		if ( ! shortcode_exists( 'blogcard' ) ) {
+			add_shortcode( 'blogcard', 'luminous_nexus_blogcard_shortcode' );
+		}
 		add_shortcode( 'product_card', 'luminous_nexus_product_card_shortcode' );
 		add_shortcode( 'm3_product', 'luminous_nexus_product_card_shortcode' );
 
-		// URL の自動ブログカード変換
-		add_filter( 'the_content', [ $this, 'auto_blogcard' ], 11 );
+		// URL の自動ブログカード変換（テーマ側で未登録の場合のみ）
+		if ( ! has_filter( 'the_content', 'node_auto_blogcard' ) ) {
+			add_filter( 'the_content', [ $this, 'auto_blogcard' ], 11 );
+		}
 
 		// Amazon oEmbed の無効化
 		add_filter( 'oembed_providers', [ $this, 'disable_amazon_oembed' ] );

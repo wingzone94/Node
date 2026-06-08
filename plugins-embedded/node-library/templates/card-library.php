@@ -7,14 +7,16 @@ if ( ! isset( $game_info ) ) {
     return;
 }
 
-$title   = $game_info['title'];
-$summary = $game_info['summary'] ?? '';
-$links   = $game_info['links'] ?? [];
+$title        = $game_info['title'];
+$summary      = $game_info['summary'] ?? '';
+$links        = $game_info['links'] ?? [];
+$header_text  = get_option( 'node_library_header_text', 'GAME / APP INFO' );
+$button_text  = get_option( 'node_library_button_text', 'で見る' );
 ?>
 <section class="m3-game-card m3-reveal node-library-card">
     <div class="m3-game-card__header">
         <span class="material-symbols-outlined">apps</span>
-        <h3>GAME / APP INFO</h3>
+        <h3><?php echo esc_html( $header_text ); ?></h3>
     </div>
     
     <div class="m3-game-card__body">
@@ -43,7 +45,7 @@ $links   = $game_info['links'] ?? [];
                        target="_blank" 
                        rel="noopener">
                         <span class="material-symbols-outlined">shopping_cart</span>
-                        <?php echo esc_html($platform); ?> で見る
+                        <?php echo esc_html( $platform . ' ' . $button_text ); ?>
                     </a>
                 <?php endforeach; ?>
             </div>

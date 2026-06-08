@@ -9,7 +9,14 @@
     font-size: 1.2rem;
     font-weight: 900;
     margin-bottom: var(--m3-spacing-l);
-    color: #000000;
+    color: var(--md-sys-color-on-surface);
+    letter-spacing: 0;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 18px rgba(255, 153, 0, 0.16);
+}
+
+[data-theme="dark"] .m3-share-title {
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72), 0 0 18px rgba(255, 153, 0, 0.32);
 }
 .m3-share-buttons { 
     display: grid !important; 

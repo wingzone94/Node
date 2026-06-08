@@ -58,30 +58,6 @@ function node_register_settings() {
     register_setting( 'node_settings_group', 'node_ogp_bg_id' );
     register_setting( 'node_settings_group', 'node_ogp_logo_id' );
 }
-/**
- * ユーザー個別のGemini設定を保存
- */
-function node_save_user_gemini_settings() {
-    if ( ! isset( $_POST['node_gemini_settings_nonce'] ) || ! wp_verify_nonce( $_POST['node_gemini_settings_nonce'], 'node_save_gemini' ) ) {
-        return;
-    }
-
-    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_posts' ) ) {
-        return;
-    }
-
-    $user_id = get_current_user_id();
-
-    if ( isset( $_POST['node_gemini_api_key'] ) ) {
-        update_user_meta( $user_id, 'node_gemini_api_key', sanitize_text_field( $_POST['node_gemini_api_key'] ) );
-    }
-
-    if ( isset( $_POST['node_gemini_model'] ) ) {
-        update_user_meta( $user_id, 'node_gemini_model', sanitize_text_field( $_POST['node_gemini_model'] ) );
-    }
-}
-add_action( 'admin_init', 'node_save_user_gemini_settings' );
-
 add_action( 'admin_init', 'node_register_settings' );
 
 /**
@@ -97,35 +73,20 @@ function node_render_settings_page() {
             wp_nonce_field( 'node_save_gemini', 'node_gemini_settings_nonce' );
             ?>
             
-            <!-- Gemini設定 -->
+            <!-- Gemini設定（管理者自身の個人キー。ライターは ユーザー → プロフィール で設定） -->
             <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                 <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
-                    <span class="dashicons dashicons-rest-api"></span> Gemini 設定
+                    <span class="dashicons dashicons-rest-api"></span> Gemini 設定（管理者・個人）
                 </h2>
-                <table class="form-table">
-                    <tr valign="top">
-                        <th scope="row">Gemini API Key</th>
-                        <td>
-                            <?php $user_api_key = get_user_meta( get_current_user_id(), 'node_gemini_api_key', true ); ?>
-                            <input type="password" name="node_gemini_api_key" value="<?php echo esc_attr( $user_api_key ); ?>" class="regular-text" />
-                            <p class="description">※この設定はあなた専用です。他のユーザーには共有されません。</p>
-                        </td>
-                    </tr>
-                    <tr valign="top">
-                        <th scope="row">Gemini Model</th>
-                        <td>
-                            <select name="node_gemini_model" id="node_gemini_model">
-                                <?php $current_model = get_user_meta( get_current_user_id(), 'node_gemini_model', true ) ?: 'gemini-3-flash-preview'; ?>
-                                <option value="gemini-3.1-pro-preview" <?php selected( $current_model, 'gemini-3.1-pro-preview' ); ?>>Gemini 3.1 Pro Preview</option>
-                                <option value="gemini-3-flash-preview" <?php selected( $current_model, 'gemini-3-flash-preview' ); ?>>Gemini 3 Flash Preview</option>
-                                <option value="gemini-3.1-flash-lite" <?php selected( $current_model, 'gemini-3.1-flash-lite' ); ?>>Gemini 3.1 Flash-Lite</option>
-                                <option value="gemini-2.5-pro" <?php selected( $current_model, 'gemini-2.5-pro' ); ?>>Gemini 2.5 Pro</option>
-                                <option value="gemini-2.0-flash" <?php selected( $current_model, 'gemini-2.0-flash' ); ?>>Gemini 2.0 Flash</option>
-                            </select>
-                            <p class="description">AI要約機能などで使用するモデルを選択してください。</p>
-                        </td>
-                    </tr>
-                </table>
+                <?php
+                $current_user = wp_get_current_user();
+                if ( function_exists( 'node_render_gemini_user_fields' ) ) {
+                    node_render_gemini_user_fields( $current_user, true );
+                }
+                ?>
+                <p class="description" style="margin-top:0;">
+                    ライター（投稿権限のあるユーザー）は <strong>ユーザー → プロフィール</strong> から、各自の API キーを設定してください。
+                </p>
             </div>
 
             <!-- ライブラリ設定 -->
