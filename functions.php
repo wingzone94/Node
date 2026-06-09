@@ -17,12 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 1. 定数定義（テーマパス / バージョン）
  * -------------------------------------------------------
  */
-define( 'NODE_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
 define( 'NODE_THEME_DIR', get_template_directory() );
 define( 'NODE_THEME_URI', get_template_directory_uri() );
 define( 'NODE_ALL_ARTICLES_SLUG', 'all-articles' );
 define( 'NODE_ALL_ARTICLES_PER_PAGE', 24 );
 define( 'NODE_ALL_ARTICLES_TOTAL_LIMIT', 240 );
+
+require_once NODE_THEME_DIR . '/inc/theme-setup.php';
+define( 'NODE_THEME_VERSION', node_get_theme_version() );
 
 /**
  * -------------------------------------------------------
@@ -30,7 +32,6 @@ define( 'NODE_ALL_ARTICLES_TOTAL_LIMIT', 240 );
  * -------------------------------------------------------
  */
 require_once NODE_THEME_DIR . '/inc/hooks.php';
-require_once NODE_THEME_DIR . '/inc/theme-setup.php';
 require_once NODE_THEME_DIR . '/inc/meta-boxes.php';
 require_once NODE_THEME_DIR . '/inc/category-meta.php';
 require_once NODE_THEME_DIR . '/inc/ajax.php';

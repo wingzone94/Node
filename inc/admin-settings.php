@@ -222,7 +222,8 @@ function node_render_settings_page() {
                 <p class="description">GitHub から最新の `node.zip` を取得して自動インストールします。</p>
                 
                 <div id="luminous-update-info" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <p>現在のバージョン: <strong><?php echo wp_get_theme()->get('Version'); ?></strong></p>
+                    <p>現在のバージョン: <strong>v<?php echo esc_html( node_get_theme_version() ); ?></strong></p>
+                    <p class="description">フッター表示（v<?php echo esc_html( node_get_theme_version() ); ?>）と同じ style.css の Version を参照しています。</p>
                     <div id="update-check-result"></div>
                 </div>
 

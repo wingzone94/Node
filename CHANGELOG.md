@@ -14,6 +14,9 @@ Node テーマの更新履歴です。
     - ブラウザ既定の `figure` 余白とヒーローカードの bleed を解消。
 - **モバイル余白の最適化**:
     - Single / HEADLINES / SPOTLIGHT 向け fluid トークンを追加し、セクション間の過大な余白を抑制。
+- **テーマアップデート・バージョン表示**:
+    - Luminous Settings / フッター / アップデート確認で `node_get_theme_version()` により同一の `style.css` Version を参照。
+    - GitHub からの自動更新で Linux 本番でも `Node/` フォルダを正しく解決するよう ZIP 展開パスを修正。
 
 ## [1.0.2] - 2026.06.08
 ### アーカイブUI刷新・記事ヒーロー調整

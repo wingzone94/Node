@@ -120,3 +120,74 @@ function node_initialize_seed_color() {
         update_option( '_node_seed_color', $seed );
     }
 }
+
+/**
+ * Node テーマのバージョン（親テーマ style.css の Version ヘッダー）
+ */
+function node_get_theme_version(): string {
+	$theme   = wp_get_theme( get_template() );
+	$version = $theme->get( 'Version' );
+
+	return ( is_string( $version ) && '' !== $version ) ? $version : '0.0.0';
+}
+
+/**
+ * node.zip 展開後のコピー元ディレクトリを解決する
+ *
+ * @param string $temp_extract_dir 一時展開先。
+ * @return string|null 末尾スラッシュ付きパス。見つからない場合は null。
+ */
+function node_resolve_theme_update_source_dir( string $temp_extract_dir ): ?string {
+	$candidates = array(
+		$temp_extract_dir . '/Node',
+		$temp_extract_dir . '/node',
+		$temp_extract_dir . '/node-theme-production',
+	);
+
+	foreach ( $candidates as $dir ) {
+		if ( node_is_valid_theme_update_source( $dir ) ) {
+			return trailingslashit( $dir );
+		}
+	}
+
+	$entries = is_dir( $temp_extract_dir ) ? scandir( $temp_extract_dir ) : false;
+	if ( is_array( $entries ) ) {
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			$dir = $temp_extract_dir . '/' . $entry;
+			if ( is_dir( $dir ) && node_is_valid_theme_update_source( $dir ) ) {
+				return trailingslashit( $dir );
+			}
+		}
+	}
+
+	if ( node_is_valid_theme_update_source( $temp_extract_dir ) ) {
+		return trailingslashit( $temp_extract_dir );
+	}
+
+	return null;
+}
+
+/**
+ * テーマ更新のコピー元として style.css が Node テーマか検証
+ *
+ * @param string $dir 検査対象ディレクトリ。
+ */
+function node_is_valid_theme_update_source( string $dir ): bool {
+	$style = $dir . '/style.css';
+	if ( ! is_file( $style ) ) {
+		return false;
+	}
+
+	$data = get_file_data(
+		$style,
+		array(
+			'Theme Name' => 'Theme Name',
+		)
+	);
+
+	return isset( $data['Theme Name'] ) && 'Node' === $data['Theme Name'];
+}
