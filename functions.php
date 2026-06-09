@@ -215,6 +215,67 @@ function node_get_spotlight_url() {
 }
 
 /**
+ * リクエストパスが SPOTLIGHT 専用アーカイブ（/spotlight/）か判定する。
+ * リライトルール未フラッシュ環境向けフォールバックでも使用。
+ */
+function node_is_spotlight_archive_request(): bool {
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	$path        = trim( (string) parse_url( $request_uri, PHP_URL_PATH ), '/' );
+	$home_path   = trim( (string) parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+
+	if ( '' !== $home_path ) {
+		if ( $path === $home_path ) {
+			$path = '';
+		} elseif ( str_starts_with( $path, $home_path . '/' ) ) {
+			$path = substr( $path, strlen( $home_path ) + 1 );
+		}
+	}
+
+	return 'spotlight' === $path;
+}
+
+/**
+ * リライト未反映時も /spotlight/ を node_spotlight クエリとして解決する。
+ *
+ * @param array<string, mixed> $query_vars クエリ変数。
+ * @return array<string, mixed>
+ */
+function node_spotlight_request_fallback( $query_vars ) {
+	if ( ! empty( $query_vars['node_spotlight'] ) ) {
+		return $query_vars;
+	}
+
+	if ( node_is_spotlight_archive_request() ) {
+		return array( 'node_spotlight' => '1' );
+	}
+
+	return $query_vars;
+}
+add_filter( 'request', 'node_spotlight_request_fallback' );
+
+/**
+ * 404 判定後の最終フォールバック（本番で rewrite_rules が古い場合）。
+ */
+function node_spotlight_404_fallback(): void {
+	if ( ! is_404() || ! node_is_spotlight_archive_request() ) {
+		return;
+	}
+
+	global $wp_query;
+
+	$wp_query->query_vars['node_spotlight'] = '1';
+	$wp_query->query_vars['error']          = '';
+	unset( $wp_query->query_vars['pagename'], $wp_query->query_vars['name'] );
+	$wp_query->is_404     = false;
+	$wp_query->is_home    = false;
+	$wp_query->is_archive = false;
+	$wp_query->is_singular = false;
+
+	status_header( 200 );
+}
+add_action( 'template_redirect', 'node_spotlight_404_fallback', 0 );
+
+/**
  * 全記事一覧専用のリライトルールを登録する。
  */
 function node_register_all_articles_rewrite_rule() {
@@ -297,7 +358,7 @@ add_filter( 'template_include', 'node_use_all_articles_template', 99 );
  * リライトルールを一度だけフラッシュする（本番運用向け）。
  */
 function node_maybe_flush_rewrite_rules_for_all_articles() {
-	$rewrite_version = 'node_all_articles_v4';
+	$rewrite_version = 'node_all_articles_v5';
 	if ( get_option( 'node_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}

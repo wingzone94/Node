@@ -17,6 +17,8 @@ Node テーマの更新履歴です。
 - **テーマアップデート・バージョン表示**:
     - Luminous Settings / フッター / アップデート確認で `node_get_theme_version()` により同一の `style.css` Version を参照。
     - GitHub からの自動更新で Linux 本番でも `Node/` フォルダを正しく解決するよう ZIP 展開パスを修正。
+- **SPOTLIGHT URL（`/spotlight/`）**:
+    - 本番でリライト未フラッシュ時に 404 になる問題を修正（`request` / `template_redirect` フォールバック、rewrite v5 再フラッシュ）。
 
 ## [1.0.2] - 2026.06.08
 ### アーカイブUI刷新・記事ヒーロー調整
