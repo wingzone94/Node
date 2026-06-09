@@ -665,14 +665,14 @@
 
 /* --- Article View (Single) --- */
 .article-view {
-    padding: calc(64px + var(--safe-area-top) + 24px) var(--m3-spacing-m) 0;
+    padding: var(--node-header-content-offset) var(--node-gutter-inline) 0;
     position: relative;
 }
 
 .m3-article {
-    max-width: 864px;
+    max-width: var(--node-content-max);
     margin: 0 auto;
-    padding: 0 var(--m3-spacing-m) var(--m3-spacing-xxxl);
+    padding: 0 var(--node-gutter-inline) var(--m3-spacing-xxxl);
     position: relative;
     overflow-wrap: break-word;
     /* 画面はみ出し防止 */
@@ -680,7 +680,7 @@
 
 @media (min-width: 768px) {
     .m3-article {
-        padding: 0 var(--m3-spacing-xl) var(--m3-spacing-xxxl);
+        padding: 0 var(--node-gutter-inline-lg) var(--m3-spacing-xxxl);
     }
 }
 
@@ -1122,7 +1122,7 @@
 /* Breadcrumbs (SEO & Navigation) */
 .m3-breadcrumbs {
     margin: var(--m3-spacing-m) 0;
-    padding: 0 var(--m3-spacing-m);
+    padding: 0 var(--node-gutter-inline);
 }
 
 .m3-breadcrumbs__list {
@@ -1229,11 +1229,11 @@
 
 .m3-article__header-card {
     background-color: var(--md-sys-color-surface-container-low);
-    border-radius: 32px;
+    border-radius: var(--node-hero-card-radius);
     padding: 0; /* Seamless image integration */
-    margin: 24px auto 32px;
+    margin: var(--node-section-margin-block) auto var(--m3-spacing-xl);
     border: 1px solid var(--md-sys-color-outline-variant);
-    max-width: 860px;
+    max-width: var(--node-content-max);
     width: 100%;
     position: relative;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
@@ -1241,12 +1241,12 @@
 }
 
 .m3-article__header--overlap {
-    border-radius: 32px;
-    padding: 48px 32px;
+    border-radius: var(--node-hero-card-radius);
+    padding: var(--node-hero-padding-block) var(--node-hero-padding-inline);
     position: relative;
     z-index: 10;
-    margin-left: 16px;
-    margin-right: 16px;
+    margin-left: var(--node-gutter-inline);
+    margin-right: var(--node-gutter-inline);
     margin-bottom: 16px;
 }
 
@@ -1264,7 +1264,7 @@
     background: transparent;
     box-shadow: none;
     border: none;
-    padding: 48px 32px 32px; /* 上部にしっかり余白を確保 */
+    padding: var(--node-hero-padding-block) var(--node-hero-padding-inline) 32px; /* 上部にしっかり余白を確保 */
 }
 
 /* カード自体のパディング調整 */
@@ -1355,23 +1355,34 @@
 
 @media (min-width: 1024px) {
     .m3-article__header-card {
-        margin-left: -68px;
-        /* 左にはみ出し */
-        margin-right: -68px;
-        /* 右にはみ出し */
-        width: calc(100% + 136px);
+        /* タイトルカードを本文・画像カラムと同じ基準に揃える（ヒーロー張り出しを解除） */
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+    }
+}
+
+/* フォールダブル等で本文が 680px に絞られる場合、カードも同じ幅に揃える
+   （_navigation.css の本文ルールより後に読み込まれる本ファイルで上書き） */
+@media (min-width: 600px) and (max-width: 1024px) and (min-aspect-ratio: 4/5) {
+    .m3-article__header-card {
+        max-width: 680px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
     }
 }
 
 @media (max-width: 600px) {
     .m3-article__header-card {
         padding: 0; /* Seamless */
-        border-radius: 24px;
-        margin: 8px 12px 24px;
-        max-width: calc(100% - 24px);
+        border-radius: var(--node-hero-card-radius);
+        /* タイトルカードの左右端を本文テキスト・画像と同じガター基準に揃える */
+        margin: 8px 0 24px;
+        max-width: 100%;
     }
     .m3-article__header--overlap {
-        padding: 32px 20px; /* 0.7.0 style */
+        padding: clamp(28px, 7vw, 36px) clamp(18px, 5vw, 24px); /* 0.7.0 style */
         margin-left: 0;
         margin-right: 0;
     }

@@ -144,6 +144,26 @@ body.admin-bar .m3-header {
         flex: 0 0 auto;
         font-size: 20px;
     }
+
+    .m3-home-layout .special-features .m3-headlines__header {
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 0;
+        margin-bottom: 16px !important;
+    }
+
+    .m3-home-layout .special-features .m3-headlines__title,
+    .m3-home-layout .special-features .m3-section-title.m3-headlines__title {
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        min-width: 0;
+        margin: 0;
+        gap: 6px;
+        font-size: clamp(1.35rem, 6vw, 1.55rem);
+        line-height: 1.1;
+        white-space: nowrap;
+    }
 }
 /* ===== End Mobile Headline Header Layout Fix ===== */
 

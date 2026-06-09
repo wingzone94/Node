@@ -5,22 +5,16 @@
     <?php
     if ((is_home() || is_front_page()) && !is_paged()) {
         $news_cat = get_term_by('name', 'ニュース', 'category');
-        $spotlight_cat = get_category_by_slug('spotlight');
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
 
         if (!empty($spotlight_cats)) : ?>
             <section class="special-features m3-surface m3-section-spacing" aria-labelledby="spotlight-title">
                 <div class="m3-headlines__header" style="margin-bottom: 24px; padding: 0;">
-                    <h2 id="spotlight-title" class="m3-section-title" style="margin-bottom: 0;">
+                    <h2 id="spotlight-title" class="m3-section-title m3-headlines__title" style="margin-bottom: 0;">
                         <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
                         SPOTLIGHT <span class="m3-section-title__sub">特集</span>
                     </h2>
-                    <?php
-                    $spotlight_link = $spotlight_cat
-                        ? get_category_link($spotlight_cat->term_id)
-                        : home_url('/category/spotlight/');
-                    ?>
-                    <a href="<?php echo esc_url($spotlight_link); ?>" class="m3-headlines__more m3-button m3-button--text">
+                    <a href="<?php echo esc_url( node_get_spotlight_url() ); ?>" class="m3-headlines__more m3-button m3-button--text">
                         すべて見る<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </a>
                 </div>

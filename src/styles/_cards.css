@@ -65,7 +65,7 @@
     }
     
     .m3-post-grid__container.m3-post-grid--list .m3-card--no-image .m3-card__content {
-        padding-top: 64px; /* Restore overlay padding */
+        padding-top: 20px;
     }
 }
 
@@ -77,6 +77,11 @@
     
     .m3-post-grid__container.m3-post-grid--2col-list .m3-card {
         height: 100%;
+    }
+
+    .m3-post-grid__container.m3-post-grid--2col-list .m3-card--no-image {
+        height: auto;
+        align-self: start;
     }
     
     .m3-post-grid__container.m3-post-grid--2col-list .m3-card__visual {
@@ -192,7 +197,7 @@
 }
 
 .m3-post-grid--list .m3-card--no-image {
-    flex-direction: column !important;
+    flex-direction: row !important;
 }
 
 /* Ensure heights are natural in the grid */
@@ -329,7 +334,7 @@
 }
 
 .m3-card--no-image .m3-card__content {
-    padding-top: 20px; /* Reduced from 64px to shrink top space */
+    padding-top: 20px;
 }
 
 .m3-card__title {

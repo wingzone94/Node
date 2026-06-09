@@ -18,8 +18,13 @@
 /* --- ブロックメディアの自然な中央配置 ---
    align 系クラス（alignleft/alignright/alignwide/alignfull/aligncenter）が
    付いたブロックは除外し、ユーザー指定の配置・回り込みを尊重する。
-   text-align のみで inline 要素（img / iframe）を中央化するため、
-   本文テキストの配置には影響しない。 */
+   UA 標準の figure { margin-inline: 40px } をリセットし、
+   img は block + margin-inline:auto で本文幅内に中央配置する。 */
+.m3-article__body figure:not(.alignleft):not(.alignright),
+.m3-article__body .wp-block-image:not(.alignleft):not(.alignright) {
+    margin-inline: 0;
+}
+
 .m3-article__body > figure:not([class*="align"]),
 .m3-article__body > .wp-block-image:not([class*="align"]),
 .m3-article__body > .wp-block-embed:not([class*="align"]),
@@ -36,11 +41,22 @@
 }
 
 /* 画像・埋め込みは本文幅を超えない（スマホ横スクロール防止の保険） */
+.m3-article__body .wp-block-image > a,
+.m3-article__body figure:not(.alignleft):not(.alignright) > a {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+}
+
 .m3-article__body .wp-block-image img,
+.m3-article__body figure:not(.alignleft):not(.alignright) img,
 .m3-article__body .wp-block-embed iframe,
 .m3-article__body .wp-block-video video {
+    display: block;
     max-width: 100%;
     height: auto;
+    margin-inline: auto;
 }
 
 /* --- ユーザーが明示指定したテキスト揃えを尊重（コアCSS dequeue の補完） --- */

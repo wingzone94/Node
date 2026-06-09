@@ -207,6 +207,13 @@ function node_get_headlines_url() {
 }
 
 /**
+ * SPOTLIGHT 特集一覧ページのURLを返す。
+ */
+function node_get_spotlight_url() {
+	return home_url( '/spotlight/' );
+}
+
+/**
  * 全記事一覧専用のリライトルールを登録する。
  */
 function node_register_all_articles_rewrite_rule() {
@@ -234,6 +241,14 @@ function node_register_all_articles_rewrite_rule() {
 		'index.php?node_headlines=1&paged=$matches[1]',
 		'top'
 	);
+
+	// SPOTLIGHT 専用のリライトルール
+	add_rewrite_tag( '%node_spotlight%', '1' );
+	add_rewrite_rule(
+		'^spotlight/?$',
+		'index.php?node_spotlight=1',
+		'top'
+	);
 }
 add_action( 'init', 'node_register_all_articles_rewrite_rule' );
 
@@ -243,6 +258,7 @@ add_action( 'init', 'node_register_all_articles_rewrite_rule' );
 function node_add_all_articles_query_var( $vars ) {
 	$vars[] = 'node_all_articles';
 	$vars[] = 'node_headlines';
+	$vars[] = 'node_spotlight';
 	return $vars;
 }
 add_filter( 'query_vars', 'node_add_all_articles_query_var' );
@@ -265,6 +281,13 @@ function node_use_all_articles_template( $template ) {
 		}
 	}
 
+	if ( get_query_var( 'node_spotlight' ) ) {
+		$custom_template = NODE_THEME_DIR . '/template-parts/spotlight-archive.php';
+		if ( file_exists( $custom_template ) ) {
+			return $custom_template;
+		}
+	}
+
 	return $template;
 }
 add_filter( 'template_include', 'node_use_all_articles_template', 99 );
@@ -273,7 +296,7 @@ add_filter( 'template_include', 'node_use_all_articles_template', 99 );
  * リライトルールを一度だけフラッシュする（本番運用向け）。
  */
 function node_maybe_flush_rewrite_rules_for_all_articles() {
-	$rewrite_version = 'node_all_articles_v2';
+	$rewrite_version = 'node_all_articles_v4';
 	if ( get_option( 'node_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
@@ -685,3 +708,29 @@ function node_headlines_pre_get_posts( $query ) {
     }
 }
 add_action( 'pre_get_posts', 'node_headlines_pre_get_posts' );
+
+/**
+ * -------------------------------------------------------
+ * 14. SPOTLIGHT専用ページのメインクエリ制御
+ * -------------------------------------------------------
+ */
+function node_spotlight_pre_get_posts( $query ) {
+	if ( ! is_admin() && $query->is_main_query() && $query->get( 'node_spotlight' ) ) {
+		// 過去特集カタログ専用ページのため、記事ループは実行しない。
+		$query->set( 'post__in', array( 0 ) );
+	}
+}
+add_action( 'pre_get_posts', 'node_spotlight_pre_get_posts' );
+
+/**
+ * 旧カテゴリアーカイブ /category/spotlight/ を専用URLへ統合する。
+ */
+function node_redirect_spotlight_category_archive() {
+	if ( ! is_category( 'spotlight' ) ) {
+		return;
+	}
+
+	wp_safe_redirect( node_get_spotlight_url(), 301 );
+	exit;
+}
+add_action( 'template_redirect', 'node_redirect_spotlight_category_archive' );

@@ -75,25 +75,13 @@ export function initLatestGridExpansion() {
 export function initSectionArchiveLinks() {
     if (!isLatestHomePage()) return;
 
-    const newsMoreLink = document.querySelector('.m3-headlines[aria-labelledby="headline-title"] .m3-headlines__more');
     const spotlightMoreLink = document.querySelector('.special-features .m3-headlines__more');
-
     if (!spotlightMoreLink) return;
 
-    const toAbsolute = (href) => {
-        if (!href) return null;
-        try {
-            return new URL(href, window.location.href);
-        } catch {
-            return null;
-        }
-    };
-
-    const newsUrl = toAbsolute(newsMoreLink?.getAttribute('href'));
-    const categoryBase = newsUrl
-        ? `${newsUrl.origin}${newsUrl.pathname.replace(/\/category\/[^/]*\/?$/i, '/category/')}`
-        : `${window.location.origin}/category/`;
-    spotlightMoreLink.href = `${categoryBase}spotlight/`;
+    const href = spotlightMoreLink.getAttribute('href');
+    if (!href || href === '#') {
+        spotlightMoreLink.href = `${window.location.origin}/spotlight/`;
+    }
 }
 
 export function initHeroInfoBubble() {

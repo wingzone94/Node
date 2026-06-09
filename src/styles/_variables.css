@@ -73,6 +73,20 @@
     --m3-spacing-xl: 32px;
     --m3-spacing-xxl: 48px;
     --m3-spacing-xxxl: 64px;
+
+    /* --- Node Layout Tokens (Single + HEADLINES) --- */
+    --node-content-max: 864px;
+    --node-content-wide-max: 1080px;
+    --node-gutter-inline: clamp(12px, 3.5vw, var(--m3-spacing-m));
+    --node-gutter-inline-lg: clamp(16px, 4vw, var(--m3-spacing-xl));
+    --node-section-padding: clamp(16px, 3vw, 24px);
+    --node-section-margin-inline: clamp(12px, 3.5vw, var(--m3-spacing-m));
+    --node-section-margin-block: clamp(16px, 4vw, var(--m3-spacing-l));
+    --node-header-content-offset: calc(64px + var(--safe-area-top) + clamp(12px, 3vw, 24px));
+    --node-hero-padding-inline: clamp(20px, 5vw, 36px);
+    --node-hero-padding-block: clamp(32px, 5vw, 48px);
+    --node-hero-card-margin-inline: clamp(8px, 3vw, 12px);
+    --node-hero-card-radius: clamp(24px, 4vw, 32px);
  
     /* --- Material 3 Motion --- */
     --m3-motion-duration: 500ms;

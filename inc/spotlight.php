@@ -28,10 +28,18 @@ function node_get_spotlight_categories() {
             if (!$color) {
                 $color = 'var(--md-sys-color-primary)';
             }
+            $label = $cat->name;
+            if ( ! preg_match( '/特集$/u', $label ) ) {
+                $label .= '特集';
+            }
+
             $result[] = [
-                'name' => $cat->name . '特集',
-                'url' => get_category_link($cat->term_id),
-                'color' => $color
+                'name'        => $label,
+                'slug'        => $cat->slug,
+                'url'         => get_category_link( $cat->term_id ),
+                'color'       => $color,
+                'count'       => (int) $cat->count,
+                'description' => term_description( $cat->term_id, 'category' ),
             ];
         }
     }
