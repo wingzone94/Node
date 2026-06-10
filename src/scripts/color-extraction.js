@@ -2,28 +2,13 @@ import { extractColorFromImage } from '../colorExtractor';
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
-function getReadableTextColor(hexColor) {
-    if (hexColor.toLowerCase() === '#ff9900') {
-        return '#ffffff';
-    }
-
-    const hex = hexColor.replace('#', '');
-    const red = parseInt(hex.slice(0, 2), 16);
-    const green = parseInt(hex.slice(2, 4), 16);
-    const blue = parseInt(hex.slice(4, 6), 16);
-    const yiq = ((red * 299) + (green * 587) + (blue * 114)) / 1000;
-
-    return yiq >= 150 ? '#2b1700' : '#ffffff';
-}
-
 function applyBadgeColor(badge, color) {
+    // カテゴリラベルの文字色は常に白で固定する（ライト/ダーク共通）。
     badge.style.setProperty('--category-color', color);
-    badge.style.setProperty('--category-on-color', getReadableTextColor(color));
+    badge.style.setProperty('--category-on-color', '#ffffff');
     badge.style.backgroundColor = color;
     badge.style.color = 'var(--category-on-color)';
-    badge.style.textShadow = getReadableTextColor(color) === '#ffffff'
-        ? '0 1px 2px rgba(0,0,0,0.3)'
-        : 'none';
+    badge.style.textShadow = '0 1px 2px rgba(0,0,0,0.3)';
 }
 
 export function initColorExtraction() {

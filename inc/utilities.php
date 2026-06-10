@@ -155,7 +155,8 @@ function node_get_category_label_props($term) {
 
     return array(
         'color'      => $color,
-        'on_color'   => $is_default ? '#ffffff' : node_get_readable_text_color($color),
+        // カテゴリラベルの文字色はライト/ダーク問わず常に白で固定する。
+        'on_color'   => '#ffffff',
         'data_color' => $is_default ? '' : $color,
     );
 }
