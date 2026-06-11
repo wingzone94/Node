@@ -37,9 +37,11 @@ final class Meta_Output {
 			return;
 		}
 
-		$title = get_the_title( $post_id );
-		$desc  = wp_strip_all_tags( get_the_excerpt( $post_id ) );
-		$url   = get_permalink( $post_id );
+		$title         = get_the_title( $post_id );
+		$desc          = wp_strip_all_tags( get_the_excerpt( $post_id ) );
+		$url           = get_permalink( $post_id );
+		$twitter_site  = (string) apply_filters( 'node_seo_twitter_site', '@Luminous_Core_' );
+		$twitter_domain = wp_parse_url( home_url(), PHP_URL_HOST );
 
 		echo '<meta property="og:type" content="article" />' . "\n";
 		echo '<meta property="og:title" content="' . esc_attr( $title ) . '" />' . "\n";
@@ -48,14 +50,27 @@ final class Meta_Output {
 		}
 		echo '<meta property="og:url" content="' . esc_url( $url ) . '" />' . "\n";
 		echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '" />' . "\n";
+		echo '<meta property="og:locale" content="ja_JP" />' . "\n";
 		echo '<meta property="og:image" content="' . esc_url( $ogp_url ) . '" />' . "\n";
+		if ( str_starts_with( $ogp_url, 'https://' ) ) {
+			echo '<meta property="og:image:secure_url" content="' . esc_url( $ogp_url ) . '" />' . "\n";
+		}
 		echo '<meta property="og:image:width" content="1200" />' . "\n";
 		echo '<meta property="og:image:height" content="630" />' . "\n";
+		echo '<meta property="og:image:type" content="image/png" />' . "\n";
+		echo '<meta property="og:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
 		echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+		if ( '' !== $twitter_site ) {
+			echo '<meta name="twitter:site" content="' . esc_attr( $twitter_site ) . '" />' . "\n";
+		}
+		if ( is_string( $twitter_domain ) && '' !== $twitter_domain ) {
+			echo '<meta name="twitter:domain" content="' . esc_attr( $twitter_domain ) . '" />' . "\n";
+		}
 		echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '" />' . "\n";
 		if ( $desc ) {
 			echo '<meta name="twitter:description" content="' . esc_attr( $desc ) . '" />' . "\n";
 		}
 		echo '<meta name="twitter:image" content="' . esc_url( $ogp_url ) . '" />' . "\n";
+		echo '<meta name="twitter:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
 	}
 }

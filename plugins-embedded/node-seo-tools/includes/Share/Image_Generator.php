@@ -15,7 +15,11 @@ final class Image_Generator {
 	/**
 	 * 描画ロジックの世代。レイアウト変更時に上げると既存画像が自動再生成される。
 	 */
-	public const GENERATOR_VERSION = '2026-06-11-wrap-v2';
+	public const GENERATOR_VERSION = '2026-06-11-rakko-v3';
+
+	/** Threads 等の上下トリミングを考慮したセーフゾーン（1200x630 基準） */
+	private const SNS_SAFE_TOP    = 90;
+	private const SNS_SAFE_BOTTOM = 540;
 
 	private const META_GENERATOR_VERSION = '_node_ogp_generator_version';
 
@@ -254,7 +258,7 @@ final class Image_Generator {
 		}
 
 		$left_margin   = 46;
-		$top_margin    = 30;
+		$top_margin    = self::SNS_SAFE_TOP + 6;
 		$icon_h        = 44;
 
 		$orig_w = imagesx( $logo_src );
@@ -309,8 +313,8 @@ final class Image_Generator {
 		$max_width     = $width - 200;
 		$line_spacing  = 1.38;
 		$kerning_ratio = 0.012; // auto kerning based on font size.
-		$title_box_y   = 132;
-		$title_box_h   = 332;
+		$title_box_y   = self::SNS_SAFE_TOP + 12;
+		$title_box_h   = self::SNS_SAFE_BOTTOM - self::SNS_SAFE_TOP - 24;
 
 		$layout = $this->select_title_layout(
 			$title,
