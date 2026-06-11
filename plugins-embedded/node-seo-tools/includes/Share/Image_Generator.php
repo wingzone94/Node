@@ -15,7 +15,7 @@ final class Image_Generator {
 	/**
 	 * 描画ロジックの世代。レイアウト変更時に上げると既存画像が自動再生成される。
 	 */
-	public const GENERATOR_VERSION = '2026-06-11-bold-v1';
+	public const GENERATOR_VERSION = '2026-06-11-wrap-v2';
 
 	private const META_GENERATOR_VERSION = '_node_ogp_generator_version';
 
@@ -24,6 +24,7 @@ final class Image_Generator {
 	private const MAX_TITLE_LINES         = 3;
 	private const TITLE_MAX_FONT_SIZE     = 48;
 	private const TITLE_MIN_FONT_SIZE     = 34;
+	private const MIN_ORPHAN_LINE_CHARS   = 3;
 	private const BOLD_PIXEL_OFFSETS      = array(
 		array( 0.0, 0.0 ),
 		array( 1.0, 0.0 ),
@@ -305,30 +306,25 @@ final class Image_Generator {
 
 		$title         = self::normalize_text( $title );
 		$text_color    = imagecolorallocate( $image, 56, 56, 56 );
-		$font_size     = self::TITLE_MAX_FONT_SIZE;
 		$max_width     = $width - 200;
 		$line_spacing  = 1.38;
 		$kerning_ratio = 0.012; // auto kerning based on font size.
-		$title_box_y  = 132;
-		$title_box_h  = 332;
-		$lines        = array( $title );
-		$line_height  = 0.0;
+		$title_box_y   = 132;
+		$title_box_h   = 332;
 
-		for ( $size = self::TITLE_MAX_FONT_SIZE; $size >= self::TITLE_MIN_FONT_SIZE; $size -= 2 ) {
-			$font_size  = $size;
-			$kerning_px = $font_size * $kerning_ratio;
-			$lines      = $this->wrap_text_with_rules( $title, $font_size, $font_jp, $font_latin, $max_width, $kerning_px );
-			$bbox_char  = imagettfbbox( $font_size, 0, $font_latin, 'A' );
-			if ( ! is_array( $bbox_char ) ) {
-				continue;
-			}
-			$line_height  = ( $bbox_char[1] - $bbox_char[7] ) * $line_spacing;
-			$total_height = count( $lines ) * $line_height;
-			if ( count( $lines ) <= self::MAX_TITLE_LINES && $total_height <= $title_box_h ) {
-				break;
-			}
-		}
+		$layout = $this->select_title_layout(
+			$title,
+			$font_jp,
+			$font_latin,
+			$max_width,
+			$title_box_h,
+			$line_spacing,
+			$kerning_ratio
+		);
 
+		$font_size    = $layout['font_size'];
+		$lines        = $layout['lines'];
+		$line_height  = $layout['line_height'];
 		$total_height = count( $lines ) * $line_height;
 		$y            = $title_box_y + ( ( $title_box_h - $total_height ) / 2 ) + ( $line_height / 1.15 );
 		$kerning_px   = $font_size * $kerning_ratio;
@@ -339,6 +335,93 @@ final class Image_Generator {
 			$this->draw_mixed_line( $image, $line, $font_size, (float) $x, (float) $y, $text_color, $font_jp, $font_latin, $kerning_px );
 			$y += $line_height;
 		}
+	}
+
+	/**
+	 * Pick the largest font size that minimizes line count and avoids orphan lines.
+	 *
+	 * @return array{font_size:int,lines:array<int,string>,line_height:float}
+	 */
+	private function select_title_layout(
+		string $title,
+		string $font_jp,
+		string $font_latin,
+		int $max_width,
+		int $title_box_h,
+		float $line_spacing,
+		float $kerning_ratio
+	): array {
+		$best = null;
+
+		for ( $size = self::TITLE_MAX_FONT_SIZE; $size >= self::TITLE_MIN_FONT_SIZE; $size -= 2 ) {
+			$kerning_px = $size * $kerning_ratio;
+			$lines      = $this->wrap_text_with_rules( $title, $size, $font_jp, $font_latin, $max_width, $kerning_px );
+			$bbox_char  = imagettfbbox( $size, 0, $font_latin, 'A' );
+			if ( ! is_array( $bbox_char ) ) {
+				continue;
+			}
+
+			$line_height  = ( $bbox_char[1] - $bbox_char[7] ) * $line_spacing;
+			$total_height = count( $lines ) * $line_height;
+			if ( count( $lines ) > self::MAX_TITLE_LINES || $total_height > $title_box_h ) {
+				continue;
+			}
+			if ( $this->has_orphan_lines( $lines ) ) {
+				continue;
+			}
+
+			if (
+				null === $best
+				|| count( $lines ) < count( $best['lines'] )
+				|| ( count( $lines ) === count( $best['lines'] ) && $size > $best['font_size'] )
+			) {
+				$best = array(
+					'font_size'   => $size,
+					'lines'       => $lines,
+					'line_height' => $line_height,
+				);
+			}
+		}
+
+		if ( null !== $best ) {
+			return $best;
+		}
+
+		$fallback_size = self::TITLE_MIN_FONT_SIZE;
+		$kerning_px    = $fallback_size * $kerning_ratio;
+		$lines         = $this->wrap_text_with_rules( $title, $fallback_size, $font_jp, $font_latin, $max_width, $kerning_px );
+		$bbox_char     = imagettfbbox( $fallback_size, 0, $font_latin, 'A' );
+		$line_height   = is_array( $bbox_char )
+			? ( $bbox_char[1] - $bbox_char[7] ) * $line_spacing
+			: (float) $fallback_size * $line_spacing;
+
+		return array(
+			'font_size'   => $fallback_size,
+			'lines'       => $lines,
+			'line_height' => $line_height,
+		);
+	}
+
+	/**
+	 * @param array<int, string> $lines
+	 */
+	private function has_orphan_lines( array $lines ): bool {
+		if ( count( $lines ) <= 1 ) {
+			return false;
+		}
+
+		foreach ( $lines as $line ) {
+			$visible = preg_replace( '/\s+/u', '', $line );
+			if ( null === $visible ) {
+				continue;
+			}
+			$length = function_exists( 'mb_strlen' ) ? mb_strlen( $visible ) : strlen( $visible );
+			if ( $length > 0 && $length < self::MIN_ORPHAN_LINE_CHARS ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static function normalize_text( string $text ): string {
@@ -386,7 +469,8 @@ final class Image_Generator {
 			}
 		}
 
-		$lines[] = $this->trim_line_end_forbidden( $current );
+		// 最終行の句読点はタイトル末尾として保持する。
+		$lines[] = $current;
 		$lines   = $this->fix_line_start_forbidden( $lines );
 		return array_values( array_filter( $lines, static fn( string $line ): bool => '' !== trim( $line ) ) );
 	}
