@@ -38,7 +38,7 @@ final class Meta_Output {
 		}
 
 		$title          = get_the_title( $post_id );
-		$desc           = wp_strip_all_tags( get_the_excerpt( $post_id ) );
+		$desc           = $this->build_share_description( $post_id );
 		$url            = get_permalink( $post_id );
 		$twitter_site   = (string) apply_filters( 'node_seo_twitter_site', '@Luminous_Core_' );
 		$twitter_domain = wp_parse_url( home_url(), PHP_URL_HOST );
@@ -52,6 +52,8 @@ final class Meta_Output {
 		echo '<meta property="og:url" content="' . esc_url( $url ) . '" />' . "\n";
 		echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '" />' . "\n";
 		echo '<meta property="og:locale" content="ja_JP" />' . "\n";
+		echo '<meta property="article:published_time" content="' . esc_attr( get_the_date( 'c', $post_id ) ) . '" />' . "\n";
+		echo '<meta property="article:modified_time" content="' . esc_attr( get_the_modified_date( 'c', $post_id ) ) . '" />' . "\n";
 		echo '<meta property="og:image" content="' . esc_url( $ogp_url ) . '" />' . "\n";
 		if ( str_starts_with( $ogp_url, 'https://' ) ) {
 			echo '<meta property="og:image:secure_url" content="' . esc_url( $ogp_url ) . '" />' . "\n";
@@ -75,6 +77,23 @@ final class Meta_Output {
 		echo '<meta name="twitter:image" content="' . esc_url( $ogp_url ) . '" />' . "\n";
 		echo '<meta name="twitter:image:src" content="' . esc_url( $ogp_url ) . '" />' . "\n";
 		echo '<meta name="twitter:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
+	}
+
+	/**
+	 * SNS向け説明文（HTML実体・WordPress省略記号を正規化、120文字上限）
+	 */
+	private function build_share_description( int $post_id ): string {
+		$desc = wp_strip_all_tags( get_the_excerpt( $post_id ) );
+		$desc = html_entity_decode( $desc, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$desc = preg_replace( '/\[\s*(?:&hellip;|…|\.\.\.)\s*\]/u', '…', $desc ) ?? $desc;
+		$desc = preg_replace( '/\.{3,}/u', '…', $desc ) ?? $desc;
+		$desc = trim( preg_replace( '/\s+/u', ' ', $desc ) ?? $desc );
+
+		if ( function_exists( 'mb_strlen' ) && mb_strlen( $desc ) > 120 ) {
+			$desc = mb_substr( $desc, 0, 119 ) . '…';
+		}
+
+		return $desc;
 	}
 
 	/**

@@ -15,11 +15,13 @@ final class Image_Generator {
 	/**
 	 * 描画ロジックの世代。レイアウト変更時に上げると既存画像が自動再生成される。
 	 */
-	public const GENERATOR_VERSION = '2026-06-11-rakko-v3';
+	public const GENERATOR_VERSION = '2026-06-11-insightbase-v4';
 
 	/** Threads 等の上下トリミングを考慮したセーフゾーン（1200x630 基準） */
 	private const SNS_SAFE_TOP    = 90;
 	private const SNS_SAFE_BOTTOM = 540;
+	/** Instagram 1:1 中央クロップでも切れない幅（1200 幅の中央 630px 内） */
+	private const SNS_SAFE_WIDTH  = 620;
 
 	private const META_GENERATOR_VERSION = '_node_ogp_generator_version';
 
@@ -28,7 +30,7 @@ final class Image_Generator {
 	private const MAX_TITLE_LINES         = 3;
 	private const TITLE_MAX_FONT_SIZE     = 48;
 	private const TITLE_MIN_FONT_SIZE     = 34;
-	private const MIN_ORPHAN_LINE_CHARS   = 3;
+	private const MIN_ORPHAN_LINE_CHARS   = 10;
 	private const BOLD_PIXEL_OFFSETS      = array(
 		array( 0.0, 0.0 ),
 		array( 1.0, 0.0 ),
@@ -313,7 +315,7 @@ final class Image_Generator {
 
 		$title         = self::normalize_text( $title );
 		$text_color    = imagecolorallocate( $image, 56, 56, 56 );
-		$max_width     = $width - 200;
+		$max_width     = self::SNS_SAFE_WIDTH;
 		$line_spacing  = 1.38;
 		$kerning_ratio = 0.012; // auto kerning based on font size.
 		$title_box_y   = self::SNS_SAFE_TOP + 12;
@@ -394,7 +396,25 @@ final class Image_Generator {
 			return $best;
 		}
 
-		$fallback_size = self::TITLE_MIN_FONT_SIZE;
+		for ( $size = self::TITLE_MIN_FONT_SIZE; $size >= 28; $size -= 2 ) {
+			$kerning_px = $size * $kerning_ratio;
+			$lines      = $this->wrap_text_with_rules( $title, $size, $font_jp, $font_latin, $max_width, $kerning_px );
+			$bbox_char  = imagettfbbox( $size, 0, $font_latin, 'A' );
+			if ( ! is_array( $bbox_char ) ) {
+				continue;
+			}
+			$line_height  = ( $bbox_char[1] - $bbox_char[7] ) * $line_spacing;
+			$total_height = count( $lines ) * $line_height;
+			if ( count( $lines ) <= self::MAX_TITLE_LINES && $total_height <= $title_box_h ) {
+				return array(
+					'font_size'   => $size,
+					'lines'       => $lines,
+					'line_height' => $line_height,
+				);
+			}
+		}
+
+		$fallback_size = 28;
 		$kerning_px    = $fallback_size * $kerning_ratio;
 		$lines         = $this->wrap_text_with_rules( $title, $fallback_size, $font_jp, $font_latin, $max_width, $kerning_px );
 		$bbox_char     = imagettfbbox( $fallback_size, 0, $font_latin, 'A' );
@@ -407,6 +427,27 @@ final class Image_Generator {
 			'lines'       => $lines,
 			'line_height' => $line_height,
 		);
+	}
+
+	/**
+	 * @param array<int, string> $lines
+	 */
+	/**
+	 * @param array<int, string> $lines
+	 * @return array<int, string>
+	 */
+	private function merge_orphan_tail_lines( array $lines ): array {
+		while ( count( $lines ) > 1 ) {
+			$last    = trim( (string) end( $lines ) );
+			$visible = preg_replace( '/\s+/u', '', $last );
+			$length  = function_exists( 'mb_strlen' ) ? mb_strlen( (string) $visible ) : strlen( (string) $visible );
+			if ( $length >= self::MIN_ORPHAN_LINE_CHARS ) {
+				break;
+			}
+			$tail = (string) array_pop( $lines );
+			$lines[ count( $lines ) - 1 ] .= $tail;
+		}
+		return $lines;
 	}
 
 	/**
@@ -479,7 +520,9 @@ final class Image_Generator {
 		// 最終行の句読点はタイトル末尾として保持する。
 		$lines[] = $current;
 		$lines   = $this->fix_line_start_forbidden( $lines );
-		return array_values( array_filter( $lines, static fn( string $line ): bool => '' !== trim( $line ) ) );
+		$lines   = $this->merge_orphan_tail_lines( $lines );
+		$lines   = array_map( static fn( string $line ): string => trim( $line ), $lines );
+		return array_values( array_filter( $lines, static fn( string $line ): bool => '' !== $line ) );
 	}
 
 	private function tokenize_text( string $text ): array {
@@ -491,8 +534,27 @@ final class Image_Generator {
 		$tokens = array();
 		$buffer = '';
 		$type   = null;
-		foreach ( $chars as $ch ) {
-			$ch_type = preg_match( '/[A-Za-z0-9]/u', $ch ) ? 'latin' : 'other';
+		foreach ( $chars as $idx => $ch ) {
+			$is_latin = (bool) preg_match( '/[A-Za-z0-9]/u', $ch );
+			$is_space = (bool) preg_match( '/\s/u', $ch );
+			$ch_type  = $is_latin ? 'latin' : 'other';
+
+			if ( '.' === $ch && 'latin' === $type ) {
+				$next = $chars[ $idx + 1 ] ?? '';
+				if ( preg_match( '/[0-9]$/u', $buffer ) && is_string( $next ) && preg_match( '/^[0-9]/u', $next ) ) {
+					$buffer .= $ch;
+					continue;
+				}
+			}
+
+			if ( $is_space && 'latin' === $type ) {
+				$next = $chars[ $idx + 1 ] ?? '';
+				if ( is_string( $next ) && preg_match( '/[A-Za-z0-9]/u', $next ) ) {
+					$buffer .= $ch;
+					continue;
+				}
+			}
+
 			if ( null === $type ) {
 				$type   = $ch_type;
 				$buffer = $ch;
