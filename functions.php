@@ -63,6 +63,7 @@ $embedded_plugins = [
 	'luminous-nexus/luminous-nexus.php'     => 'luminous_nexus_init',
 	'luminous-interactivity/luminous-interactivity.php' => 'luminous_interactivity_init',
 	'node-library/node-library.php'         => 'node_library_init',
+	'node-seo-tools/node-seo-tools.php'     => 'node_seo_tools_init',
 ];
 
 foreach ( $embedded_plugins as $plugin_file => $init_func ) {
