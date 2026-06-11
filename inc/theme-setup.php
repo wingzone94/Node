@@ -178,7 +178,8 @@ function node_resolve_theme_update_source_dir( string $temp_extract_dir ): ?stri
  */
 function node_is_valid_theme_update_source( string $dir ): bool {
 	$style = $dir . '/style.css';
-	if ( ! is_file( $style ) ) {
+	$index = $dir . '/index.php';
+	if ( ! is_file( $style ) || ! is_file( $index ) ) {
 		return false;
 	}
 
