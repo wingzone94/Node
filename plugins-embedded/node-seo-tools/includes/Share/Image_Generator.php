@@ -12,6 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Image_Generator {
+	/**
+	 * 描画ロジックの世代。レイアウト変更時に上げると既存画像が自動再生成される。
+	 */
+	public const GENERATOR_VERSION = '2026-06-11-bold-v1';
+
+	private const META_GENERATOR_VERSION = '_node_ogp_generator_version';
+
 	private const UNIFY_ALL_LINE_WEIGHT   = true;
 	private const UNIFY_MIXED_LINE_WEIGHT = true;
 	private const MAX_TITLE_LINES         = 3;
@@ -37,6 +44,35 @@ final class Image_Generator {
 
 	private function __construct() {
 		add_action( 'save_post', array( $this, 'generate_on_save' ), 10, 2 );
+		add_action( 'template_redirect', array( $this, 'maybe_regenerate_stale' ) );
+	}
+
+	/**
+	 * 旧ロジックで生成済みのOGP画像を、記事閲覧時に1回だけ作り直す。
+	 * 世代メタが現行と一致していれば何もしない。
+	 */
+	public function maybe_regenerate_stale(): void {
+		if ( is_admin() || wp_doing_ajax() || ! is_singular( 'post' ) ) {
+			return;
+		}
+		if ( ! get_option( 'node_ogp_enabled' ) ) {
+			return;
+		}
+
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || 'publish' !== get_post_status( $post_id ) ) {
+			return;
+		}
+
+		if ( self::GENERATOR_VERSION === get_post_meta( $post_id, self::META_GENERATOR_VERSION, true ) ) {
+			return;
+		}
+
+		try {
+			$this->generate_ogp( $post_id );
+		} catch ( \Exception $e ) {
+			error_log( 'Node SEO Tools OGP regenerate error: ' . $e->getMessage() );
+		}
 	}
 
 	public function generate_on_save( int $post_id, \WP_Post $post ): void {
@@ -116,6 +152,7 @@ final class Image_Generator {
 			'_node_ogp_image_url',
 			trailingslashit( $upload_dir['baseurl'] ) . 'ogp/' . $filename
 		);
+		update_post_meta( $post_id, self::META_GENERATOR_VERSION, self::GENERATOR_VERSION );
 	}
 
 	/**
