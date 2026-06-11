@@ -32,16 +32,17 @@ final class Meta_Output {
 		}
 
 		$post_id = get_the_ID();
-		$ogp_url = get_post_meta( $post_id, '_node_ogp_image_url', true );
-		if ( ! $ogp_url ) {
+		$ogp_url = $this->resolve_ogp_image_url( $post_id );
+		if ( '' === $ogp_url ) {
 			return;
 		}
 
-		$title         = get_the_title( $post_id );
-		$desc          = wp_strip_all_tags( get_the_excerpt( $post_id ) );
-		$url           = get_permalink( $post_id );
-		$twitter_site  = (string) apply_filters( 'node_seo_twitter_site', '@Luminous_Core_' );
+		$title          = get_the_title( $post_id );
+		$desc           = wp_strip_all_tags( get_the_excerpt( $post_id ) );
+		$url            = get_permalink( $post_id );
+		$twitter_site   = (string) apply_filters( 'node_seo_twitter_site', '@Luminous_Core_' );
 		$twitter_domain = wp_parse_url( home_url(), PHP_URL_HOST );
+		$card_type      = 'summary_large_image';
 
 		echo '<meta property="og:type" content="article" />' . "\n";
 		echo '<meta property="og:title" content="' . esc_attr( $title ) . '" />' . "\n";
@@ -59,7 +60,8 @@ final class Meta_Output {
 		echo '<meta property="og:image:height" content="630" />' . "\n";
 		echo '<meta property="og:image:type" content="image/png" />' . "\n";
 		echo '<meta property="og:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
-		echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+		echo '<meta name="twitter:card" content="' . esc_attr( $card_type ) . '" />' . "\n";
+		echo '<meta property="twitter:card" content="' . esc_attr( $card_type ) . '" />' . "\n";
 		if ( '' !== $twitter_site ) {
 			echo '<meta name="twitter:site" content="' . esc_attr( $twitter_site ) . '" />' . "\n";
 		}
@@ -71,6 +73,59 @@ final class Meta_Output {
 			echo '<meta name="twitter:description" content="' . esc_attr( $desc ) . '" />' . "\n";
 		}
 		echo '<meta name="twitter:image" content="' . esc_url( $ogp_url ) . '" />' . "\n";
+		echo '<meta name="twitter:image:src" content="' . esc_url( $ogp_url ) . '" />' . "\n";
 		echo '<meta name="twitter:image:alt" content="' . esc_attr( $title ) . '" />' . "\n";
+	}
+
+	/**
+	 * Resolve a cache-busted HTTPS OGP image URL for SNS crawlers.
+	 */
+	private function resolve_ogp_image_url( int $post_id ): string {
+		$url = get_post_meta( $post_id, '_node_ogp_image_url', true );
+		if ( ! is_string( $url ) || '' === $url ) {
+			$upload_dir = wp_upload_dir();
+			$filepath   = trailingslashit( $upload_dir['basedir'] ) . 'ogp/ogp-' . $post_id . '.png';
+			if ( ! is_file( $filepath ) ) {
+				return '';
+			}
+			$url = trailingslashit( $upload_dir['baseurl'] ) . 'ogp/ogp-' . $post_id . '.png';
+		}
+
+		$url = set_url_scheme( $url, 'https' );
+
+		$mtime = (int) get_post_meta( $post_id, '_node_ogp_image_mtime', true );
+		if ( $mtime <= 0 ) {
+			$path = $this->url_to_upload_path( $url );
+			if ( '' !== $path && is_file( $path ) ) {
+				$mtime = (int) filemtime( $path );
+			}
+		}
+
+		if ( $mtime > 0 ) {
+			$url = add_query_arg( 'v', (string) $mtime, $url );
+		}
+
+		return $url;
+	}
+
+	private function url_to_upload_path( string $url ): string {
+		$upload_dir = wp_upload_dir();
+		$baseurl    = trailingslashit( $upload_dir['baseurl'] );
+		$basedir    = trailingslashit( $upload_dir['basedir'] );
+
+		if ( ! str_starts_with( $url, $baseurl ) ) {
+			$path = wp_parse_url( $url, PHP_URL_PATH );
+			if ( ! is_string( $path ) || '' === $path ) {
+				return '';
+			}
+			$relative = ltrim( $path, '/' );
+			$uploads  = ltrim( wp_parse_url( $baseurl, PHP_URL_PATH ) ?? '', '/' );
+			if ( '' !== $uploads && str_starts_with( $relative, $uploads ) ) {
+				$relative = ltrim( substr( $relative, strlen( $uploads ) ), '/' );
+			}
+			return $basedir . $relative;
+		}
+
+		return $basedir . ltrim( substr( $url, strlen( $baseurl ) ), '/' );
 	}
 }

@@ -147,16 +147,19 @@ final class Image_Generator {
 		$filename = 'ogp-' . $post_id . '.png';
 		$filepath = trailingslashit( $ogp_dir ) . $filename;
 
-		imagepng( $image, $filepath );
+		imagepng( $image, $filepath, 6 );
 		if ( function_exists( 'imagedestroy' ) ) {
 			imagedestroy( $image );
 		}
+
+		$mtime = is_file( $filepath ) ? (int) filemtime( $filepath ) : time();
 
 		update_post_meta(
 			$post_id,
 			'_node_ogp_image_url',
 			trailingslashit( $upload_dir['baseurl'] ) . 'ogp/' . $filename
 		);
+		update_post_meta( $post_id, '_node_ogp_image_mtime', $mtime );
 		update_post_meta( $post_id, self::META_GENERATOR_VERSION, self::GENERATOR_VERSION );
 	}
 
