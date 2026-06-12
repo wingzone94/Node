@@ -103,6 +103,27 @@ final class Asset_Syncer {
 		);
 	}
 
+	/**
+	 * ブランドフォールバック用 Inter（プラグイン同梱を正本とする）。
+	 */
+	public static function resolve_inter_font(): string {
+		$bundled = NODE_SEO_TOOLS_DIR . 'assets/share/fonts/' . self::FONT_LATIN_FALLBACK_BUNDLED;
+		if ( self::is_valid_font( $bundled ) ) {
+			return $bundled;
+		}
+
+		$cached = self::get_cache_dir() . '/' . self::FONT_LATIN_FALLBACK_BUNDLED;
+		if ( self::is_valid_font( $cached ) ) {
+			return $cached;
+		}
+
+		if ( self::download_file( self::FONT_LATIN_CDN_URL, $cached ) && self::is_valid_font( $cached ) ) {
+			return $cached;
+		}
+
+		return '';
+	}
+
 	private static function resolve_single_font( string $bundled, string $cached, string $cdn_url ): string {
 		if ( self::is_valid_font( $bundled ) ) {
 			return $bundled;
