@@ -80,6 +80,23 @@
             }
         } catch (e) {}
 
+        // タブレット表示モード（localStorage に保存済みの場合のみ viewport を上書き）
+        const VIEW_STORE_KEY = 'm3_store_view-mode';
+        try {
+            const viewRaw = localStorage.getItem(VIEW_STORE_KEY);
+            if (viewRaw) {
+                const viewMode = JSON.parse(viewRaw);
+                const viewport = document.getElementById('m3-viewport');
+                if (viewport && viewMode === 'mobile') {
+                    viewport.setAttribute('content', 'width=390, initial-scale=1, viewport-fit=cover');
+                    document.documentElement.setAttribute('data-view-mode', 'mobile');
+                } else if (viewport && viewMode === 'pc') {
+                    viewport.setAttribute('content', 'width=1280, initial-scale=1, viewport-fit=cover');
+                    document.documentElement.setAttribute('data-view-mode', 'pc');
+                }
+            }
+        } catch (e) {}
+
     })();
     </script>
 <!-- node-build-id: 20260613-180500 -->
@@ -114,10 +131,13 @@
                         <button type="button" class="m3-icon-button m3-search-mobile-close" id="m3-search-mobile-close" aria-label="検索を閉じる">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
-                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off">
+                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off" enterkeyhint="search">
                         <div class="m3-search-actions-inline">
                             <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="キーワードをクリア"<?php echo get_search_query() ? '' : ' hidden'; ?>>
                                 <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                            </button>
+                            <button type="submit" class="m3-icon-button m3-search-submit" id="m3-search-submit" aria-label="検索を実行">
+                                <span class="material-symbols-outlined" aria-hidden="true">search</span>
                             </button>
                             <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索">
                                 <span class="material-symbols-outlined">tune</span>
@@ -218,8 +238,8 @@
 
             <!-- View (Tablet UA のみ) -->
             <?php if ( node_is_tablet_ua() ) : ?>
-            <button class="m3-icon-button m3-tooltip-target m3-view-toggle--tablet" id="m3-view-toggle" aria-label="表示モード" data-tooltip="表示モード切替">
-                <span class="material-symbols-outlined">devices</span>
+            <button class="m3-icon-button m3-tooltip-target m3-view-toggle--tablet" id="m3-view-toggle" aria-label="PC表示モード" data-tooltip="PC表示モード（タップでモバイル表示）" data-view-mode="pc">
+                <span class="material-symbols-outlined" id="m3-view-toggle-icon" aria-hidden="true">computer</span>
             </button>
             <?php endif; ?>
 

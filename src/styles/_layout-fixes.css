@@ -70,11 +70,6 @@ body.admin-bar .m3-header {
     }
 }
 
-@media screen and (max-width: 600px) {
-    body.admin-bar .m3-search-input-wrapper {
-        top: calc(var(--wp-admin-bar-offset) + 8px);
-    }
-}
 /* ===== End WordPress Admin Bar Header Offset ===== */
 
 /* ===== Fixed Header Content Offset ===== */

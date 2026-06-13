@@ -1,10 +1,46 @@
 import { storage } from '../storage';
 
+const VIEW_MODE_ICON = {
+    pc: 'computer',
+    mobile: 'smartphone',
+};
+
+const VIEW_MODE_LABEL = {
+    pc: 'PC表示モード',
+    mobile: 'モバイル表示モード',
+};
+
+const VIEW_MODE_TOOLTIP = {
+    pc: 'PC表示モード（タップでモバイル表示）',
+    mobile: 'モバイル表示モード（タップでPC表示）',
+};
+
+function getViewMode() {
+    const saved = storage.get('view-mode');
+    return saved === 'mobile' ? 'mobile' : 'pc';
+}
+
+function syncViewToggleUI(btn) {
+    const mode = getViewMode();
+    const icon = document.getElementById('m3-view-toggle-icon');
+
+    if (icon) {
+        icon.textContent = VIEW_MODE_ICON[mode];
+    }
+
+    btn.dataset.viewMode = mode;
+    btn.setAttribute('aria-label', VIEW_MODE_LABEL[mode]);
+    btn.dataset.tooltip = VIEW_MODE_TOOLTIP[mode];
+}
+
 export function initViewSwitcher() {
     const btn = document.getElementById('m3-view-toggle');
     if (!btn) return;
+
+    syncViewToggleUI(btn);
+
     btn.addEventListener('click', () => {
-        const current = storage.get('view-mode') || 'pc';
+        const current = getViewMode();
         const next = current === 'pc' ? 'mobile' : 'pc';
         storage.set('view-mode', next);
         location.reload();

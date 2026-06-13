@@ -1,6 +1,6 @@
 /* Search Results Page Styles */
 .site-main.m3-search-layout {
-    padding-top: 0;
+    padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px));
     max-width: none;
     padding-left: 0;
     padding-right: 0;
@@ -17,7 +17,7 @@
 
 @media (max-width: 600px) {
     .m3-search-results-header {
-        padding: 48px 20px 40px;
+        padding: 24px 20px 40px;
         margin-bottom: 32px;
         border-radius: 0 0 40px 40px;
     }
@@ -51,6 +51,8 @@
     .m3-search-results-title {
         font-size: 2rem;
         gap: 12px;
+        flex-wrap: wrap;
+        align-items: flex-start;
     }
     .m3-search-results-title .material-symbols-outlined {
         font-size: 2.4rem;

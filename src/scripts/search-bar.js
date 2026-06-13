@@ -5,7 +5,8 @@ const NODE_DEBUG = false;
 export function initSearchBar() {
     if (NODE_DEBUG) console.log('Search Bar: Initializing Full Version...');
     const searchToggle = document.getElementById('search-toggle');
-    const searchBar = document.querySelector('.m3-search-bar');
+    const searchForm = document.getElementById('m3-main-search-form');
+    const searchBar = searchForm || document.querySelector('.m3-search-bar');
     const searchInput = document.getElementById('m3-search-input');
     const modal = document.getElementById('m3-advanced-search-modal');
     const modalClose = document.getElementById('m3-advanced-search-close');
@@ -15,31 +16,43 @@ export function initSearchBar() {
 
     if (!searchToggle || !searchBar || !searchInput) return;
 
-    // --- Search Bar Toggle ---
-    searchToggle.addEventListener('click', (e) => {
-        if (!searchBar.classList.contains('is-active')) {
-            searchBar.classList.add('is-active');
-            header?.classList.add('search-is-active');
-            setTimeout(() => {
-                searchInput.focus();
-                if (typeof window.nodeUpdateSearchClear === 'function') {
-                    window.nodeUpdateSearchClear();
-                }
-            }, 300);
-        } else if (!searchInput.value.trim()) {
-            searchBar.classList.remove('is-active');
-            header?.classList.remove('search-is-active');
-        } else {
-            searchBar.submit();
+    const openSearch = () => {
+        searchBar.classList.add('is-active');
+        header?.classList.add('search-is-active');
+        // iOS Safari: focus はタップと同じイベントターンで呼ぶ必要がある（遅延するとキーボードが出ない）
+        searchInput.focus({ preventScroll: true });
+        if (typeof window.nodeUpdateSearchClear === 'function') {
+            window.nodeUpdateSearchClear();
         }
-    });
+    };
 
-    // クリアボタンは header.php インラインスクリプトが正本（二重バインド防止）
+    const submitSearch = () => {
+        if (!searchInput.value.trim()) return;
+        if (typeof searchForm?.requestSubmit === 'function') {
+            searchForm.requestSubmit();
+            return;
+        }
+        searchForm?.submit();
+    };
 
     const closeSearch = () => {
         searchBar.classList.remove('is-active');
         header?.classList.remove('search-is-active');
+        searchInput.blur();
     };
+
+    // --- Search Bar Toggle ---
+    searchToggle.addEventListener('click', () => {
+        if (!searchBar.classList.contains('is-active')) {
+            openSearch();
+        } else if (!searchInput.value.trim()) {
+            closeSearch();
+        } else {
+            submitSearch();
+        }
+    });
+
+    // クリアボタンは header.php インラインスクリプトが正本（二重バインド防止）
 
     // --- Close (← / Escape) ---
     document.getElementById('m3-search-mobile-close')?.addEventListener('click', closeSearch);
@@ -48,6 +61,18 @@ export function initSearchBar() {
         if (e.key === 'Escape') {
             e.preventDefault();
             closeSearch();
+            return;
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitSearch();
+        }
+    });
+
+    searchForm?.addEventListener('submit', (e) => {
+        if (!searchInput.value.trim()) {
+            e.preventDefault();
+            searchInput.focus({ preventScroll: true });
         }
     });
 
