@@ -3,8 +3,8 @@
     "file": "js/color-tools.DO17jA51.js",
     "name": "color-tools"
   },
-  "_vendor.SFc2wnMY.js": {
-    "file": "js/vendor.SFc2wnMY.js",
+  "_vendor.DN3_VpbH.js": {
+    "file": "js/vendor.DN3_VpbH.js",
     "name": "vendor"
   },
   "src/editor.js": {
@@ -14,12 +14,12 @@
     "isEntry": true
   },
   "src/main.js": {
-    "file": "js/main.yuMdeDwA.js",
+    "file": "js/main.C6bCZOo9.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
     "imports": [
-      "_vendor.SFc2wnMY.js"
+      "_vendor.DN3_VpbH.js"
     ],
     "dynamicImports": [
       "src/scripts/color-extraction.js",
@@ -27,7 +27,8 @@
       "src/scripts/header-clock.js",
       "src/scripts/table-sorter.js",
       "src/scripts/pagination.js",
-      "src/scripts/reading-badge-animation.js"
+      "src/scripts/reading-badge-animation.js",
+      "src/scripts/color-mode.js"
     ]
   },
   "src/scripts/color-extraction.js": {
@@ -37,6 +38,15 @@
     "isDynamicEntry": true,
     "imports": [
       "_color-tools.DO17jA51.js"
+    ]
+  },
+  "src/scripts/color-mode.js": {
+    "file": "js/color-mode.Cq0dpWO5.js",
+    "name": "color-mode",
+    "src": "src/scripts/color-mode.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor.DN3_VpbH.js"
     ]
   },
   "src/scripts/comment-form.js": {

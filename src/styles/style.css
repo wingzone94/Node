@@ -1,14 +1,22 @@
 /* Luminous Core - CSS Module Entry Point */
+
+/* Core tokens and base behavior */
 @import './_variables.css';
 @import './_motion.css';
 @import './_reset.css';
 @import './_material-symbols.css';
+
+/* Global shell and navigation */
 @import './_header.css';
-@import './_search-results.css';
-@import './_archive.css';
-@import './_theme-controls.css';
-@import './_spotlight.css';
 @import './_navigation.css';
+@import './_theme-controls.css';
+@import './_color-mode.css';
+@import './_footer-misc.css';
+
+/* Page and content surfaces */
+@import './_spotlight.css';
+@import './_archive.css';
+@import './_search-results.css';
 @import './_cards.css';
 @import './_product-card.css';
 @import './_article.css';
@@ -17,18 +25,21 @@
 @import './_comments.css';
 @import './_toc-sidebar.css';
 @import './_fab.css';
+@import './_bottom-bar.css';
+@import './_hero-toc.css';
+@import './_buttons.css';
+
+/* Specialized modules */
 @import './_blogcard-ai.css';
 @import './_fact-check.css';
-@import './_footer-misc.css';
-@import './_skeleton.css';
-@import './_loading.css';
 @import './_adblock-modal.css';
 @import './_ai-summary.css';
 @import './_writer-card.css';
 @import './_game-card.css';
-@import './_bottom-bar.css';
-@import './_hero-toc.css';
-@import './_buttons.css';
+
+/* Utilities and compatibility patches */
+@import './_skeleton.css';
+@import './_loading.css';
 @import './_layout-fixes.css';
 @import './_article-polish.css';
 @import './_toc-fab.css';

@@ -132,6 +132,48 @@ function node_get_theme_version(): string {
 }
 
 /**
+ * iPad / Android タブレット等の UA 判定（表示モード切替ボタン出力用）
+ */
+function node_is_tablet_ua(): bool {
+	$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+	if ( '' === $ua ) {
+		return false;
+	}
+
+	// iPad（クラシック UA）
+	if ( false !== stripos( $ua, 'iPad' ) ) {
+		return true;
+	}
+
+	// Android タブレット（Mobile なし）
+	if ( false !== stripos( $ua, 'Android' ) && false === stripos( $ua, 'Mobile' ) ) {
+		return true;
+	}
+
+	// 汎用 Tablet / Kindle 等
+	if ( preg_match( '/Tablet|PlayBook|Silk/i', $ua ) ) {
+		return true;
+	}
+
+	// iPadOS（Mobile 付き Macintosh Safari）
+	if ( preg_match( '/Macintosh|Mac OS X/i', $ua )
+		&& preg_match( '/AppleWebKit/i', $ua )
+		&& false === stripos( $ua, 'iPhone' )
+		&& false === stripos( $ua, 'iPod' )
+		&& false !== stripos( $ua, 'Mobile' ) ) {
+		return true;
+	}
+
+	// Client Hints（対応ブラウザ）
+	$ch_platform = isset( $_SERVER['HTTP_SEC_CH_UA_PLATFORM'] ) ? (string) $_SERVER['HTTP_SEC_CH_UA_PLATFORM'] : '';
+	if ( '' !== $ch_platform && false !== stripos( $ch_platform, 'iPad' ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * node.zip 展開後のコピー元ディレクトリを解決する
  *
  * @param string $temp_extract_dir 一時展開先。

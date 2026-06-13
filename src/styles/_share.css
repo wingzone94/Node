@@ -90,7 +90,6 @@
     }
     
     /* アイコンを強制的に中央へ */
-    .m3-share-buttons .m3-share-btn i.fa-brands, 
     .m3-share-buttons .m3-share-btn .material-symbols-outlined,
     .m3-share-buttons .m3-share-btn .m3-share-btn__icon { 
         margin: 0 !important;
@@ -106,7 +105,7 @@
         text-indent: 0 !important;
     }
     /* 個別アイコンの微調整 (Facebook Fなどは重心がずれているため) */
-    .m3-share-buttons .m3-share-btn--facebook i {
+    .m3-share-buttons .m3-share-btn--facebook .m3-share-btn__icon {
         margin-left: 2px !important;
     }
 
@@ -161,7 +160,6 @@
     border-color: transparent !important;
 }
  
-.m3-share-buttons .m3-share-btn i, 
 .m3-share-buttons .m3-share-btn .material-symbols-outlined,
 .m3-share-buttons .m3-share-btn .m3-share-btn__icon,
 .m3-share-buttons .m3-share-btn svg { 
@@ -176,7 +174,6 @@
 }
 
 @media (max-width: 599px) {
-    .m3-share-buttons .m3-share-btn i, 
     .m3-share-buttons .m3-share-btn .material-symbols-outlined,
     .m3-share-buttons .m3-share-btn .m3-share-btn__icon,
     .m3-share-buttons .m3-share-btn svg { 
@@ -201,7 +198,6 @@
     font-size: 11px !important;       
 }
 .m3-share-btn--hatebu .m3-share-btn__icon,
-.m3-share-btn--hatebu i,
 .m3-share-btn--hatebu span.material-symbols-outlined {
     margin-right: 4px !important;
 }

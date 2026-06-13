@@ -78,11 +78,24 @@ const scheduleOptionalInitializers = () => {
     window.setTimeout(runOptionalInitializers, 250);
 };
 
+function initColorModeLoader() {
+    if (!document.querySelector('#theme-toggle, #m3-theme-toggle-handy, #m3-color-scheme-toggle, .m3-color-scheme-toggle, [data-color-toggle]')) return;
+
+    import('./scripts/color-mode')
+        .then(module => {
+            module.initColorMode();
+        })
+        .catch(e => {
+            console.error('Initializer failed: initColorMode', e);
+        });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const initializers = [
         initSearchBar,
         initDrawer,
         initViewSwitcher,
+        initColorModeLoader,
         initKeyboardSnackbar,
         initHandyMode,
         initExpressiveFloatingTOC,

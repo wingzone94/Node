@@ -7,7 +7,6 @@ export function initSearchBar() {
     const searchToggle = document.getElementById('search-toggle');
     const searchBar = document.querySelector('.m3-search-bar');
     const searchInput = document.getElementById('m3-search-input');
-    const searchClear = document.getElementById('m3-search-clear');
     const modal = document.getElementById('m3-advanced-search-modal');
     const modalClose = document.getElementById('m3-advanced-search-close');
     const modalReset = document.getElementById('m3-advanced-search-reset');
@@ -21,7 +20,12 @@ export function initSearchBar() {
         if (!searchBar.classList.contains('is-active')) {
             searchBar.classList.add('is-active');
             header?.classList.add('search-is-active');
-            setTimeout(() => searchInput.focus(), 300);
+            setTimeout(() => {
+                searchInput.focus();
+                if (typeof window.nodeUpdateSearchClear === 'function') {
+                    window.nodeUpdateSearchClear();
+                }
+            }, 300);
         } else if (!searchInput.value.trim()) {
             searchBar.classList.remove('is-active');
             header?.classList.remove('search-is-active');
@@ -30,31 +34,21 @@ export function initSearchBar() {
         }
     });
 
-    // --- Clear Button ---
-    const updateClearBtn = () => {
-        if (searchClear) searchClear.style.display = searchInput.value ? 'flex' : 'none';
-    };
+    // クリアボタンは header.php インラインスクリプトが正本（二重バインド防止）
 
-    // Initialize state
-    updateClearBtn();
-
-    searchInput.addEventListener('input', updateClearBtn);
-    searchInput.addEventListener('change', updateClearBtn);
-    searchInput.addEventListener('search', updateClearBtn); // For 'x' in type="search" browsers
-
-    searchClear?.addEventListener('click', () => {
-        if (searchInput.value) {
-            animateSearchClear(searchInput, searchClear, () => {
-                updateClearBtn();
-            });
-            searchInput.focus();
-        }
-    });
-
-    // --- Mobile Close ---
-    document.getElementById('m3-search-mobile-close')?.addEventListener('click', () => {
+    const closeSearch = () => {
         searchBar.classList.remove('is-active');
         header?.classList.remove('search-is-active');
+    };
+
+    // --- Close (← / Escape) ---
+    document.getElementById('m3-search-mobile-close')?.addEventListener('click', closeSearch);
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeSearch();
+        }
     });
 
     if (!modal) return;
@@ -364,38 +358,5 @@ export function initSearchBar() {
         initRangeSlider();
         updateHitCount();
         updateTabStatus();
-    });
-}
-
-function animateSearchClear(input, button, callback) {
-    if (typeof gsap === 'undefined') return;
-
-    // 1. Button Animation (Subtle rotation)
-    gsap.to(button, {
-        rotation: 90,
-        duration: 0.15,
-        ease: "power2.inOut",
-        onComplete: () => {
-            gsap.set(button, { rotation: 0 });
-        }
-    });
-
-    // 2. Simple Text Fade Animation
-    gsap.to(input, {
-        opacity: 0,
-        x: -5,
-        duration: 0.1,
-        ease: "power2.in",
-        onComplete: () => {
-            input.value = '';
-            if (callback) callback();
-            gsap.to(input, {
-                opacity: 1,
-                x: 0,
-                duration: 0.15,
-                delay: 0.05,
-                ease: "power2.out"
-            });
-        }
     });
 }

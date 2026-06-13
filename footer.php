@@ -37,7 +37,7 @@
 
         <div class="m3-footer__bottom">
             <div class="m3-footer__bottom-inner">
-                <p class="m3-footer__copyright">&copy; <?php echo date('Y'); ?> Luminous Core Teams. <span class="m3-footer__version">v<?php echo esc_html( node_get_theme_version() ); ?></span></p>
+                <p class="m3-footer__copyright">&copy; <?php echo date('Y'); ?> Luminous Core Team. <span class="m3-footer__version">v<?php echo esc_html( node_get_theme_version() ); ?></span></p>
             </div>
         </div>
     </footer>

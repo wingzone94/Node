@@ -7,27 +7,53 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#FF9900">
-    <link rel="apple-touch-icon" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg">
+    <link rel="apple-touch-icon" href="<?php echo esc_url( get_template_directory_uri() . '/assets/pwa/apple-touch-icon-180.png' ); ?>">
     <link rel="manifest" href="<?php echo get_template_directory_uri(); ?>/manifest.json">
+    <?php
+    // iOS ホーム画面追加時のスプラッシュ（オレンジ背景＋ブランドロゴ）
+    $node_pwa_uri      = get_template_directory_uri() . '/assets/pwa';
+    $node_ios_splashes = array(
+        array( 375, 667, 2, 'splash-750x1334.png' ),
+        array( 414, 896, 2, 'splash-828x1792.png' ),
+        array( 375, 812, 3, 'splash-1125x2436.png' ),
+        array( 390, 844, 3, 'splash-1170x2532.png' ),
+        array( 393, 852, 3, 'splash-1179x2556.png' ),
+        array( 402, 874, 3, 'splash-1206x2622.png' ),
+        array( 414, 896, 3, 'splash-1242x2688.png' ),
+        array( 428, 926, 3, 'splash-1284x2778.png' ),
+        array( 430, 932, 3, 'splash-1290x2796.png' ),
+        array( 440, 956, 3, 'splash-1320x2868.png' ),
+    );
+    foreach ( $node_ios_splashes as $node_splash ) {
+        printf(
+            '<link rel="apple-touch-startup-image" media="screen and (device-width: %1$dpx) and (device-height: %2$dpx) and (-webkit-device-pixel-ratio: %3$d) and (orientation: portrait)" href="%4$s">' . "\n    ",
+            (int) $node_splash[0],
+            (int) $node_splash[1],
+            (int) $node_splash[2],
+            esc_url( $node_pwa_uri . '/' . $node_splash[3] )
+        );
+    }
+    ?>
     <link rel="mask-icon" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg" color="#FF9900">
     <link rel="icon" type="image/svg+xml" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg">
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//kit.fontawesome.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     
     <!-- High Performance Font Loading Pattern -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+    <!-- 本文フォント: 非同期ロード + swap (テキストのFOUTは許容) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+    <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+    <!-- Adobe Fonts kit: edit at fonts.adobe.com to load DIN 2014 only -->
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
     
-    <script src="https://kit.fontawesome.com/d2db209f03.js" crossorigin="anonymous"></script>
- 
     <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
         <style>
             body { opacity: 1 !important; visibility: visible !important; }
         </style>
@@ -45,7 +71,8 @@
             } catch (e) {}
         };
 
-        // --- 1. Initial Load ---
+        // --- 1. Initial Load (FOUC対策: 保存済みテーマを早期適用) ---
+        // クリックによる切り替えとアイコン更新は color-mode.js に一本化している。
         try {
             const saved = localStorage.getItem(THEME_KEY);
             if (saved === 'dark' || saved === 'light') {
@@ -53,23 +80,9 @@
             }
         } catch (e) {}
 
-        // --- 2. Toggle Handler (Robust Delegation) ---
-        window.addEventListener('load', () => {
-            if (NODE_DEBUG) console.log('[Theme] Initializing toggle...');
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('#theme-toggle, #m3-theme-toggle-handy');
-                if (btn) {
-                    if (NODE_DEBUG) console.log('[Theme] Toggle clicked');
-                    const current = document.body.getAttribute('data-theme') || document.documentElement.getAttribute('data-theme') || 'light';
-                    const next = current === 'dark' ? 'light' : 'dark';
-                    applyTheme(next);
-                }
-            });
-        });
-
     })();
     </script>
-<!-- node-build-id: 20260518-182307 -->
+<!-- node-build-id: 20260613-180500 -->
     <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
@@ -101,10 +114,10 @@
                         <button type="button" class="m3-icon-button m3-search-mobile-close" id="m3-search-mobile-close" aria-label="検索を閉じる">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
-                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo get_search_query(); ?>" name="s" autocomplete="off">
+                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off">
                         <div class="m3-search-actions-inline">
-                            <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="クリア" style="display:none;">
-                                <span class="material-symbols-outlined">close</span>
+                            <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="キーワードをクリア"<?php echo get_search_query() ? '' : ' hidden'; ?>>
+                                <span class="material-symbols-outlined" aria-hidden="true">close</span>
                             </button>
                             <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索">
                                 <span class="material-symbols-outlined">tune</span>
@@ -115,6 +128,66 @@
                         <span class="material-symbols-outlined">search</span>
                     </button>
                 </form>
+                <script>
+                (function () {
+                    var form = document.getElementById('m3-main-search-form');
+                    var input = document.getElementById('m3-search-input');
+                    var clearBtn = document.getElementById('m3-search-clear');
+                    if (!form || !input || !clearBtn) return;
+
+                    var DISSIPATE_MS = 180;
+                    var REAPPEAR_MS = 120;
+
+                    function updateClearBtn() {
+                        var hasValue = Boolean(input.value && input.value.trim());
+                        clearBtn.hidden = !hasValue;
+                        clearBtn.setAttribute('aria-hidden', hasValue ? 'false' : 'true');
+                    }
+
+                    function resetInputVisual() {
+                        input.classList.remove('is-dissipating', 'is-reappearing');
+                    }
+
+                    function animateClear(done) {
+                        if (!input.value || !input.value.trim()) {
+                            if (done) done();
+                            return;
+                        }
+
+                        clearBtn.classList.add('is-popping');
+                        input.classList.add('is-dissipating');
+
+                        window.setTimeout(function () {
+                            input.value = '';
+                            resetInputVisual();
+                            clearBtn.classList.remove('is-popping');
+                            updateClearBtn();
+                            input.classList.add('is-reappearing');
+                            window.setTimeout(function () {
+                                input.classList.remove('is-reappearing');
+                            }, REAPPEAR_MS);
+                            if (done) done();
+                        }, DISSIPATE_MS);
+                    }
+
+                    clearBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        animateClear(function () {
+                            input.focus();
+                        });
+                    });
+
+                    input.addEventListener('input', updateClearBtn);
+                    input.addEventListener('change', updateClearBtn);
+                    input.addEventListener('search', updateClearBtn);
+
+                    form.setAttribute('data-search-clear-ready', '1');
+                    window.nodeUpdateSearchClear = updateClearBtn;
+                    window.nodeAnimateSearchClear = animateClear;
+                    updateClearBtn();
+                })();
+                </script>
             </div>
 
             <!-- RSS -->
@@ -124,12 +197,16 @@
 
             <!-- X (Twitter) -->
             <a href="https://x.com/Luminous_Core_" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-x-button" aria-label="Official X" data-tooltip="公式X">
-                <i class="fa-brands fa-x-twitter"></i>
+                <svg class="m3-social-button__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false" fill="currentColor">
+                    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932Zm-1.291 19.491h2.039L6.486 3.24H4.298Z"/>
+                </svg>
             </a>
 
             <!-- Discord -->
             <a href="https://discord.gg/QPr4RPxfAA" target="_blank" rel="noopener noreferrer" class="m3-icon-button m3-tooltip-target m3-social-button m3-discord-button" aria-label="Official Discord" data-tooltip="公式Discord">
-                <i class="fa-brands fa-discord"></i>
+                <svg class="m3-social-button__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false" fill="currentColor">
+                    <path d="M20.317 4.37a19.8 19.8 0 0 0-4.885-1.515.07.07 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.3 18.3 0 0 0-5.487 0 12.6 12.6 0 0 0-.617-1.25.08.08 0 0 0-.079-.037A19.7 19.7 0 0 0 3.677 4.37a.06.06 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.08.08 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.08.08 0 0 0 .084-.028 14.1 14.1 0 0 0 1.226-1.994.08.08 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.08.08 0 0 1-.008-.128c.126-.094.251-.194.372-.292a.07.07 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.07.07 0 0 1 .078.01c.12.098.246.198.373.292a.08.08 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.08.08 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.08.08 0 0 0 .084.028 19.8 19.8 0 0 0 6.002-3.03.08.08 0 0 0 .032-.054c.5-5.177-.838-9.674-3.548-13.66a.06.06 0 0 0-.031-.03ZM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419s.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418Zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419s.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z"/>
+                </svg>
             </a>
             
             <!-- Theme -->
@@ -139,13 +216,9 @@
                 </button>
             </div>
 
-            <!-- View (Tablet Only) -->
-            <?php 
-            $ua = $_SERVER['HTTP_USER_AGENT'];
-            $is_tablet = (strpos($ua, 'iPad') !== false) || (strpos($ua, 'Android') !== false && strpos($ua, 'Mobile') === false) || (strpos($ua, 'Tablet') !== false);
-            if ($is_tablet) : 
-            ?>
-            <button class="m3-icon-button m3-tooltip-target" id="m3-view-toggle" aria-label="表示モード" data-tooltip="表示モード切替">
+            <!-- View (Tablet UA のみ) -->
+            <?php if ( node_is_tablet_ua() ) : ?>
+            <button class="m3-icon-button m3-tooltip-target m3-view-toggle--tablet" id="m3-view-toggle" aria-label="表示モード" data-tooltip="表示モード切替">
                 <span class="material-symbols-outlined">devices</span>
             </button>
             <?php endif; ?>
