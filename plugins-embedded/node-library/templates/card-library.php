@@ -119,7 +119,7 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
     $badge_url = $badge_file
         ? plugins_url( 'assets/images/' . $badge_file, dirname( __DIR__ ) . '/node-library.php' )
         : '';
-    $badge_always_visible = in_array( $platform_slug, [ 'mac', 'windows', 'xbox' ], true );
+    $badge_always_visible = in_array( $platform_slug, [ 'mac', 'windows' ], true );
     if ( $supports_qr ) :
     ?>
         <div class="m3-platform-action m3-platform-action--qr">
