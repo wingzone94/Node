@@ -273,6 +273,17 @@
     display: none;
 }
 
+.m3-game-card__tab-all-view-label {
+    display: none;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: 0;
+}
+
+.m3-game-card__stores.is-all-view .m3-game-card__tab[data-node-library-tab="all"] .m3-game-card__tab-all-view-label {
+    display: inline;
+}
+
 .m3-game-card__store-panel[hidden] {
     display: none;
 }

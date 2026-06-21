@@ -206,6 +206,9 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
                                 <span class="material-symbols-outlined" aria-hidden="true"><?php echo esc_html( $group['icon'] ); ?></span>
                                 <span class="m3-game-card__tab-label m3-game-card__tab-label--full"><?php echo esc_html( $group['label'] ); ?></span>
                                 <span class="m3-game-card__tab-label m3-game-card__tab-label--compact"><?php echo esc_html( $group['short_label'] ); ?></span>
+                                <?php if ( 'all' === $group_key ) : ?>
+                                    <span class="m3-game-card__tab-all-view-label" aria-hidden="true">すべてのプラットフォームを表示中</span>
+                                <?php endif; ?>
                             </button>
                             <?php $tab_index++; ?>
                         <?php endforeach; ?>
