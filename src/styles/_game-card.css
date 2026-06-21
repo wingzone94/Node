@@ -502,6 +502,16 @@
     color: #ffffff;
 }
 
+.m3-platform-button--amazon {
+    background-color: #FF9900;
+    color: #111111;
+}
+
+.m3-platform-button--geforcenow {
+    background-color: #76B900;
+    color: #111111;
+}
+
 @media (max-width: 600px) {
     .m3-game-card {
         border-radius: 20px;

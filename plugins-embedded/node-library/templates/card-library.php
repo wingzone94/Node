@@ -94,6 +94,8 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
     if ( stripos( $platform, 'mac' ) !== false ) $platform_slug = 'mac';
     if ( stripos( $platform, 'microsoft' ) !== false && stripos( $platform, 'xbox' ) === false ) $platform_slug = 'windows';
     if ( stripos( $platform, 'windows' ) !== false || stripos( $platform, 'pc' ) !== false ) $platform_slug = 'windows';
+    if ( stripos( $platform, 'amazon' ) !== false ) $platform_slug = 'amazon';
+    if ( stripos( $platform, 'geforce' ) !== false ) $platform_slug = 'geforcenow';
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );
     $qr_panel_id = $supports_qr ? wp_unique_id( 'node-library-qr-' ) : '';
     $qr_title_id = $supports_qr ? $qr_panel_id . '-title' : '';
@@ -101,6 +103,8 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
         'nintendo'    => 'Nintendo Storeで見る',
         'playstation' => 'PS Storeで見る',
         'mac'         => 'Mac App Storeで見る',
+        'amazon'      => 'Amazon Appstoreで見る',
+        'geforcenow'  => 'GeForce NOWで見る',
         default       => $platform . ' ' . $button_text,
     };
     $badge_file = match ( $platform_slug ) {

@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.3
+ * Version:      1.3.4
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.3' );
+define( 'NODE_LIBRARY_VERSION', '1.3.4' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 
 $node_library_embedded_dir = get_template_directory() . '/plugins-embedded/node-library/';
@@ -60,8 +60,8 @@ function node_library_auto_category( string $platform ): string {
 		return 'console';
 	}
 
-	// Mac App Store はデスクトップ向けなので「App Store」判定より先に PC とする。
-	if ( false !== stripos( $platform, 'mac' ) ) {
+	// Mac App Store / GeForce NOW はデスクトップ・クラウド向けなので「App Store」判定より先に PC とする。
+	if ( false !== stripos( $platform, 'mac' ) || false !== stripos( $platform, 'geforce' ) ) {
 		return 'pc';
 	}
 
@@ -71,7 +71,8 @@ function node_library_auto_category( string $platform ): string {
 		false !== stripos( $platform, 'ipad' ) ||
 		false !== stripos( $platform, 'app store' ) ||
 		false !== stripos( $platform, 'android' ) ||
-		false !== stripos( $platform, 'google play' )
+		false !== stripos( $platform, 'google play' ) ||
+		false !== stripos( $platform, 'amazon' )
 	) {
 		return 'mobile';
 	}
@@ -219,7 +220,7 @@ final class Node_Library {
 		}
 
 		$prompt = sprintf(
-			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo eShop、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Xbox向けリンクのプラットフォーム名は「Microsoft Store（Xbox）」としてください。各リンクには表示タブを示す category を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store(Windows)・Mac App Store など）、"mobile"（App Store・Google Play などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto"}]} 形式のJSONだけにしてください。',
+			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo eShop、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Xbox向けリンクのプラットフォーム名は「Microsoft Store（Xbox）」としてください。各リンクには表示タブを示す category を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store(Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto"}]} 形式のJSONだけにしてください。',
 			'app' === $type ? 'アプリ' : 'ゲーム',
 			$title
 		);
@@ -300,13 +301,17 @@ final class Node_Library {
 
 		$links = [];
 		$allowed_store_domains = [
+			'amazon.co.jp',
+			'amazon.com',
 			'apps.apple.com',
 			'apps.microsoft.com',
 			'epicgames.com',
+			'geforcenow.com',
 			'gog.com',
 			'itch.io',
 			'microsoft.com',
 			'nintendo.com',
+			'nvidia.com',
 			'play.google.com',
 			'playstation.com',
 			'steamcommunity.com',
