@@ -18,7 +18,7 @@
 
 .m3-game-card__header .material-symbols-outlined {
     font-size: 28px;
-    color: var(--md-sys-color-primary);
+    color: var(--node-article-accent, #FF9900);
 }
 
 .m3-game-card__header h3 {
@@ -256,12 +256,12 @@
 }
 
 .m3-game-card__tab[aria-selected="true"] {
-    border-bottom-color: var(--md-sys-color-primary);
-    color: var(--md-sys-color-primary);
+    border-bottom-color: var(--node-article-accent, #FF9900);
+    color: var(--node-article-accent, #FF9900);
 }
 
 .m3-game-card__tab:focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--md-sys-color-primary) 42%, transparent);
+    outline: 3px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 42%, transparent);
     outline-offset: -3px;
 }
 
@@ -325,7 +325,7 @@
 }
 
 .m3-platform-qr-toggle:focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--md-sys-color-primary) 48%, transparent);
+    outline: 3px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 48%, transparent);
     outline-offset: 2px;
 }
 
@@ -407,7 +407,7 @@
     min-width: 0;
     overflow: hidden;
     flex: 1;
-    color: var(--md-sys-color-primary);
+    color: var(--node-article-accent, #FF9900);
     font-size: 0.74rem;
     text-overflow: ellipsis;
     text-decoration: underline;
