@@ -106,16 +106,31 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
         'playstation' => 'PS Storeで見る',
         default       => $platform . ' ' . $button_text,
     };
+    $badge_file = match ( $platform_slug ) {
+        'ios'     => 'app-store-badge-ja.svg',
+        'android' => 'google-play-badge-ja.png',
+        default   => '',
+    };
+    $badge_url = $badge_file
+        ? plugins_url( 'assets/images/' . $badge_file, dirname( __DIR__ ) . '/node-library.php' )
+        : '';
     if ( $supports_qr ) :
     ?>
         <div class="m3-platform-action m3-platform-action--qr">
             <div class="m3-platform-action__row">
                 <a href="<?php echo esc_url( $link['url'] ); ?>"
-                   class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-ripple-host"
+                   class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-platform-button--desktop m3-ripple-host"
                    target="_blank"
                    rel="noopener">
                     <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
                     <?php echo esc_html( $button_label ); ?>
+                </a>
+                <a href="<?php echo esc_url( $link['url'] ); ?>"
+                   class="m3-platform-store-badge-link m3-platform-store-badge-link--<?php echo esc_attr( $platform_slug ); ?>"
+                   target="_blank"
+                   rel="noopener"
+                   aria-label="<?php echo esc_attr( $button_label ); ?>">
+                    <img class="m3-platform-store-badge" src="<?php echo esc_url( $badge_url ); ?>" alt="<?php echo esc_attr( $button_label ); ?>">
                 </a>
                 <button class="m3-platform-qr-toggle" type="button" aria-label="<?php echo esc_attr( $platform . 'のQRコードを表示' ); ?>" aria-controls="<?php echo esc_attr( $qr_panel_id ); ?>" aria-expanded="false" title="QRコードを表示" data-node-library-qr-toggle>
                     <span class="material-symbols-outlined" aria-hidden="true">qr_code_2</span>
@@ -186,6 +201,10 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
                             <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
                         </button>
                     <?php endif; ?>
+                    <button class="m3-game-card__tab-back" type="button" data-node-library-tab-back hidden>
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                        デバイスタイプ別に戻る
+                    </button>
                     </div>
                 <?php endif; ?>
 

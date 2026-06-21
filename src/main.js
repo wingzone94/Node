@@ -191,6 +191,7 @@ function initNodeLibraryTabs() {
         const tabs = Array.from(section.querySelectorAll('[role="tab"][data-node-library-tab]'));
         const panels = Array.from(section.querySelectorAll('[role="tabpanel"][data-node-library-panel]'));
         const nextButton = section.querySelector('[data-node-library-tab-next]');
+        const backButton = section.querySelector('[data-node-library-tab-back]');
         if (tabs.length < 2 || panels.length < 2) return;
         let previousTarget = tabs.find(tab => tab.getAttribute('aria-selected') === 'true')?.dataset.nodeLibraryTab || tabs[0].dataset.nodeLibraryTab;
 
@@ -210,11 +211,9 @@ function initNodeLibraryTabs() {
             });
 
             if (nextButton) {
-                const icon = nextButton.querySelector('.material-symbols-outlined');
-                nextButton.setAttribute('aria-label', isAllView ? '分類タブに戻る' : '全てを表示タブへ移動');
-                nextButton.title = isAllView ? '分類タブに戻る' : '全てを表示タブへ移動';
-                if (icon) icon.textContent = isAllView ? 'chevron_left' : 'chevron_right';
+                nextButton.hidden = isAllView;
             }
+            if (backButton) backButton.hidden = !isAllView;
         };
 
         tabs.forEach((tab, index) => {
@@ -232,15 +231,12 @@ function initNodeLibraryTabs() {
         });
 
         nextButton?.addEventListener('click', () => {
-            if (section.classList.contains('is-all-view')) {
-                activate(previousTarget, true);
-                return;
-            }
-
             const nextIndex = Math.min(3, tabs.length - 1);
             tabs[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
             tabs[nextIndex].focus({ preventScroll: true });
         });
+
+        backButton?.addEventListener('click', () => activate(previousTarget, true));
 
         activate(previousTarget);
     });

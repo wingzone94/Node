@@ -1149,6 +1149,14 @@
     transition: color 0.18s ease, opacity 0.18s ease;
 }
 
+.node-footnotes__info-label {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
 .node-footnotes__info-toggle:hover,
 .node-footnotes__info-toggle[aria-expanded="true"] {
     background: transparent;
@@ -1420,6 +1428,20 @@
         font-size: 0.64rem;
         font-weight: 500;
         line-height: 1.4;
+    }
+
+    .node-footnotes__header {
+        gap: 8px;
+    }
+
+    .node-footnotes__info-label {
+        font-size: 0.64rem;
+    }
+
+    .node-footnotes__info-toggle {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
     }
 
     .node-footnotes__icon {

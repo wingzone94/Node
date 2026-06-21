@@ -137,6 +137,10 @@
     cursor: pointer;
 }
 
+.m3-game-card__tab-next[hidden] {
+    display: none;
+}
+
 .m3-game-card__tab-next:hover,
 .m3-game-card__tab-next:focus-visible {
     background: var(--md-sys-color-primary-container);
@@ -145,6 +149,42 @@
 
 .m3-game-card__tab-next .material-symbols-outlined {
     font-size: 21px;
+}
+
+.m3-game-card__tab-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    margin-bottom: 4px;
+    padding: 6px 12px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 999px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.m3-game-card__tab-back[hidden] {
+    display: none;
+}
+
+.m3-game-card__tab-back:hover,
+.m3-game-card__tab-back:focus-visible {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.m3-game-card__tab-back .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.m3-platform-store-badge-link {
+    display: none;
 }
 
 .m3-game-card__tab {
@@ -429,6 +469,38 @@
         min-width: 0;
     }
 
+    .m3-platform-action--qr .m3-platform-button--desktop,
+    .m3-platform-action--qr .m3-platform-qr-toggle {
+        display: none;
+    }
+
+    .m3-platform-store-badge-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+        line-height: 0;
+    }
+
+    .m3-platform-store-badge {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+    }
+
+    .m3-platform-store-badge-link--ios .m3-platform-store-badge {
+        width: 162px;
+    }
+
+    .m3-platform-store-badge-link--android .m3-platform-store-badge {
+        width: 182px;
+    }
+
+    .m3-platform-action--qr .m3-platform-action__row {
+        justify-content: center;
+    }
+
     .m3-game-card__tabs-shell {
         padding-inline: 6px;
     }
@@ -454,5 +526,12 @@
 
     .m3-game-card__stores.is-all-view .m3-game-card__tab[data-node-library-tab="all"] .m3-game-card__tab-label--compact {
         display: none;
+    }
+
+    .m3-game-card__tab-back {
+        min-height: 44px;
+        padding-inline: 10px;
+        font-size: 0.7rem;
+        white-space: nowrap;
     }
 }

@@ -808,6 +808,7 @@ function node_render_footnote_section( $groups, $current_page, $total_pages ) {
 
     $html  = sprintf( '<section class="%1$s"%2$s aria-label="脚注">', esc_attr( $classes ), $attributes );
     $html .= '<div class="node-footnotes__header">';
+    $html .= '<span class="node-footnotes__info-label">脚注について</span>';
     $html .= sprintf(
         '<button class="node-footnotes__info-toggle" type="button" aria-label="脚注の説明を表示" aria-expanded="false" aria-controls="%1$s" data-footnote-info-toggle><span class="material-symbols-outlined" aria-hidden="true">info</span></button>',
         esc_attr( $info_id )
