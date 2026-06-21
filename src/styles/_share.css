@@ -111,7 +111,7 @@
 
     /* コピーボタンの背景をブランドトーンに合わせる */
     .m3-share-buttons .m3-share-btn--copy {
-        background-color: var(--md-sys-color-primary) !important;
+        background-color: #FF9900 !important;
         color: #ffffff !important;
     }
 }
@@ -150,14 +150,72 @@
     color: var(--md-sys-color-on-secondary) !important; 
 }
 .m3-share-btn--copy { 
-    background-color: var(--md-sys-color-surface-container-high) !important; 
-    color: var(--md-sys-color-on-surface) !important; 
-    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    background-color: #FF9900 !important;
+    color: #ffffff !important;
+    border: 1px solid #FF9900 !important;
+}
+.m3-share-btn--copy.is-copy-armed {
+    background-color: #e88900 !important;
+    border-color: #e88900 !important;
 }
 .m3-share-btn--copy.is-success {
     background-color: #FF9900 !important; /* オレンジに統一 */
     color: #ffffff !important;
     border-color: transparent !important;
+}
+
+.node-copy-toast {
+    position: fixed;
+    left: 50%;
+    bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px));
+    z-index: 11000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid color-mix(in srgb, #FF9900 42%, transparent);
+    border-radius: 8px;
+    background: var(--md-sys-color-inverse-surface, #2f2923);
+    color: var(--md-sys-color-inverse-on-surface, #ffffff);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+    font-size: 0.86rem;
+    font-weight: 800;
+    line-height: 1.4;
+    text-align: center;
+    opacity: 0;
+    transform: translate(-50%, 12px);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.node-copy-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.node-copy-toast .material-symbols-outlined {
+    flex: 0 0 auto;
+    color: #FF9900;
+    font-size: 20px;
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 20;
+}
+
+@media (max-width: 599px) {
+    .node-copy-toast {
+        bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px));
+        width: calc(100vw - 32px);
+        font-size: 0.82rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .node-copy-toast {
+        transition: none;
+    }
 }
  
 .m3-share-buttons .m3-share-btn .material-symbols-outlined,

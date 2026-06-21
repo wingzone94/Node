@@ -80,20 +80,27 @@
             }
         } catch (e) {}
 
-        // タブレット表示モード（localStorage に保存済みの場合のみ viewport を上書き）
+        // タブレット表示モード（タブレットUAは初期モバイル、保存済み設定を優先）
         const VIEW_STORE_KEY = 'm3_store_view-mode';
+        const IS_TABLET_UA = <?php echo node_is_tablet_ua() ? 'true' : 'false'; ?>;
         try {
             const viewRaw = localStorage.getItem(VIEW_STORE_KEY);
-            if (viewRaw) {
-                const viewMode = JSON.parse(viewRaw);
-                const viewport = document.getElementById('m3-viewport');
-                if (viewport && viewMode === 'mobile') {
-                    viewport.setAttribute('content', 'width=390, initial-scale=1, viewport-fit=cover');
-                    document.documentElement.setAttribute('data-view-mode', 'mobile');
-                } else if (viewport && viewMode === 'pc') {
-                    viewport.setAttribute('content', 'width=1280, initial-scale=1, viewport-fit=cover');
-                    document.documentElement.setAttribute('data-view-mode', 'pc');
-                }
+            const savedViewMode = viewRaw ? JSON.parse(viewRaw) : null;
+            const viewMode = (savedViewMode === 'mobile' || savedViewMode === 'pc')
+                ? savedViewMode
+                : (IS_TABLET_UA ? 'mobile' : null);
+            const viewport = document.getElementById('m3-viewport');
+
+            if (IS_TABLET_UA) {
+                document.documentElement.setAttribute('data-device-class', 'tablet');
+            }
+
+            if (viewport && viewMode === 'mobile') {
+                viewport.setAttribute('content', 'width=390, initial-scale=1, viewport-fit=cover');
+                document.documentElement.setAttribute('data-view-mode', 'mobile');
+            } else if (viewport && viewMode === 'pc') {
+                viewport.setAttribute('content', 'width=1280, initial-scale=1, viewport-fit=cover');
+                document.documentElement.setAttribute('data-view-mode', 'pc');
             }
         } catch (e) {}
 
@@ -238,8 +245,8 @@
 
             <!-- View (Tablet UA のみ) -->
             <?php if ( node_is_tablet_ua() ) : ?>
-            <button class="m3-icon-button m3-tooltip-target m3-view-toggle--tablet" id="m3-view-toggle" aria-label="PC表示モード" data-tooltip="PC表示モード（タップでモバイル表示）" data-view-mode="pc">
-                <span class="material-symbols-outlined" id="m3-view-toggle-icon" aria-hidden="true">computer</span>
+            <button class="m3-icon-button m3-tooltip-target m3-view-toggle--tablet" id="m3-view-toggle" aria-label="モバイル表示モード" data-tooltip="モバイル表示モード（タップでPC表示）" data-view-mode="mobile">
+                <span class="material-symbols-outlined" id="m3-view-toggle-icon" aria-hidden="true">smartphone</span>
             </button>
             <?php endif; ?>
 

@@ -227,6 +227,8 @@ function node_generate_m3_colors() {
 
     $seed_color      = '';
     $seed_color_dark = '';
+    $article_accent      = $default_primary;
+    $article_accent_dark = $default_primary_dark;
 
     // 個別記事ページおよび固定ページ: 投稿メタ → カテゴリメタ → アイキャッチ抽出色 の順に解決
     if (is_singular(['post', 'page'])) {
@@ -236,6 +238,10 @@ function node_generate_m3_colors() {
         $post_color = get_post_meta($post_id, '_m3_primary_color', true);
         if (!empty($post_color)) {
             $seed_color = sanitize_hex_color($post_color);
+            if (!empty($seed_color)) {
+                $article_accent = $seed_color;
+                $article_accent_dark = node_mix_hex_color($seed_color, '#ffffff', 0.36);
+            }
         }
 
         // 2. カテゴリカラー
@@ -282,6 +288,12 @@ function node_generate_m3_colors() {
     $dark_on_primary            = node_get_readable_text_color($seed_color_dark);
     $dark_primary_container     = node_mix_hex_color($seed_color, '#1e1b16', 0.54);
     $dark_on_primary_container  = node_get_readable_text_color($dark_primary_container);
+    $article_on_accent          = node_get_readable_text_color($article_accent);
+    $article_accent_container   = node_mix_hex_color($article_accent, '#fff4e5', 0.78);
+    $article_on_accent_container = node_get_readable_text_color($article_accent_container);
+    $article_on_accent_dark     = node_get_readable_text_color($article_accent_dark);
+    $article_accent_container_dark = node_mix_hex_color($article_accent, '#1e1b16', 0.54);
+    $article_on_accent_container_dark = node_get_readable_text_color($article_accent_container_dark);
     ?>
     <style id="m3-dynamic-colors">
         :root {
@@ -289,6 +301,10 @@ function node_generate_m3_colors() {
             --md-sys-color-on-primary: <?php echo esc_attr($on_primary); ?>;
             --md-sys-color-primary-container: <?php echo esc_attr($primary_container); ?>;
             --md-sys-color-on-primary-container: <?php echo esc_attr($on_primary_container); ?>;
+            --node-article-accent: <?php echo esc_attr($article_accent); ?>;
+            --node-article-on-accent: <?php echo esc_attr($article_on_accent); ?>;
+            --node-article-accent-container: <?php echo esc_attr($article_accent_container); ?>;
+            --node-article-on-accent-container: <?php echo esc_attr($article_on_accent_container); ?>;
             --md-sys-color-surface: #FFF4E5; /* Warm Orange Background */
             --md-sys-color-on-surface: #2b1700;
             --md-sys-color-surface-container-low: #ffffff;
@@ -302,6 +318,10 @@ function node_generate_m3_colors() {
             --md-sys-color-on-primary: <?php echo esc_attr($dark_on_primary); ?>;
             --md-sys-color-primary-container: <?php echo esc_attr($dark_primary_container); ?>;
             --md-sys-color-on-primary-container: <?php echo esc_attr($dark_on_primary_container); ?>;
+            --node-article-accent: <?php echo esc_attr($article_accent_dark); ?>;
+            --node-article-on-accent: <?php echo esc_attr($article_on_accent_dark); ?>;
+            --node-article-accent-container: <?php echo esc_attr($article_accent_container_dark); ?>;
+            --node-article-on-accent-container: <?php echo esc_attr($article_on_accent_container_dark); ?>;
             --md-sys-color-surface: #1e1b16;
             --md-sys-color-on-surface: #ebe0d9;
             --md-sys-color-surface-container-low: #25221b;

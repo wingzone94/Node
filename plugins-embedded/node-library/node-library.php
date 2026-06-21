@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.0
+ * Version:      1.3.2
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.0' );
+define( 'NODE_LIBRARY_VERSION', '1.3.2' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 
 $node_library_embedded_dir = get_template_directory() . '/plugins-embedded/node-library/';
@@ -45,8 +45,8 @@ final class Node_Library {
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ $this, 'save_meta_boxes' ] );
 		
-		// テーマのフックに応答（ライター情報の下に表示）
-		add_action( 'luminous_after_writer', [ $this, 'render_library_card_on_post' ] );
+		// テーマのフックに応答（タグの下に表示）
+		add_action( 'luminous_after_tags', [ $this, 'render_library_card_on_post' ] );
 
 		// 管理画面用アセット
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
@@ -76,6 +76,22 @@ final class Node_Library {
 			'methods'             => 'GET',
 			'callback'            => [ $this, 'handle_list_items' ],
 			'permission_callback' => function() { return current_user_can( 'edit_posts' ); },
+		] );
+
+		register_rest_route( 'node-library/v1', '/generate-game-info', [
+			'methods'             => 'POST',
+			'callback'            => [ $this, 'handle_generate_game_info' ],
+			'permission_callback' => function() { return current_user_can( 'edit_posts' ); },
+			'args'                => [
+				'title' => [
+					'required'          => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				],
+				'type' => [
+					'default'           => 'game',
+					'sanitize_callback' => 'sanitize_key',
+				],
+			],
 		] );
 	}
 
@@ -110,6 +126,168 @@ final class Node_Library {
 		);
 
 		return rest_ensure_response( $items );
+	}
+
+	/**
+	 * Gemini API からゲーム・アプリ紹介文の下書きを取得する。
+	 */
+	public function handle_generate_game_info( $request ) {
+		$title = trim( (string) $request->get_param( 'title' ) );
+		$type  = 'app' === $request->get_param( 'type' ) ? 'app' : 'game';
+		if ( '' === $title ) {
+			return new WP_Error( 'missing_title', 'ゲームまたはアプリのタイトルを入力してください。', [ 'status' => 400 ] );
+		}
+
+		if ( ! function_exists( 'node_get_user_gemini_api_key' ) || ! function_exists( 'node_get_user_gemini_model' ) || ! function_exists( 'node_is_valid_gemini_model_id' ) ) {
+			return new WP_Error( 'gemini_unavailable', 'Gemini API 設定を読み込めませんでした。', [ 'status' => 500 ] );
+		}
+
+		$api_key = node_get_user_gemini_api_key();
+		$model   = node_get_user_gemini_model();
+
+		if ( '' === $api_key ) {
+			return new WP_Error( 'missing_api_key', 'ユーザープロフィールで Gemini API キーを設定してください。', [ 'status' => 400 ] );
+		}
+
+		if ( ! node_is_valid_gemini_model_id( $model ) ) {
+			return new WP_Error( 'invalid_model', 'Geminiモデルの設定が無効です。', [ 'status' => 400 ] );
+		}
+
+		$prompt = sprintf(
+			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo eShop、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Xbox向けリンクのプラットフォーム名は「Microsoft Store（Xbox）」としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://..."}]} 形式のJSONだけにしてください。',
+			'app' === $type ? 'アプリ' : 'ゲーム',
+			$title
+		);
+
+		$endpoint = sprintf(
+			'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent',
+			rawurlencode( $model )
+		);
+		$response = wp_remote_post(
+			$endpoint,
+			[
+				'timeout' => 45,
+				'headers' => [
+					'Content-Type'   => 'application/json',
+					'x-goog-api-key' => $api_key,
+				],
+				'body'    => wp_json_encode(
+					[
+						'contents'         => [
+							[
+								'parts' => [ [ 'text' => $prompt ] ],
+							],
+						],
+						'tools'            => [
+							[ 'google_search' => (object) [] ],
+						],
+						'generationConfig' => [
+							'maxOutputTokens' => 4096,
+						],
+					]
+				),
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'gemini_request_failed', 'Gemini APIへの接続に失敗しました。', [ 'status' => 502 ] );
+		}
+
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		$data   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		if ( 200 !== $status || ! is_array( $data ) ) {
+			$message = is_array( $data ) ? (string) ( $data['error']['message'] ?? '' ) : '';
+			return new WP_Error(
+				'gemini_response_failed',
+				$message ? 'Gemini APIエラー: ' . sanitize_text_field( $message ) : 'Gemini APIから情報を取得できませんでした。',
+				[ 'status' => 502 ]
+			);
+		}
+
+		$parts = $data['candidates'][0]['content']['parts'] ?? [];
+		$text  = '';
+		foreach ( (array) $parts as $part ) {
+			if ( is_array( $part ) && isset( $part['text'] ) ) {
+				$text .= (string) $part['text'];
+			}
+		}
+
+		$json_text = trim( $text );
+		$json_text = preg_replace( '/^```(?:json)?\s*|\s*```$/i', '', $json_text );
+		$result    = json_decode( (string) $json_text, true );
+
+		if ( ! is_array( $result ) ) {
+			$start = strpos( $json_text, '{' );
+			$end   = strrpos( $json_text, '}' );
+			if ( false !== $start && false !== $end && $end > $start ) {
+				$result = json_decode( substr( $json_text, $start, $end - $start + 1 ), true );
+			}
+		}
+
+		if ( ! is_array( $result ) ) {
+			return new WP_Error( 'invalid_gemini_response', 'Gemini APIの応答をゲーム・アプリ情報として解析できませんでした。', [ 'status' => 502 ] );
+		}
+
+		$summary = sanitize_textarea_field( trim( (string) ( $result['summary'] ?? '' ) ) );
+		if ( '' === $summary ) {
+			return new WP_Error( 'empty_gemini_response', 'Gemini APIから紹介文が返されませんでした。', [ 'status' => 502 ] );
+		}
+
+		$links = [];
+		$allowed_store_domains = [
+			'apps.apple.com',
+			'apps.microsoft.com',
+			'epicgames.com',
+			'gog.com',
+			'itch.io',
+			'microsoft.com',
+			'nintendo.com',
+			'play.google.com',
+			'playstation.com',
+			'steamcommunity.com',
+			'steampowered.com',
+			'xbox.com',
+		];
+		foreach ( (array) ( $result['links'] ?? [] ) as $link ) {
+			if ( ! is_array( $link ) ) {
+				continue;
+			}
+
+			$platform = sanitize_text_field( (string) ( $link['platform'] ?? '' ) );
+			if ( false !== stripos( $platform, 'xbox' ) ) {
+				$platform = 'Microsoft Store（Xbox）';
+			}
+			$url      = esc_url_raw( (string) ( $link['url'] ?? '' ), [ 'https' ] );
+			$host     = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+			$is_store = false;
+			foreach ( $allowed_store_domains as $domain ) {
+				if ( $host === $domain || str_ends_with( $host, '.' . $domain ) ) {
+					$is_store = true;
+					break;
+				}
+			}
+
+			if ( '' === $platform || '' === $url || 'https' !== wp_parse_url( $url, PHP_URL_SCHEME ) || ! $is_store ) {
+				continue;
+			}
+
+			$links[] = [
+				'platform' => $platform,
+				'url'      => $url,
+			];
+
+			if ( count( $links ) >= 10 ) {
+				break;
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'summary' => $summary,
+				'links'   => $links,
+				'model'   => $model,
+			]
+		);
 	}
 
 	/**
@@ -359,9 +537,17 @@ final class Node_Library {
 		wp_enqueue_script(
 			'node-library-admin-meta',
 			NODE_LIBRARY_URL . 'assets/js/admin-meta.js',
-			array(),
+			array( 'wp-api-fetch' ),
 			NODE_LIBRARY_VERSION,
 			true
+		);
+
+		wp_localize_script(
+			'node-library-admin-meta',
+			'nodeLibraryAdmin',
+			array(
+				'generatePath' => '/node-library/v1/generate-game-info',
+			)
 		);
 
 		wp_add_inline_style(
@@ -386,6 +572,7 @@ final class Node_Library {
 
 		$game_info = [
 			'title'   => $lib_post->post_title,
+			'type'    => get_post_meta( $lib_id, '_node_library_type', true ) ?: 'game',
 			'summary' => get_post_meta( $lib_id, '_node_library_summary', true ),
 			'links'   => get_post_meta( $lib_id, '_node_library_links', true ),
 		];
@@ -461,6 +648,8 @@ final class Node_Library {
 	public function render_details_meta_box( $post ): void {
 		wp_nonce_field( 'node_library_save_details', 'node_library_details_nonce' );
 		
+		$type    = get_post_meta( $post->ID, '_node_library_type', true );
+		$type    = in_array( $type, [ 'game', 'app' ], true ) ? $type : 'game';
 		$summary = get_post_meta( $post->ID, '_node_library_summary', true );
 		$links   = get_post_meta( $post->ID, '_node_library_links', true );
 		if ( ! is_array( $links ) ) $links = [];
@@ -468,8 +657,23 @@ final class Node_Library {
 		?>
 		<div class="node-library-admin-fields">
 			<p>
+				<label for="node-library-type"><strong>種類:</strong></label><br>
+				<select name="node_library_type" id="node-library-type">
+					<option value="game" <?php selected( $type, 'game' ); ?>>ゲーム</option>
+					<option value="app" <?php selected( $type, 'app' ); ?>>アプリ</option>
+				</select>
+			</p>
+			<p>
 				<label><strong>紹介文・レビュー:</strong></label><br>
 				<textarea name="node_library_summary" rows="4" style="width:100%;" placeholder="作品の魅力やレビューを自由に記載してください。"><?php echo esc_textarea( $summary ); ?></textarea>
+				<span style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+					<button type="button" class="button button-secondary" id="node-library-generate-info">
+						<span class="dashicons dashicons-superhero-alt" aria-hidden="true"></span>
+						ゲーム（アプリ）情報を取得
+					</button>
+					<span id="node-library-generate-status" role="status" aria-live="polite"></span>
+				</span>
+				<span class="description">Geminiが作成した下書きを確認・修正してから保存してください。</span>
 			</p>
 			
 			<div id="node-library-links-editor">
@@ -493,7 +697,7 @@ final class Node_Library {
 				<p style="margin-top:8px;">
 					<button type="button" class="button button-secondary" id="node-library-add-link">リンク行を追加</button>
 				</p>
-				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation, Xbox, Nintendo Switch, App Store）</p>
+				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation, Microsoft Store（Xbox）, Nintendo Switch, App Store）</p>
 			</div>
 		</div>
 		<?php
@@ -519,7 +723,7 @@ final class Node_Library {
 		}
 		?>
 		<p class="node-library-metabox-help">
-			紐付けると、記事フッター（ライター情報の下）にゲーム・アプリカードが<strong>自動表示</strong>されます。<br>
+			紐付けると、記事フッター（タグの下）にゲーム・アプリカードが<strong>自動表示</strong>されます。<br>
 			本文の任意位置に入れたい場合は、ブロック追加 → <strong>Node</strong> カテゴリ →「ライブラリカード」を使ってください。
 		</p>
 		<select name="node_linked_library_id" id="node-linked-library-select" style="width:100%; margin-top:8px;">
@@ -553,6 +757,10 @@ final class Node_Library {
 	 */
 	public function save_meta_boxes( int $post_id ): void {
 		if ( isset( $_POST['node_library_details_nonce'] ) && wp_verify_nonce( $_POST['node_library_details_nonce'], 'node_library_save_details' ) ) {
+			if ( isset( $_POST['node_library_type'] ) ) {
+				$type = sanitize_key( wp_unslash( $_POST['node_library_type'] ) );
+				update_post_meta( $post_id, '_node_library_type', in_array( $type, [ 'game', 'app' ], true ) ? $type : 'game' );
+			}
 			if ( isset( $_POST['node_library_summary'] ) ) {
 				update_post_meta( $post_id, '_node_library_summary', sanitize_textarea_field( $_POST['node_library_summary'] ) );
 			}
@@ -600,6 +808,7 @@ final class Node_Library {
 
 		$game_info = [
 			'title'   => $lib_post->post_title,
+			'type'    => get_post_meta( $lib_id, '_node_library_type', true ) ?: 'game',
 			'summary' => get_post_meta( $lib_id, '_node_library_summary', true ),
 			'links'   => get_post_meta( $lib_id, '_node_library_links', true ),
 		];

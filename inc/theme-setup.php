@@ -14,6 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function node_theme_setup() {
 
+	// Node の既定言語は日本語。翻訳ファイルが追加された場合も node ドメインで読む。
+	load_theme_textdomain( 'node', get_template_directory() . '/languages' );
+
 	// HTML <title> を WP に任せる
 	add_theme_support( 'title-tag' );
 
@@ -23,8 +26,8 @@ function node_theme_setup() {
 	// メニュー
 	register_nav_menus(
 		array(
-			'primary'   => __( 'Primary Menu', 'luminous-core' ),
-			'footer'    => __( 'Footer Menu', 'luminous-core' ),
+			'primary'   => __( 'メインメニュー', 'node' ),
+			'footer'    => __( 'フッターメニュー', 'node' ),
 		)
 	);
 
@@ -82,6 +85,20 @@ function node_theme_setup() {
 	);
 }
 add_action( 'after_setup_theme', 'node_theme_setup' );
+
+/**
+ * フロントエンドの既定 locale を日本語に固定する。
+ *
+ * 管理画面はユーザー個別設定を尊重し、テーマの表示面だけを日本語優先にする。
+ */
+function node_force_frontend_locale_to_japanese( string $locale ): string {
+	if ( is_admin() ) {
+		return $locale;
+	}
+
+	return 'ja';
+}
+add_filter( 'locale', 'node_force_frontend_locale_to_japanese' );
 
 /**
  * -------------------------------------------------------

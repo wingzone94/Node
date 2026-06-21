@@ -1,4 +1,5 @@
 import { storage } from '../storage';
+import { isTabletLikeDevice } from './device-mode';
 
 const VIEW_MODE_ICON = {
     pc: 'computer',
@@ -17,12 +18,25 @@ const VIEW_MODE_TOOLTIP = {
 
 function getViewMode() {
     const saved = storage.get('view-mode');
-    return saved === 'mobile' ? 'mobile' : 'pc';
+    if (saved === 'mobile' || saved === 'pc') {
+        return saved;
+    }
+
+    return isTabletLikeDevice() ? 'mobile' : 'pc';
 }
 
 function syncViewToggleUI(btn) {
     const mode = getViewMode();
     const icon = document.getElementById('m3-view-toggle-icon');
+    const isTabletToggle = isTabletLikeDevice() || btn.classList.contains('m3-view-toggle--tablet');
+
+    if (!isTabletToggle) {
+        btn.hidden = true;
+        return;
+    }
+
+    document.documentElement.dataset.viewMode = mode;
+    btn.hidden = false;
 
     if (icon) {
         icon.textContent = VIEW_MODE_ICON[mode];

@@ -4,14 +4,30 @@
  */
 ?>
 <footer class="m3-article__footer">
-    <?php node_the_tag_labels(); ?>
+    <?php if ( get_the_tags() ) : ?>
+        <section class="m3-article__footer-section m3-article__tag-section" aria-label="タグ">
+            <?php node_the_tag_labels(); ?>
+        </section>
+    <?php endif; ?>
+
+    <?php
+    ob_start();
+    do_action('luminous_after_tags', get_the_ID());
+    $node_linked_content = trim( (string) ob_get_clean() );
+
+    if ( '' !== $node_linked_content ) :
+    ?>
+        <section class="m3-article__footer-section m3-article__library-section" aria-label="ゲーム・アプリ情報">
+            <?php echo $node_linked_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        </section>
+    <?php endif; ?>
 
     <?php get_template_part('template-parts/social-share'); ?>
     
     <?php get_template_part('template-parts/card-writer'); ?>
     
     <?php 
-    // ライター情報の後にコンテンツを挿入するアクション（Node Library等）
+    // ライター情報の後にコンテンツを挿入するアクション
     do_action('luminous_after_writer', get_the_ID()); 
     ?>
 

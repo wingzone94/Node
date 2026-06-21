@@ -22,6 +22,10 @@ function node_seo_json_ld() {
         $payloads[] = [
             '@context' => 'https://schema.org',
             '@type'    => 'Article',
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id'   => wp_get_canonical_url( $post_id ) ?: get_permalink( $post_id ),
+            ],
             'headline' => get_the_title(),
             'image'    => [ get_the_post_thumbnail_url( $post_id, 'large' ) ?: get_site_icon_url() ],
             'datePublished' => get_the_date( 'c' ),
@@ -65,11 +69,82 @@ function node_seo_json_ld() {
 add_action( 'wp_head', 'node_seo_json_ld' );
 
 /**
+ * OpenSearch description document support.
+ */
+function node_opensearch_xml_escape( $value ) {
+    return function_exists( 'esc_xml' ) ? esc_xml( $value ) : esc_html( $value );
+}
+
+function node_opensearch_description_url(): string {
+    return home_url( '/opensearch.xml' );
+}
+
+function node_opensearch_search_template(): string {
+    return home_url( '/?s={searchTerms}' );
+}
+
+function node_output_opensearch_link() {
+    echo '<link rel="search" type="application/opensearchdescription+xml" title="' . esc_attr( get_bloginfo( 'name' ) . ' Search' ) . '" href="' . esc_url( node_opensearch_description_url() ) . '">' . "\n";
+}
+add_action( 'wp_head', 'node_output_opensearch_link', 2 );
+
+function node_maybe_render_opensearch_description() {
+    $request_path   = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+    $opensearch_url = (string) wp_parse_url( node_opensearch_description_url(), PHP_URL_PATH );
+
+    if ( untrailingslashit( $request_path ) !== untrailingslashit( $opensearch_url ) ) {
+        return;
+    }
+
+    $site_name   = get_bloginfo( 'name' );
+    $description = sprintf( '%s のサイト内検索', $site_name );
+
+    status_header( 200 );
+    nocache_headers();
+    header( 'Content-Type: application/opensearchdescription+xml; charset=' . get_bloginfo( 'charset' ) );
+
+    echo '<?xml version="1.0" encoding="' . esc_attr( get_bloginfo( 'charset' ) ) . '"?>' . "\n";
+    echo '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">' . "\n";
+    echo "\t" . '<ShortName>' . node_opensearch_xml_escape( $site_name ) . '</ShortName>' . "\n";
+    echo "\t" . '<Description>' . node_opensearch_xml_escape( $description ) . '</Description>' . "\n";
+    echo "\t" . '<InputEncoding>UTF-8</InputEncoding>' . "\n";
+    echo "\t" . '<Image height="16" width="16" type="image/x-icon">' . esc_url( get_site_icon_url( 16 ) ?: home_url( '/favicon.ico' ) ) . '</Image>' . "\n";
+    echo "\t" . '<Url type="text/html" method="get" template="' . esc_attr( node_opensearch_search_template() ) . '" />' . "\n";
+    echo '</OpenSearchDescription>' . "\n";
+    exit;
+}
+add_action( 'template_redirect', 'node_maybe_render_opensearch_description', 0 );
+
+/**
  * 2. 標準メタディスクリプションの出力
  */
 function node_seo_meta_description() {
     if ( is_singular() ) {
         $desc = get_the_excerpt();
+
+        if ( is_singular( 'post' ) ) {
+            $current_page = max( 1, (int) get_query_var( 'page' ) );
+
+            if ( $current_page > 1 ) {
+                $content = get_post_field( 'post_content', get_queried_object_id() );
+                $pages   = is_string( $content ) ? preg_split( '/<!--\s*nextpage\s*-->/i', $content ) : array();
+
+                if ( isset( $pages[ $current_page - 1 ] ) ) {
+                    $page_desc = strip_shortcodes( $pages[ $current_page - 1 ] );
+                    $page_desc = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $page_desc ) ) );
+
+                    if ( '' !== $page_desc ) {
+                        $desc = wp_html_excerpt( $page_desc, 140, '…' );
+                    }
+
+                    $desc .= sprintf(
+                        '（全%1$dページ中%2$dページ目）',
+                        count( $pages ),
+                        $current_page
+                    );
+                }
+            }
+        }
     } elseif ( is_category() || is_tag() || is_tax() ) {
         $desc = term_description();
     } else {

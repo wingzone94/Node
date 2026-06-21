@@ -52,17 +52,301 @@
 }
 
 /* --- Platform Brand Actions --- */
+.m3-game-card__stores {
+    overflow: hidden;
+    margin-top: 2px;
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(
+        in srgb,
+        var(--md-sys-color-surface-container-low) 72%,
+        var(--md-sys-color-surface-container-high) 28%
+    );
+}
+
 .m3-game-card__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 8px;
+    margin: 0;
+}
+
+.m3-game-card__tabs-shell {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 4px 8px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: color-mix(
+        in srgb,
+        var(--md-sys-color-surface-container-high) 84%,
+        var(--md-sys-color-primary-container) 16%
+    );
+}
+
+.m3-game-card__tabs {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    flex: 1;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+}
+
+.m3-game-card__tabs--overflow {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}
+
+.m3-game-card__tabs--overflow::-webkit-scrollbar {
+    display: none;
+}
+
+.m3-game-card__tabs--overflow .m3-game-card__tab {
+    flex: 0 0 calc((100% - 8px) / 3);
+    scroll-snap-align: start;
+}
+
+.m3-game-card__stores.is-all-view .m3-game-card__tabs--overflow {
+    overflow: hidden;
+}
+
+.m3-game-card__stores.is-all-view .m3-game-card__tab:not([data-node-library-tab="all"]) {
+    display: none;
+}
+
+.m3-game-card__stores.is-all-view .m3-game-card__tabs--overflow .m3-game-card__tab[data-node-library-tab="all"] {
+    flex: 1 1 100%;
+}
+
+.m3-game-card__tab-next {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    margin-bottom: 4px;
+    padding: 0;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+}
+
+.m3-game-card__tab-next:hover,
+.m3-game-card__tab-next:focus-visible {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.m3-game-card__tab-next .material-symbols-outlined {
+    font-size: 21px;
+}
+
+.m3-game-card__tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.m3-game-card__tab[aria-selected="true"] {
+    border-bottom-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-primary);
+}
+
+.m3-game-card__tab:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--md-sys-color-primary) 42%, transparent);
+    outline-offset: -3px;
+}
+
+.m3-game-card__tab .material-symbols-outlined {
+    font-size: 19px;
+}
+
+.m3-game-card__tab-label--compact {
+    display: none;
+}
+
+.m3-game-card__store-panel[hidden] {
+    display: none;
+}
+
+.m3-game-card__store-panel {
+    padding: 14px;
+}
+
+.m3-platform-action {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.m3-platform-action__row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.m3-platform-qr-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+}
+
+.m3-platform-qr-toggle:hover,
+.m3-platform-qr-toggle[aria-expanded="true"] {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.m3-platform-qr-toggle:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--md-sys-color-primary) 48%, transparent);
+    outline-offset: 2px;
+}
+
+.m3-platform-qr-toggle:disabled {
+    cursor: wait;
+    opacity: 0.64;
+}
+
+.m3-platform-qr-dialog {
+    width: min(320px, calc(100vw - 32px));
+    max-width: 320px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 8px;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.m3-platform-qr-dialog[open] {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+}
+
+.m3-platform-qr-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.46);
+}
+
+.m3-platform-qr-dialog h5 {
+    margin: 0;
+    padding-inline: 36px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.m3-platform-qr-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+}
+
+.m3-platform-qr-close:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.m3-platform-qr-canvas {
+    width: 192px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.m3-platform-qr-status {
+    font-size: 0.8rem;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-platform-qr-link-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+    gap: 6px;
+}
+
+.m3-platform-qr-url {
+    min-width: 0;
+    overflow: hidden;
+    flex: 1;
+    color: var(--md-sys-color-primary);
+    font-size: 0.74rem;
+    text-overflow: ellipsis;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+.m3-platform-qr-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 18px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.m3-platform-qr-copy .material-symbols-outlined {
+    font-size: 17px;
+}
+
+.m3-platform-qr-copy-status {
+    min-height: 1.2em;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.72rem;
 }
 
 .m3-platform-button {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
     padding: 10px 20px;
     border-radius: 100px;
     font-size: 0.85rem;
@@ -103,6 +387,11 @@
     color: #ffffff;
 }
 
+[data-theme="dark"] .m3-platform-button--ios {
+    background-color: #ffffff;
+    color: #111111;
+}
+
 .m3-platform-button--android {
     background-color: #3DDC84;
     color: #073042;
@@ -118,9 +407,52 @@
         border-radius: 20px;
         padding: 20px;
     }
+
+    .m3-game-card__stores {
+        margin-inline: -4px;
+    }
     
     .m3-platform-button {
         width: 100%;
         justify-content: center;
+        padding-inline: 12px;
+        font-size: 0.72rem;
+        white-space: nowrap;
+    }
+
+    .m3-platform-action {
+        width: 100%;
+    }
+
+    .m3-platform-action__row .m3-platform-button {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .m3-game-card__tabs-shell {
+        padding-inline: 6px;
+    }
+
+    .m3-game-card__tab {
+        min-width: 0;
+        padding-inline: 4px;
+        font-size: 0.7rem;
+    }
+
+    .m3-game-card__tab .material-symbols-outlined,
+    .m3-game-card__tab-label--full {
+        display: none;
+    }
+
+    .m3-game-card__tab-label--compact {
+        display: inline;
+    }
+
+    .m3-game-card__stores.is-all-view .m3-game-card__tab[data-node-library-tab="all"] .m3-game-card__tab-label--full {
+        display: inline;
+    }
+
+    .m3-game-card__stores.is-all-view .m3-game-card__tab[data-node-library-tab="all"] .m3-game-card__tab-label--compact {
+        display: none;
     }
 }

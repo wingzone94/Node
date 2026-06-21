@@ -3,8 +3,11 @@
    ========================================================================== */
 
 .m3-footer {
-    background-color: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
+    --node-footer-background: #fedcbe;
+    --node-footer-foreground: #2b1700;
+    --node-footer-accent: #c96500;
+    background-color: var(--node-footer-background);
+    color: var(--node-footer-foreground);
     margin-top: 120px;
     border-radius: 48px 48px 0 0; /* M3E Large Rounded Top */
     padding: 80px 0 0;
@@ -14,8 +17,9 @@
 }
 
 [data-theme="dark"] .m3-footer {
-    background-color: #2D1A00; /* Rich Dark Burnt Orange */
-    color: #FFDCBE;
+    --node-footer-background: #2D1A00;
+    --node-footer-foreground: #FFDCBE;
+    --node-footer-accent: #ffb85d;
 }
 
 .m3-footer__main {
@@ -47,7 +51,7 @@
     font-size: 0.8rem;
     font-weight: 900;
     letter-spacing: 0.1em;
-    color: var(--md-sys-color-on-primary-container);
+    color: var(--node-footer-foreground);
     opacity: 0.7;
     margin-bottom: 24px;
     text-transform: uppercase;
@@ -56,7 +60,7 @@
 .m3-footer__tagline {
     font-size: 1rem;
     line-height: 1.6;
-    color: var(--md-sys-color-on-primary-container);
+    color: var(--node-footer-foreground);
     font-weight: 500;
     max-width: 320px;
     opacity: 0.8;
@@ -81,7 +85,7 @@
 }
 
 .m3-footer__links a:hover {
-    color: var(--md-sys-color-primary);
+    color: var(--node-footer-accent);
     transform: translateX(4px);
 }
 
@@ -104,14 +108,14 @@
     align-items: center;
     font-size: 0.85rem;
     font-weight: 700;
-    color: var(--md-sys-color-on-surface-variant);
+    color: var(--node-footer-foreground);
 }
 
 .m3-footer__bottom-links {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--md-sys-color-primary);
+    color: var(--node-footer-accent);
 }
 
 .m3-footer__version {

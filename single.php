@@ -76,7 +76,7 @@
                                             <select id="m3-page-selector" class="m3-pagination__select" aria-label="ページを選択">
                                                 <?php for ( $i = 1; $i <= $numpages; $i++ ) : ?>
                                                     <option value="<?php echo esc_url( $get_multipage_url( $i ) ); ?>" <?php selected( $i, $current_multipage ); ?>>
-                                                        Page <?php echo $i; ?> / <?php echo $numpages; ?>
+                                                        <?php echo esc_html( sprintf( '%1$d/%2$d', $i, $numpages ) ); ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>

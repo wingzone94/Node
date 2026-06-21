@@ -47,6 +47,11 @@ const optionalInitializers = [
         load: () => import('./scripts/pagination')
     },
     {
+        name: 'initFootnotesPopover',
+        shouldRun: () => document.querySelector('.m3-article__body sup[data-fn]'),
+        load: () => import('./scripts/footnotes-popover')
+    },
+    {
         name: 'initReadingBadgeAnimation',
         shouldRun: () => (
             (document.body.classList.contains('single') || document.body.classList.contains('single-post')) &&
@@ -90,12 +95,165 @@ function initColorModeLoader() {
         });
 }
 
+function initNodeLibraryQr() {
+    document.querySelectorAll('[data-node-library-qr-toggle]').forEach(toggle => {
+        if (toggle.dataset.nodeLibraryQrReady === 'true') return;
+
+        const dialogId = toggle.getAttribute('aria-controls');
+        const dialog = dialogId ? document.getElementById(dialogId) : null;
+        const canvas = dialog?.querySelector('[data-node-library-qr-canvas]');
+        const status = dialog?.querySelector('[data-node-library-qr-status]');
+        const close = dialog?.querySelector('[data-node-library-qr-close]');
+        const copy = dialog?.querySelector('[data-node-library-qr-copy]');
+        const copyStatus = dialog?.querySelector('[data-node-library-qr-copy-status]');
+        const url = dialog?.dataset.qrUrl || '';
+        if (!dialog || !canvas || !status || !close || !copy || !copyStatus || !url) return;
+
+        toggle.dataset.nodeLibraryQrReady = 'true';
+
+        const renderQr = async () => {
+            if (dialog.dataset.qrReady === 'true') return;
+
+            status.hidden = false;
+            status.textContent = 'QRコードを生成中…';
+            canvas.hidden = true;
+
+            const { toCanvas } = await import('qrcode');
+            await toCanvas(canvas, url, {
+                width: 192,
+                margin: 2,
+                errorCorrectionLevel: 'M',
+                color: {
+                    dark: '#111111',
+                    light: '#ffffff'
+                }
+            });
+
+            status.hidden = true;
+            canvas.hidden = false;
+            dialog.dataset.qrReady = 'true';
+        };
+
+        const copyUrl = async () => {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(url);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = url;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    textarea.remove();
+                }
+                copyStatus.textContent = 'コピーしました';
+            } catch (error) {
+                copyStatus.textContent = 'コピーできませんでした';
+                console.error('Node Library URL copy failed', error);
+            }
+        };
+
+        toggle.addEventListener('click', async () => {
+            toggle.disabled = true;
+            toggle.setAttribute('aria-busy', 'true');
+
+            try {
+                await renderQr();
+                dialog.showModal();
+                toggle.setAttribute('aria-expanded', 'true');
+            } catch (error) {
+                if (!dialog.open) dialog.showModal();
+                status.hidden = false;
+                status.textContent = 'QRコードを生成できませんでした。';
+                console.error('Node Library QR generation failed', error);
+            } finally {
+                toggle.disabled = false;
+                toggle.removeAttribute('aria-busy');
+            }
+        });
+
+        close.addEventListener('click', () => dialog.close());
+        copy.addEventListener('click', copyUrl);
+        dialog.addEventListener('click', event => {
+            if (event.target === dialog) dialog.close();
+        });
+        dialog.addEventListener('close', () => {
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.focus({ preventScroll: true });
+        });
+    });
+}
+
+function initNodeLibraryTabs() {
+    document.querySelectorAll('[data-node-library-tabs]').forEach(section => {
+        const tabs = Array.from(section.querySelectorAll('[role="tab"][data-node-library-tab]'));
+        const panels = Array.from(section.querySelectorAll('[role="tabpanel"][data-node-library-panel]'));
+        const nextButton = section.querySelector('[data-node-library-tab-next]');
+        if (tabs.length < 2 || panels.length < 2) return;
+        let previousTarget = tabs.find(tab => tab.getAttribute('aria-selected') === 'true')?.dataset.nodeLibraryTab || tabs[0].dataset.nodeLibraryTab;
+
+        const activate = (target, shouldFocus = false) => {
+            const isAllView = target === 'all';
+            if (!isAllView) previousTarget = target;
+            section.classList.toggle('is-all-view', isAllView);
+
+            tabs.forEach(tab => {
+                const active = tab.dataset.nodeLibraryTab === target;
+                tab.setAttribute('aria-selected', String(active));
+                tab.tabIndex = active ? 0 : -1;
+                if (active && shouldFocus) tab.focus();
+            });
+            panels.forEach(panel => {
+                panel.hidden = panel.dataset.nodeLibraryPanel !== target;
+            });
+
+            if (nextButton) {
+                const icon = nextButton.querySelector('.material-symbols-outlined');
+                nextButton.setAttribute('aria-label', isAllView ? '分類タブに戻る' : '全てを表示タブへ移動');
+                nextButton.title = isAllView ? '分類タブに戻る' : '全てを表示タブへ移動';
+                if (icon) icon.textContent = isAllView ? 'chevron_left' : 'chevron_right';
+            }
+        };
+
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => activate(tab.dataset.nodeLibraryTab));
+            tab.addEventListener('keydown', event => {
+                const direction = ['ArrowRight', 'ArrowDown'].includes(event.key)
+                    ? 1
+                    : ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 0;
+                if (!direction) return;
+
+                event.preventDefault();
+                const next = (index + direction + tabs.length) % tabs.length;
+                activate(tabs[next].dataset.nodeLibraryTab, true);
+            });
+        });
+
+        nextButton?.addEventListener('click', () => {
+            if (section.classList.contains('is-all-view')) {
+                activate(previousTarget, true);
+                return;
+            }
+
+            const nextIndex = Math.min(3, tabs.length - 1);
+            tabs[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+            tabs[nextIndex].focus({ preventScroll: true });
+        });
+
+        activate(previousTarget);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const initializers = [
         initSearchBar,
         initDrawer,
         initViewSwitcher,
         initColorModeLoader,
+        initNodeLibraryQr,
+        initNodeLibraryTabs,
         initKeyboardSnackbar,
         initHandyMode,
         initExpressiveFloatingTOC,
