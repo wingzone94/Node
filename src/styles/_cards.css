@@ -255,6 +255,13 @@
     box-shadow: var(--m3-elevation-2);
 }
 
+.m3-label--category,
+.m3-label--category:visited,
+.m3-label--category:hover,
+.m3-label--category:focus-visible {
+    color: #ffffff !important;
+}
+
 .m3-label--icon-only {
     width: 32px;
     height: 32px;
