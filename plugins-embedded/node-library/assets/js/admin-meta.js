@@ -58,12 +58,18 @@
                 summaryField.value = response.summary || '';
                 summaryField.dispatchEvent(new Event('input', { bubbles: true }));
 
+				var validCategories = ['auto', 'pc', 'mobile', 'console'];
 				linkRows.forEach(function (row, index) {
 					var link = response.links && response.links[index] ? response.links[index] : null;
 					var platform = row.querySelector('input[name*="[platform]"]');
 					var url = row.querySelector('input[name*="[url]"]');
+					var category = row.querySelector('select[name*="[category]"]');
 					if (platform) platform.value = link ? link.platform : '';
 					if (url) url.value = link ? link.url : '';
+					if (category) {
+						var cat = link && validCategories.indexOf(link.category) !== -1 ? link.category : 'auto';
+						category.value = cat;
+					}
 
 					var shouldShow = index < Math.max(2, response.links ? response.links.length : 0);
 					row.classList.toggle('is-hidden', !shouldShow);

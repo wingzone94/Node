@@ -45,26 +45,20 @@ $store_groups = [
 foreach ( $links as $link ) {
     $platform = (string) ( $link['platform'] ?? '' );
 
-    if (
-        false !== stripos( $platform, 'nintendo' ) ||
-        false !== stripos( $platform, 'switch' ) ||
-        false !== stripos( $platform, 'playstation' ) ||
-        preg_match( '/(^|\s)ps[345](\s|$)/i', $platform ) ||
-        false !== stripos( $platform, 'xbox' )
-    ) {
-        $store_groups['console']['links'][] = $link;
-    } elseif (
-        false !== stripos( $platform, 'ios' ) ||
-        false !== stripos( $platform, 'apple' ) ||
-        false !== stripos( $platform, 'ipad' ) ||
-        false !== stripos( $platform, 'app store' ) ||
-        false !== stripos( $platform, 'android' ) ||
-        false !== stripos( $platform, 'google play' )
-    ) {
-        $store_groups['mobile']['links'][] = $link;
-    } else {
-        $store_groups['pc']['links'][] = $link;
+    // 手動指定（pc / mobile / console）があればそれを優先。なければ自動判定。
+    $category = function_exists( 'node_library_normalize_category' )
+        ? node_library_normalize_category( $link['category'] ?? '' )
+        : 'auto';
+    if ( 'auto' === $category ) {
+        $category = function_exists( 'node_library_auto_category' )
+            ? node_library_auto_category( $platform )
+            : 'pc';
     }
+
+    if ( ! isset( $store_groups[ $category ] ) ) {
+        $category = 'pc';
+    }
+    $store_groups[ $category ]['links'][] = $link;
 }
 
 $store_groups = array_filter(

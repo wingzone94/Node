@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.2
+ * Version:      1.3.3
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.2' );
+define( 'NODE_LIBRARY_VERSION', '1.3.3' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 
 $node_library_embedded_dir = get_template_directory() . '/plugins-embedded/node-library/';
@@ -25,6 +25,71 @@ define(
 		? get_template_directory_uri() . '/plugins-embedded/node-library/'
 		: content_url( '/plugins/node-library/' )
 );
+
+/**
+ * 手動タブ分類で選べるカテゴリ（タブ）の一覧。
+ *
+ * @return array<string,string> value => 表示ラベル
+ */
+function node_library_tab_categories(): array {
+	return [
+		'auto'    => '自動判定',
+		'pc'      => 'PC',
+		'mobile'  => 'スマホ・タブレット',
+		'console' => 'コンソール',
+	];
+}
+
+/**
+ * ストア名（プラットフォーム名）からタブ分類を自動判定する。
+ * カテゴリの手動指定が無い（auto）リンクに使う共通ロジック。
+ *
+ * @param string $platform プラットフォーム名。
+ * @return string 'pc' | 'mobile' | 'console'
+ */
+function node_library_auto_category( string $platform ): string {
+	if (
+		false !== stripos( $platform, 'nintendo' ) ||
+		false !== stripos( $platform, 'switch' ) ||
+		false !== stripos( $platform, 'playstation' ) ||
+		false !== stripos( $platform, 'ps store' ) ||
+		false !== stripos( $platform, 'psn' ) ||
+		preg_match( '/(^|\s)ps\s?[345](\s|$)/i', $platform ) ||
+		false !== stripos( $platform, 'xbox' )
+	) {
+		return 'console';
+	}
+
+	// Mac App Store はデスクトップ向けなので「App Store」判定より先に PC とする。
+	if ( false !== stripos( $platform, 'mac' ) ) {
+		return 'pc';
+	}
+
+	if (
+		false !== stripos( $platform, 'ios' ) ||
+		false !== stripos( $platform, 'apple' ) ||
+		false !== stripos( $platform, 'ipad' ) ||
+		false !== stripos( $platform, 'app store' ) ||
+		false !== stripos( $platform, 'android' ) ||
+		false !== stripos( $platform, 'google play' )
+	) {
+		return 'mobile';
+	}
+
+	return 'pc';
+}
+
+/**
+ * リンクのカテゴリ値を正規化する（保存・表示・API 共通）。
+ * 'pc' | 'mobile' | 'console' のみ手動指定として有効、それ以外は 'auto'。
+ *
+ * @param mixed $value 入力値。
+ * @return string
+ */
+function node_library_normalize_category( $value ): string {
+	$value = is_string( $value ) ? strtolower( trim( $value ) ) : '';
+	return in_array( $value, [ 'pc', 'mobile', 'console' ], true ) ? $value : 'auto';
+}
 
 /**
  * Node Library Main Class
@@ -154,7 +219,7 @@ final class Node_Library {
 		}
 
 		$prompt = sprintf(
-			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo eShop、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Xbox向けリンクのプラットフォーム名は「Microsoft Store（Xbox）」としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://..."}]} 形式のJSONだけにしてください。',
+			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo eShop、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Xbox向けリンクのプラットフォーム名は「Microsoft Store（Xbox）」としてください。各リンクには表示タブを示す category を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store(Windows)・Mac App Store など）、"mobile"（App Store・Google Play などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto"}]} 形式のJSONだけにしてください。',
 			'app' === $type ? 'アプリ' : 'ゲーム',
 			$title
 		);
@@ -274,6 +339,7 @@ final class Node_Library {
 			$links[] = [
 				'platform' => $platform,
 				'url'      => $url,
+				'category' => node_library_normalize_category( $link['category'] ?? '' ),
 			];
 
 			if ( count( $links ) >= 10 ) {
@@ -682,22 +748,29 @@ final class Node_Library {
 					<?php
 					$filled_count = is_array( $links ) ? count( $links ) : 0;
 					$visible_rows = max( 2, min( 10, $filled_count + 1 ) );
+					$tab_categories = function_exists( 'node_library_tab_categories' ) ? node_library_tab_categories() : [ 'auto' => '自動判定' ];
 					for ( $i = 0; $i < 10; $i++ ) :
 						$p       = $links[ $i ]['platform'] ?? '';
 						$u       = $links[ $i ]['url'] ?? '';
+						$c       = function_exists( 'node_library_normalize_category' ) ? node_library_normalize_category( $links[ $i ]['category'] ?? '' ) : 'auto';
 						$hidden  = $i >= $visible_rows ? ' is-hidden' : '';
 					?>
 						<div class="link-row<?php echo esc_attr( $hidden ); ?>" style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
 							<span style="min-width:20px; font-weight:bold; color:#666;"><?php echo $i + 1; ?>.</span>
 							<input type="text" name="node_library_links[<?php echo $i; ?>][platform]" value="<?php echo esc_attr( $p ); ?>" placeholder="ストア名 (例: Steam, Nintendo Switch)" style="flex:1;">
 							<input type="text" name="node_library_links[<?php echo $i; ?>][url]" value="<?php echo esc_url( $u ); ?>" placeholder="https://..." style="flex:2;">
+							<select name="node_library_links[<?php echo $i; ?>][category]" class="node-library-link-category" title="表示タブ" style="flex:0 0 auto; min-width:140px;">
+								<?php foreach ( $tab_categories as $cat_value => $cat_label ) : ?>
+									<option value="<?php echo esc_attr( $cat_value ); ?>" <?php selected( $c, $cat_value ); ?>><?php echo esc_html( $cat_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
 						</div>
 					<?php endfor; ?>
 				</div>
 				<p style="margin-top:8px;">
 					<button type="button" class="button button-secondary" id="node-library-add-link">リンク行を追加</button>
 				</p>
-				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation, Microsoft Store（Xbox）, Nintendo Switch, App Store）</p>
+				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation, Microsoft Store（Xbox）, Nintendo Switch, App Store）<br>「表示タブ」で各リンクをどのタブ（PC / スマホ・タブレット / コンソール）に出すか手動指定できます。「自動判定」のままならストア名から自動分類します。</p>
 			</div>
 		</div>
 		<?php
@@ -770,7 +843,8 @@ final class Node_Library {
 					if ( ! empty( $link['platform'] ) && ! empty( $link['url'] ) ) {
 						$links[] = [
 							'platform' => sanitize_text_field( $link['platform'] ),
-							'url'      => esc_url_raw( $link['url'] )
+							'url'      => esc_url_raw( $link['url'] ),
+							'category' => node_library_normalize_category( $link['category'] ?? '' ),
 						];
 					}
 				}
