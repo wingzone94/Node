@@ -97,6 +97,8 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
     if ( stripos( $platform, 'steam' ) !== false ) $platform_slug = 'steam';
     if ( stripos( $platform, 'ios' ) !== false || stripos( $platform, 'apple' ) !== false || stripos( $platform, 'app store' ) !== false ) $platform_slug = 'ios';
     if ( stripos( $platform, 'android' ) !== false || stripos( $platform, 'google' ) !== false ) $platform_slug = 'android';
+    if ( stripos( $platform, 'mac' ) !== false ) $platform_slug = 'mac';
+    if ( stripos( $platform, 'microsoft' ) !== false && stripos( $platform, 'xbox' ) === false ) $platform_slug = 'windows';
     if ( stripos( $platform, 'windows' ) !== false || stripos( $platform, 'pc' ) !== false ) $platform_slug = 'windows';
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );
     $qr_panel_id = $supports_qr ? wp_unique_id( 'node-library-qr-' ) : '';
@@ -104,16 +106,20 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
     $button_label = match ( $platform_slug ) {
         'nintendo'    => 'Nintendo Storeで見る',
         'playstation' => 'PS Storeで見る',
+        'mac'         => 'Mac App Storeで見る',
         default       => $platform . ' ' . $button_text,
     };
     $badge_file = match ( $platform_slug ) {
         'ios'     => 'app-store-badge-ja.svg',
         'android' => 'google-play-badge-ja.png',
+        'mac'     => 'mac-app-store-badge-ja.svg',
+        'windows', 'xbox' => 'microsoft-store-badge-ja.svg',
         default   => '',
     };
     $badge_url = $badge_file
         ? plugins_url( 'assets/images/' . $badge_file, dirname( __DIR__ ) . '/node-library.php' )
         : '';
+    $badge_always_visible = in_array( $platform_slug, [ 'mac', 'windows', 'xbox' ], true );
     if ( $supports_qr ) :
     ?>
         <div class="m3-platform-action m3-platform-action--qr">
@@ -153,6 +159,14 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
                 <span class="m3-platform-qr-copy-status" aria-live="polite" data-node-library-qr-copy-status></span>
             </dialog>
         </div>
+    <?php elseif ( $badge_always_visible ) : ?>
+        <a href="<?php echo esc_url( $link['url'] ); ?>"
+           class="m3-platform-store-badge-link m3-platform-store-badge-link--always m3-platform-store-badge-link--<?php echo esc_attr( $platform_slug ); ?>"
+           target="_blank"
+           rel="noopener"
+           aria-label="<?php echo esc_attr( $button_label ); ?>">
+            <img class="m3-platform-store-badge" src="<?php echo esc_url( $badge_url ); ?>" alt="<?php echo esc_attr( $button_label ); ?>">
+        </a>
     <?php else : ?>
         <a href="<?php echo esc_url( $link['url'] ); ?>"
            class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-ripple-host"
@@ -188,7 +202,7 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
                             $tab_id   = $store_tabs_id . '-' . $group_key . '-tab';
                             $panel_id = $store_tabs_id . '-' . $group_key . '-panel';
                             ?>
-                            <button class="m3-game-card__tab" id="<?php echo esc_attr( $tab_id ); ?>" type="button" role="tab" aria-selected="<?php echo 0 === $tab_index ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $panel_id ); ?>" tabindex="<?php echo 0 === $tab_index ? '0' : '-1'; ?>" data-node-library-tab="<?php echo esc_attr( $group_key ); ?>">
+                            <button class="m3-game-card__tab" id="<?php echo esc_attr( $tab_id ); ?>" type="button" role="tab" aria-label="<?php echo esc_attr( $group['label'] ); ?>" aria-selected="<?php echo 0 === $tab_index ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $panel_id ); ?>" tabindex="<?php echo 0 === $tab_index ? '0' : '-1'; ?>" data-node-library-tab="<?php echo esc_attr( $group_key ); ?>">
                                 <span class="material-symbols-outlined" aria-hidden="true"><?php echo esc_html( $group['icon'] ); ?></span>
                                 <span class="m3-game-card__tab-label m3-game-card__tab-label--full"><?php echo esc_html( $group['label'] ); ?></span>
                                 <span class="m3-game-card__tab-label m3-game-card__tab-label--compact"><?php echo esc_html( $group['short_label'] ); ?></span>
@@ -201,9 +215,9 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
                             <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
                         </button>
                     <?php endif; ?>
-                    <button class="m3-game-card__tab-back" type="button" data-node-library-tab-back hidden>
+                    <button class="m3-game-card__tab-back" type="button" aria-label="デバイスタイプ別に戻る" title="デバイスタイプ別に戻る" data-node-library-tab-back hidden>
                         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-                        デバイスタイプ別に戻る
+                        <span class="m3-game-card__tab-back-label">デバイスタイプ別に戻る</span>
                     </button>
                     </div>
                 <?php endif; ?>
