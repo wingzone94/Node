@@ -1127,6 +1127,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 16px;
     padding: 16px 22px 14px 26px;
     border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 74%, transparent);
@@ -1175,9 +1176,8 @@
 }
 
 .node-footnotes__info-panel {
-    flex: 0 1 auto;
+    flex: 1 1 100%;
     min-width: 0;
-    overflow: hidden;
     margin: 0;
     padding: 0;
     border: 0;
@@ -1185,9 +1185,8 @@
     color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 84%, transparent);
     font-size: 0.72rem;
     font-weight: 500;
-    line-height: 1.4;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.5;
+    white-space: normal;
 }
 
 .node-footnotes__info-panel[hidden] {
@@ -1423,11 +1422,10 @@
     }
 
     .node-footnotes__info-panel {
-        flex: 1;
         padding: 0;
-        font-size: 0.64rem;
+        font-size: 0.7rem;
         font-weight: 500;
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     .node-footnotes__header {
