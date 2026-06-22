@@ -10,6 +10,9 @@ Node テーマの更新履歴です。
 - **Gemini 連携対応**: 情報取得（Gemini）の応答にも `category` を含めるようプロンプト・パースを拡張し、取得結果から表示タブを自動設定できるように。
 - **ストア追加**: Amazon Appstore（スマホ・タブレットタブ / ブランドカラー #FF9900）と GeForce NOW（PC タブ / NVIDIA グリーン #76B900）に対応。許可ドメインと Gemini プロンプトにも追加。
 
+### Gemini API
+- **エラー表示の改善**: テーマ全体の Gemini API 利用箇所（ライブラリ情報生成 / 要約・ファクトチェック等の AI ツール / モデル一覧取得）で、API エラーメッセージを利用者に表示。利用上限超過（HTTP 429 / RESOURCE_EXHAUSTED）時は `RetryInfo` から**解除予定時刻**を算出して表示するよう共通化（`node_gemini_format_api_error()`）。
+
 ## [1.1.0] - 2026.06.13
 ### パフォーマンス・外観・検索 UX
 - **Font Awesome 廃止**:

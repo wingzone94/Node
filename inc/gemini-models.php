@@ -17,6 +17,103 @@ function node_gemini_models_cache_key(): string {
 }
 
 /**
+ * protobuf Duration 文字列（例: "37s" / "1.5s" / "1m30s" / "1h"）を秒に変換する。
+ */
+if ( ! function_exists( 'node_gemini_parse_duration_seconds' ) ) {
+	function node_gemini_parse_duration_seconds( string $value ): int {
+		$value = trim( $value );
+		if ( '' === $value ) {
+			return 0;
+		}
+		// 単純な秒表現（"37s" / "56.7s"）。
+		if ( preg_match( '/^([0-9]+(?:\.[0-9]+)?)s$/', $value, $m ) ) {
+			return (int) ceil( (float) $m[1] );
+		}
+		// 複合表現（"1h2m3s" 等）。
+		$total = 0;
+		if ( preg_match( '/([0-9]+)\s*h/', $value, $m ) ) {
+			$total += (int) $m[1] * 3600;
+		}
+		if ( preg_match( '/([0-9]+)\s*m(?!s)/', $value, $m ) ) {
+			$total += (int) $m[1] * 60;
+		}
+		if ( preg_match( '/([0-9]+(?:\.[0-9]+)?)\s*s/', $value, $m ) ) {
+			$total += (int) ceil( (float) $m[1] );
+		}
+		return $total;
+	}
+}
+
+/**
+ * Gemini のエラー詳細（RetryInfo）から再試行までの秒数を取り出す。
+ *
+ * @param mixed $data デコード済みレスポンス。
+ */
+if ( ! function_exists( 'node_gemini_extract_retry_seconds' ) ) {
+	function node_gemini_extract_retry_seconds( $data ): int {
+		if ( ! is_array( $data ) ) {
+			return 0;
+		}
+		$details = $data['error']['details'] ?? array();
+		foreach ( (array) $details as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+			$type = (string) ( $entry['@type'] ?? '' );
+			if ( false !== stripos( $type, 'RetryInfo' ) && isset( $entry['retryDelay'] ) ) {
+				return node_gemini_parse_duration_seconds( (string) $entry['retryDelay'] );
+			}
+		}
+		return 0;
+	}
+}
+
+/**
+ * Gemini API のエラー応答から、利用者向けの日本語エラーメッセージを生成する。
+ * 429（利用上限超過 / RESOURCE_EXHAUSTED）の場合は解除予定時刻も付与する。
+ *
+ * @param int    $status HTTP ステータスコード（0 = 不明）。
+ * @param mixed  $data   デコード済みレスポンス（連想配列想定）。
+ * @param string $raw    生のレスポンス本文（フォールバック用）。
+ * @return string
+ */
+if ( ! function_exists( 'node_gemini_format_api_error' ) ) {
+	function node_gemini_format_api_error( int $status, $data, string $raw = '' ): string {
+		$detail     = '';
+		$api_status = '';
+		if ( is_array( $data ) && isset( $data['error'] ) && is_array( $data['error'] ) ) {
+			$detail     = (string) ( $data['error']['message'] ?? '' );
+			$api_status = (string) ( $data['error']['status'] ?? '' );
+		}
+		if ( '' === $detail ) {
+			$detail = '' !== trim( $raw ) ? wp_trim_words( $raw, 40, '…' ) : 'Gemini API から有効な応答が得られませんでした。';
+		}
+
+		$is_quota = ( 429 === $status ) || ( 'RESOURCE_EXHAUSTED' === $api_status );
+
+		if ( $is_quota ) {
+			$retry = node_gemini_extract_retry_seconds( $data );
+			if ( $retry > 0 ) {
+				$reset = wp_date( 'n月j日 H:i:s', time() + $retry );
+				return sprintf(
+					'Gemini API の利用上限に達しました（quota 超過）。約 %d 秒後・%s 頃に解除予定です。詳細: %s',
+					$retry,
+					$reset,
+					$detail
+				);
+			}
+			return 'Gemini API の利用上限に達しました（quota 超過）。解除予定時刻が応答に含まれていません。しばらく待って再試行してください。詳細: ' . $detail;
+		}
+
+		if ( $status > 0 ) {
+			return sprintf( 'Gemini API エラー (HTTP %d): %s', $status, $detail );
+		}
+
+		return 'Gemini API エラー: ' . $detail;
+	}
+}
+
+/**
  * フォールバック用の静的モデル一覧
  *
  * @return array<string, string>
@@ -113,8 +210,9 @@ function node_fetch_gemini_models_from_api( string $api_key, bool $force_refresh
 		return new WP_Error( 'missing_api_key', 'API キーが未設定です。' );
 	}
 
-	$models   = array();
-	$page_url = add_query_arg(
+	$models     = array();
+	$last_error = '';
+	$page_url   = add_query_arg(
 		array(
 			'key'      => $api_key,
 			'pageSize' => 100,
@@ -132,10 +230,16 @@ function node_fetch_gemini_models_from_api( string $api_key, bool $force_refresh
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$last_error = $response->get_error_message();
 			break;
 		}
 
-		if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		$http_status = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $http_status ) {
+			$err_body = (string) wp_remote_retrieve_body( $response );
+			$last_error = function_exists( 'node_gemini_format_api_error' )
+				? node_gemini_format_api_error( $http_status, json_decode( $err_body, true ), $err_body )
+				: ( 'Gemini API エラー (HTTP ' . $http_status . ')' );
 			break;
 		}
 
@@ -178,7 +282,12 @@ function node_fetch_gemini_models_from_api( string $api_key, bool $force_refresh
 			return $stale;
 		}
 
-		return new WP_Error( 'models_fetch_failed', 'Gemini API からモデル一覧を取得できませんでした。' );
+		return new WP_Error(
+			'models_fetch_failed',
+			'' !== $last_error
+				? 'Gemini API からモデル一覧を取得できませんでした。' . $last_error
+				: 'Gemini API からモデル一覧を取得できませんでした。'
+		);
 	}
 
 	uasort(

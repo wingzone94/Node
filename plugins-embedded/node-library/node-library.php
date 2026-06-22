@@ -260,14 +260,14 @@ final class Node_Library {
 		}
 
 		$status = (int) wp_remote_retrieve_response_code( $response );
-		$data   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		if ( 200 !== $status || ! is_array( $data ) ) {
-			$message = is_array( $data ) ? (string) ( $data['error']['message'] ?? '' ) : '';
-			return new WP_Error(
-				'gemini_response_failed',
-				$message ? 'Gemini APIエラー: ' . sanitize_text_field( $message ) : 'Gemini APIから情報を取得できませんでした。',
-				[ 'status' => 502 ]
-			);
+		$body   = (string) wp_remote_retrieve_body( $response );
+		$data   = json_decode( $body, true );
+		if ( 200 !== $status || ! is_array( $data ) || isset( $data['error'] ) ) {
+			$message = function_exists( 'node_gemini_format_api_error' )
+				? node_gemini_format_api_error( $status, $data, $body )
+				: 'Gemini APIから情報を取得できませんでした。';
+			$code    = ( 429 === $status ) ? 'gemini_quota_exceeded' : 'gemini_response_failed';
+			return new WP_Error( $code, $message, [ 'status' => ( 429 === $status ) ? 429 : 502 ] );
 		}
 
 		$parts = $data['candidates'][0]['content']['parts'] ?? [];

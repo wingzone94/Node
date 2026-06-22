@@ -103,8 +103,19 @@ class Node_Gemini_API {
             return $response;
         }
 
-        $data = json_decode(wp_remote_retrieve_body($response), true);
-        
+        $status = (int) wp_remote_retrieve_response_code($response);
+        $body   = (string) wp_remote_retrieve_body($response);
+        $data   = json_decode($body, true);
+
+        // HTTP エラー / API エラー応答（429 の利用上限超過を含む）を分かりやすく返す。
+        if (200 !== $status || (is_array($data) && isset($data['error']))) {
+            $message = function_exists('node_gemini_format_api_error')
+                ? node_gemini_format_api_error($status, $data, $body)
+                : ('Gemini API エラー (HTTP ' . $status . ')');
+            $code = (429 === $status) ? 'gemini_quota_exceeded' : 'gemini_api_error';
+            return new WP_Error($code, $message, ['status' => $status]);
+        }
+
         if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
             $text = trim($data['candidates'][0]['content']['parts'][0]['text']);
 
@@ -118,7 +129,12 @@ class Node_Gemini_API {
             return $text;
         }
 
-        return new WP_Error('api_error', 'APIから有効なレスポンスが得られませんでした。: ' . wp_remote_retrieve_body($response));
+        return new WP_Error(
+            'api_error',
+            function_exists('node_gemini_format_api_error')
+                ? node_gemini_format_api_error($status, $data, $body)
+                : 'Gemini API から有効なレスポンスが得られませんでした。'
+        );
     }
 
     /**
