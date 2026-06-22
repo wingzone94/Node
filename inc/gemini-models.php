@@ -69,6 +69,22 @@ if ( ! function_exists( 'node_gemini_extract_retry_seconds' ) ) {
 }
 
 /**
+ * 無料枠の日次 quota がリセットされる次回時刻（太平洋時間の翌0時）を UNIX 時刻で返す。
+ * Gemini API の無料枠 RPD は太平洋時間の深夜0時にリセットされる。
+ */
+if ( ! function_exists( 'node_gemini_next_daily_quota_reset' ) ) {
+	function node_gemini_next_daily_quota_reset(): int {
+		try {
+			$pt   = new DateTimeZone( 'America/Los_Angeles' );
+			$next = new DateTime( 'tomorrow 00:00:00', $pt );
+			return $next->getTimestamp();
+		} catch ( Exception $e ) {
+			return 0;
+		}
+	}
+}
+
+/**
  * Gemini API のエラー応答から、利用者向けの日本語エラーメッセージを生成する。
  * 429（利用上限超過 / RESOURCE_EXHAUSTED）の場合は解除予定時刻も付与する。
  *
@@ -94,15 +110,27 @@ if ( ! function_exists( 'node_gemini_format_api_error' ) ) {
 		if ( $is_quota ) {
 			$retry = node_gemini_extract_retry_seconds( $data );
 			if ( $retry > 0 ) {
+				// レート上限（毎分など）。応答の RetryInfo に基づき短時間で解除。
 				$reset = wp_date( 'n月j日 H:i:s', time() + $retry );
 				return sprintf(
-					'Gemini API の利用上限に達しました（quota 超過）。約 %d 秒後・%s 頃に解除予定です。詳細: %s',
+					'Gemini API のレート上限に達しました。約 %d 秒後（%s 頃）に解除予定です。詳細: %s',
 					$retry,
 					$reset,
 					$detail
 				);
 			}
-			return 'Gemini API の利用上限に達しました（quota 超過）。解除予定時刻が応答に含まれていません。しばらく待って再試行してください。詳細: ' . $detail;
+
+			// RetryInfo が無い場合は多くが無料枠の日次上限。太平洋時間の翌0時にリセットされる。
+			$daily_reset = node_gemini_next_daily_quota_reset();
+			if ( $daily_reset > 0 ) {
+				return sprintf(
+					'Gemini API の利用上限（quota）に達しました。無料枠の日次上限であれば %s 頃（太平洋時間の翌0時）にリセットされます。上限緩和には課金プランの確認が必要です。詳細: %s',
+					wp_date( 'n月j日 H:i', $daily_reset ),
+					$detail
+				);
+			}
+
+			return 'Gemini API の利用上限（quota）に達しました。上限緩和には課金プランの確認が必要です。詳細: ' . $detail;
 		}
 
 		if ( $status > 0 ) {
