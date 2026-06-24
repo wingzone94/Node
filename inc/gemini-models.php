@@ -85,6 +85,23 @@ if ( ! function_exists( 'node_gemini_next_daily_quota_reset' ) ) {
 }
 
 /**
+ * UNIX 時刻を日本時間（Asia/Tokyo）の文字列に整形する。
+ *
+ * @param int    $timestamp UNIX 時刻。
+ * @param string $format    日付フォーマット。
+ * @return string
+ */
+if ( ! function_exists( 'node_gemini_format_jst' ) ) {
+	function node_gemini_format_jst( int $timestamp, string $format ): string {
+		try {
+			return wp_date( $format, $timestamp, new DateTimeZone( 'Asia/Tokyo' ) );
+		} catch ( Exception $e ) {
+			return wp_date( $format, $timestamp );
+		}
+	}
+}
+
+/**
  * Gemini API のエラー応答から、利用者向けの日本語エラーメッセージを生成する。
  * 429（利用上限超過 / RESOURCE_EXHAUSTED）の場合は解除予定時刻も付与する。
  *
@@ -108,12 +125,18 @@ if ( ! function_exists( 'node_gemini_format_api_error' ) ) {
 		$is_quota = ( 429 === $status ) || ( 'RESOURCE_EXHAUSTED' === $api_status );
 
 		if ( $is_quota ) {
+			// 冗長な英語メッセージ（リンク等）を省略してUIの崩れを防ぐ
+			if ( false !== stripos( $detail, 'You exceeded your current quota' ) ) {
+				$detail = 'APIの無料枠または課金プランの利用枠を超過しました。';
+			}
+
+
 			$retry = node_gemini_extract_retry_seconds( $data );
 			if ( $retry > 0 ) {
 				// レート上限（毎分など）。応答の RetryInfo に基づき短時間で解除。
-				$reset = wp_date( 'n月j日 H:i:s', time() + $retry );
+				$reset = node_gemini_format_jst( time() + $retry, 'n月j日 H:i:s' );
 				return sprintf(
-					'Gemini API のレート上限に達しました。約 %d 秒後（%s 頃）に解除予定です。詳細: %s',
+					'Gemini API のレート上限に達しました。約 %d 秒後（日本時間 %s 頃）に解除予定です。詳細: %s',
 					$retry,
 					$reset,
 					$detail
@@ -124,8 +147,8 @@ if ( ! function_exists( 'node_gemini_format_api_error' ) ) {
 			$daily_reset = node_gemini_next_daily_quota_reset();
 			if ( $daily_reset > 0 ) {
 				return sprintf(
-					'Gemini API の利用上限（quota）に達しました。無料枠の日次上限であれば %s 頃（太平洋時間の翌0時）にリセットされます。上限緩和には課金プランの確認が必要です。詳細: %s',
-					wp_date( 'n月j日 H:i', $daily_reset ),
+					'Gemini API の利用上限（quota）に達しました。無料枠の日次上限であれば、日本時間 %s 頃（太平洋時間の翌0時）にリセットされます。上限緩和には課金プランの確認が必要です。詳細: %s',
+					node_gemini_format_jst( $daily_reset, 'n月j日 H:i' ),
 					$detail
 				);
 			}
@@ -258,7 +281,12 @@ function node_fetch_gemini_models_from_api( string $api_key, bool $force_refresh
 		);
 
 		if ( is_wp_error( $response ) ) {
-			$last_error = $response->get_error_message();
+			$err_msg = $response->get_error_message();
+			if ( strpos( $err_msg, 'timed out' ) !== false ) {
+				$last_error = 'Gemini APIからの応答がタイムアウトしました。しばらく待ってから再度お試しください。';
+			} else {
+				$last_error = '詳細: ' . $err_msg;
+			}
 			break;
 		}
 
