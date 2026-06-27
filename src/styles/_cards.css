@@ -331,6 +331,48 @@
     opacity: 0.95;
 }
 
+/* シリーズの現在回/全話数バナー（カード右上） */
+.m3-card__series-banner {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--node-series-color, #FF9900);
+    color: #FFFFFF;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    line-height: 1.2;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--node-series-color, #FF9900) 30%, transparent);
+}
+
+.m3-card__series-banner .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.m3-card__series-banner--no-image {
+    position: static;
+    margin-left: auto;
+    box-shadow: none;
+}
+
+@media (max-width: 600px) {
+    .m3-card__series-banner {
+        top: 8px;
+        right: 8px;
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
+
+    .m3-card__series-banner .material-symbols-outlined {
+        font-size: 14px;
+    }
+}
+
 /* 3. Content Area */
 .m3-card__content {
     padding: 20px;
