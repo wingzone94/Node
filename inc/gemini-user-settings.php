@@ -163,9 +163,11 @@ function node_render_gemini_user_fields( WP_User $user, bool $is_settings_page =
 	</table>
 
 	<?php if ( function_exists( 'node_gemini_get_user_quota_usage' ) ) : ?>
-	<h3 style="margin-top: 30px;"><?php esc_html_e( 'API 使用量・Quota ステータス', 'node' ); ?></h3>
+	<h3 style="margin-top: 30px;"><?php esc_html_e( 'Gemini API クォータ使用状況', 'node' ); ?></h3>
 	<p class="description">
-		<?php esc_html_e( 'このサーバーで記録しているローカルの概算使用量です。APIの実際のカウントとは誤差がある場合があります。', 'node' ); ?>
+		<?php esc_html_e( 'この画面は、このWordPressサーバー経由で実行したリクエストのローカル概算です。Google側の正確な残量・請求額・無料枠の最新条件は取得していません。', 'node' ); ?>
+		<br>
+		<?php esc_html_e( 'RPM=1分あたりのリクエスト数、TPM=1分あたりのトークン数、RPD=1日あたりのリクエスト数です。料金ではなく、APIの利用上限の目安として確認してください。', 'node' ); ?>
 	</p>
 	<div class="node-gemini-quota-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 15px;">
 		<?php foreach ( $model_options as $model_id => $model_label ) :
@@ -188,9 +190,9 @@ function node_render_gemini_user_fields( WP_User $user, bool $is_settings_page =
 			<?php if ( $is_limit_zero ) : ?>
 				<div style="padding: 6px 8px; background: #ffebee; border-left: 3px solid #f44336; margin-bottom: 0;">
 					<p style="margin: 0; font-size: 11px; color: #d32f2f;">
-						<strong>利用不可:</strong> このtierでは利用不可。<br>
+						<strong>利用不可:</strong> このモデルは現在のクォータ設定では利用できません。<br>
 						<?php if ( strpos( $model_id, 'pro' ) !== false ) : ?>
-						Flash系への変更を推奨します。
+						Pro系で429や利用不可が出る場合は、Flash系への変更を推奨します。
 						<?php endif; ?>
 					</p>
 				</div>
@@ -214,9 +216,9 @@ function node_render_gemini_user_fields( WP_User $user, bool $is_settings_page =
 
 				<?php
 				$metrics = [
-					'RPM' => [ 'label' => 'RPM', 'val' => $usage['rpm']['count'], 'max' => $limits['rpm'] ],
-					'TPM' => [ 'label' => 'TPM', 'val' => $usage['tpm']['count'], 'max' => $limits['tpm'] ],
-					'RPD' => [ 'label' => 'RPD', 'val' => $usage['rpd']['count'], 'max' => $limits['rpd'] ],
+					'RPM' => [ 'label' => 'RPM（リクエスト/分）', 'val' => $usage['rpm']['count'], 'max' => $limits['rpm'] ],
+					'TPM' => [ 'label' => 'TPM（トークン/分）', 'val' => $usage['tpm']['count'], 'max' => $limits['tpm'] ],
+					'RPD' => [ 'label' => 'RPD（リクエスト/日）', 'val' => $usage['rpd']['count'], 'max' => $limits['rpd'] ],
 				];
 				foreach ( $metrics as $key => $m ) :
 					$val = $m['val'];

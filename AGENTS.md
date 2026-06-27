@@ -11,6 +11,8 @@
 * ブログ / サイトのブランド名は **Luminous Core**
 * WordPress テーマ名は **Node**
 * `style.css` の `Theme Name`、テーマディレクトリ名、配布ZIP内のルートディレクトリ名は **Node** に統一すること
+* `style.css` の `Author`（テーマ作成者名義）は **Luminous Core Teams** に固定すること
+* テーマ作成者名義に個人の本名を入れないこと
 * ヘッダー、フッター、OGP、メタ情報、サイト表示、`get_bloginfo( 'name' )` 由来の表示は **Luminous Core** を使用すること
 * 「Luminous Core テーマ」「Luminous Core（Node）テーマ」のように、ブログ名とテーマ名を混同しないこと
 * 併記が必要な場合は「ブログブランド: Luminous Core / テーマ: Node」と明記すること
