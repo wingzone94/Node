@@ -45,6 +45,7 @@
             }
 
             generateBtn.disabled = true;
+            generateStatus.style.color = '';
             generateStatus.textContent = '取得中…';
 
             window.wp.apiFetch({
@@ -84,6 +85,7 @@
 					? '紹介文とストアリンク' + linkCount + '件を反映しました。'
 					: '紹介文を反映しました。公式ストアページは見つかりませんでした。';
             }).catch(function (error) {
+				generateStatus.style.color = '#d63638';
                 generateStatus.textContent = error && error.message ? error.message : 'ゲーム（アプリ）情報の取得に失敗しました。';
             }).finally(function () {
                 generateBtn.disabled = false;

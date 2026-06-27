@@ -43,6 +43,14 @@ if ( ! function_exists( 'node_ai_ajax_generate_summary' ) ) {
         update_post_meta($post_id, '_node_ai_max_lines', $max_lines);
         update_post_meta($post_id, '_node_ai_max_chars', $max_chars);
 
+        // もし使用モデルが指定されていれば、ユーザーのデフォルト設定として保存する
+        if ( isset( $_POST['gemini_model'] ) && ! empty( $_POST['gemini_model'] ) ) {
+            $gemini_model = sanitize_text_field( $_POST['gemini_model'] );
+            if ( function_exists('node_is_valid_gemini_model_id') && node_is_valid_gemini_model_id( $gemini_model ) ) {
+                update_user_meta( get_current_user_id(), 'node_gemini_model', $gemini_model );
+            }
+        }
+
         // APIクラスを使用して要約を生成 (JSONレスポンスを期待)
         if ( class_exists( 'Node_Gemini_API' ) ) {
             $api = new Node_Gemini_API();
@@ -136,6 +144,14 @@ if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
         $content = strip_shortcodes( strip_tags( $post->post_content ) );
         if ( empty( trim( $content ) ) ) {
             wp_send_json_error( array( 'message' => '記事本文が空です。' ) );
+        }
+
+        // もし使用モデルが指定されていれば、ユーザーのデフォルト設定として保存する
+        if ( isset( $_POST['gemini_model'] ) && ! empty( $_POST['gemini_model'] ) ) {
+            $gemini_model = sanitize_text_field( $_POST['gemini_model'] );
+            if ( function_exists('node_is_valid_gemini_model_id') && node_is_valid_gemini_model_id( $gemini_model ) ) {
+                update_user_meta( get_current_user_id(), 'node_gemini_model', $gemini_model );
+            }
         }
 
         if ( ! class_exists( 'Node_Gemini_API' ) ) {

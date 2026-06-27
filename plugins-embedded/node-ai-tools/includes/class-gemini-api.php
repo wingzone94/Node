@@ -100,7 +100,11 @@ class Node_Gemini_API {
         ]);
 
         if (is_wp_error($response)) {
-            return $response;
+            $err_msg = $response->get_error_message();
+            if (strpos($err_msg, 'timed out') !== false) {
+                return new WP_Error('gemini_timeout', 'Gemini APIからの応答がタイムアウトしました。しばらく待ってから再度お試しください。', ['status' => 504]);
+            }
+            return new WP_Error('gemini_request_failed', 'Gemini APIへの接続に失敗しました。詳細: ' . $err_msg, ['status' => 502]);
         }
 
         $status = (int) wp_remote_retrieve_response_code($response);
@@ -109,6 +113,10 @@ class Node_Gemini_API {
 
         // HTTP エラー / API エラー応答（429 の利用上限超過を含む）を分かりやすく返す。
         if (200 !== $status || (is_array($data) && isset($data['error']))) {
+            if ( function_exists( 'node_gemini_record_quota_error' ) ) {
+                node_gemini_record_quota_error( $user_id, $model_name, $status, $data );
+            }
+
             $message = function_exists('node_gemini_format_api_error')
                 ? node_gemini_format_api_error($status, $data, $body)
                 : ('Gemini API エラー (HTTP ' . $status . ')');
@@ -118,6 +126,11 @@ class Node_Gemini_API {
 
         if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
             $text = trim($data['candidates'][0]['content']['parts'][0]['text']);
+
+            if ( function_exists( 'node_gemini_record_usage' ) ) {
+                $tokens = (int) ($data['usageMetadata']['totalTokenCount'] ?? 0);
+                node_gemini_record_usage( $user_id, $model_name, $tokens, 1 );
+            }
 
             if ( ! empty( $options['return_metadata'] ) ) {
                 return array(

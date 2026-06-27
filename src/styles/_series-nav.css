@@ -1,0 +1,330 @@
+/* --- Series Navigation Chart (前後ナビ統合 + 縦並びチャート + アコーディオン) --- */
+/* M3 Expressive ハイブリッド型: カード全体はテーマ共通のニュートラル面（.m3-toc-card）に統一し、
+   アクセント色（--node-series-color、既定#FF9900）は「現在地」を示す要素（件数バッジ・現在回ノード）にのみ限定する。 */
+
+.m3-series-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m3-spacing-l);
+}
+
+.m3-series-toc__heading {
+    margin: 0 0 16px 0;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.m3-series-toc__toggle {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: var(--m3-spacing-m);
+    width: 100%;
+    padding: 4px 0;
+    cursor: pointer;
+    border-radius: var(--m3-radius-small);
+    transition: opacity 0.2s var(--m3-motion-easing);
+}
+
+.m3-series-toc__toggle:hover,
+.m3-series-toc__toggle:focus-visible {
+    opacity: 0.8;
+}
+
+.m3-series-toc__toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    flex-shrink: 0;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-series-toc__toggle-label {
+    flex-grow: 1;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: opacity 0.15s var(--m3-motion-easing);
+}
+
+/* 開いたら「目次」ラベルは消え、現在回・シリーズ説明の文章に切り替わる */
+.m3-series-toc__toggle[aria-expanded="true"] .m3-series-toc__toggle-label {
+    display: none;
+}
+
+.m3-series-toc__toggle-expanded-label {
+    display: none;
+    flex-grow: 1;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.7;
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: left;
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+.m3-series-toc__toggle[aria-expanded="true"] .m3-series-toc__toggle-expanded-label {
+    display: block;
+}
+
+/* 唯一の強調要素: 現在地バッジ（X/Y）だけをシリーズ色で塗る */
+.m3-series-toc__count {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 100px;
+    background: var(--node-series-color, #FF9900);
+    color: #FFFFFF;
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1.5;
+}
+
+.m3-series-toc__chevron {
+    flex-shrink: 0;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: transform 0.3s var(--m3-motion-easing);
+}
+
+.m3-series-toc__toggle[aria-expanded="true"] .m3-series-toc__chevron {
+    transform: rotate(180deg);
+}
+
+.m3-series-toc__footer {
+    display: flex;
+    margin-top: var(--m3-spacing-m);
+    padding-top: var(--m3-spacing-m);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* 目次見出しピル（.m3-series-toc__toggle）と同じ「クリックでピル自体が横に伸びて説明文に
+   切り替わる」方式。フロー内で幅が変わるだけなので、座標計算や浮動オーバーレイは一切不要で、
+   テキストへの衝突も構造的に発生しない。 */
+.m3-series-toc__info-toggle {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    max-width: 100%;
+    padding: 6px 14px;
+    border-radius: 18px;
+    background: transparent;
+    color: color-mix(in srgb, #2196F3 65%, var(--md-sys-color-on-surface-variant) 35%);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.18s ease, background-color 0.18s ease, width 0.3s var(--m3-motion-easing), padding 0.3s var(--m3-motion-easing);
+}
+
+.m3-series-toc__info-toggle:hover {
+    background: color-mix(in srgb, #2196F3 12%, var(--md-sys-color-surface-container) 88%);
+    color: #2196F3;
+}
+
+.m3-series-toc__info-toggle[aria-expanded="true"] {
+    width: 100%;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: #FFFFFF;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+[data-theme="dark"] .m3-series-toc__info-toggle[aria-expanded="true"] {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.m3-series-toc__info-toggle:focus-visible {
+    outline: 3px solid color-mix(in srgb, #2196F3 30%, transparent);
+    outline-offset: 2px;
+}
+
+.m3-series-toc__info-toggle-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+}
+
+.m3-series-toc__info-toggle[aria-expanded="true"] .m3-series-toc__info-toggle-icon {
+    color: #2196F3;
+    margin-top: 1px;
+}
+
+.m3-series-toc__info-toggle[aria-expanded="true"] .m3-series-toc__info-toggle-label {
+    display: none;
+}
+
+.m3-series-toc__info-toggle-expanded-label {
+    display: none;
+    text-align: left;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.7;
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+.m3-series-toc__info-toggle[aria-expanded="true"] .m3-series-toc__info-toggle-expanded-label {
+    display: block;
+}
+
+.m3-series-toc__panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s var(--m3-motion-easing);
+}
+
+.m3-series-chart {
+    list-style: none;
+    margin: 0;
+    padding: var(--m3-spacing-m) 2px 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+.m3-series-chart__step {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--m3-spacing-m);
+    padding-bottom: var(--m3-spacing-l);
+}
+
+.m3-series-chart__step:last-child {
+    padding-bottom: 0;
+}
+
+.m3-series-chart__step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    top: 28px;
+    left: 19px;
+    width: 2px;
+    height: calc(100% - 28px);
+    background: var(--md-sys-color-outline-variant);
+    z-index: 0;
+}
+
+.m3-series-chart__link {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--m3-spacing-m);
+    width: 100%;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: var(--m3-radius-small);
+    text-decoration: none;
+    color: var(--md-sys-color-on-surface);
+    transition: background-color 0.2s var(--m3-motion-easing);
+}
+
+.m3-series-chart__link:hover {
+    background: var(--md-sys-color-surface-container);
+}
+
+.m3-series-chart__node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 28px;
+    min-width: 40px;
+    border-radius: 100px;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    transition: background-color 0.2s var(--m3-motion-easing), color 0.2s var(--m3-motion-easing), transform 0.2s var(--m3-motion-easing), box-shadow 0.2s var(--m3-motion-easing);
+}
+
+.m3-series-chart__link:hover .m3-series-chart__node {
+    transform: scale(1.06);
+}
+
+.m3-series-chart__label {
+    flex-grow: 1;
+    padding-top: 6px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* 現在の回を同じ楕円形のまま、現在地バッジと同じシリーズ色で塗りつぶして強調 */
+.m3-series-chart__step.is-current .m3-series-chart__node {
+    background: var(--node-series-color, #FF9900);
+    border-color: transparent;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--node-series-color, #FF9900) 30%, transparent);
+}
+
+.m3-series-chart__step.is-current .m3-series-chart__label {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 700;
+}
+
+/* --- モバイル対応: タップ領域を確保しつつ余白を詰める --- */
+@media (max-width: 600px) {
+    .m3-series-toc__toggle-icon {
+        width: 32px;
+        min-width: 32px;
+    }
+
+    .m3-series-toc__toggle-label {
+        font-size: 0.95rem;
+        gap: 4px;
+    }
+
+    .m3-series-toc__count {
+        font-size: 0.75rem;
+    }
+
+    .m3-series-toc__info-toggle {
+        padding: 8px 14px;
+    }
+
+    .m3-series-chart {
+        padding: var(--m3-spacing-m) 2px 4px;
+    }
+
+    .m3-series-chart__step {
+        gap: var(--m3-spacing-s);
+        padding-bottom: var(--m3-spacing-m);
+    }
+
+    .m3-series-chart__step:not(:last-child)::before {
+        top: 32px;
+        left: 15px;
+        height: calc(100% - 32px);
+    }
+
+    .m3-series-chart__link {
+        padding: 8px 6px;
+        margin: -8px -6px;
+    }
+
+    .m3-series-chart__node {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 0.8rem;
+    }
+
+    .m3-series-chart__label {
+        font-size: 0.82rem;
+        padding-top: 5px;
+    }
+}

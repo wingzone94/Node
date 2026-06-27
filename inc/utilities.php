@@ -528,6 +528,27 @@ function node_the_post_badges($post_id = null, $mode = 'compact', $types = ['ai'
 }
 
 /**
+ * カード右上に表示する、シリーズの現在回/全話数バナーを出力する。
+ */
+function node_the_series_banner($post_id = null, $extra_class = '') {
+    if (!$post_id) $post_id = get_the_ID();
+    if (!function_exists('node_series_get_position')) return;
+
+    $series_position = node_series_get_position($post_id);
+    if (!$series_position) return;
+
+    $label = 'シリーズ「' . $series_position['term']->name . '」第' . $series_position['index'] . '回（全' . $series_position['total'] . '回）';
+    $class = trim('m3-card__series-banner ' . $extra_class);
+    $color = function_exists('node_series_get_color') ? node_series_get_color($post_id) : null;
+    $style = $color ? ' style="--node-series-color: ' . esc_attr($color) . ';"' : '';
+
+    echo '<span class="' . esc_attr($class) . '"' . $style . ' title="' . esc_attr($label) . '" aria-label="' . esc_attr($label) . '">';
+    echo '<span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>';
+    echo '<span>' . esc_html($series_position['index'] . ' / ' . $series_position['total']) . '</span>';
+    echo '</span>';
+}
+
+/**
  * AI要約の短縮版を取得する
  */
 function node_get_short_ai_summary($text, $length = 80) {

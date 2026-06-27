@@ -58,6 +58,11 @@ const optionalInitializers = [
             document.getElementById('m3-hero-reading-badge')
         ),
         load: () => import('./scripts/reading-badge-animation')
+    },
+    {
+        name: 'initSeriesToc',
+        shouldRun: () => document.querySelector('.m3-series-toc__toggle'),
+        load: () => import('./scripts/series-toc')
     }
 ];
 

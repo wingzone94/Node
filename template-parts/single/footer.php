@@ -31,6 +31,8 @@
     do_action('luminous_after_writer', get_the_ID()); 
     ?>
 
+    <?php get_template_part('template-parts/single/series-nav'); ?>
+
     <!-- 前後の記事ナビゲーション -->
     <?php
     $prev_post = get_previous_post();

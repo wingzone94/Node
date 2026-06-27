@@ -19,6 +19,20 @@ function node_ai_render_summary_meta_box($post) {
     
     echo '<div class="m3-ai-meta-box">';
     
+    // Model selection
+    $user_id = get_current_user_id();
+    $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
+    $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
+    
+    if ( ! empty( $models ) ) {
+        echo '<p><strong>使用モデル:</strong></p>';
+        echo '<select id="node_ai_gemini_model" name="node_ai_gemini_model" style="width:100%; margin-bottom:10px;">';
+        foreach ( $models as $id => $label ) {
+            echo '<option value="' . esc_attr( $id ) . '" ' . selected( $id, $current_model, false ) . '>' . esc_html( $label ) . '</option>';
+        }
+        echo '</select>';
+    }
+
     echo '<p><strong>AIへの追加指示 (プロンプト):</strong></p>';
     echo '<textarea id="node_ai_custom_prompt" name="node_ai_custom_prompt" style="width:100%; height:60px; margin-bottom:10px;" placeholder="例: もっと情熱的に、専門用語を避けて、箇条書きで...">'.esc_textarea($custom_prompt).'</textarea>';
     
@@ -51,6 +65,7 @@ function node_ai_render_summary_meta_box($post) {
             var customPrompt = $('#node_ai_custom_prompt').val();
             var maxLines = $('#node_ai_max_lines').val();
             var maxChars = $('#node_ai_max_chars').val();
+            var geminiModel = $('#node_ai_gemini_model').length ? $('#node_ai_gemini_model').val() : '';
             
             btn.prop('disabled', true);
             status.text('生成中...').css('color', '#FF9900');
@@ -60,6 +75,7 @@ function node_ai_render_summary_meta_box($post) {
                 custom_prompt: customPrompt,
                 max_lines: maxLines,
                 max_chars: maxChars,
+                gemini_model: geminiModel,
                 nonce: nonce
             }, function(response) {
                 btn.prop('disabled', false);

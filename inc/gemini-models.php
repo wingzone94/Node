@@ -449,3 +449,111 @@ function node_get_default_gemini_model(): string {
 function node_is_valid_gemini_model_id( string $model ): bool {
 	return (bool) preg_match( '/^gemini-[a-z0-9][a-z0-9.-]*$/i', $model );
 }
+
+/**
+ * Gemini Quota Limits
+ *
+ * @param string $model モデルID
+ * @return array{rpm: int, tpm: int, rpd: int}
+ */
+function node_gemini_get_quota_limits( string $model ): array {
+	if ( strpos( $model, '3.1-pro' ) !== false ) {
+		return array( 'rpm' => 0, 'tpm' => 0, 'rpd' => 0 );
+	}
+	if ( strpos( $model, 'pro' ) !== false ) {
+		return array( 'rpm' => 2, 'tpm' => 32000, 'rpd' => 50 );
+	}
+	return array( 'rpm' => 15, 'tpm' => 1000000, 'rpd' => 1500 );
+}
+
+/**
+ * Get User Quota Usage
+ *
+ * @param int $user_id
+ * @param string $model
+ * @return array
+ */
+function node_gemini_get_user_quota_usage( int $user_id, string $model ): array {
+	$key = 'node_gemini_usage_' . $user_id;
+	$data = get_transient( $key );
+	if ( ! is_array( $data ) ) {
+		$data = array();
+	}
+	
+	$now = time();
+	$model_data = $data[ $model ] ?? array(
+		'rpm' => array( 'count' => 0, 'expires' => $now + 60 ),
+		'tpm' => array( 'count' => 0, 'expires' => $now + 60 ),
+		'rpd' => array( 'count' => 0, 'expires' => node_gemini_next_daily_quota_reset() ),
+		'last_error' => array(),
+	);
+
+	// Expire checks
+	if ( isset( $model_data['rpm']['expires'] ) && $now >= $model_data['rpm']['expires'] ) {
+		$model_data['rpm'] = array( 'count' => 0, 'expires' => $now + 60 );
+	}
+	if ( isset( $model_data['tpm']['expires'] ) && $now >= $model_data['tpm']['expires'] ) {
+		$model_data['tpm'] = array( 'count' => 0, 'expires' => $now + 60 );
+	}
+	if ( isset( $model_data['rpd']['expires'] ) && $now >= $model_data['rpd']['expires'] ) {
+		$model_data['rpd'] = array( 'count' => 0, 'expires' => node_gemini_next_daily_quota_reset() );
+	}
+
+	// Error expiry check (e.g. 429 short-term retryDelay)
+	if ( ! empty( $model_data['last_error']['expires'] ) && $now >= $model_data['last_error']['expires'] ) {
+		$model_data['last_error'] = array();
+	}
+
+	return $model_data;
+}
+
+/**
+ * Record Usage
+ */
+function node_gemini_record_usage( int $user_id, string $model, int $tokens, int $requests = 1 ): void {
+	$key = 'node_gemini_usage_' . $user_id;
+	$data = get_transient( $key );
+	if ( ! is_array( $data ) ) {
+		$data = array();
+	}
+
+	$model_data = node_gemini_get_user_quota_usage( $user_id, $model );
+	$model_data['rpm']['count'] += $requests;
+	$model_data['tpm']['count'] += $tokens;
+	$model_data['rpd']['count'] += $requests;
+	
+	// If it succeeded, clear any previous error
+	$model_data['last_error'] = array();
+
+	$data[ $model ] = $model_data;
+	set_transient( $key, $data, DAY_IN_SECONDS );
+}
+
+/**
+ * Record Quota Error
+ */
+function node_gemini_record_quota_error( int $user_id, string $model, int $status, $api_data ): void {
+	if ( 429 !== $status && ( !is_array($api_data) || !isset($api_data['error']['status']) || 'RESOURCE_EXHAUSTED' !== $api_data['error']['status'] ) ) {
+		return;
+	}
+
+	$key = 'node_gemini_usage_' . $user_id;
+	$data = get_transient( $key );
+	if ( ! is_array( $data ) ) {
+		$data = array();
+	}
+
+	$model_data = node_gemini_get_user_quota_usage( $user_id, $model );
+	
+	$retry = node_gemini_extract_retry_seconds( $api_data );
+	$expires = $retry > 0 ? time() + $retry : node_gemini_next_daily_quota_reset();
+	
+	$model_data['last_error'] = array(
+		'status' => $status,
+		'retry' => $retry,
+		'expires' => $expires,
+	);
+
+	$data[ $model ] = $model_data;
+	set_transient( $key, $data, DAY_IN_SECONDS );
+}

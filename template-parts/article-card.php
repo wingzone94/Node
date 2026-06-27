@@ -42,6 +42,7 @@ if ($has_image && empty($thumbnail)) {
                     </span>
                 <?php endif; ?>
             </div>
+            <?php if (function_exists('node_the_series_banner')) node_the_series_banner($post_id); ?>
         </div>
     <?php endif; ?>
 
@@ -49,6 +50,7 @@ if ($has_image && empty($thumbnail)) {
         <?php if (!$has_image) : ?>
             <div class="m3-card__labels m3-card__labels--no-image">
                 <?php node_the_post_badges($post_id, 'compact'); ?>
+                <?php if (function_exists('node_the_series_banner')) node_the_series_banner($post_id, 'm3-card__series-banner--no-image'); ?>
             </div>
         <?php endif; ?>
 
