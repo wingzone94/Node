@@ -40,6 +40,22 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 				編集者が結果を確認済み（フロント公開）
 			</label>
 		</p>
+        
+        <?php
+        // Model selection
+        $user_id = get_current_user_id();
+        $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
+        $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
+        
+        if ( ! empty( $models ) ) {
+            echo '<p><strong>使用モデル:</strong><br>';
+            echo '<select id="node_ai_gemini_model_fact_check" style="width:100%;">';
+            foreach ( $models as $id => $label ) {
+                echo '<option value="' . esc_attr( $id ) . '" ' . selected( $id, $current_model, false ) . '>' . esc_html( $label ) . '</option>';
+            }
+            echo '</select></p>';
+        }
+        ?>
 
 		<p>
 			<button type="button" id="node_fact_check_btn" class="button button-secondary" data-post-id="<?php echo esc_attr( (string) $post->ID ); ?>">
@@ -137,11 +153,14 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 			var btn = $(this);
 			var status = $('#node_fact_check_status');
 			btn.prop('disabled', true);
-			status.text('チェック中...').css('color', '#FF9900');
+			status.text('検証中... (しばらくお待ちください)').css('color', '#FF9900');
+
+			var geminiModel = $('#node_ai_gemini_model_fact_check').length ? $('#node_ai_gemini_model_fact_check').val() : '';
 
 			$.post(ajaxurl, {
 				action: 'node_ai_fact_check',
 				post_id: btn.data('post-id'),
+				gemini_model: geminiModel,
 				nonce: $('#node_ai_fact_check_nonce').val()
 			}, function(response) {
 				btn.prop('disabled', false);

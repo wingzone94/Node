@@ -104,6 +104,7 @@ if ( ! function_exists( 'node_gemini_format_jst' ) ) {
 /**
  * Gemini API のエラー応答から、利用者向けの日本語エラーメッセージを生成する。
  * 429（利用上限超過 / RESOURCE_EXHAUSTED）の場合は解除予定時刻も付与する。
+ * 503（モデル混雑）の場合は、クォータ超過と区別して一時的な再試行案内を返す。
  *
  * @param int    $status HTTP ステータスコード（0 = 不明）。
  * @param mixed  $data   デコード済みレスポンス（連想配列想定）。
@@ -154,6 +155,10 @@ if ( ! function_exists( 'node_gemini_format_api_error' ) ) {
 			}
 
 			return 'Gemini API の利用上限（quota）に達しました。上限緩和には課金プランの確認が必要です。詳細: ' . $detail;
+		}
+
+		if ( 503 === $status || 'UNAVAILABLE' === $api_status ) {
+			return 'Gemini API のモデルが一時的に混雑しています。クォータ超過や課金エラーではないため、数分置いてから再実行してください。急ぎの場合は、利用モデルを Flash 系へ切り替えると成功しやすくなります。詳細: ' . $detail;
 		}
 
 		if ( $status > 0 ) {
@@ -448,4 +453,112 @@ function node_get_default_gemini_model(): string {
  */
 function node_is_valid_gemini_model_id( string $model ): bool {
 	return (bool) preg_match( '/^gemini-[a-z0-9][a-z0-9.-]*$/i', $model );
+}
+
+/**
+ * Gemini Quota Limits
+ *
+ * @param string $model モデルID
+ * @return array{rpm: int, tpm: int, rpd: int}
+ */
+function node_gemini_get_quota_limits( string $model ): array {
+	if ( strpos( $model, '3.1-pro' ) !== false ) {
+		return array( 'rpm' => 0, 'tpm' => 0, 'rpd' => 0 );
+	}
+	if ( strpos( $model, 'pro' ) !== false ) {
+		return array( 'rpm' => 2, 'tpm' => 32000, 'rpd' => 50 );
+	}
+	return array( 'rpm' => 15, 'tpm' => 1000000, 'rpd' => 1500 );
+}
+
+/**
+ * Get User Quota Usage
+ *
+ * @param int $user_id
+ * @param string $model
+ * @return array
+ */
+function node_gemini_get_user_quota_usage( int $user_id, string $model ): array {
+	$key = 'node_gemini_usage_' . $user_id;
+	$data = get_transient( $key );
+	if ( ! is_array( $data ) ) {
+		$data = array();
+	}
+	
+	$now = time();
+	$model_data = $data[ $model ] ?? array(
+		'rpm' => array( 'count' => 0, 'expires' => $now + 60 ),
+		'tpm' => array( 'count' => 0, 'expires' => $now + 60 ),
+		'rpd' => array( 'count' => 0, 'expires' => node_gemini_next_daily_quota_reset() ),
+		'last_error' => array(),
+	);
+
+	// Expire checks
+	if ( isset( $model_data['rpm']['expires'] ) && $now >= $model_data['rpm']['expires'] ) {
+		$model_data['rpm'] = array( 'count' => 0, 'expires' => $now + 60 );
+	}
+	if ( isset( $model_data['tpm']['expires'] ) && $now >= $model_data['tpm']['expires'] ) {
+		$model_data['tpm'] = array( 'count' => 0, 'expires' => $now + 60 );
+	}
+	if ( isset( $model_data['rpd']['expires'] ) && $now >= $model_data['rpd']['expires'] ) {
+		$model_data['rpd'] = array( 'count' => 0, 'expires' => node_gemini_next_daily_quota_reset() );
+	}
+
+	// Error expiry check (e.g. 429 short-term retryDelay)
+	if ( ! empty( $model_data['last_error']['expires'] ) && $now >= $model_data['last_error']['expires'] ) {
+		$model_data['last_error'] = array();
+	}
+
+	return $model_data;
+}
+
+/**
+ * Record Usage
+ */
+function node_gemini_record_usage( int $user_id, string $model, int $tokens, int $requests = 1 ): void {
+	$key = 'node_gemini_usage_' . $user_id;
+	$data = get_transient( $key );
+	if ( ! is_array( $data ) ) {
+		$data = array();
+	}
+
+	$model_data = node_gemini_get_user_quota_usage( $user_id, $model );
+	$model_data['rpm']['count'] += $requests;
+	$model_data['tpm']['count'] += $tokens;
+	$model_data['rpd']['count'] += $requests;
+	
+	// If it succeeded, clear any previous error
+	$model_data['last_error'] = array();
+
+	$data[ $model ] = $model_data;
+	set_transient( $key, $data, DAY_IN_SECONDS );
+}
+
+/**
+ * Record Quota Error
+ */
+function node_gemini_record_quota_error( int $user_id, string $model, int $status, $api_data ): void {
+	if ( 429 !== $status && ( !is_array($api_data) || !isset($api_data['error']['status']) || 'RESOURCE_EXHAUSTED' !== $api_data['error']['status'] ) ) {
+		return;
+	}
+
+	$key = 'node_gemini_usage_' . $user_id;
+	$data = get_transient( $key );
+	if ( ! is_array( $data ) ) {
+		$data = array();
+	}
+
+	$model_data = node_gemini_get_user_quota_usage( $user_id, $model );
+	
+	$retry = node_gemini_extract_retry_seconds( $api_data );
+	$expires = $retry > 0 ? time() + $retry : node_gemini_next_daily_quota_reset();
+	
+	$model_data['last_error'] = array(
+		'status' => $status,
+		'retry' => $retry,
+		'expires' => $expires,
+	);
+
+	$data[ $model ] = $model_data;
+	set_transient( $key, $data, DAY_IN_SECONDS );
 }

@@ -256,7 +256,11 @@ final class Node_Library {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'gemini_request_failed', 'Gemini APIへの接続に失敗しました。', [ 'status' => 502 ] );
+			$err_msg = $response->get_error_message();
+			if ( strpos( $err_msg, 'timed out' ) !== false ) {
+				return new WP_Error( 'gemini_timeout', 'Gemini APIからの応答がタイムアウトしました。しばらく待ってから再度お試しください。', [ 'status' => 504 ] );
+			}
+			return new WP_Error( 'gemini_request_failed', 'Gemini APIへの接続に失敗しました。詳細: ' . $err_msg, [ 'status' => 502 ] );
 		}
 
 		$status = (int) wp_remote_retrieve_response_code( $response );
@@ -266,8 +270,8 @@ final class Node_Library {
 			$message = function_exists( 'node_gemini_format_api_error' )
 				? node_gemini_format_api_error( $status, $data, $body )
 				: 'Gemini APIから情報を取得できませんでした。';
-			$code    = ( 429 === $status ) ? 'gemini_quota_exceeded' : 'gemini_response_failed';
-			return new WP_Error( $code, $message, [ 'status' => ( 429 === $status ) ? 429 : 502 ] );
+			$code    = ( 429 === $status ) ? 'gemini_quota_exceeded' : ( ( 503 === $status ) ? 'gemini_model_unavailable' : 'gemini_response_failed' );
+			return new WP_Error( $code, $message, [ 'status' => ( 429 === $status || 503 === $status ) ? $status : 502 ] );
 		}
 
 		$parts = $data['candidates'][0]['content']['parts'] ?? [];
@@ -744,7 +748,7 @@ final class Node_Library {
 					</button>
 					<span id="node-library-generate-status" role="status" aria-live="polite"></span>
 				</span>
-				<span class="description">Geminiが作成した下書きを確認・修正してから保存してください。</span>
+				<p class="description" style="margin-top:8px;">Geminiが作成した下書きを確認・修正してから保存してください。</p>
 			</p>
 			
 			<div id="node-library-links-editor">

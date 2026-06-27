@@ -9,9 +9,9 @@ Luminous Core（ブログブランド） / Node（WordPressテーマ）の開発
 
 | エージェント / ツール | 役割 | 主な用途 |
 | --- | --- | --- |
-| **Cursor** | AIコーディングIDE | 実装・修正・レビュー・デバッグ |
-| **Codex** | コーディングエージェント（CLI/IDE） | 単機能の実装・修正・レビュー |
-| **AntiGravity** | AIエージェント（Worktree / Local モード） | 調査・差分提案・限定的な実装 |
+| **Claude Code（VS Code / Claude アプリ）** | AIコーディングエージェント | 設計判断・横断レビュー・リリース前ゲート・実装補助 |
+| **Codex（CLI / IDE）** | コーディングエージェント | 単機能の実装・修正・差分作成・テスト（実装の主力） |
+| **AntiGravity** | AIエージェント（Worktree / Local モード） | Gemini API 連携部の検証・調査・差分提案・限定的な実装 |
 | **ChatGPT** | 対話型AI | プロンプト整理・仕様整理・記事/文章の下書き |
 
 ---
@@ -32,7 +32,7 @@ Luminous Core（ブログブランド） / Node（WordPressテーマ）の開発
 
 | モデル | 提供 | 備考 |
 | --- | --- | --- |
-| **Auto / 軽量モデル** | Cursor 等 | typo修正・小規模CSS修正・コミットメッセージ・diff要約 |
+| **Auto / 軽量モデル** | Claude Code / Codex の軽量モード等 | typo修正・小規模CSS修正・コミットメッセージ・diff要約 |
 | **Gemini 系**（AntiGravity 等で利用） | Google | 調査・補助 |
 
 ---

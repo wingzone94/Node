@@ -23,14 +23,20 @@ add_action('add_meta_boxes', 'node_add_custom_meta_boxes');
  */
 function node_register_post_meta() {
     register_meta('post', '_node_is_ai_generated', [
-        'show_in_rest' => true,
-        'single'       => true,
-        'type'         => 'boolean',
+        'show_in_rest'  => true,
+        'single'        => true,
+        'type'          => 'boolean',
+        'auth_callback' => function() {
+            return current_user_can('edit_posts');
+        }
     ]);
     register_meta('post', '_node_is_ai_text_generated', [
-        'show_in_rest' => true,
-        'single'       => true,
-        'type'         => 'boolean',
+        'show_in_rest'  => true,
+        'single'        => true,
+        'type'          => 'boolean',
+        'auth_callback' => function() {
+            return current_user_can('edit_posts');
+        }
     ]);
 }
 add_action('init', 'node_register_post_meta');

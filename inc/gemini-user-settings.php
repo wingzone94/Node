@@ -161,6 +161,108 @@ function node_render_gemini_user_fields( WP_User $user, bool $is_settings_page =
 			</td>
 		</tr>
 	</table>
+
+	<?php if ( function_exists( 'node_gemini_get_user_quota_usage' ) ) : ?>
+	<h3 style="margin-top: 30px;"><?php esc_html_e( 'Gemini API クォータ使用状況', 'node' ); ?></h3>
+	<p class="description">
+		<?php esc_html_e( 'この画面は、このWordPressサーバー経由で実行したリクエストのローカル概算です。Google側の正確な残量・請求額・無料枠の最新条件は取得していません。', 'node' ); ?>
+		<br>
+		<?php esc_html_e( 'RPM=1分あたりのリクエスト数、TPM=1分あたりのトークン数、RPD=1日あたりのリクエスト数です。料金ではなく、APIの利用上限の目安として確認してください。', 'node' ); ?>
+	</p>
+	<div class="node-gemini-quota-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 15px;">
+		<?php foreach ( $model_options as $model_id => $model_label ) :
+			$usage = node_gemini_get_user_quota_usage( $user->ID, $model_id );
+			$limits = node_gemini_get_quota_limits( $model_id );
+			$is_limit_zero = ( 0 === $limits['rpm'] && 0 === $limits['tpm'] && 0 === $limits['rpd'] );
+			
+			$is_current = ( $model_id === $current_model );
+			$border_color = $is_current ? '#007cba' : '#e0e0e0';
+			$bg_color = $is_current ? '#f0f8ff' : '#fafafa';
+		?>
+		<div class="node-quota-card" style="border: 1px solid <?php echo esc_attr( $border_color ); ?>; background: <?php echo esc_attr( $bg_color ); ?>; padding: 10px; border-radius: 6px;">
+			<h4 style="margin: 0 0 8px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+				<?php echo esc_html( $model_label ); ?>
+				<?php if ( $is_current ) : ?>
+					<span style="font-size: 10px; background: #007cba; color: #fff; padding: 2px 5px; border-radius: 3px;">選択中</span>
+				<?php endif; ?>
+			</h4>
+
+			<?php if ( $is_limit_zero ) : ?>
+				<div style="padding: 6px 8px; background: #ffebee; border-left: 3px solid #f44336; margin-bottom: 0;">
+					<p style="margin: 0; font-size: 11px; color: #d32f2f;">
+						<strong>利用不可:</strong> このモデルは現在のクォータ設定では利用できません。<br>
+						<?php if ( strpos( $model_id, 'pro' ) !== false ) : ?>
+						Pro系で429や利用不可が出る場合は、Flash系への変更を推奨します。
+						<?php endif; ?>
+					</p>
+				</div>
+			<?php else : ?>
+
+				<?php
+				if ( ! empty( $usage['last_error'] ) && $usage['last_error']['expires'] > time() ) {
+					$err = $usage['last_error'];
+					if ( $err['retry'] > 0 ) {
+						$err_msg = '短時間制限: 残り ' . max( 0, $err['expires'] - time() ) . ' 秒';
+						$err_color = '#d32f2f';
+						$err_bg = '#ffcdd2';
+					} else {
+						$err_msg = '日次上限（Quota）到達';
+						$err_color = '#d32f2f';
+						$err_bg = '#ffebee';
+					}
+					echo '<div style="margin-bottom: 8px; padding: 6px; background: ' . $err_bg . '; color: ' . $err_color . '; font-size: 11px; font-weight: bold; border-radius: 3px;">' . esc_html( $err_msg ) . '</div>';
+				}
+				?>
+
+				<?php
+				$metrics = [
+					'RPM' => [ 'label' => 'RPM（リクエスト/分）', 'val' => $usage['rpm']['count'], 'max' => $limits['rpm'] ],
+					'TPM' => [ 'label' => 'TPM（トークン/分）', 'val' => $usage['tpm']['count'], 'max' => $limits['tpm'] ],
+					'RPD' => [ 'label' => 'RPD（リクエスト/日）', 'val' => $usage['rpd']['count'], 'max' => $limits['rpd'] ],
+				];
+				foreach ( $metrics as $key => $m ) :
+					$val = $m['val'];
+					$max = $m['max'];
+					
+					$low = $max * 0.7;
+					$high = $max * 0.9;
+					$optimum = $max * 0.3;
+				?>
+				<div style="margin-bottom: 4px;">
+					<div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; color: #555;">
+						<span><?php echo esc_html( $m['label'] ); ?></span>
+						<span><?php echo esc_html( number_format( $val ) . '/' . number_format( $max ) ); ?></span>
+					</div>
+					<meter 
+						value="<?php echo esc_attr( $val ); ?>" 
+						min="0" 
+						max="<?php echo esc_attr( $max ); ?>"
+						low="<?php echo esc_attr( $low ); ?>"
+						high="<?php echo esc_attr( $high ); ?>"
+						optimum="<?php echo esc_attr( $optimum ); ?>"
+						style="width: 100%; height: 8px; border-radius: 3px; overflow: hidden; background: #eee; display: block;"
+					></meter>
+				</div>
+				<?php endforeach; ?>
+
+			<?php endif; ?>
+		</div>
+		<?php endforeach; ?>
+	</div>
+	<style>
+	meter::-webkit-meter-bar { background: #eee; border: none; }
+	meter::-webkit-meter-optimum-value { background: #4caf50; }
+	meter::-webkit-meter-suboptimum-value { background: #ffeb3b; }
+	meter::-webkit-meter-even-less-good-value { background: #f44336; }
+	meter:-moz-meter-optimum::-moz-meter-bar { background: #4caf50; }
+	meter:-moz-meter-sub-optimum::-moz-meter-bar { background: #ffeb3b; }
+	meter:-moz-meter-sub-sub-optimum::-moz-meter-bar { background: #f44336; }
+	@media (max-width: 782px) {
+		.node-quota-card { width: 100% !important; }
+	}
+	</style>
+	<?php endif; ?>
+
 	<?php
 }
 
