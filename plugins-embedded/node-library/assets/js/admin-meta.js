@@ -70,8 +70,10 @@
 					'nintendo-switch-2',
 					'playstation-4',
 					'playstation-5',
+					'playstation-crossgen',
 					'xbox-one',
-					'xbox-series'
+					'xbox-series',
+					'xbox-crossgen'
 				];
 				linkRows.forEach(function (row, index) {
 					var link = response.links && response.links[index] ? response.links[index] : null;

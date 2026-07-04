@@ -156,21 +156,25 @@ $nintendo_store_warning_message = static function ( string $device ): string {
 $platform_warning_device_from_link = static function ( array $link, string $platform_slug ) use ( $nintendo_store_device_from_link ): string {
     $hardware = (string) ( $link['hardware'] ?? 'auto' );
     $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
+    $has_ps4 = false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' );
+    $has_ps5 = false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' );
+    $has_xbox_one = false !== strpos( $platform, 'xbox one' );
+    $has_xbox_series = false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 's・x' ) || false !== strpos( $platform, 'xs' );
 
     if ( 'nintendo' === $platform_slug ) {
         return $nintendo_store_device_from_link( $link, $platform_slug );
     }
 
     if ( 'playstation' === $platform_slug ) {
-        if ( 'playstation-crossgen' === $hardware ) return '';
-        if ( 'playstation-5' === $hardware || false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' ) ) return 'ps5';
-        if ( 'playstation-4' === $hardware || false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' ) ) return 'ps4';
+        if ( 'playstation-crossgen' === $hardware || ( $has_ps4 && $has_ps5 ) ) return '';
+        if ( 'playstation-5' === $hardware || $has_ps5 ) return 'ps5';
+        if ( 'playstation-4' === $hardware || $has_ps4 ) return 'ps4';
     }
 
     if ( 'xbox' === $platform_slug ) {
-        if ( 'xbox-crossgen' === $hardware ) return '';
-        if ( 'xbox-series' === $hardware || false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 'xs' ) ) return 'xbox-series';
-        if ( 'xbox-one' === $hardware || false !== strpos( $platform, 'xbox one' ) ) return 'xbox-one';
+        if ( 'xbox-crossgen' === $hardware || ( $has_xbox_one && $has_xbox_series ) ) return '';
+        if ( 'xbox-series' === $hardware || $has_xbox_series ) return 'xbox-series';
+        if ( 'xbox-one' === $hardware || $has_xbox_one ) return 'xbox-one';
     }
 
     return '';
@@ -180,20 +184,24 @@ $platform_warning_message = static function ( string $device ): string {
         'ps4'         => 'このタイトルはPS4専用です。',
         'ps5'         => 'このタイトルはPS5専用です。',
         'xbox-one'    => 'このタイトルはXbox One専用です。',
-        'xbox-series' => 'このタイトルはXbox Series S・X専用です。',
+        'xbox-series' => 'このタイトルはXbox Series X|S専用です。',
         default       => '',
     };
 };
 $store_platform_variant_from_link = static function ( array $link, string $platform_slug ) use ( $nintendo_store_device_from_link ): string {
     $hardware = (string) ( $link['hardware'] ?? 'auto' );
     $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
+    $has_ps4 = false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' );
+    $has_ps5 = false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' );
+    $has_xbox_one = false !== strpos( $platform, 'xbox one' );
+    $has_xbox_series = false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 's・x' ) || false !== strpos( $platform, 'xs' );
 
     if ( 'nintendo' === $platform_slug ) {
         return $nintendo_store_device_from_link( $link, $platform_slug );
     }
 
     if ( 'playstation' === $platform_slug ) {
-        if ( 'playstation-crossgen' === $hardware ) return 'crossgen';
+        if ( 'playstation-crossgen' === $hardware || ( $has_ps4 && $has_ps5 ) ) return 'crossgen';
         if ( 'playstation-5' === $hardware ) return 'ps5';
         if ( 'playstation-4' === $hardware ) return 'ps4';
         if ( false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' ) ) return 'ps5';
@@ -202,7 +210,7 @@ $store_platform_variant_from_link = static function ( array $link, string $platf
     }
 
     if ( 'xbox' === $platform_slug ) {
-        if ( 'xbox-crossgen' === $hardware ) return 'crossgen';
+        if ( 'xbox-crossgen' === $hardware || ( $has_xbox_one && $has_xbox_series ) ) return 'crossgen';
         if ( 'xbox-series' === $hardware ) return 'series';
         if ( 'xbox-one' === $hardware ) return 'one';
         if ( false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 'xs' ) ) return 'series';

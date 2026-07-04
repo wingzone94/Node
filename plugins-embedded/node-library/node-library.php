@@ -110,8 +110,10 @@ function node_library_hardware_options(): array {
 		'nintendo-switch-2' => 'Nintendo Switch 2',
 		'playstation-4'     => 'PlayStation 4',
 		'playstation-5'     => 'PlayStation 5',
+		'playstation-crossgen' => 'PlayStation 4 / 5',
 		'xbox-one'          => 'Xbox One',
 		'xbox-series'       => 'Xbox Series X|S',
+		'xbox-crossgen'     => 'Xbox One / Xbox Series X|S',
 	];
 }
 
@@ -134,13 +136,19 @@ function node_library_normalize_hardware( $value ): string {
  */
 function node_library_infer_hardware_from_platform( string $platform ): string {
 	$platform = strtolower( $platform );
+	$has_ps4 = false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' );
+	$has_ps5 = false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' );
+	$has_xbox_one = false !== strpos( $platform, 'xbox one' );
+	$has_xbox_series = false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 's・x' );
 
 	if ( false !== strpos( $platform, 'switch 2' ) || false !== strpos( $platform, 'switch2' ) ) return 'nintendo-switch-2';
 	if ( false !== strpos( $platform, 'switch' ) || false !== strpos( $platform, 'nintendo' ) ) return 'nintendo-switch';
-	if ( false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' ) ) return 'playstation-5';
-	if ( false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' ) ) return 'playstation-4';
-	if ( false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) ) return 'xbox-series';
-	if ( false !== strpos( $platform, 'xbox one' ) ) return 'xbox-one';
+	if ( $has_ps4 && $has_ps5 ) return 'playstation-crossgen';
+	if ( $has_ps5 ) return 'playstation-5';
+	if ( $has_ps4 ) return 'playstation-4';
+	if ( $has_xbox_one && $has_xbox_series ) return 'xbox-crossgen';
+	if ( $has_xbox_series ) return 'xbox-series';
+	if ( $has_xbox_one ) return 'xbox-one';
 	if ( false !== strpos( $platform, 'amazon' ) ) return 'amazon-fire';
 	if ( false !== strpos( $platform, 'android' ) || false !== strpos( $platform, 'google play' ) ) return 'android';
 	if ( false !== strpos( $platform, 'ios' ) || false !== strpos( $platform, 'ipad' ) || false !== strpos( $platform, 'iphone' ) || false !== strpos( $platform, 'app store' ) ) return 'iphone-ipad';
@@ -278,7 +286,7 @@ final class Node_Library {
 		}
 
 		$prompt = sprintf(
-			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo Store、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Nintendo StoreはNintendo Switch版とNintendo Switch 2版が別商品ページとして存在する場合、片方にまとめず、platformを「Nintendo Switch」「Nintendo Switch 2」として両方返してください。PlayStation StoreはPS4版とPS5版が別商品ページとして存在する場合、platformを「PlayStation 4」「PlayStation 5」として両方返してください。Xbox / Microsoft Store（Xbox）はXbox One版とXbox Series X|S版が別商品ページとして存在する場合、platformを「Xbox One」「Xbox Series X|S」として両方返してください。Windows/PC向けのMicrosoft Storeリンクはplatformを「Microsoft Store (Windows)」にし、Xbox向けリンクは「Microsoft Store（Xbox）」または機種別のXbox名にしてください。各リンクには表示タブを示す category と対応ハードを示す hardware を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store (Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。hardware は次のいずれかです: "auto", "windows-pc", "mac", "iphone-ipad", "android", "amazon-fire", "nintendo-switch", "nintendo-switch-2", "playstation-4", "playstation-5", "xbox-one", "xbox-series"。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto","hardware":"auto|windows-pc|mac|iphone-ipad|android|amazon-fire|nintendo-switch|nintendo-switch-2|playstation-4|playstation-5|xbox-one|xbox-series"}]} 形式のJSONだけにしてください。',
+			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo Store、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Nintendo StoreはNintendo Switch版とNintendo Switch 2版が別商品ページとして存在する場合、片方にまとめず、platformを「Nintendo Switch」「Nintendo Switch 2」として両方返してください。PlayStation StoreはPS4版とPS5版が別商品ページとして存在する場合、platformを「PlayStation 4」「PlayStation 5」として両方返してください。Xbox / Microsoft Store（Xbox）はXbox One版とXbox Series X|S版が別商品ページとして存在する場合、platformを「Xbox One」「Xbox Series X|S」として両方返してください。Windows/PC向けのMicrosoft Storeリンクはplatformを「Microsoft Store (Windows)」にし、Xbox向けリンクは「Microsoft Store（Xbox）」または機種別のXbox名にしてください。各リンクには表示タブを示す category と対応ハードを示す hardware を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store (Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。hardware は次のいずれかです: "auto", "windows-pc", "mac", "iphone-ipad", "android", "amazon-fire", "nintendo-switch", "nintendo-switch-2", "playstation-4", "playstation-5", "playstation-crossgen", "xbox-one", "xbox-series", "xbox-crossgen"。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto","hardware":"auto|windows-pc|mac|iphone-ipad|android|amazon-fire|nintendo-switch|nintendo-switch-2|playstation-4|playstation-5|playstation-crossgen|xbox-one|xbox-series|xbox-crossgen"}]} 形式のJSONだけにしてください。',
 			'app' === $type ? 'アプリ' : 'ゲーム',
 			$title
 		);
