@@ -41,6 +41,46 @@ $platform_slug_from_name = static function ( string $platform ): string {
 
     return strtolower( str_replace( ' ', '', $platform ) );
 };
+$category_from_link = static function ( array $link ) use ( $platform_slug_from_name ): string {
+    $platform = (string) ( $link['platform'] ?? '' );
+    $url      = (string) ( $link['url'] ?? '' );
+    $slug     = $platform_slug_from_name( $platform );
+    $host     = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+
+    if ( 0 === strpos( $host, 'www.' ) ) {
+        $host = substr( $host, 4 );
+    }
+
+    if (
+        in_array( $slug, [ 'nintendo', 'playstation', 'xbox' ], true ) ||
+        false !== strpos( $host, 'nintendo.com' ) ||
+        false !== strpos( $host, 'playstation.com' ) ||
+        false !== strpos( $host, 'xbox.com' )
+    ) {
+        return 'console';
+    }
+
+    if (
+        in_array( $slug, [ 'ios', 'android', 'amazon' ], true ) ||
+        false !== strpos( $host, 'apps.apple.com' ) ||
+        false !== strpos( $host, 'play.google.com' ) ||
+        false !== strpos( $host, 'amazon.' )
+    ) {
+        return 'mobile';
+    }
+
+    if (
+        in_array( $slug, [ 'mac', 'windows', 'steam', 'geforcenow' ], true ) ||
+        false !== strpos( $host, 'steampowered.com' ) ||
+        false !== strpos( $host, 'apps.microsoft.com' ) ||
+        false !== strpos( $host, 'epicgames.com' ) ||
+        false !== strpos( $host, 'nvidia.com' )
+    ) {
+        return 'pc';
+    }
+
+    return 'auto';
+};
 $steam_app_id_from_url = static function ( string $url ): string {
     $path = (string) wp_parse_url( $url, PHP_URL_PATH );
     if ( preg_match( '#/app/([0-9]+)(?:/|$)#', $path, $matches ) ) {
@@ -114,11 +154,14 @@ $store_groups = [
 foreach ( $store_links as $link ) {
     $platform = (string) ( $link['platform'] ?? '' );
 
-    // 手動指定（pc / mobile / console）があればそれを優先。なければ自動判定。
+    // URLやストア名から確定できる場合は、古い保存カテゴリより安全側に補正する。
     $category = function_exists( 'node_library_normalize_category' )
         ? node_library_normalize_category( $link['category'] ?? '' )
         : 'auto';
-    if ( 'auto' === $category ) {
+    $inferred_category = $category_from_link( $link );
+    if ( 'auto' !== $inferred_category ) {
+        $category = $inferred_category;
+    } elseif ( 'auto' === $category ) {
         $category = function_exists( 'node_library_auto_category' )
             ? node_library_auto_category( $platform )
             : 'pc';
