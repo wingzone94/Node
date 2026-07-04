@@ -191,6 +191,29 @@ function initNodeLibraryQr() {
     });
 }
 
+function initNodeLibrarySteamEmbedToggles() {
+    document.querySelectorAll('[data-node-library-steam-toggle]').forEach(toggle => {
+        if (toggle.dataset.nodeLibrarySteamReady === 'true') return;
+
+        const panelId = toggle.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+        const control = toggle.closest('[data-node-library-steam-control]');
+        if (!panel) return;
+
+        toggle.dataset.nodeLibrarySteamReady = 'true';
+
+        const sync = () => {
+            const isOpen = toggle.checked;
+            panel.hidden = !isOpen;
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            control?.classList.toggle('is-steam-visible', isOpen);
+        };
+
+        toggle.addEventListener('change', sync);
+        sync();
+    });
+}
+
 function initNodeLibraryTabs() {
     document.querySelectorAll('[data-node-library-tabs]').forEach(section => {
         const tabs = Array.from(section.querySelectorAll('[role="tab"][data-node-library-tab]'));
@@ -255,6 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initColorModeLoader,
         initNodeLibraryQr,
         initNodeLibraryTabs,
+        initNodeLibrarySteamEmbedToggles,
         initKeyboardSnackbar,
         initHandyMode,
         initExpressiveFloatingTOC,

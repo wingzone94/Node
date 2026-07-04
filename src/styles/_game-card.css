@@ -9,6 +9,10 @@
     overflow: hidden;
 }
 
+.m3-game-card--has-steam-toggle {
+    padding-bottom: 56px;
+}
+
 .m3-game-card__header {
     display: flex;
     align-items: center;
@@ -222,6 +226,115 @@
 .m3-platform-store-badge-link--windows .m3-platform-store-badge,
 .m3-platform-store-badge-link--xbox .m3-platform-store-badge {
     width: 161px;
+}
+
+.m3-platform-steam-embed {
+    width: min(100%, 646px);
+    min-height: 190px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+}
+
+.m3-platform-steam-embed iframe {
+    display: block;
+    width: 100%;
+    height: 190px;
+    border: 0;
+}
+
+.node-library-steam-standalone,
+.node-library-steam-panel {
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    margin: 24px 0;
+}
+
+.node-library-steam-panel[hidden] {
+    display: none;
+}
+
+.node-library-steam-control {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    z-index: 2;
+}
+
+.node-library-steam-control__dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    list-style: none;
+    gap: 3px;
+}
+
+.node-library-steam-control__dot::-webkit-details-marker {
+    display: none;
+}
+
+.node-library-steam-control__dot span,
+.node-library-steam-control__dot::before,
+.node-library-steam-control__dot::after {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.node-library-steam-control__dot::before,
+.node-library-steam-control__dot::after {
+    content: "";
+}
+
+.node-library-steam-control__dot:hover,
+.node-library-steam-control__dot:focus-visible,
+.node-library-steam-control[open] .node-library-steam-control__dot {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.node-library-steam-control__dot:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 42%, transparent);
+    outline-offset: 2px;
+}
+
+.node-library-steam-control__switch {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    max-width: min(260px, calc(100vw - 40px));
+    padding: 10px 12px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 8px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: var(--m3-elevation-2);
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.node-library-steam-control__switch input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--node-article-accent, #FF9900);
+}
+
+.node-library-steam-control:not([open]) .node-library-steam-control__switch {
+    display: none;
 }
 
 .m3-game-card__tab-back-label {

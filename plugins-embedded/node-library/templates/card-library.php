@@ -21,6 +21,75 @@ $links        = array_values(
 );
 $header_text  = get_option( 'node_library_header_text', 'GAME / APP INFO' );
 $button_text  = get_option( 'node_library_button_text', 'で見る' );
+$store_tabs_id = wp_unique_id( 'node-library-store-tabs-' );
+$badge_base_url = defined( 'NODE_LIBRARY_BADGE_BASE_URL' )
+    ? NODE_LIBRARY_BADGE_BASE_URL
+    : 'https://luminous-core.net/wp-content/themes/Node/plugins-embedded/node-library/assets/images/';
+$badge_base_url = trailingslashit( apply_filters( 'node_library_badge_base_url', $badge_base_url ) );
+$platform_slug_from_name = static function ( string $platform ): string {
+    if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) return 'nintendo';
+    if ( stripos( $platform, 'ps' ) !== false || stripos( $platform, 'playstation' ) !== false ) return 'playstation';
+    if ( stripos( $platform, 'xbox' ) !== false ) return 'xbox';
+    if ( stripos( $platform, 'steam' ) !== false ) return 'steam';
+    if ( stripos( $platform, 'amazon' ) !== false ) return 'amazon';
+    if ( stripos( $platform, 'mac' ) !== false ) return 'mac';
+    if ( stripos( $platform, 'ios' ) !== false || stripos( $platform, 'apple' ) !== false || stripos( $platform, 'app store' ) !== false ) return 'ios';
+    if ( stripos( $platform, 'android' ) !== false || stripos( $platform, 'google' ) !== false ) return 'android';
+    if ( stripos( $platform, 'microsoft' ) !== false && stripos( $platform, 'xbox' ) === false ) return 'windows';
+    if ( stripos( $platform, 'windows' ) !== false || stripos( $platform, 'pc' ) !== false ) return 'windows';
+    if ( stripos( $platform, 'geforce' ) !== false ) return 'geforcenow';
+
+    return strtolower( str_replace( ' ', '', $platform ) );
+};
+$steam_app_id_from_url = static function ( string $url ): string {
+    $path = (string) wp_parse_url( $url, PHP_URL_PATH );
+    if ( preg_match( '#/app/([0-9]+)(?:/|$)#', $path, $matches ) ) {
+        return $matches[1];
+    }
+
+    return '';
+};
+$steam_links = [];
+$store_links = [];
+foreach ( $links as $link ) {
+    $platform = (string) ( $link['platform'] ?? '' );
+    $app_id   = 'steam' === $platform_slug_from_name( $platform )
+        ? $steam_app_id_from_url( (string) $link['url'] )
+        : '';
+
+    if ( '' !== $app_id ) {
+        $steam_links[] = [
+            'platform' => $platform,
+            'url'      => (string) $link['url'],
+            'app_id'   => $app_id,
+        ];
+        continue;
+    }
+
+    $store_links[] = $link;
+}
+$render_steam_embed = static function ( array $steam_link ) {
+    ?>
+    <div class="m3-platform-steam-embed">
+        <iframe
+            src="<?php echo esc_url( 'https://store.steampowered.com/widget/' . rawurlencode( (string) $steam_link['app_id'] ) . '/' ); ?>"
+            title="<?php echo esc_attr( ( $steam_link['platform'] ?: 'Steam' ) . '公式ストア埋め込み' ); ?>"
+            loading="lazy"
+            frameborder="0"
+        ></iframe>
+    </div>
+    <?php
+};
+
+if ( empty( $store_links ) && ! empty( $steam_links ) ) {
+    ?>
+    <div class="node-library-steam-standalone m3-reveal">
+        <?php foreach ( $steam_links as $steam_link ) $render_steam_embed( $steam_link ); ?>
+    </div>
+    <?php
+    return;
+}
+
 $store_groups = [
     'pc' => [
         'label'       => 'PC',
@@ -42,7 +111,7 @@ $store_groups = [
     ],
 ];
 
-foreach ( $links as $link ) {
+foreach ( $store_links as $link ) {
     $platform = (string) ( $link['platform'] ?? '' );
 
     // 手動指定（pc / mobile / console）があればそれを優先。なければ自動判定。
@@ -73,29 +142,17 @@ if ( count( $store_groups ) > 1 ) {
         'label'       => '全てを表示',
         'short_label' => 'すべて',
         'icon'        => 'apps',
-        'links'       => $links,
+        'links'       => $store_links,
     ];
 }
 
-$store_tabs_id = wp_unique_id( 'node-library-store-tabs-' );
-$render_store_link  = static function ( $link ) use ( $button_text ) {
+$steam_panel_id = ! empty( $steam_links ) ? wp_unique_id( 'node-library-steam-panel-' ) : '';
+$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $platform_slug_from_name ) {
     $platform = $link['platform'] ?? 'other';
     if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) $platform = 'Nintendo Store';
     if ( stripos( $platform, 'xbox' ) !== false ) $platform = 'Microsoft Store（Xbox）';
     if ( stripos( $platform, 'playstation' ) !== false || preg_match( '/(^|\s)ps[345](\s|$)/i', $platform ) ) $platform = 'PS Store';
-    $platform_slug = strtolower( str_replace( ' ', '', $platform ) );
-
-    if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) $platform_slug = 'nintendo';
-    if ( stripos( $platform, 'ps' ) !== false || stripos( $platform, 'playstation' ) !== false ) $platform_slug = 'playstation';
-    if ( stripos( $platform, 'xbox' ) !== false ) $platform_slug = 'xbox';
-    if ( stripos( $platform, 'steam' ) !== false ) $platform_slug = 'steam';
-    if ( stripos( $platform, 'ios' ) !== false || stripos( $platform, 'apple' ) !== false || stripos( $platform, 'app store' ) !== false ) $platform_slug = 'ios';
-    if ( stripos( $platform, 'android' ) !== false || stripos( $platform, 'google' ) !== false ) $platform_slug = 'android';
-    if ( stripos( $platform, 'mac' ) !== false ) $platform_slug = 'mac';
-    if ( stripos( $platform, 'microsoft' ) !== false && stripos( $platform, 'xbox' ) === false ) $platform_slug = 'windows';
-    if ( stripos( $platform, 'windows' ) !== false || stripos( $platform, 'pc' ) !== false ) $platform_slug = 'windows';
-    if ( stripos( $platform, 'amazon' ) !== false ) $platform_slug = 'amazon';
-    if ( stripos( $platform, 'geforce' ) !== false ) $platform_slug = 'geforcenow';
+    $platform_slug = $platform_slug_from_name( (string) $platform );
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );
     $qr_panel_id = $supports_qr ? wp_unique_id( 'node-library-qr-' ) : '';
     $qr_title_id = $supports_qr ? $qr_panel_id . '-title' : '';
@@ -103,7 +160,7 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
         'nintendo'    => 'Nintendo Storeで見る',
         'playstation' => 'PS Storeで見る',
         'mac'         => 'Mac App Storeで見る',
-        'amazon'      => 'Amazon Appstoreで見る',
+        'amazon'      => 'Amazon App Storeで見る',
         'geforcenow'  => 'GeForce NOWで見る',
         default       => $platform . ' ' . $button_text,
     };
@@ -114,9 +171,7 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
         'windows', 'xbox' => 'microsoft-store-badge-ja.svg',
         default   => '',
     };
-    $badge_url = $badge_file
-        ? plugins_url( 'assets/images/' . $badge_file, dirname( __DIR__ ) . '/node-library.php' )
-        : '';
+    $badge_url = $badge_file ? $badge_base_url . $badge_file : '';
     $badge_always_visible = in_array( $platform_slug, [ 'mac', 'windows' ], true );
     if ( $supports_qr ) :
     ?>
@@ -177,7 +232,7 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
     <?php
 };
 ?>
-<section class="m3-game-card m3-reveal node-library-card">
+<section class="m3-game-card m3-reveal node-library-card<?php echo ! empty( $steam_links ) ? ' m3-game-card--has-steam-toggle' : ''; ?>">
     <div class="m3-game-card__header">
         <span class="material-symbols-outlined" aria-hidden="true"><?php echo esc_html( $header_icon ); ?></span>
         <h3><?php echo esc_html( $header_text ); ?></h3>
@@ -238,5 +293,23 @@ $render_store_link  = static function ( $link ) use ( $button_text ) {
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+
+        <?php if ( ! empty( $steam_links ) ) : ?>
+            <div class="node-library-steam-panel" id="<?php echo esc_attr( $steam_panel_id ); ?>" data-node-library-steam-panel hidden>
+                <?php foreach ( $steam_links as $steam_link ) $render_steam_embed( $steam_link ); ?>
+            </div>
+        <?php endif; ?>
     </div>
+
+    <?php if ( ! empty( $steam_links ) ) : ?>
+        <details class="node-library-steam-control" data-node-library-steam-control>
+            <summary class="node-library-steam-control__dot" aria-label="Steam埋め込み表示設定" title="Steam埋め込み表示設定">
+                <span aria-hidden="true"></span>
+            </summary>
+            <label class="node-library-steam-control__switch">
+                <input type="checkbox" data-node-library-steam-toggle aria-controls="<?php echo esc_attr( $steam_panel_id ); ?>" aria-expanded="false">
+                <span>Steam埋め込みを表示する</span>
+            </label>
+        </details>
+    <?php endif; ?>
 </section>
