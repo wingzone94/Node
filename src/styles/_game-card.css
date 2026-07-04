@@ -619,6 +619,33 @@
     box-shadow: var(--m3-elevation-1);
 }
 
+.m3-platform-button--has-note {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 48px;
+    padding-block: 7px;
+}
+
+.m3-platform-button__main {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.m3-platform-button__note {
+    display: block;
+    max-width: 100%;
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1.05;
+    opacity: 0.88;
+    text-align: center;
+    white-space: nowrap;
+}
+
 .m3-platform-button[hidden] {
     display: none;
 }

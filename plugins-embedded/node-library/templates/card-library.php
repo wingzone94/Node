@@ -154,6 +154,10 @@ $nintendo_store_warning_message = static function ( string $device ): string {
     };
 };
 $platform_warning_device_from_link = static function ( array $link, string $platform_slug ) use ( $nintendo_store_device_from_link ): string {
+    if ( ! empty( $link['node_library_skip_platform_warning'] ) ) {
+        return '';
+    }
+
     $hardware = (string) ( $link['hardware'] ?? 'auto' );
     $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
     $has_ps4 = false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' );
@@ -187,6 +191,28 @@ $platform_warning_message = static function ( string $device ): string {
         'xbox-series' => 'このタイトルはXbox Series X|S専用です。',
         default       => '',
     };
+};
+$platform_hardware_note_from_link = static function ( array $link, string $platform_slug ): string {
+    $hardware = (string) ( $link['hardware'] ?? 'auto' );
+    $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
+    $has_ps4 = false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' );
+    $has_ps5 = false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' );
+    $has_xbox_one = false !== strpos( $platform, 'xbox one' );
+    $has_xbox_series = false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 'xs' );
+
+    if ( 'playstation' === $platform_slug ) {
+        if ( 'playstation-crossgen' === $hardware || ( $has_ps4 && $has_ps5 ) ) return 'PS4 / PS5';
+        if ( 'playstation-5' === $hardware || $has_ps5 ) return 'PS5';
+        if ( 'playstation-4' === $hardware || $has_ps4 ) return 'PS4';
+    }
+
+    if ( 'xbox' === $platform_slug ) {
+        if ( 'xbox-crossgen' === $hardware || ( $has_xbox_one && $has_xbox_series ) ) return 'Xbox One / Xbox Series X|S';
+        if ( 'xbox-series' === $hardware || $has_xbox_series ) return 'Xbox Series X|S';
+        if ( 'xbox-one' === $hardware || $has_xbox_one ) return 'Xbox One';
+    }
+
+    return '';
 };
 $store_platform_variant_from_link = static function ( array $link, string $platform_slug ) use ( $nintendo_store_device_from_link ): string {
     $hardware = (string) ( $link['hardware'] ?? 'auto' );
@@ -276,14 +302,20 @@ foreach ( $store_links as $link ) {
     $variant = $store_platform_variant_from_link( $link, $platform_slug );
     $group_key = $category . ':' . $platform_slug;
 
-    if ( 'playstation' === $platform_slug && ! empty( $dual_support_groups[ $group_key ]['ps4'] ) && ! empty( $dual_support_groups[ $group_key ]['ps5'] ) ) {
-        $variant = 'crossgen';
-        $link['hardware'] = 'playstation-crossgen';
+    if (
+        'playstation' === $platform_slug &&
+        ! empty( $dual_support_groups[ $group_key ]['ps4'] ) &&
+        ! empty( $dual_support_groups[ $group_key ]['ps5'] )
+    ) {
+        $link['node_library_skip_platform_warning'] = true;
     }
 
-    if ( 'xbox' === $platform_slug && ! empty( $dual_support_groups[ $group_key ]['one'] ) && ! empty( $dual_support_groups[ $group_key ]['series'] ) ) {
-        $variant = 'crossgen';
-        $link['hardware'] = 'xbox-crossgen';
+    if (
+        'xbox' === $platform_slug &&
+        ! empty( $dual_support_groups[ $group_key ]['one'] ) &&
+        ! empty( $dual_support_groups[ $group_key ]['series'] )
+    ) {
+        $link['node_library_skip_platform_warning'] = true;
     }
 
     $device_key = '' !== $variant ? ':' . $variant : '';
@@ -353,7 +385,7 @@ if ( count( $store_groups ) > 1 ) {
 }
 
 $steam_panel_id = ! empty( $steam_links ) ? wp_unique_id( 'node-library-steam-panel-' ) : '';
-$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $hardware_slug_from_link, $platform_warning_device_from_link, $nintendo_store_warning_message, $platform_warning_message ) {
+$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $hardware_slug_from_link, $platform_warning_device_from_link, $platform_hardware_note_from_link, $nintendo_store_warning_message, $platform_warning_message ) {
     $platform = $link['platform'] ?? 'other';
     $platform_slug = $hardware_slug_from_link( $link );
     if ( 'nintendo' === $platform_slug ) $platform = 'Nintendo Store';
@@ -364,6 +396,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
     $platform_warning = 'nintendo' === $platform_slug
         ? $nintendo_store_warning_message( $platform_warning_device )
         : $platform_warning_message( $platform_warning_device );
+    $platform_hardware_note = $platform_hardware_note_from_link( $link, $platform_slug );
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );
     $qr_panel_id = $supports_qr ? wp_unique_id( 'node-library-qr-' ) : '';
     $qr_title_id = $supports_qr ? $qr_panel_id . '-title' : '';
@@ -437,11 +470,16 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
                 <span class="node-library-platform-warning node-library-nintendo-warning" role="note" hidden><?php echo esc_html( $platform_warning ); ?></span>
         <?php endif; ?>
         <a href="<?php echo esc_url( $link['url'] ); ?>"
-           class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-ripple-host"
+           class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?><?php echo $platform_hardware_note ? ' m3-platform-button--has-note' : ''; ?> m3-ripple-host"
            target="_blank"
            rel="noopener"<?php echo $platform_warning ? ' data-node-library-platform-device="' . esc_attr( $platform_warning_device ) . '" data-node-library-platform-warning="' . esc_attr( $platform_warning ) . '" data-node-library-nintendo-device="' . esc_attr( $platform_warning_device ) . '" data-node-library-nintendo-warning="' . esc_attr( $platform_warning ) . '"' : ''; ?>>
-            <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
-            <?php echo esc_html( $button_label ); ?>
+            <span class="m3-platform-button__main">
+                <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
+                <span><?php echo esc_html( $button_label ); ?></span>
+            </span>
+            <?php if ( $platform_hardware_note ) : ?>
+                <span class="m3-platform-button__note">(<?php echo esc_html( $platform_hardware_note ); ?>)</span>
+            <?php endif; ?>
         </a>
         <?php if ( $platform_warning ) : ?>
             </span>
