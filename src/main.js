@@ -195,6 +195,7 @@ function initNodeLibrarySteamEmbedToggles() {
         const control = toggle.closest('[data-node-library-steam-control]');
         const card = toggle.closest('.node-library-card');
         const steamButtons = card ? Array.from(card.querySelectorAll('.m3-platform-button--steam')) : [];
+        const stores = card?.querySelector('.m3-game-card__stores');
         if (!panel) return;
 
         toggle.dataset.nodeLibrarySteamReady = 'true';
@@ -205,6 +206,13 @@ function initNodeLibrarySteamEmbedToggles() {
             steamButtons.forEach(button => {
                 button.hidden = isOpen;
             });
+            if (stores) {
+                const activePanel = stores.querySelector('.m3-game-card__store-panel:not([hidden])') || stores.querySelector('.m3-game-card__store-panel');
+                const visibleButtons = activePanel
+                    ? Array.from(activePanel.querySelectorAll('.m3-platform-button')).filter(button => !button.hidden)
+                    : [];
+                stores.hidden = isOpen && visibleButtons.length === 0;
+            }
             toggle.setAttribute('aria-expanded', String(isOpen));
             control?.classList.toggle('is-steam-visible', isOpen);
         };
