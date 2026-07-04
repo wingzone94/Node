@@ -615,6 +615,10 @@
     box-shadow: var(--m3-elevation-1);
 }
 
+.m3-platform-button[hidden] {
+    display: none;
+}
+
 .m3-platform-button:hover {
     transform: translateY(-2px);
     box-shadow: var(--m3-elevation-2);

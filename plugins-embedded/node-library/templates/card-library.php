@@ -140,7 +140,6 @@ foreach ( $links as $link ) {
             'url'      => (string) $link['url'],
             'app_id'   => $app_id,
         ];
-        continue;
     }
 
     $store_links[] = $link;
@@ -173,15 +172,6 @@ $render_steam_embed = static function ( array $steam_link ) {
     </div>
     <?php
 };
-
-if ( empty( $store_links ) && ! empty( $steam_links ) ) {
-    ?>
-    <div class="node-library-steam-standalone m3-reveal">
-        <?php foreach ( $steam_links as $steam_link ) $render_steam_embed( $steam_link ); ?>
-    </div>
-    <?php
-    return;
-}
 
 $store_groups = [
     'pc' => [
