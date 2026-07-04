@@ -118,11 +118,11 @@ $nintendo_store_device_from_link = static function ( array $link, string $platfo
 
     return 'unknown';
 };
-$nintendo_store_confirm_message = static function ( string $device ): string {
+$nintendo_store_warning_message = static function ( string $device ): string {
     return match ( $device ) {
-        'switch2' => 'このリンクはNintendo Switch 2向けのNintendo Storeページです。お使いの本体に対応しているか確認してから開いてください。',
-        'switch'  => 'このリンクはNintendo Switch向けのNintendo Storeページです。Nintendo Switch 2向けとは異なる場合があります。開いてよろしいですか？',
-        'unknown' => 'Nintendo Storeを開きます。対応機種を確認してから入手してください。開いてよろしいですか？',
+        'switch2' => 'このソフトはSwitch 2専用ソフトです。',
+        'switch'  => 'このソフトはSwitch専用ソフトです。',
+        'unknown' => '対応機種を確認してから入手してください。',
         default   => '',
     };
 };
@@ -155,7 +155,9 @@ foreach ( $store_links as $link ) {
             : 'auto';
     }
 
-    $dedupe_key = ( 'auto' === $category ? 'auto' : $category ) . ':' . $platform_slug_from_name( $platform );
+    $platform_slug = $platform_slug_from_name( $platform );
+    $device_key = 'nintendo' === $platform_slug ? ':' . $nintendo_store_device_from_link( $link, $platform_slug ) : '';
+    $dedupe_key = ( 'auto' === $category ? 'auto' : $category ) . ':' . $platform_slug . $device_key;
     $deduped_store_links[ $dedupe_key ] = $link;
 }
 $store_links = array_values( $deduped_store_links );
@@ -241,14 +243,14 @@ if ( count( $store_groups ) > 1 ) {
 }
 
 $steam_panel_id = ! empty( $steam_links ) ? wp_unique_id( 'node-library-steam-panel-' ) : '';
-$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $platform_slug_from_name, $nintendo_store_device_from_link, $nintendo_store_confirm_message ) {
+$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $platform_slug_from_name, $nintendo_store_device_from_link, $nintendo_store_warning_message ) {
     $platform = $link['platform'] ?? 'other';
     if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) $platform = 'Nintendo Store';
     if ( stripos( $platform, 'xbox' ) !== false ) $platform = 'Microsoft Store（Xbox）';
     if ( stripos( $platform, 'playstation' ) !== false || preg_match( '/(^|\s)ps[345](\s|$)/i', $platform ) ) $platform = 'PS Store';
     $platform_slug = $platform_slug_from_name( (string) $platform );
     $nintendo_store_device = $nintendo_store_device_from_link( $link, $platform_slug );
-    $nintendo_store_confirm = $nintendo_store_confirm_message( $nintendo_store_device );
+    $nintendo_store_warning = $nintendo_store_warning_message( $nintendo_store_device );
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );
     $qr_panel_id = $supports_qr ? wp_unique_id( 'node-library-qr-' ) : '';
     $qr_title_id = $supports_qr ? $qr_panel_id . '-title' : '';
@@ -276,7 +278,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
                 <a href="<?php echo esc_url( $link['url'] ); ?>"
                    class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-platform-button--desktop m3-ripple-host"
                    target="_blank"
-                   rel="noopener"<?php echo $nintendo_store_confirm ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" onclick="return confirm(\'' . esc_js( $nintendo_store_confirm ) . '\');"' : ''; ?>>
+                   rel="noopener">
                     <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
                     <?php echo esc_html( $button_label ); ?>
                 </a>
@@ -312,18 +314,25 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
         <a href="<?php echo esc_url( $link['url'] ); ?>"
            class="m3-platform-store-badge-link m3-platform-store-badge-link--always m3-platform-store-badge-link--<?php echo esc_attr( $platform_slug ); ?>"
            target="_blank"
-           rel="noopener"<?php echo $nintendo_store_confirm ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" onclick="return confirm(\'' . esc_js( $nintendo_store_confirm ) . '\');"' : ''; ?>
+           rel="noopener"
            aria-label="<?php echo esc_attr( $button_label ); ?>">
             <img class="m3-platform-store-badge" src="<?php echo esc_url( $badge_url ); ?>" alt="<?php echo esc_attr( $button_label ); ?>">
         </a>
     <?php else : ?>
+        <?php if ( $nintendo_store_warning ) : ?>
+            <span class="node-library-nintendo-link">
+                <span class="node-library-nintendo-warning" role="note"><?php echo esc_html( $nintendo_store_warning ); ?></span>
+        <?php endif; ?>
         <a href="<?php echo esc_url( $link['url'] ); ?>"
            class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-ripple-host"
            target="_blank"
-           rel="noopener"<?php echo $nintendo_store_confirm ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" onclick="return confirm(\'' . esc_js( $nintendo_store_confirm ) . '\');"' : ''; ?>>
+           rel="noopener"<?php echo $nintendo_store_warning ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" data-node-library-nintendo-warning="' . esc_attr( $nintendo_store_warning ) . '"' : ''; ?>>
             <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
             <?php echo esc_html( $button_label ); ?>
         </a>
+        <?php if ( $nintendo_store_warning ) : ?>
+            </span>
+        <?php endif; ?>
     <?php endif; ?>
     <?php
 };
@@ -404,6 +413,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
             </summary>
             <label class="node-library-steam-control__switch">
                 <input type="checkbox" data-node-library-steam-toggle aria-controls="<?php echo esc_attr( $steam_panel_id ); ?>" aria-expanded="false">
+                <span class="node-library-steam-control__toggle" aria-hidden="true"></span>
                 <span>Steam埋め込みを表示する</span>
             </label>
         </details>
