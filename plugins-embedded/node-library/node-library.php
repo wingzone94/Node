@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'NODE_LIBRARY_VERSION', '1.3.4' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
+define( 'NODE_LIBRARY_BADGE_BASE_URL', 'https://luminous-core.net/wp-content/themes/Node/plugins-embedded/node-library/assets/images/' );
 
 $node_library_embedded_dir = get_template_directory() . '/plugins-embedded/node-library/';
 define(
