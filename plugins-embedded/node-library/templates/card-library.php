@@ -46,18 +46,21 @@ $category_from_link = static function ( array $link ) use ( $platform_slug_from_
     $url      = (string) ( $link['url'] ?? '' );
     $slug     = $platform_slug_from_name( $platform );
     $host     = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+    $path     = strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) );
 
     if ( 0 === strpos( $host, 'www.' ) ) {
         $host = substr( $host, 4 );
     }
 
     if (
-        in_array( $slug, [ 'nintendo', 'playstation', 'xbox' ], true ) ||
-        false !== strpos( $host, 'nintendo.com' ) ||
-        false !== strpos( $host, 'playstation.com' ) ||
-        false !== strpos( $host, 'xbox.com' )
+        in_array( $slug, [ 'mac', 'windows', 'steam', 'geforcenow' ], true ) ||
+        false !== strpos( $host, 'steampowered.com' ) ||
+        false !== strpos( $host, 'apps.microsoft.com' ) ||
+        false !== strpos( $host, 'epicgames.com' ) ||
+        false !== strpos( $host, 'nvidia.com' ) ||
+        false !== strpos( $path, 'for-pc' )
     ) {
-        return 'console';
+        return 'pc';
     }
 
     if (
@@ -70,13 +73,12 @@ $category_from_link = static function ( array $link ) use ( $platform_slug_from_
     }
 
     if (
-        in_array( $slug, [ 'mac', 'windows', 'steam', 'geforcenow' ], true ) ||
-        false !== strpos( $host, 'steampowered.com' ) ||
-        false !== strpos( $host, 'apps.microsoft.com' ) ||
-        false !== strpos( $host, 'epicgames.com' ) ||
-        false !== strpos( $host, 'nvidia.com' )
+        in_array( $slug, [ 'nintendo', 'playstation', 'xbox' ], true ) ||
+        false !== strpos( $host, 'nintendo.com' ) ||
+        false !== strpos( $host, 'playstation.com' ) ||
+        false !== strpos( $host, 'xbox.com' )
     ) {
-        return 'pc';
+        return 'console';
     }
 
     return 'auto';
@@ -126,6 +128,27 @@ $nintendo_store_warning_message = static function ( string $device ): string {
         default   => '',
     };
 };
+$store_platform_variant_from_link = static function ( array $link, string $platform_slug ) use ( $nintendo_store_device_from_link ): string {
+    $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
+
+    if ( 'nintendo' === $platform_slug ) {
+        return $nintendo_store_device_from_link( $link, $platform_slug );
+    }
+
+    if ( 'playstation' === $platform_slug ) {
+        if ( false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' ) ) return 'ps5';
+        if ( false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' ) ) return 'ps4';
+        return 'playstation';
+    }
+
+    if ( 'xbox' === $platform_slug ) {
+        if ( false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 'xs' ) ) return 'series';
+        if ( false !== strpos( $platform, 'xbox one' ) ) return 'one';
+        return 'xbox';
+    }
+
+    return '';
+};
 $steam_links = [];
 $store_links = [];
 foreach ( $links as $link ) {
@@ -155,7 +178,8 @@ foreach ( $store_links as $link ) {
     }
 
     $platform_slug = $platform_slug_from_name( $platform );
-    $device_key = 'nintendo' === $platform_slug ? ':' . $nintendo_store_device_from_link( $link, $platform_slug ) : '';
+    $variant = $store_platform_variant_from_link( $link, $platform_slug );
+    $device_key = '' !== $variant ? ':' . $variant : '';
     $dedupe_key = ( 'auto' === $category ? 'auto' : $category ) . ':' . $platform_slug . $device_key;
     $deduped_store_links[ $dedupe_key ] = $link;
 }

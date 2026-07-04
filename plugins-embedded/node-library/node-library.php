@@ -221,7 +221,7 @@ final class Node_Library {
 		}
 
 		$prompt = sprintf(
-			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo eShop、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Xbox向けリンクのプラットフォーム名は「Microsoft Store（Xbox）」としてください。各リンクには表示タブを示す category を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store(Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto"}]} 形式のJSONだけにしてください。',
+			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo Store、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Nintendo StoreはNintendo Switch版とNintendo Switch 2版が別商品ページとして存在する場合、片方にまとめず、platformを「Nintendo Switch」「Nintendo Switch 2」として両方返してください。PlayStation StoreはPS4版とPS5版が別商品ページとして存在する場合、platformを「PlayStation 4」「PlayStation 5」として両方返してください。Xbox / Microsoft Store（Xbox）はXbox One版とXbox Series X|S版が別商品ページとして存在する場合、platformを「Xbox One」「Xbox Series X|S」として両方返してください。Windows/PC向けのMicrosoft Storeリンクはplatformを「Microsoft Store (Windows)」にし、Xbox向けリンクは「Microsoft Store（Xbox）」または機種別のXbox名にしてください。各リンクには表示タブを示す category を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store (Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto"}]} 形式のJSONだけにしてください。',
 			'app' === $type ? 'アプリ' : 'ゲーム',
 			$title
 		);
@@ -763,7 +763,7 @@ final class Node_Library {
 					?>
 						<div class="link-row<?php echo esc_attr( $hidden ); ?>" style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
 							<span style="min-width:20px; font-weight:bold; color:#666;"><?php echo $i + 1; ?>.</span>
-							<input type="text" name="node_library_links[<?php echo $i; ?>][platform]" value="<?php echo esc_attr( $p ); ?>" placeholder="ストア名 (例: Steam, Nintendo Switch)" style="flex:1;">
+							<input type="text" name="node_library_links[<?php echo $i; ?>][platform]" value="<?php echo esc_attr( $p ); ?>" placeholder="ストア名 (例: Steam, Nintendo Switch 2)" style="flex:1;">
 							<input type="text" name="node_library_links[<?php echo $i; ?>][url]" value="<?php echo esc_url( $u ); ?>" placeholder="https://..." style="flex:2;">
 							<select name="node_library_links[<?php echo $i; ?>][category]" class="node-library-link-category" title="表示タブ" style="flex:0 0 auto; min-width:140px;">
 								<?php foreach ( $tab_categories as $cat_value => $cat_label ) : ?>
@@ -776,7 +776,7 @@ final class Node_Library {
 				<p style="margin-top:8px;">
 					<button type="button" class="button button-secondary" id="node-library-add-link">リンク行を追加</button>
 				</p>
-				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation, Microsoft Store（Xbox）, Nintendo Switch, App Store）<br>「表示タブ」で各リンクをどのタブ（PC / スマホ・タブレット / コンソール）に出すか手動指定できます。「自動判定」のままならストア名から自動分類します。</p>
+				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation 5, Xbox Series X|S, Microsoft Store (Windows), Microsoft Store（Xbox）, Nintendo Switch, Nintendo Switch 2, App Store）<br>Nintendo Store / PlayStation Store / Microsoft Store（Xbox）は、機種別の商品ページを別行で登録できます。「表示タブ」で各リンクをどのタブ（PC / スマホ・タブレット / コンソール）に出すか手動指定できます。「自動判定」のままならストア名から自動分類します。</p>
 			</div>
 		</div>
 		<?php
