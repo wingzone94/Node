@@ -286,7 +286,10 @@ function node_render_settings_page() {
                                 var local = response.data.local_version;
                                 if (response.data.update_available) {
                                     $('#update-check-result').html('<p style="color: #FF9900; font-weight: bold;">新しいバージョン (v' + remote + ') が見つかりました！</p>');
-                                    $('#luminous-install-update').show();
+                                    $('#luminous-install-update').text('最新版をインストール').show();
+                                } else if (response.data.install_available) {
+                                    $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。同じバージョンを再インストールできます。</p>');
+                                    $('#luminous-install-update').text('同じバージョンを再インストール').show();
                                 } else {
                                     $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。</p>');
                                     $('#luminous-install-update').hide();

@@ -29,12 +29,15 @@ add_action(
 		$remote_version = isset( $matches[1] ) ? $matches[1] : '0.0.0';
 
 		$update_available = version_compare( $remote_version, $local_version, '>' );
+		$install_available = version_compare( $remote_version, $local_version, '>=' );
 
 		wp_send_json_success(
 			array(
 				'local_version'    => $local_version,
 				'remote_version'   => $remote_version,
-				'update_available' => $update_available,
+				'update_available'  => $update_available,
+				'install_available' => $install_available,
+				'same_version'      => ! $update_available && $install_available,
 			)
 		);
 	}
