@@ -282,10 +282,11 @@ function initNodeLibraryNintendoWarnings() {
     const warningTimers = new WeakMap();
 
     const hideWarning = link => {
-        const warning = link.closest('.node-library-nintendo-link')?.querySelector('.node-library-nintendo-warning');
+        const warning = link.closest('.node-library-platform-link, .node-library-nintendo-link')?.querySelector('.node-library-platform-warning, .node-library-nintendo-warning');
         const timer = warningTimers.get(link);
         if (timer) window.clearTimeout(timer);
 
+        link.dataset.nodeLibraryPlatformArmed = 'false';
         link.dataset.nodeLibraryNintendoArmed = 'false';
         link.setAttribute('aria-expanded', 'false');
         warning?.setAttribute('hidden', '');
@@ -293,14 +294,15 @@ function initNodeLibraryNintendoWarnings() {
     };
 
     const showWarning = link => {
-        const warning = link.closest('.node-library-nintendo-link')?.querySelector('.node-library-nintendo-warning');
+        const warning = link.closest('.node-library-platform-link, .node-library-nintendo-link')?.querySelector('.node-library-platform-warning, .node-library-nintendo-warning');
         if (!warning) return false;
 
-        document.querySelectorAll('[data-node-library-nintendo-warning][data-node-library-nintendo-armed="true"]').forEach(activeLink => {
+        document.querySelectorAll('[data-node-library-platform-warning][data-node-library-platform-armed="true"], [data-node-library-nintendo-warning][data-node-library-nintendo-armed="true"]').forEach(activeLink => {
             if (activeLink !== link) hideWarning(activeLink);
         });
 
         warning.hidden = false;
+        link.dataset.nodeLibraryPlatformArmed = 'true';
         link.dataset.nodeLibraryNintendoArmed = 'true';
         link.setAttribute('aria-expanded', 'true');
 
@@ -309,16 +311,18 @@ function initNodeLibraryNintendoWarnings() {
         return true;
     };
 
-    document.querySelectorAll('[data-node-library-nintendo-warning]').forEach(link => {
-        if (link.dataset.nodeLibraryNintendoReady === 'true') return;
+    document.querySelectorAll('[data-node-library-platform-warning], [data-node-library-nintendo-warning]').forEach(link => {
+        if (link.dataset.nodeLibraryPlatformReady === 'true' || link.dataset.nodeLibraryNintendoReady === 'true') return;
 
+        link.dataset.nodeLibraryPlatformReady = 'true';
         link.dataset.nodeLibraryNintendoReady = 'true';
+        link.dataset.nodeLibraryPlatformArmed = 'false';
         link.dataset.nodeLibraryNintendoArmed = 'false';
         link.setAttribute('aria-haspopup', 'true');
         link.setAttribute('aria-expanded', 'false');
 
         link.addEventListener('click', event => {
-            if (link.dataset.nodeLibraryNintendoArmed === 'true') {
+            if (link.dataset.nodeLibraryPlatformArmed === 'true' || link.dataset.nodeLibraryNintendoArmed === 'true') {
                 hideWarning(link);
                 return;
             }
