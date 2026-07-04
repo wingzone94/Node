@@ -10,7 +10,15 @@
 }
 
 .m3-game-card--has-steam-toggle {
-    padding-bottom: 56px;
+    padding-bottom: 64px;
+}
+
+.m3-game-card--has-steam-toggle:has(.node-library-steam-control[open]) {
+    padding-bottom: 120px;
+}
+
+.m3-game-card--has-steam-toggle:has(.node-library-steam-control[open]) .node-library-steam-panel:not([hidden]) {
+    margin-bottom: 56px;
 }
 
 .m3-game-card__header {

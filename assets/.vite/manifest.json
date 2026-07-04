@@ -15,7 +15,7 @@
     "isEntry": true
   },
   "src/main.js": {
-    "file": "js/main.DdBk85zx.js",
+    "file": "js/main.C5-KhxyA.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
@@ -30,7 +30,6 @@
       "src/scripts/pagination.js",
       "src/scripts/footnotes-popover.js",
       "src/scripts/reading-badge-animation.js",
-      "src/scripts/series-toc.js",
       "src/scripts/color-mode.js",
       "_vendor.CoViGN73.js"
     ]
@@ -60,7 +59,7 @@
     "isDynamicEntry": true
   },
   "src/scripts/footnotes-popover.js": {
-    "file": "js/footnotes-popover.DjkvFS72.js",
+    "file": "js/footnotes-popover.DrjGXQtK.js",
     "name": "footnotes-popover",
     "src": "src/scripts/footnotes-popover.js",
     "isDynamicEntry": true,
@@ -85,12 +84,6 @@
     "file": "js/reading-badge-animation.DxfofZvk.js",
     "name": "reading-badge-animation",
     "src": "src/scripts/reading-badge-animation.js",
-    "isDynamicEntry": true
-  },
-  "src/scripts/series-toc.js": {
-    "file": "js/series-toc.DGMWFGU9.js",
-    "name": "series-toc",
-    "src": "src/scripts/series-toc.js",
     "isDynamicEntry": true
   },
   "src/scripts/table-sorter.js": {

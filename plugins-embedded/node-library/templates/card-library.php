@@ -89,6 +89,43 @@ $steam_app_id_from_url = static function ( string $url ): string {
 
     return '';
 };
+$nintendo_store_device_from_link = static function ( array $link, string $platform_slug ): string {
+    $url      = (string) ( $link['url'] ?? '' );
+    $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
+    $host     = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+    $path     = strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+
+    if ( 'nintendo' !== $platform_slug && false === strpos( $host, 'nintendo.com' ) ) {
+        return '';
+    }
+
+    if (
+        false !== strpos( $platform, 'switch 2' ) ||
+        false !== strpos( $platform, 'switch2' ) ||
+        false !== strpos( $path, 'switch2' ) ||
+        false !== strpos( $path, 'switch-2' ) ||
+        false !== strpos( $path, 'd70010000096732' )
+    ) {
+        return 'switch2';
+    }
+
+    if (
+        false !== strpos( $platform, 'switch' ) ||
+        false !== strpos( $path, 'd70010000010193' )
+    ) {
+        return 'switch';
+    }
+
+    return 'unknown';
+};
+$nintendo_store_confirm_message = static function ( string $device ): string {
+    return match ( $device ) {
+        'switch2' => 'このリンクはNintendo Switch 2向けのNintendo Storeページです。お使いの本体に対応しているか確認してから開いてください。',
+        'switch'  => 'このリンクはNintendo Switch向けのNintendo Storeページです。Nintendo Switch 2向けとは異なる場合があります。開いてよろしいですか？',
+        'unknown' => 'Nintendo Storeを開きます。対応機種を確認してから入手してください。開いてよろしいですか？',
+        default   => '',
+    };
+};
 $steam_links = [];
 $store_links = [];
 foreach ( $links as $link ) {
@@ -108,6 +145,20 @@ foreach ( $links as $link ) {
 
     $store_links[] = $link;
 }
+$deduped_store_links = [];
+foreach ( $store_links as $link ) {
+    $platform = (string) ( $link['platform'] ?? '' );
+    $category = $category_from_link( $link );
+    if ( 'auto' === $category ) {
+        $category = function_exists( 'node_library_normalize_category' )
+            ? node_library_normalize_category( $link['category'] ?? '' )
+            : 'auto';
+    }
+
+    $dedupe_key = ( 'auto' === $category ? 'auto' : $category ) . ':' . $platform_slug_from_name( $platform );
+    $deduped_store_links[ $dedupe_key ] = $link;
+}
+$store_links = array_values( $deduped_store_links );
 $render_steam_embed = static function ( array $steam_link ) {
     ?>
     <div class="m3-platform-steam-embed">
@@ -190,12 +241,14 @@ if ( count( $store_groups ) > 1 ) {
 }
 
 $steam_panel_id = ! empty( $steam_links ) ? wp_unique_id( 'node-library-steam-panel-' ) : '';
-$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $platform_slug_from_name ) {
+$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $platform_slug_from_name, $nintendo_store_device_from_link, $nintendo_store_confirm_message ) {
     $platform = $link['platform'] ?? 'other';
     if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) $platform = 'Nintendo Store';
     if ( stripos( $platform, 'xbox' ) !== false ) $platform = 'Microsoft Store（Xbox）';
     if ( stripos( $platform, 'playstation' ) !== false || preg_match( '/(^|\s)ps[345](\s|$)/i', $platform ) ) $platform = 'PS Store';
     $platform_slug = $platform_slug_from_name( (string) $platform );
+    $nintendo_store_device = $nintendo_store_device_from_link( $link, $platform_slug );
+    $nintendo_store_confirm = $nintendo_store_confirm_message( $nintendo_store_device );
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );
     $qr_panel_id = $supports_qr ? wp_unique_id( 'node-library-qr-' ) : '';
     $qr_title_id = $supports_qr ? $qr_panel_id . '-title' : '';
@@ -223,7 +276,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
                 <a href="<?php echo esc_url( $link['url'] ); ?>"
                    class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-platform-button--desktop m3-ripple-host"
                    target="_blank"
-                   rel="noopener">
+                   rel="noopener"<?php echo $nintendo_store_confirm ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" onclick="return confirm(\'' . esc_js( $nintendo_store_confirm ) . '\');"' : ''; ?>>
                     <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
                     <?php echo esc_html( $button_label ); ?>
                 </a>
@@ -259,7 +312,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
         <a href="<?php echo esc_url( $link['url'] ); ?>"
            class="m3-platform-store-badge-link m3-platform-store-badge-link--always m3-platform-store-badge-link--<?php echo esc_attr( $platform_slug ); ?>"
            target="_blank"
-           rel="noopener"
+           rel="noopener"<?php echo $nintendo_store_confirm ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" onclick="return confirm(\'' . esc_js( $nintendo_store_confirm ) . '\');"' : ''; ?>
            aria-label="<?php echo esc_attr( $button_label ); ?>">
             <img class="m3-platform-store-badge" src="<?php echo esc_url( $badge_url ); ?>" alt="<?php echo esc_attr( $button_label ); ?>">
         </a>
@@ -267,7 +320,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
         <a href="<?php echo esc_url( $link['url'] ); ?>"
            class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-ripple-host"
            target="_blank"
-           rel="noopener">
+           rel="noopener"<?php echo $nintendo_store_confirm ? ' data-node-library-nintendo-device="' . esc_attr( $nintendo_store_device ) . '" onclick="return confirm(\'' . esc_js( $nintendo_store_confirm ) . '\');"' : ''; ?>>
             <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
             <?php echo esc_html( $button_label ); ?>
         </a>
