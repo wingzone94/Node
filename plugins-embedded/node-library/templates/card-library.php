@@ -28,10 +28,10 @@ $badge_base_url = defined( 'NODE_LIBRARY_BADGE_BASE_URL' )
 $badge_base_url = trailingslashit( apply_filters( 'node_library_badge_base_url', $badge_base_url ) );
 $platform_slug_from_name = static function ( string $platform ): string {
     if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) return 'nintendo';
-    if ( stripos( $platform, 'ps' ) !== false || stripos( $platform, 'playstation' ) !== false ) return 'playstation';
+    if ( stripos( $platform, 'amazon' ) !== false ) return 'amazon';
+    if ( stripos( $platform, 'playstation' ) !== false || preg_match( '/(^|\s)ps(\s+store|[345](\s|$))/i', $platform ) ) return 'playstation';
     if ( stripos( $platform, 'xbox' ) !== false ) return 'xbox';
     if ( stripos( $platform, 'steam' ) !== false ) return 'steam';
-    if ( stripos( $platform, 'amazon' ) !== false ) return 'amazon';
     if ( stripos( $platform, 'mac' ) !== false ) return 'mac';
     if ( stripos( $platform, 'ios' ) !== false || stripos( $platform, 'apple' ) !== false || stripos( $platform, 'app store' ) !== false ) return 'ios';
     if ( stripos( $platform, 'android' ) !== false || stripos( $platform, 'google' ) !== false ) return 'android';
@@ -41,10 +41,26 @@ $platform_slug_from_name = static function ( string $platform ): string {
 
     return strtolower( str_replace( ' ', '', $platform ) );
 };
-$category_from_link = static function ( array $link ) use ( $platform_slug_from_name ): string {
+$hardware_slug_from_link = static function ( array $link ) use ( $platform_slug_from_name ): string {
+    $hardware = (string) ( $link['hardware'] ?? 'auto' );
+    $platform = (string) ( $link['platform'] ?? '' );
+
+    return match ( $hardware ) {
+        'nintendo-switch', 'nintendo-switch-2' => 'nintendo',
+        'playstation-4', 'playstation-5'       => 'playstation',
+        'xbox-one', 'xbox-series'              => 'xbox',
+        'amazon-fire'                          => 'amazon',
+        'iphone-ipad'                          => 'ios',
+        'android'                              => 'android',
+        'windows-pc'                           => 'windows',
+        'mac'                                  => 'mac',
+        default                                => $platform_slug_from_name( $platform ),
+    };
+};
+$category_from_link = static function ( array $link ) use ( $hardware_slug_from_link ): string {
     $platform = (string) ( $link['platform'] ?? '' );
     $url      = (string) ( $link['url'] ?? '' );
-    $slug     = $platform_slug_from_name( $platform );
+    $slug     = $hardware_slug_from_link( $link );
     $host     = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
     $path     = strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) );
 
@@ -93,12 +109,21 @@ $steam_app_id_from_url = static function ( string $url ): string {
 };
 $nintendo_store_device_from_link = static function ( array $link, string $platform_slug ): string {
     $url      = (string) ( $link['url'] ?? '' );
+    $hardware = (string) ( $link['hardware'] ?? 'auto' );
     $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
     $host     = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
     $path     = strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) );
 
     if ( 'nintendo' !== $platform_slug && false === strpos( $host, 'nintendo.com' ) ) {
         return '';
+    }
+
+    if ( 'nintendo-switch-2' === $hardware ) {
+        return 'switch2';
+    }
+
+    if ( 'nintendo-switch' === $hardware ) {
+        return 'switch';
     }
 
     if (
@@ -129,6 +154,7 @@ $nintendo_store_warning_message = static function ( string $device ): string {
     };
 };
 $store_platform_variant_from_link = static function ( array $link, string $platform_slug ) use ( $nintendo_store_device_from_link ): string {
+    $hardware = (string) ( $link['hardware'] ?? 'auto' );
     $platform = strtolower( (string) ( $link['platform'] ?? '' ) );
 
     if ( 'nintendo' === $platform_slug ) {
@@ -136,12 +162,16 @@ $store_platform_variant_from_link = static function ( array $link, string $platf
     }
 
     if ( 'playstation' === $platform_slug ) {
+        if ( 'playstation-5' === $hardware ) return 'ps5';
+        if ( 'playstation-4' === $hardware ) return 'ps4';
         if ( false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' ) ) return 'ps5';
         if ( false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' ) ) return 'ps4';
         return 'playstation';
     }
 
     if ( 'xbox' === $platform_slug ) {
+        if ( 'xbox-series' === $hardware ) return 'series';
+        if ( 'xbox-one' === $hardware ) return 'one';
         if ( false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) || false !== strpos( $platform, 'xs' ) ) return 'series';
         if ( false !== strpos( $platform, 'xbox one' ) ) return 'one';
         return 'xbox';
@@ -177,7 +207,7 @@ foreach ( $store_links as $link ) {
             : 'auto';
     }
 
-    $platform_slug = $platform_slug_from_name( $platform );
+    $platform_slug = $hardware_slug_from_link( $link );
     $variant = $store_platform_variant_from_link( $link, $platform_slug );
     $device_key = '' !== $variant ? ':' . $variant : '';
     $dedupe_key = ( 'auto' === $category ? 'auto' : $category ) . ':' . $platform_slug . $device_key;
@@ -257,12 +287,13 @@ if ( count( $store_groups ) > 1 ) {
 }
 
 $steam_panel_id = ! empty( $steam_links ) ? wp_unique_id( 'node-library-steam-panel-' ) : '';
-$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $platform_slug_from_name, $nintendo_store_device_from_link, $nintendo_store_warning_message ) {
+$render_store_link  = static function ( $link ) use ( $button_text, $badge_base_url, $hardware_slug_from_link, $nintendo_store_device_from_link, $nintendo_store_warning_message ) {
     $platform = $link['platform'] ?? 'other';
-    if ( stripos( $platform, 'switch' ) !== false || stripos( $platform, 'nintendo' ) !== false ) $platform = 'Nintendo Store';
-    if ( stripos( $platform, 'xbox' ) !== false ) $platform = 'Microsoft Store（Xbox）';
-    if ( stripos( $platform, 'playstation' ) !== false || preg_match( '/(^|\s)ps[345](\s|$)/i', $platform ) ) $platform = 'PS Store';
-    $platform_slug = $platform_slug_from_name( (string) $platform );
+    $platform_slug = $hardware_slug_from_link( $link );
+    if ( 'nintendo' === $platform_slug ) $platform = 'Nintendo Store';
+    if ( 'xbox' === $platform_slug ) $platform = 'Microsoft Store（Xbox）';
+    if ( 'playstation' === $platform_slug ) $platform = 'PS Store';
+    if ( 'amazon' === $platform_slug ) $platform = 'Amazon App Store';
     $nintendo_store_device = $nintendo_store_device_from_link( $link, $platform_slug );
     $nintendo_store_warning = $nintendo_store_warning_message( $nintendo_store_device );
     $supports_qr = in_array( $platform_slug, [ 'ios', 'android' ], true );

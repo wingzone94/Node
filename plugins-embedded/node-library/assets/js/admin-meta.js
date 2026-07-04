@@ -59,16 +59,35 @@
                 summaryField.dispatchEvent(new Event('input', { bubbles: true }));
 
 				var validCategories = ['auto', 'pc', 'mobile', 'console'];
+				var validHardware = [
+					'auto',
+					'windows-pc',
+					'mac',
+					'iphone-ipad',
+					'android',
+					'amazon-fire',
+					'nintendo-switch',
+					'nintendo-switch-2',
+					'playstation-4',
+					'playstation-5',
+					'xbox-one',
+					'xbox-series'
+				];
 				linkRows.forEach(function (row, index) {
 					var link = response.links && response.links[index] ? response.links[index] : null;
 					var platform = row.querySelector('input[name*="[platform]"]');
 					var url = row.querySelector('input[name*="[url]"]');
 					var category = row.querySelector('select[name*="[category]"]');
+					var hardware = row.querySelector('select[name*="[hardware]"]');
 					if (platform) platform.value = link ? link.platform : '';
 					if (url) url.value = link ? link.url : '';
 					if (category) {
 						var cat = link && validCategories.indexOf(link.category) !== -1 ? link.category : 'auto';
 						category.value = cat;
+					}
+					if (hardware) {
+						var device = link && validHardware.indexOf(link.hardware) !== -1 ? link.hardware : 'auto';
+						hardware.value = device;
 					}
 
 					var shouldShow = index < Math.max(2, response.links ? response.links.length : 0);

@@ -94,6 +94,63 @@ function node_library_normalize_category( $value ): string {
 }
 
 /**
+ * ストアリンクごとの対応ハード候補。
+ *
+ * @return array<string, string>
+ */
+function node_library_hardware_options(): array {
+	return [
+		'auto'              => '自動判定',
+		'windows-pc'        => 'Windows PC',
+		'mac'               => 'Mac',
+		'iphone-ipad'       => 'iPhone / iPad',
+		'android'           => 'Android',
+		'amazon-fire'       => 'Amazon Fire / Amazon Appstore',
+		'nintendo-switch'   => 'Nintendo Switch',
+		'nintendo-switch-2' => 'Nintendo Switch 2',
+		'playstation-4'     => 'PlayStation 4',
+		'playstation-5'     => 'PlayStation 5',
+		'xbox-one'          => 'Xbox One',
+		'xbox-series'       => 'Xbox Series X|S',
+	];
+}
+
+/**
+ * 対応ハード値を保存用に正規化する。
+ *
+ * @param mixed $value 入力値。
+ * @return string
+ */
+function node_library_normalize_hardware( $value ): string {
+	$value = is_string( $value ) ? sanitize_key( $value ) : '';
+	return array_key_exists( $value, node_library_hardware_options() ) ? $value : 'auto';
+}
+
+/**
+ * Geminiや既存入力のplatform名から対応ハードを推定する。
+ *
+ * @param string $platform プラットフォーム名。
+ * @return string
+ */
+function node_library_infer_hardware_from_platform( string $platform ): string {
+	$platform = strtolower( $platform );
+
+	if ( false !== strpos( $platform, 'switch 2' ) || false !== strpos( $platform, 'switch2' ) ) return 'nintendo-switch-2';
+	if ( false !== strpos( $platform, 'switch' ) || false !== strpos( $platform, 'nintendo' ) ) return 'nintendo-switch';
+	if ( false !== strpos( $platform, 'playstation 5' ) || false !== strpos( $platform, 'ps5' ) ) return 'playstation-5';
+	if ( false !== strpos( $platform, 'playstation 4' ) || false !== strpos( $platform, 'ps4' ) ) return 'playstation-4';
+	if ( false !== strpos( $platform, 'series' ) || false !== strpos( $platform, 'x|s' ) ) return 'xbox-series';
+	if ( false !== strpos( $platform, 'xbox one' ) ) return 'xbox-one';
+	if ( false !== strpos( $platform, 'amazon' ) ) return 'amazon-fire';
+	if ( false !== strpos( $platform, 'android' ) || false !== strpos( $platform, 'google play' ) ) return 'android';
+	if ( false !== strpos( $platform, 'ios' ) || false !== strpos( $platform, 'ipad' ) || false !== strpos( $platform, 'iphone' ) || false !== strpos( $platform, 'app store' ) ) return 'iphone-ipad';
+	if ( false !== strpos( $platform, 'mac' ) ) return 'mac';
+	if ( false !== strpos( $platform, 'windows' ) || false !== strpos( $platform, 'pc' ) ) return 'windows-pc';
+
+	return 'auto';
+}
+
+/**
  * Node Library Main Class
  */
 final class Node_Library {
@@ -221,7 +278,7 @@ final class Node_Library {
 		}
 
 		$prompt = sprintf(
-			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo Store、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Nintendo StoreはNintendo Switch版とNintendo Switch 2版が別商品ページとして存在する場合、片方にまとめず、platformを「Nintendo Switch」「Nintendo Switch 2」として両方返してください。PlayStation StoreはPS4版とPS5版が別商品ページとして存在する場合、platformを「PlayStation 4」「PlayStation 5」として両方返してください。Xbox / Microsoft Store（Xbox）はXbox One版とXbox Series X|S版が別商品ページとして存在する場合、platformを「Xbox One」「Xbox Series X|S」として両方返してください。Windows/PC向けのMicrosoft Storeリンクはplatformを「Microsoft Store (Windows)」にし、Xbox向けリンクは「Microsoft Store（Xbox）」または機種別のXbox名にしてください。各リンクには表示タブを示す category を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store (Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto"}]} 形式のJSONだけにしてください。',
+			'%1$s「%2$s」の情報をGoogle検索で確認してください。記事内カード用の日本語紹介文と、配信中の公式ストアページを取得してください。紹介文はジャンルまたは用途、提供元、主な対応プラットフォーム、特徴を180〜260文字で簡潔にまとめてください。リンクはSteam、Nintendo Store、PlayStation Store、Microsoft Store、Microsoft Store（Xbox）、App Store、Google Play、Amazon Appstore、GeForce NOW、Epic Games Storeなど、実際に確認できた公式ストアの商品ページだけにしてください。Nintendo StoreはNintendo Switch版とNintendo Switch 2版が別商品ページとして存在する場合、片方にまとめず、platformを「Nintendo Switch」「Nintendo Switch 2」として両方返してください。PlayStation StoreはPS4版とPS5版が別商品ページとして存在する場合、platformを「PlayStation 4」「PlayStation 5」として両方返してください。Xbox / Microsoft Store（Xbox）はXbox One版とXbox Series X|S版が別商品ページとして存在する場合、platformを「Xbox One」「Xbox Series X|S」として両方返してください。Windows/PC向けのMicrosoft Storeリンクはplatformを「Microsoft Store (Windows)」にし、Xbox向けリンクは「Microsoft Store（Xbox）」または機種別のXbox名にしてください。各リンクには表示タブを示す category と対応ハードを示す hardware を付けてください。category は次のいずれかです: "pc"（Steam・Epic・GOG・Microsoft Store (Windows)・Mac App Store・GeForce NOW など）、"mobile"（App Store・Google Play・Amazon Appstore などスマホ/タブレット）、"console"（Nintendo・PlayStation・Xbox などコンソール）。hardware は次のいずれかです: "auto", "windows-pc", "mac", "iphone-ipad", "android", "amazon-fire", "nintendo-switch", "nintendo-switch-2", "playstation-4", "playstation-5", "xbox-one", "xbox-series"。判断できない場合は "auto" としてください。推測したURL、検索結果ページ、攻略サイト、ニュース記事、公式トップページは含めないでください。返答はMarkdownを使わず、必ず {"summary":"紹介文","links":[{"platform":"プラットフォーム名","url":"https://...","category":"pc|mobile|console|auto","hardware":"auto|windows-pc|mac|iphone-ipad|android|amazon-fire|nintendo-switch|nintendo-switch-2|playstation-4|playstation-5|xbox-one|xbox-series"}]} 形式のJSONだけにしてください。',
 			'app' === $type ? 'アプリ' : 'ゲーム',
 			$title
 		);
@@ -346,6 +403,7 @@ final class Node_Library {
 				'platform' => $platform,
 				'url'      => $url,
 				'category' => node_library_normalize_category( $link['category'] ?? '' ),
+				'hardware' => node_library_normalize_hardware( $link['hardware'] ?? node_library_infer_hardware_from_platform( $platform ) ),
 			];
 
 			if ( count( $links ) >= 10 ) {
@@ -755,13 +813,15 @@ final class Node_Library {
 					$filled_count = is_array( $links ) ? count( $links ) : 0;
 					$visible_rows = max( 2, min( 10, $filled_count + 1 ) );
 					$tab_categories = function_exists( 'node_library_tab_categories' ) ? node_library_tab_categories() : [ 'auto' => '自動判定' ];
+					$hardware_options = function_exists( 'node_library_hardware_options' ) ? node_library_hardware_options() : [ 'auto' => '自動判定' ];
 					for ( $i = 0; $i < 10; $i++ ) :
 						$p       = $links[ $i ]['platform'] ?? '';
 						$u       = $links[ $i ]['url'] ?? '';
 						$c       = function_exists( 'node_library_normalize_category' ) ? node_library_normalize_category( $links[ $i ]['category'] ?? '' ) : 'auto';
+						$h       = function_exists( 'node_library_normalize_hardware' ) ? node_library_normalize_hardware( $links[ $i ]['hardware'] ?? '' ) : 'auto';
 						$hidden  = $i >= $visible_rows ? ' is-hidden' : '';
 					?>
-						<div class="link-row<?php echo esc_attr( $hidden ); ?>" style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
+						<div class="link-row<?php echo esc_attr( $hidden ); ?>" style="display:flex; gap:10px; margin-bottom:8px; align-items:center; flex-wrap:wrap;">
 							<span style="min-width:20px; font-weight:bold; color:#666;"><?php echo $i + 1; ?>.</span>
 							<input type="text" name="node_library_links[<?php echo $i; ?>][platform]" value="<?php echo esc_attr( $p ); ?>" placeholder="ストア名 (例: Steam, Nintendo Switch 2)" style="flex:1;">
 							<input type="text" name="node_library_links[<?php echo $i; ?>][url]" value="<?php echo esc_url( $u ); ?>" placeholder="https://..." style="flex:2;">
@@ -770,13 +830,18 @@ final class Node_Library {
 									<option value="<?php echo esc_attr( $cat_value ); ?>" <?php selected( $c, $cat_value ); ?>><?php echo esc_html( $cat_label ); ?></option>
 								<?php endforeach; ?>
 							</select>
+							<select name="node_library_links[<?php echo $i; ?>][hardware]" class="node-library-link-hardware" title="対応ハード" style="flex:0 0 auto; min-width:180px;">
+								<?php foreach ( $hardware_options as $hardware_value => $hardware_label ) : ?>
+									<option value="<?php echo esc_attr( $hardware_value ); ?>" <?php selected( $h, $hardware_value ); ?>><?php echo esc_html( $hardware_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
 						</div>
 					<?php endfor; ?>
 				</div>
 				<p style="margin-top:8px;">
 					<button type="button" class="button button-secondary" id="node-library-add-link">リンク行を追加</button>
 				</p>
-				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation 5, Xbox Series X|S, Microsoft Store (Windows), Microsoft Store（Xbox）, Nintendo Switch, Nintendo Switch 2, App Store）<br>Nintendo Store / PlayStation Store / Microsoft Store（Xbox）は、機種別の商品ページを別行で登録できます。「表示タブ」で各リンクをどのタブ（PC / スマホ・タブレット / コンソール）に出すか手動指定できます。「自動判定」のままならストア名から自動分類します。</p>
+				<p class="description">ストア名に応じてボタン色・アイコンが自動選択されます。（例: Steam, PlayStation 5, Xbox Series X|S, Microsoft Store (Windows), Microsoft Store（Xbox）, Nintendo Switch, Nintendo Switch 2, App Store）<br>Nintendo Store / PlayStation Store / Microsoft Store（Xbox）は、機種別の商品ページを別行で登録できます。「表示タブ」と「対応ハード」は必要に応じて手動指定できます。「自動判定」のままならストア名から自動分類します。</p>
 			</div>
 		</div>
 		<?php
@@ -851,6 +916,7 @@ final class Node_Library {
 							'platform' => sanitize_text_field( $link['platform'] ),
 							'url'      => esc_url_raw( $link['url'] ),
 							'category' => node_library_normalize_category( $link['category'] ?? '' ),
+							'hardware' => node_library_normalize_hardware( $link['hardware'] ?? '' ),
 						];
 					}
 				}
