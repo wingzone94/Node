@@ -265,6 +265,64 @@ function initNodeLibraryTabs() {
     });
 }
 
+function initNodeLibraryNintendoWarnings() {
+    const warningTimers = new WeakMap();
+
+    const hideWarning = link => {
+        const warning = link.closest('.node-library-nintendo-link')?.querySelector('.node-library-nintendo-warning');
+        const timer = warningTimers.get(link);
+        if (timer) window.clearTimeout(timer);
+
+        link.dataset.nodeLibraryNintendoArmed = 'false';
+        link.setAttribute('aria-expanded', 'false');
+        warning?.setAttribute('hidden', '');
+        warningTimers.delete(link);
+    };
+
+    const showWarning = link => {
+        const warning = link.closest('.node-library-nintendo-link')?.querySelector('.node-library-nintendo-warning');
+        if (!warning) return false;
+
+        document.querySelectorAll('[data-node-library-nintendo-warning][data-node-library-nintendo-armed="true"]').forEach(activeLink => {
+            if (activeLink !== link) hideWarning(activeLink);
+        });
+
+        warning.hidden = false;
+        link.dataset.nodeLibraryNintendoArmed = 'true';
+        link.setAttribute('aria-expanded', 'true');
+
+        const timer = window.setTimeout(() => hideWarning(link), 3500);
+        warningTimers.set(link, timer);
+        return true;
+    };
+
+    document.querySelectorAll('[data-node-library-nintendo-warning]').forEach(link => {
+        if (link.dataset.nodeLibraryNintendoReady === 'true') return;
+
+        link.dataset.nodeLibraryNintendoReady = 'true';
+        link.dataset.nodeLibraryNintendoArmed = 'false';
+        link.setAttribute('aria-haspopup', 'true');
+        link.setAttribute('aria-expanded', 'false');
+
+        link.addEventListener('click', event => {
+            if (link.dataset.nodeLibraryNintendoArmed === 'true') {
+                hideWarning(link);
+                return;
+            }
+
+            if (showWarning(link)) {
+                event.preventDefault();
+            }
+        });
+
+        link.addEventListener('blur', () => {
+            window.setTimeout(() => {
+                if (!link.matches(':focus')) hideWarning(link);
+            }, 80);
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const initializers = [
         initSearchBar,
@@ -273,6 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initColorModeLoader,
         initNodeLibraryQr,
         initNodeLibraryTabs,
+        initNodeLibraryNintendoWarnings,
         initNodeLibrarySteamEmbedToggles,
         initKeyboardSnackbar,
         initHandyMode,

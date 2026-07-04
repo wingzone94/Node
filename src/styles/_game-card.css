@@ -673,18 +673,21 @@
 
 .node-library-nintendo-link {
     display: inline-flex;
-    flex-direction: column;
+    position: relative;
     align-items: center;
-    gap: 8px;
     max-width: min(100%, 240px);
 }
 
 .node-library-nintendo-warning {
-    position: relative;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    max-width: 100%;
+    width: max-content;
+    max-width: min(240px, calc(100vw - 48px));
     min-height: 30px;
     padding: 6px 10px;
     border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 86%, transparent);
@@ -697,6 +700,11 @@
     line-height: 1.25;
     text-align: center;
     white-space: normal;
+    transform: translateX(-50%);
+}
+
+.node-library-nintendo-warning[hidden] {
+    display: none;
 }
 
 .node-library-nintendo-warning::after {
@@ -741,7 +749,8 @@
     }
 
     .node-library-nintendo-warning {
-        width: 100%;
+        width: max-content;
+        max-width: min(260px, calc(100vw - 48px));
         font-size: 0.68rem;
     }
 

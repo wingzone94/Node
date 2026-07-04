@@ -321,7 +321,7 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
     <?php else : ?>
         <?php if ( $nintendo_store_warning ) : ?>
             <span class="node-library-nintendo-link">
-                <span class="node-library-nintendo-warning" role="note"><?php echo esc_html( $nintendo_store_warning ); ?></span>
+                <span class="node-library-nintendo-warning" role="note" hidden><?php echo esc_html( $nintendo_store_warning ); ?></span>
         <?php endif; ?>
         <a href="<?php echo esc_url( $link['url'] ); ?>"
            class="m3-platform-button m3-platform-button--<?php echo esc_attr( $platform_slug ); ?> m3-ripple-host"
