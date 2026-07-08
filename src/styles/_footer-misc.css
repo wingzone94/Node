@@ -469,6 +469,14 @@ body {
     /* padding-top方式を有効にするため */
 }
 
+/* ブログカード化されたcore/embed（動画ではない）は16:9固定を解除する */
+.m3-article__body .wp-block-embed__wrapper:has(.m3-blogcard-wrap) {
+    padding-top: 0;
+    height: auto;
+    aspect-ratio: auto;
+    overflow: visible;
+}
+
 .m3-article__body .wp-block-embed__wrapper iframe {
     position: absolute;
     /* ← これが必須！ */

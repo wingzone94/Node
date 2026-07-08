@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:  Luminous AI Tools
+ * Plugin Name:  Node AI Tools
  * Plugin URI:   https://github.com/wingzone94/Node
- * Description:  Gemini API 連携による AI 要約生成・ファクトチェック補助・読了時間自動計算。Luminous Core テーマと連携。
- * Version:      1.0.1
+ * Description:  Gemini API 連携による AI 要約生成・ファクトチェック補助・読了時間自動計算。Node テーマと連携。
+ * Version:      1.2.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_AI_VERSION', '1.0.1' );
+define( 'NODE_AI_VERSION', '1.2.0' );
 define( 'NODE_AI_DIR', plugin_dir_path( __FILE__ ) );
 
 $node_ai_embedded_dir = get_template_directory() . '/plugins-embedded/node-ai-tools/';

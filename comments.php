@@ -11,6 +11,7 @@ if ( post_password_required() ) {
 /**
  * Custom Comment Callback
  */
+if ( ! function_exists( 'node_comment_callback' ) ) :
 function node_comment_callback($comment, $args, $depth) {
     ?>
     <li <?php comment_class('m3-comment-item'); ?> id="comment-<?php comment_ID(); ?>">
@@ -45,6 +46,7 @@ function node_comment_callback($comment, $args, $depth) {
     </li>
     <?php
 }
+endif;
 ?>
 
 <div id="comments" class="comments-area m3-comments-section">

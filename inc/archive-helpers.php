@@ -93,6 +93,10 @@ function node_get_archive_context() {
 		$context['title']    = post_type_archive_title( '', false );
 		$context['subtitle'] = __( 'アーカイブ', 'node' );
 		$context['icon']     = 'folder';
+		if ( is_post_type_archive( 'node_library' ) ) {
+			$context['subtitle'] = __( 'ライブラリ', 'node' );
+			$context['icon']     = 'menu_book';
+		}
 	} elseif ( function_exists( 'node_get_archive_title' ) ) {
 		$context['title'] = node_get_archive_title();
 	}

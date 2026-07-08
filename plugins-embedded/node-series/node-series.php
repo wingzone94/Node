@@ -3,7 +3,7 @@
  * Plugin Name:  Node Series
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  連載/シリーズ機能。記事をシリーズにまとめ、シリーズ内の前後記事・目次を取得する機能を提供。
- * Version:      1.0.0
+ * Version:      1.2.0
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-series
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_SERIES_VERSION', '1.0.0' );
+define( 'NODE_SERIES_VERSION', '1.2.0' );
 define( 'NODE_SERIES_ORDER_META_KEY', '_node_series_order' );
 define( 'NODE_SERIES_COLOR_TERM_META_KEY', 'node_series_color' );
 define( 'NODE_SERIES_COLOR_OVERRIDE_META_KEY', '_node_series_color_override' );
@@ -45,9 +45,12 @@ final class Node_Series {
 		add_action( 'created_node_series', [ $this, 'save_term_color_field' ] );
 		add_action( 'edited_node_series', [ $this, 'save_term_color_field' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_color_picker' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_hide_taxonomy_panel' ] );
 		add_action( 'save_post', [ $this, 'enforce_max_posts_per_series' ], 20 );
 		add_action( 'admin_notices', [ $this, 'render_limit_notice' ] );
 		add_filter( 'rest_pre_insert_post', [ $this, 'validate_series_limit_via_rest' ], 10, 2 );
+		add_action( 'wp_ajax_node_series_term_status', [ $this, 'ajax_term_status' ] );
+		add_action( 'delete_node_series', [ $this, 'cleanup_post_meta_on_term_delete' ], 10, 4 );
 	}
 
 	/**
@@ -158,6 +161,27 @@ final class Node_Series {
 	}
 
 	/**
+	 * ブロックエディタのサイドバーに自動表示される「シリーズ」タクソノミーパネルを非表示にする。
+	 * 登録先シリーズの指定は「シリーズ内の表示順序」ボックス側に統合済みのため、
+	 * 二重のUI（食い違うと上書きが発生する）を避ける。
+	 */
+	public function enqueue_hide_taxonomy_panel( string $hook_suffix ): void {
+		if ( ! in_array( $hook_suffix, [ 'post.php', 'post-new.php' ], true ) ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || 'post' !== $screen->post_type || ! $screen->is_block_editor() ) {
+			return;
+		}
+
+		wp_add_inline_script(
+			'wp-edit-post',
+			"wp.domReady(function(){ if (window.wp && wp.data && wp.data.dispatch('core/edit-post')) { wp.data.dispatch('core/edit-post').removeEditorPanel('taxonomy-panel-node_series'); } });"
+		);
+	}
+
+	/**
 	 * 新規シリーズ作成画面: プライマリカラー入力欄。
 	 */
 	public function render_term_color_field_add(): void {
@@ -221,6 +245,28 @@ final class Node_Series {
 	}
 
 	/**
+	 * シリーズ（term）が削除された際、そのシリーズに属していた投稿に残る
+	 * 表示順・記事別カラー上書きのメタを後片付けする。
+	 *
+	 * タクソノミーの紐付け（term_relationships）自体はWPコアが自動的に削除するが、
+	 * 投稿側の表示順メタ（_node_series_order）は対象外のため、削除せずに放置すると
+	 * 別のシリーズに再登録した際に古い回数が残ってしまう。
+	 * なお記事別カラー上書き（_node_series_color_override）は、シリーズに依存しない
+	 * 「この記事自体の色」という意味合いのため、シリーズ削除後も消さずに残す
+	 * （別のシリーズに再登録した場合に引き続き使われる）。
+	 *
+	 * @param int      $term         削除されたterm ID。
+	 * @param int      $tt_id        term_taxonomy ID（未使用）。
+	 * @param WP_Term  $deleted_term 削除済みtermのスナップショット（未使用）。
+	 * @param int[]    $object_ids   削除前にこのシリーズに属していた投稿IDの一覧。
+	 */
+	public function cleanup_post_meta_on_term_delete( int $term, int $tt_id, $deleted_term, array $object_ids ): void {
+		foreach ( $object_ids as $post_id ) {
+			delete_post_meta( $post_id, NODE_SERIES_ORDER_META_KEY );
+		}
+	}
+
+	/**
 	 * カスタムタクソノミー node_series を登録。
 	 * 作成・編集・記事への割当はWP標準のtaxonomy管理画面UIをそのまま利用する。
 	 */
@@ -243,6 +289,7 @@ final class Node_Series {
 				'show_ui'           => true,
 				'show_admin_column' => true,
 				'show_in_rest'      => true,
+				'meta_box_cb'       => false, // 登録先シリーズの指定は「シリーズ内の表示順序」ボックスに統合（重複UIを避ける）。
 				'rewrite'           => [ 'slug' => 'series' ],
 			]
 		);
@@ -262,23 +309,142 @@ final class Node_Series {
 		);
 	}
 
+	/**
+	 * 指定シリーズ内で、ある投稿の表示順候補がどう制約されるかを返す。
+	 * - used: 他の投稿（自分以外）が既に使っている表示順 => タイトル
+	 * - next_min: これより小さい値は「既に公開済みの回より前」になるため選択不可
+	 *   （公開済みの回の表示順を後から繰り上げてしまうのを防ぐ）
+	 *
+	 * @param int $term_id        対象のシリーズterm ID（0の場合は制約なし）。
+	 * @param int $exclude_post_id 自分自身の投稿ID（候補集計から除外する）。
+	 * @return array{count:int, max:int, next_min:int, used:array<int,string>}
+	 */
+	private function get_series_order_constraints( int $term_id, int $exclude_post_id ): array {
+		if ( $term_id <= 0 ) {
+			return [
+				'count'    => 0,
+				'max'      => NODE_SERIES_MAX_POSTS,
+				'next_min' => 1,
+				'used'     => [],
+			];
+		}
+
+		$query = new WP_Query(
+			[
+				'post_type'      => 'post',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'no_found_rows'  => true,
+				'post__not_in'   => [ $exclude_post_id ],
+				'tax_query'      => [
+					[
+						'taxonomy' => 'node_series',
+						'field'    => 'term_id',
+						'terms'    => $term_id,
+					],
+				],
+			]
+		);
+
+		$used          = [];
+		$max_published = 0;
+
+		foreach ( $query->posts as $other_post ) {
+			$order = get_post_meta( $other_post->ID, NODE_SERIES_ORDER_META_KEY, true );
+
+			if ( '' === $order ) {
+				continue;
+			}
+
+			$order          = (int) $order;
+			$used[ $order ] = get_the_title( $other_post );
+
+			if ( 'publish' === $other_post->post_status && $order > $max_published ) {
+				$max_published = $order;
+			}
+		}
+
+		return [
+			'count'    => node_series_count_posts_in_term( $term_id ),
+			'max'      => NODE_SERIES_MAX_POSTS,
+			'next_min' => $max_published + 1,
+			'used'     => $used,
+		];
+	}
+
+	/**
+	 * 「登録先シリーズ」を切り替えた際に、表示順プルダウンの選択可否と「/ 件数」を
+	 * 再計算するためのAjaxエンドポイント。
+	 */
+	public function ajax_term_status(): void {
+		check_ajax_referer( 'node_series_order_status', 'nonce' );
+
+		$post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+
+		if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( [], 403 );
+		}
+
+		$term_id = isset( $_POST['term_id'] ) ? (int) $_POST['term_id'] : 0;
+
+		wp_send_json_success( $this->get_series_order_constraints( $term_id, $post_id ) );
+	}
+
 	public function render_order_meta_box( WP_Post $post ): void {
 		wp_nonce_field( 'node_series_save_order', 'node_series_order_nonce' );
-		$order          = get_post_meta( $post->ID, NODE_SERIES_ORDER_META_KEY, true );
-		$color_override = get_post_meta( $post->ID, NODE_SERIES_COLOR_OVERRIDE_META_KEY, true );
+
+		$current_term    = node_series_get_term( $post->ID );
+		$current_term_id = $current_term ? $current_term->term_id : 0;
+		$order           = get_post_meta( $post->ID, NODE_SERIES_ORDER_META_KEY, true );
+		$order           = '' === $order ? '' : (int) $order;
+		$color_override  = get_post_meta( $post->ID, NODE_SERIES_COLOR_OVERRIDE_META_KEY, true );
+		$terms           = get_terms( [ 'taxonomy' => 'node_series', 'hide_empty' => false ] );
+		$constraints     = $this->get_series_order_constraints( $current_term_id, $post->ID );
 		?>
 		<p>
-			<label for="node_series_order_input">表示順（小さい順に表示。未設定可）</label>
-			<input
-				type="number"
-				id="node_series_order_input"
-				name="node_series_order"
-				value="<?php echo esc_attr( $order ); ?>"
-				step="1"
-				style="width: 100%;"
-			>
+			<label for="node_series_term_select">登録先シリーズ</label>
+			<select id="node_series_term_select" name="node_series_term_id" style="width: 100%;">
+				<option value=""<?php selected( null === $current_term ); ?>>— 未設定 —</option>
+				<?php
+				foreach ( $terms as $term ) :
+					$term_count    = node_series_count_posts_in_term( $term->term_id );
+					$is_over_limit = $term_count >= NODE_SERIES_MAX_POSTS && $term->term_id !== $current_term_id;
+					?>
+					<option
+						value="<?php echo esc_attr( $term->term_id ); ?>"
+						<?php selected( $current_term_id === $term->term_id ); ?>
+						<?php disabled( $is_over_limit ); ?>
+					>
+						<?php echo esc_html( $term->name ); ?><?php echo $is_over_limit ? '（上限到達）' : ''; ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
 		</p>
-		<p class="description">この記事が属するシリーズは、下の「シリーズ」ボックスで選択してください。</p>
+		<p>
+			<label for="node_series_order_input">シリーズ内の回数</label>
+			<span style="display: flex; align-items: center; gap: 6px;">
+				<select id="node_series_order_input" name="node_series_order" style="flex: 1;">
+					<option value=""<?php selected( '' === $order ); ?>>未設定</option>
+					<?php
+					for ( $i = 1; $i <= NODE_SERIES_MAX_POSTS; $i++ ) :
+						$is_own_value = $order === $i;
+						$is_used      = ! $is_own_value && isset( $constraints['used'][ $i ] );
+						$is_too_early = ! $is_own_value && $i < $constraints['next_min'];
+						?>
+						<option
+							value="<?php echo esc_attr( $i ); ?>"
+							<?php selected( $order, $i ); ?>
+							<?php disabled( $is_used || $is_too_early ); ?>
+						>
+							第<?php echo esc_html( $i ); ?>回<?php echo $is_used ? '（使用済み）' : ( $is_too_early ? '（既刊より前）' : '' ); ?>
+						</option>
+					<?php endfor; ?>
+				</select>
+				<span aria-hidden="true">/</span>
+				<span id="node_series_count_display"><?php echo esc_html( $constraints['count'] ); ?></span>
+			</span>
+		</p>
+		<p class="description">「/ N」は、上で選択したシリーズに現在登録されている記事数です（上限<?php echo esc_html( NODE_SERIES_MAX_POSTS ); ?>件）。すでに公開済みの回より前の回数は選べません。</p>
 		<p>
 			<label for="node_series_color_override_input">この記事だけのプライマリカラー（任意）</label>
 			<input
@@ -292,6 +458,67 @@ final class Node_Series {
 			>
 		</p>
 		<p class="description">未設定の場合はシリーズ共通のプライマリカラーが使われます。</p>
+		<script>
+		( function() {
+			var postId         = <?php echo (int) $post->ID; ?>;
+			var originalTermId = <?php echo (int) $current_term_id; ?>;
+			var originalOrder  = '<?php echo esc_js( '' === $order ? '' : (string) $order ); ?>';
+			var nonce          = '<?php echo esc_js( wp_create_nonce( 'node_series_order_status' ) ); ?>';
+			var termSelect     = document.getElementById( 'node_series_term_select' );
+			var orderSelect    = document.getElementById( 'node_series_order_input' );
+			var countDisplay   = document.getElementById( 'node_series_count_display' );
+
+			if ( ! termSelect || ! orderSelect || ! countDisplay ) {
+				return;
+			}
+
+			function rebuildOrderOptions( data, keepValue ) {
+				var used      = data.used || {};
+				var nextMin   = data.next_min || 1;
+				var currentVal = '' !== keepValue ? parseInt( keepValue, 10 ) : null;
+
+				countDisplay.textContent = data.count;
+
+				Array.prototype.forEach.call( orderSelect.options, function( opt ) {
+					if ( '' === opt.value ) {
+						return;
+					}
+
+					var i         = parseInt( opt.value, 10 );
+					var isOwn     = currentVal === i;
+					var isUsed    = ! isOwn && Object.prototype.hasOwnProperty.call( used, i );
+					var isTooEarly = ! isOwn && i < nextMin;
+
+					opt.disabled = isUsed || isTooEarly;
+					opt.textContent = '第' + i + '回' + ( isUsed ? '（使用済み）' : ( isTooEarly ? '（既刊より前）' : '' ) );
+				} );
+
+				var selectedOpt = orderSelect.options[ orderSelect.selectedIndex ];
+				if ( selectedOpt && selectedOpt.disabled ) {
+					orderSelect.value = '';
+				}
+			}
+
+			termSelect.addEventListener( 'change', function() {
+				var targetTermId = parseInt( termSelect.value, 10 ) || 0;
+				var keepValue    = ( targetTermId === originalTermId ) ? originalOrder : '';
+				var body         = new FormData();
+
+				body.append( 'action', 'node_series_term_status' );
+				body.append( 'nonce', nonce );
+				body.append( 'post_id', postId );
+				body.append( 'term_id', targetTermId );
+
+				fetch( ajaxurl, { method: 'POST', credentials: 'same-origin', body: body } )
+					.then( function( res ) { return res.json(); } )
+					.then( function( json ) {
+						if ( json && json.success ) {
+							rebuildOrderOptions( json.data, keepValue );
+						}
+					} );
+			} );
+		} )();
+		</script>
 		<?php
 	}
 
@@ -300,10 +527,46 @@ final class Node_Series {
 			return;
 		}
 
+		// 検証の基準にするため、term割当を変更する前に「変更前の状態」を保持しておく
+		// （自分自身が既に持っている表示順は、シリーズを変えない限り常に選択可として扱う）。
+		$original_term         = node_series_get_term( $post_id );
+		$original_term_id      = $original_term ? $original_term->term_id : 0;
+		$original_order        = get_post_meta( $post_id, NODE_SERIES_ORDER_META_KEY, true );
+		$original_order        = '' === $original_order ? null : (int) $original_order;
+
+		$term_id = isset( $_POST['node_series_term_id'] ) ? (int) $_POST['node_series_term_id'] : 0;
+
+		if ( isset( $_POST['node_series_term_id'] ) ) {
+			if ( $term_id > 0 && term_exists( $term_id, 'node_series' ) ) {
+				wp_set_object_terms( $post_id, [ $term_id ], 'node_series', false );
+			} else {
+				wp_set_object_terms( $post_id, [], 'node_series', false );
+			}
+		}
+
+		// 表示順は、UI側で選択不可にしている値（重複・既刊より前）が万一送られてきても保存しない
+		// （JS無効環境やAjax失敗時の保険。通常はプルダウン側で選択できないため到達しない）。
 		if ( ! isset( $_POST['node_series_order'] ) || '' === $_POST['node_series_order'] ) {
 			delete_post_meta( $post_id, NODE_SERIES_ORDER_META_KEY );
 		} else {
-			update_post_meta( $post_id, NODE_SERIES_ORDER_META_KEY, (int) $_POST['node_series_order'] );
+			$order_value = (int) $_POST['node_series_order'];
+
+			if ( $term_id > 0 ) {
+				$is_unchanged_own_value = ( $term_id === $original_term_id ) && ( $order_value === $original_order );
+				$constraints            = $this->get_series_order_constraints( $term_id, $post_id );
+
+				if ( ! $is_unchanged_own_value
+					&& ( isset( $constraints['used'][ $order_value ] ) || $order_value < $constraints['next_min'] )
+				) {
+					$order_value = null;
+				}
+			}
+
+			if ( null === $order_value ) {
+				delete_post_meta( $post_id, NODE_SERIES_ORDER_META_KEY );
+			} else {
+				update_post_meta( $post_id, NODE_SERIES_ORDER_META_KEY, $order_value );
+			}
 		}
 
 		$color_override = isset( $_POST['node_series_color_override'] ) ? sanitize_text_field( wp_unslash( $_POST['node_series_color_override'] ) ) : '';

@@ -177,9 +177,8 @@ function node_the_breadcrumbs() {
     echo '<meta itemprop="position" content="1" /></li>';
 
     if ( is_singular() ) {
-        $categories = get_the_category();
-        if ( ! empty( $categories ) ) {
-            $cat = $categories[0];
+        $cat = node_get_primary_category();
+        if ( $cat ) {
             echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
             echo '<li class="m3-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
             echo '<a itemprop="item" href="' . esc_url( get_category_link( $cat->term_id ) ) . '"><span itemprop="name">' . esc_html( $cat->name ) . '</span></a>';
@@ -193,6 +192,11 @@ function node_the_breadcrumbs() {
         echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
         echo '<li class="m3-breadcrumbs__item m3-breadcrumbs__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
         echo '<span itemprop="name">' . esc_html( single_term_title( '', false ) ) . '</span>';
+        echo '<meta itemprop="position" content="2" /></li>';
+    } elseif ( is_post_type_archive() ) {
+        echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
+        echo '<li class="m3-breadcrumbs__item m3-breadcrumbs__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
+        echo '<span itemprop="name">' . esc_html( post_type_archive_title( '', false ) ) . '</span>';
         echo '<meta itemprop="position" content="2" /></li>';
     } elseif ( is_search() ) {
         echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
@@ -220,6 +224,8 @@ function node_get_archive_title() {
         return get_the_date( 'Y年m月' );
     } elseif ( is_day() ) {
         return get_the_date( 'Y年m月d日' );
+    } elseif ( is_post_type_archive() ) {
+        return post_type_archive_title( '', false );
     } elseif ( is_search() ) {
         return '検索結果: ' . get_search_query();
     } elseif ( is_home() ) {

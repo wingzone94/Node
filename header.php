@@ -239,7 +239,7 @@
             <!-- Theme -->
             <div id="m3-theme-controls">
                 <button id="theme-toggle" class="m3-icon-button m3-tooltip-target" aria-label="テーマ" data-tooltip="テーマ切り替え">
-                    <span class="material-symbols-outlined" id="theme-toggle-icon">brightness_6</span>
+                    <span class="material-symbols-outlined" id="theme-toggle-icon">light_mode</span>
                 </button>
             </div>
 
@@ -250,10 +250,6 @@
             </button>
             <?php endif; ?>
 
-            <!-- Menu Drawer Button (Mobile Only) -->
-            <button class="m3-icon-button m3-header__menu m3-mobile-only" id="m3-drawer-trigger" aria-label="メニューを開く">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
         </div>
     </div>
 
@@ -459,7 +455,7 @@
         <div class="m3-modal__footer">
             <div class="m3-search-hits-display">
                 <span class="m3-search-hits-text">
-                    <strong id="m3-search-hit-count"><?php echo number_format_i18n(wp_count_posts()->publish); ?></strong> 件の記事
+                    <strong id="m3-search-hit-count"><?php echo number_format_i18n(node_get_total_published_posts()); ?></strong> 件の記事
                 </span>
             </div>
             <div class="m3-modal__footer-options">
@@ -491,34 +487,6 @@
             <button class="m3-icon-button" id="m3-snackbar-close" aria-label="閉じる">
                 <span class="material-symbols-outlined">close</span>
             </button>
-        </div>
-    </div>
-</div>
-
-<!-- Mobile Navigation Drawer (Material 3) -->
-<div id="m3-drawer-scrim" class="m3-drawer-scrim"></div>
-<div id="m3-drawer" class="m3-drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="メニュー">
-    <div class="m3-drawer__header">
-        <span class="m3-drawer__logo">Luminous Core</span>
-        <button type="button" class="m3-icon-button" id="m3-drawer-close" aria-label="メニューを閉じる">
-            <span class="material-symbols-outlined">close</span>
-        </button>
-    </div>
-    <div class="m3-drawer__content">
-        <nav class="m3-drawer__nav">
-            <?php
-            wp_nav_menu(
-                array(
-                    'theme_location' => 'primary',
-                    'menu_class'     => 'm3-drawer-menu',
-                    'container'      => false,
-                    'fallback_cb'    => 'node_primary_menu_fallback',
-                )
-            );
-            ?>
-        </nav>
-        <div class="m3-drawer__footer">
-            <p>&copy; <?php echo date('Y'); ?> Luminous Core.</p>
         </div>
     </div>
 </div>

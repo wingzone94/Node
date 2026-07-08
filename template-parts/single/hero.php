@@ -1,11 +1,14 @@
 <?php
 /**
  * Template part for displaying the article hero section in single.php
- * Reverted to 0.9.1 Centered Style
+ *
+ * v1.2: PC は縦2カラム（左=核心 / 右=補足・訴求）＋横ラインの階層構成。
+ *       1000px 以下では従来同様の1カラム（中央寄せ）へ自動で折りたたむ。
+ *       右カラム（モバイルではメタ下）にヒーロー統合目次プルダウンを設置。
  */
 ?>
 <div class="m3-article__header-card <?php echo has_post_thumbnail() ? 'has-thumbnail' : 'has-no-thumbnail'; ?>">
-    <?php 
+    <?php
     global $post;
     $current_post_id = $post->ID ?? get_the_ID();
     $has_thumb = has_post_thumbnail($current_post_id);
@@ -20,8 +23,8 @@
                 $image_url    = $image_data[0];
                 $image_alt    = get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true) ?: get_the_title();
             ?>
-                <img src="<?php echo esc_url($image_url); ?>" 
-                     alt="<?php echo esc_attr($image_alt); ?>" 
+                <img src="<?php echo esc_url($image_url); ?>"
+                     alt="<?php echo esc_attr($image_alt); ?>"
                      class="m3-article__featured-img"
                      loading="eager" fetchpriority="high" decoding="sync">
             <?php endif; ?>
@@ -29,115 +32,264 @@
         </div>
     <?php endif; ?>
 
-    <header class="m3-article__header m3-article__header--overlap">
+    <header class="m3-article__header m3-article__header--overlap m3-article__header--split">
         <div class="m3-article__accent-line"></div>
-        
+
         <div class="m3-article__header-inner">
-            <!-- Category Labels -->
-            <div class="m3-article__cat-top">
-                <?php node_the_category_labels(); ?>
-            </div>
+            <div class="m3-hero-grid">
 
-            <!-- AI Disclosure Badges -->
-            <?php
-            $has_ai_media = get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1';
-            $has_ai_text  = get_post_meta(get_the_ID(), '_node_is_ai_text_generated', true) === '1';
-            if ($has_ai_media || $has_ai_text) :
-            ?>
-                <div class="m3-article__ai-disclosure-wrapper">
-                    <?php node_the_post_badges(get_the_ID(), 'expressive', ['ai']); ?>
-                </div>
-            <?php endif; ?>
+                <!-- ===== 左カラム: 記事の核心（カテゴリ → タイトル → メタ） ===== -->
+                <div class="m3-hero-col m3-hero-col--main">
 
-            <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
-                <div class="m3-article__sponsor-bubble-wrapper">
-                    <?php node_the_post_badges(get_the_ID(), 'full', ['sponsor']); ?>
-                </div>
-            <?php endif; ?>
-
-            <!-- Main Title -->
-            <h1 class="m3-article__title">
-                <?php the_title(); ?>
-            </h1>
-
-            <!-- Meta Info (Centered) -->
-            <div class="m3-article__meta-container">
-                <div class="m3-article__meta">
-                    <div class="m3-article__meta-item m3-article__date">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <time datetime="<?php echo get_the_date('c'); ?>">
-                            <?php echo esc_html(get_the_date('Y/m/d')); ?>
-                        </time>
+                    <!-- 上: カテゴリラベル -->
+                    <div class="m3-hero-row m3-hero-row--cat">
+                        <div class="m3-article__cat-top">
+                            <?php node_the_category_labels(); ?>
+                        </div>
                     </div>
-                    <?php if (comments_open() || get_comments_number() > 0) : ?>
-                    <a href="#comments" class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger">
-                        <span class="material-symbols-outlined">chat_bubble</span>
-                        <span><?php echo get_comments_number(); ?></span>
-                    </a>
+
+                    <!-- 中: タイトル（文字数に応じて字幅・サイズを自動調整） -->
+                    <?php
+                    $hero_title_len   = mb_strlen( wp_strip_all_tags( get_the_title() ) );
+                    $hero_title_class = '';
+                    if ( $hero_title_len > 42 ) {
+                        $hero_title_class = ' is-long';
+                    } elseif ( $hero_title_len > 24 ) {
+                        $hero_title_class = ' is-medium';
+                    }
+                    ?>
+                    <div class="m3-hero-row m3-hero-row--title">
+                        <h1 class="m3-article__title<?php echo esc_attr( $hero_title_class ); ?>" id="m3-hero-title">
+                            <?php the_title(); ?>
+                        </h1>
+                        <!-- PCで3行を超えるタイトルのみJSが表示する全文展開ボタン -->
+                        <button type="button"
+                                class="m3-hero-title-expand"
+                                data-hero-title-expand
+                                hidden
+                                aria-expanded="false"
+                                aria-controls="m3-hero-title"
+                                aria-label="タイトルを全文表示">
+                            <span class="material-symbols-outlined" aria-hidden="true">more_horiz</span>
+                        </button>
+                    </div>
+
+                    <!-- 下: メタ情報（日付・追記・コメント） -->
+                    <div class="m3-hero-row m3-hero-row--meta">
+                        <div class="m3-article__meta-container">
+                            <?php
+                            $manual_modified_date     = get_post_meta( get_the_ID(), '_node_manual_modified_date', true );
+                            $has_manual_modified_date = is_string( $manual_modified_date ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $manual_modified_date );
+                            $manual_display_date      = $has_manual_modified_date ? str_replace( '-', '/', $manual_modified_date ) : '';
+                            $show_modified_date       = $has_manual_modified_date
+                                ? $manual_display_date !== get_the_date( 'Y/m/d' )
+                                : get_the_modified_date( 'Y/m/d' ) !== get_the_date( 'Y/m/d' );
+                            $modified_datetime        = $has_manual_modified_date ? $manual_modified_date : get_the_modified_date( 'c' );
+                            $modified_display_date    = $has_manual_modified_date ? $manual_display_date : get_the_modified_date( 'Y/m/d' );
+                            ?>
+                            <div class="m3-article__meta">
+                                <div class="m3-article__meta-item m3-article__date">
+                                    <span class="material-symbols-outlined">calendar_today</span>
+                                    <time datetime="<?php echo get_the_date('c'); ?>">
+                                        <?php echo esc_html(get_the_date('Y/m/d')); ?>
+                                    </time>
+                                </div>
+                                <?php if ( $show_modified_date ) : ?>
+                                <div class="m3-article__meta-item m3-article__modified">
+                                    <span class="material-symbols-outlined">update</span>
+                                    <time datetime="<?php echo esc_attr( $modified_datetime ); ?>">
+                                        <?php echo esc_html( sprintf( '追記 %s', $modified_display_date ) ); ?>
+                                    </time>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (comments_open() || get_comments_number() > 0) : ?>
+                                <a href="#comments" class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger">
+                                    <span class="material-symbols-outlined">chat_bubble</span>
+                                    <span><?php echo get_comments_number(); ?></span>
+                                </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ===== 右カラム: 補足・訴求（バッジ類 → 読了 → 目次） ===== -->
+                <div class="m3-hero-col m3-hero-col--aside">
+
+                    <!-- AI Disclosure Badges -->
+                    <?php
+                    $has_ai_media = get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1';
+                    $has_ai_text  = get_post_meta(get_the_ID(), '_node_is_ai_text_generated', true) === '1';
+                    if ($has_ai_media || $has_ai_text) :
+                    ?>
+                        <div class="m3-article__ai-disclosure-wrapper">
+                            <?php node_the_post_badges(get_the_ID(), 'expressive', ['ai']); ?>
+                        </div>
                     <?php endif; ?>
-                </div>
-            </div>
 
-            <!-- Expressive Reading Badge (0.9.1 Style) -->
-            <?php
-            $post_id = get_the_ID();
-            $reading_info = node_get_article_ranking_info($post_id);
-            $total_seconds = isset($reading_info['reading_seconds'])
-                ? max(30, (int) $reading_info['reading_seconds'])
-                : max(30, (int) round(($reading_info['chars'] / 550) * 60));
-            $minutes = (int) floor($total_seconds / 60);
-            $seconds = $total_seconds % 60;
-            $reading_time_display = $minutes > 0
-                ? sprintf('%d分%02d秒', $minutes, $seconds)
-                : sprintf('%d秒', $seconds);
-            $reading_progress = isset($reading_info['progress'])
-                ? min(100, max(0, (float) $reading_info['progress']))
-                : 0;
-            $reading_angle = round($reading_progress * 3.6, 2);
-            ?>
+                    <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
+                        <div class="m3-article__sponsor-bubble-wrapper">
+                            <?php node_the_post_badges(get_the_ID(), 'full', ['sponsor']); ?>
+                        </div>
+                    <?php endif; ?>
 
-            <!-- v0.9.1 Style Reading Badge (Restored from Git) -->
-            <div class="m3-article__meta-reading">
-                <?php
-                if ($reading_info['chars'] > 200) : // 極端に短い記事は非表示
-                ?>
-                <div class="m3-article__reading-badge-expressive m3-ripple-host"
-                     id="m3-hero-reading-badge"
-                     style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>; --reading-rank-color: <?php echo esc_attr($reading_info['badge_color']); ?>; --reading-rank-bg: <?php echo esc_attr($reading_info['badge_bg']); ?>;"
-                     role="button"
-                     tabindex="0"
-                     aria-expanded="false"
-                     aria-controls="m3-reading-badge-desc">
-                    <div class="m3-reading-badge__gauge">
-                        <svg viewBox="0 0 36 36"
-                             class="m3-reading-circle__svg"
-                             style="--target-progress: <?php echo esc_attr($reading_progress); ?>; --target-angle: <?php echo esc_attr($reading_angle); ?>deg;"
-                             aria-hidden="true"
-                             focusable="false">
-                            <path class="m3-reading-circle__bg" pathLength="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="m3-reading-circle__progress"
-                                  pathLength="100"
-                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <circle class="m3-reading-circle__head" cx="18" cy="2.0845" r="2.15" />
-                        </svg>
-                        <span class="material-symbols-outlined" aria-hidden="true">timer</span>
+                    <!-- Expressive Reading Badge (0.9.1 Style) -->
+                    <?php
+                    $post_id = get_the_ID();
+                    $reading_info = node_get_article_ranking_info($post_id);
+                    $total_seconds = isset($reading_info['reading_seconds'])
+                        ? max(30, (int) $reading_info['reading_seconds'])
+                        : max(30, (int) round(($reading_info['chars'] / 550) * 60));
+                    $minutes = (int) floor($total_seconds / 60);
+                    $seconds = $total_seconds % 60;
+                    $reading_time_display = $minutes > 0
+                        ? sprintf('%d分%02d秒', $minutes, $seconds)
+                        : sprintf('%d秒', $seconds);
+                    $reading_progress = isset($reading_info['progress'])
+                        ? min(100, max(0, (float) $reading_info['progress']))
+                        : 0;
+                    $reading_angle = round($reading_progress * 3.6, 2);
+                    ?>
+
+                    <div class="m3-article__meta-reading">
+                        <?php
+                        if ($reading_info['chars'] > 200) : // 極端に短い記事は非表示
+                        ?>
+                        <div class="m3-article__reading-badge-expressive m3-ripple-host"
+                             id="m3-hero-reading-badge"
+                             style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>; --reading-rank-color: <?php echo esc_attr($reading_info['badge_color']); ?>; --reading-rank-bg: <?php echo esc_attr($reading_info['badge_bg']); ?>;"
+                             role="button"
+                             tabindex="0"
+                             aria-expanded="false"
+                             aria-controls="m3-reading-badge-desc">
+                            <div class="m3-reading-badge__gauge">
+                                <svg viewBox="0 0 36 36"
+                                     class="m3-reading-circle__svg"
+                                     style="--target-progress: <?php echo esc_attr($reading_progress); ?>; --target-angle: <?php echo esc_attr($reading_angle); ?>deg;"
+                                     aria-hidden="true"
+                                     focusable="false">
+                                    <path class="m3-reading-circle__bg" pathLength="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="m3-reading-circle__progress"
+                                          pathLength="100"
+                                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <circle class="m3-reading-circle__head" cx="18" cy="2.0845" r="2.15" />
+                                </svg>
+                                <span class="material-symbols-outlined" aria-hidden="true">timer</span>
+                            </div>
+                            <div class="m3-reading-badge-content">
+                                <span class="m3-reading-badge-text m3-reading-badge-text--main">
+                                    <?php echo esc_html($reading_time_display); ?>
+                                    <span class="m3-reading-chars">(約<?php echo esc_html(number_format_i18n($reading_info['chars'])); ?>文字)</span>
+                                </span>
+                                <span class="m3-reading-badge-label">
+                                    <span class="m3-badge-label-main"><?php echo esc_html($reading_info['label']); ?></span>
+                                </span>
+                                <span id="m3-reading-badge-desc" class="m3-reading-badge-text m3-reading-badge-text--desc">
+                                    本文文字数とサイト平均文字数を基準にした読了目安です。
+                                </span>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    <div class="m3-reading-badge-content">
-                        <span class="m3-reading-badge-text m3-reading-badge-text--main">
-                            <?php echo esc_html($reading_time_display); ?>
-                            <span class="m3-reading-chars">(約<?php echo esc_html(number_format_i18n($reading_info['chars'])); ?>文字)</span>
-                        </span>
-                        <span class="m3-reading-badge-label">
-                            <span class="m3-badge-label-main"><?php echo esc_html($reading_info['label']); ?></span>
-                        </span>
-                        <span id="m3-reading-badge-desc" class="m3-reading-badge-text m3-reading-badge-text--desc">
-                            本文文字数とサイト平均文字数を基準にした読了目安です。
-                        </span>
-                    </div>
-                </div>
-                <?php endif; ?>
-            </div>
 
+                    <!-- PC補足: 著者情報 + ページ数（複数ページ時のみ）。CSSで PC(>=1001px) のみ表示 -->
+                    <?php
+                    $hero_author_id   = (int) get_the_author_meta('ID');
+                    $hero_raw_content = get_post_field('post_content', get_the_ID());
+                    $hero_numpages    = 1 + (int) preg_match_all('/<!--\s*nextpage\s*-->/i', is_string($hero_raw_content) ? $hero_raw_content : '');
+                    if ($hero_author_id || $hero_numpages > 1) :
+                    ?>
+                    <div class="m3-hero-aside-meta">
+                        <?php if ($hero_author_id) : ?>
+                        <!-- クリックで記事下部のライター情報カード(#m3-writer-card)へスクロール -->
+                        <a class="m3-hero-author" href="#m3-writer-card" data-hero-author-jump
+                           aria-label="記事下部のライター情報へ移動">
+                            <span class="m3-hero-author__avatar">
+                                <?php echo get_avatar($hero_author_id, 40, '', get_the_author_meta('display_name')); ?>
+                            </span>
+                            <span class="m3-hero-author__text">
+                                <span class="m3-hero-author__label">この記事を書いた人</span>
+                                <span class="m3-hero-author__name">
+                                    <?php the_author(); ?>
+                                </span>
+                            </span>
+                        </a>
+                        <?php endif; ?>
+
+                        <?php if ($hero_numpages > 1) : ?>
+                        <div class="m3-hero-pagecount">
+                            <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span>
+                            <span><?php echo esc_html(sprintf('全 %d ページ', $hero_numpages)); ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- ヒーロー統合目次プルダウン（ネイティブ <select> ベース） -->
+                    <?php
+                    $hero_toc_items = function_exists('node_get_article_toc_export_items')
+                        ? node_get_article_toc_export_items(get_the_ID())
+                        : array();
+
+                    if (!empty($hero_toc_items)) :
+                        // ページ単位にグループ化
+                        $hero_toc_pages = array();
+                        foreach ($hero_toc_items as $hero_toc_item) {
+                            $hero_toc_pages[(int) $hero_toc_item['page']][] = $hero_toc_item;
+                        }
+                        $hero_toc_is_multipage = count($hero_toc_pages) > 1;
+
+                        // 見出しレベルに応じた視覚的インデント（全角スペース）
+                        $hero_toc_indent = static function ($level) {
+                            $n = (int) preg_replace('/[^0-9]/', '', (string) $level);
+                            if ($n < 2) {
+                                $n = 2;
+                            }
+                            $depth = max(0, min(3, $n - 2));
+                            return str_repeat('　', $depth);
+                        };
+                    ?>
+                        <div class="m3-hero-toc" data-hero-toc>
+                            <label class="m3-hero-toc__label" for="m3-hero-toc-select">
+                                <span class="material-symbols-outlined" aria-hidden="true">toc</span>
+                                <span>目次から移動</span>
+                            </label>
+                            <div class="m3-hero-toc__field">
+                                <select id="m3-hero-toc-select" class="m3-hero-toc__select" data-hero-toc-select aria-label="目次から見出しへ移動">
+                                    <option value="" data-hero-toc-placeholder selected>セクションを選択…</option>
+                                    <?php if ($hero_toc_is_multipage) : ?>
+                                        <?php foreach ($hero_toc_pages as $hero_toc_page_num => $hero_toc_page_items) : ?>
+                                            <optgroup label="<?php echo esc_attr(sprintf('ページ %d', $hero_toc_page_num)); ?>">
+                                                <?php foreach ($hero_toc_page_items as $hero_toc_item) : ?>
+                                                    <option value="<?php echo esc_attr($hero_toc_item['href']); ?>"
+                                                            data-toc-target="<?php echo esc_attr($hero_toc_item['id']); ?>"
+                                                            data-toc-page="<?php echo esc_attr($hero_toc_item['page']); ?>"
+                                                            <?php echo empty($hero_toc_item['current']) ? '' : 'data-toc-current="1"'; ?>>
+                                                        <?php echo esc_html($hero_toc_indent($hero_toc_item['level']) . $hero_toc_item['text']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </optgroup>
+                                        <?php endforeach; ?>
+                                    <?php else : ?>
+                                        <?php foreach ($hero_toc_items as $hero_toc_item) : ?>
+                                            <option value="<?php echo esc_attr($hero_toc_item['href']); ?>"
+                                                    data-toc-target="<?php echo esc_attr($hero_toc_item['id']); ?>"
+                                                    data-toc-page="<?php echo esc_attr($hero_toc_item['page']); ?>"
+                                                    <?php echo empty($hero_toc_item['current']) ? '' : 'data-toc-current="1"'; ?>>
+                                                <?php echo esc_html($hero_toc_indent($hero_toc_item['level']) . $hero_toc_item['text']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <span class="material-symbols-outlined m3-hero-toc__chevron" aria-hidden="true">expand_more</span>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                </div>
+
+            </div>
         </div>
     </header>
 </div>

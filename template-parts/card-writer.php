@@ -38,7 +38,7 @@ foreach ($sns_keys as $key => $meta) {
 }
 ?>
 
-<section class="m3-writer-card m3-reveal">
+<section id="m3-writer-card" class="m3-writer-card m3-reveal">
     <div class="m3-writer-card__header">
         <span class="m3-writer-card__label">WRITER INFO</span>
     </div>

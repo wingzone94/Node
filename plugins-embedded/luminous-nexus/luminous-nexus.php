@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:  Luminous Nexus
+ * Plugin Name:  Node Nexus
  * Plugin URI:   https://github.com/wingzone94/Node
- * Description:  ゲーム・アプリ情報の管理、商品カード、ブログカード（OGP 取得）。Luminous Core テーマと連携。
- * Version:      1.0.0
+ * Description:  ゲーム・アプリ情報の管理、商品カード、ブログカード（OGP 取得）。Node テーマと連携。
+ * Version:      1.2.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LUMINOUS_NEXUS_VERSION', '1.0.0' );
+define( 'LUMINOUS_NEXUS_VERSION', '1.2.0' );
 define( 'LUMINOUS_NEXUS_DIR', plugin_dir_path( __FILE__ ) );
 
 $luminous_nexus_embedded_dir = get_template_directory() . '/plugins-embedded/luminous-nexus/';

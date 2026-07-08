@@ -17,7 +17,7 @@ add_action(
 		}
 
 		$local_version = node_get_theme_version();
-		$remote_url    = 'https://raw.githubusercontent.com/wingzone94/Node/master/style.css';
+		$remote_url    = 'https://raw.githubusercontent.com/wingzone94/Node/refs/heads/master/style.css';
 
 		$response = wp_remote_get( $remote_url );
 		if ( is_wp_error( $response ) ) {
@@ -29,12 +29,15 @@ add_action(
 		$remote_version = isset( $matches[1] ) ? $matches[1] : '0.0.0';
 
 		$update_available = version_compare( $remote_version, $local_version, '>' );
+		$install_available = version_compare( $remote_version, $local_version, '>=' );
 
 		wp_send_json_success(
 			array(
 				'local_version'    => $local_version,
 				'remote_version'   => $remote_version,
-				'update_available' => $update_available,
+				'update_available'  => $update_available,
+				'install_available' => $install_available,
+				'same_version'      => ! $update_available && $install_available,
 			)
 		);
 	}
@@ -51,7 +54,7 @@ add_action(
 			wp_send_json_error( 'Permission denied' );
 		}
 
-		$zip_url = 'https://github.com/wingzone94/Node/raw/master/node.zip';
+		$zip_url = 'https://github.com/wingzone94/Node/raw/refs/heads/master/node.zip';
 
 		error_log( 'Luminous Update: Starting update from ' . $zip_url );
 

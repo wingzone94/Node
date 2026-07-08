@@ -8,6 +8,7 @@
                         <span class="m3-logo-text"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></span>
                     </div>
                     <p class="m3-footer__tagline">AI、ガジェット、ゲームの最新情報をあなたに。</p>
+                    <?php get_template_part( 'template-parts/preferred-source', null, array( 'context' => 'footer' ) ); ?>
                     <div class="m3-footer__social">
                         <!-- Site-wide social links can be placed here if needed -->
                     </div>
@@ -43,7 +44,6 @@
     </footer>
 </div><!-- .m3-page-container -->
 
-<?php get_template_part('template-parts/components/bottom-bar'); ?>
 <?php get_template_part('template-parts/components/floating-actions'); ?>
 
 <div id="m3-ogp-tooltip" class="m3-dynamic-tooltip"></div>

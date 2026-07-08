@@ -54,10 +54,8 @@ export function initExpressiveFloatingTOC() {
             tocPanel: document.getElementById('m3-sticky-toc'),
             tocContainer: document.getElementById('m3-toc-container'),
             tocTrigger: document.getElementById('m3-toc-trigger'),
-            handyTrigger: document.getElementById('m3-handy-toc-trigger'),
             backToTopTrigger: document.getElementById('m3-back-to-top'),
-            actionStack: document.querySelector('.m3-action-stack'),
-            bottomNav: document.getElementById('m3-bottom-nav')
+            actionStack: document.querySelector('.m3-action-stack')
         };
     };
 
@@ -66,9 +64,7 @@ export function initExpressiveFloatingTOC() {
             tocPanel,
             tocContainer,
             tocTrigger,
-            handyTrigger,
-            actionStack,
-            bottomNav
+            actionStack
         } = getRefs();
 
         if (!tocTrigger && actionStack) {
@@ -82,19 +78,6 @@ export function initExpressiveFloatingTOC() {
                 '<span class="m3-fab-text">目次</span>'
             ].join('');
             actionStack.appendChild(tocTrigger);
-        }
-
-        if (!handyTrigger && bottomNav) {
-            handyTrigger = document.createElement('button');
-            handyTrigger.id = 'm3-handy-toc-trigger';
-            handyTrigger.type = 'button';
-            handyTrigger.className = 'm3-bottom-nav__item';
-            handyTrigger.setAttribute('aria-label', '目次');
-            handyTrigger.innerHTML = [
-                '<span class="material-symbols-outlined" aria-hidden="true">list_alt</span>',
-                '<span class="m3-bottom-nav__label">目次</span>'
-            ].join('');
-            bottomNav.prepend(handyTrigger);
         }
 
         if (!tocPanel) {
@@ -156,7 +139,7 @@ export function initExpressiveFloatingTOC() {
     const setPanelOpen = (open) => {
         ensureShell();
 
-        const { tocPanel, tocTrigger, handyTrigger } = getRefs();
+        const { tocPanel, tocTrigger } = getRefs();
         if (!tocPanel) return;
 
         let scrim = document.querySelector('.m3-toc-scrim');
@@ -177,7 +160,6 @@ export function initExpressiveFloatingTOC() {
         document.body.classList.toggle('is-active-toc', open);
         scrim.classList.toggle('is-active', open);
         tocTrigger?.setAttribute('aria-expanded', String(open));
-        handyTrigger?.setAttribute('aria-expanded', String(open));
 
         if (open) {
             updateActiveLink();
@@ -228,28 +210,17 @@ export function initExpressiveFloatingTOC() {
         if (!headings.length && !articleTocItems.length) {
             const {
                 tocPanel,
-                tocContainer,
-                tocTrigger,
-                handyTrigger
+                tocTrigger
             } = getRefs();
 
-            tocPanel?.classList.add('m3-sticky-toc--expressive');
-            tocTrigger?.classList.add('toc-ready');
-            tocTrigger?.setAttribute('aria-label', '目次を表示');
-            tocTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
-            tocTrigger?.setAttribute('aria-haspopup', 'menu');
-            handyTrigger?.setAttribute('aria-label', '目次を表示');
-            handyTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
+            // 見出しが無いページでは追従目次を一切表示しない（FAB・パネルとも非表示）
+            tocPanel?.classList.remove('is-active');
+            document.body.classList.remove('is-active-toc');
+            tocTrigger?.classList.remove('toc-ready');
+            if (tocTrigger) tocTrigger.style.display = 'none';
+            actionStack?.classList.remove('is-has-toc');
+            actionStack?.classList.add('is-visible');
             backToTopTrigger?.setAttribute('aria-label', '最上部へ戻る');
-            actionStack?.classList.add('is-has-toc', 'is-visible');
-            bindTriggerFallback(tocTrigger);
-            bindTriggerFallback(handyTrigger);
-
-            if (tocContainer && tocContainer.dataset.m3State !== 'empty') {
-                tocContainer.innerHTML = '<p class="m3-toc-empty">このページには見出しがありません。</p>';
-                tocContainer.dataset.m3Enhanced = 'true';
-                tocContainer.dataset.m3State = 'empty';
-            }
 
             if (!tocReadyDispatched) {
                 document.dispatchEvent(new CustomEvent('m3:toc:ready'));
@@ -261,21 +232,20 @@ export function initExpressiveFloatingTOC() {
         const {
             tocPanel,
             tocContainer,
-            tocTrigger,
-            handyTrigger
+            tocTrigger
         } = getRefs();
+
+        // 見出しあり: 非表示化されていた場合に備えて表示を復元
+        if (tocTrigger) tocTrigger.style.removeProperty('display');
 
         tocPanel?.classList.add('m3-sticky-toc--expressive');
         tocTrigger?.classList.add('toc-ready');
         tocTrigger?.setAttribute('aria-label', '目次を表示');
         tocTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
         tocTrigger?.setAttribute('aria-haspopup', 'menu');
-        handyTrigger?.setAttribute('aria-label', '目次を表示');
-        handyTrigger?.setAttribute('aria-controls', 'm3-sticky-toc');
         backToTopTrigger?.setAttribute('aria-label', '最上部へ戻る');
         actionStack?.classList.add('is-has-toc', 'is-visible');
         bindTriggerFallback(tocTrigger);
-        bindTriggerFallback(handyTrigger);
 
         const usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map((element) => element.id));
         let currentHeadingIndex = 0;
@@ -398,7 +368,7 @@ export function initExpressiveFloatingTOC() {
         };
 
         document.addEventListener('click', (event) => {
-            const trigger = event.target.closest('#m3-toc-trigger, #m3-handy-toc-trigger');
+            const trigger = event.target.closest('#m3-toc-trigger');
             if (trigger) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -432,11 +402,11 @@ export function initExpressiveFloatingTOC() {
                 return;
             }
 
-            const { tocPanel, tocTrigger, handyTrigger } = getRefs();
+            const { tocPanel, tocTrigger } = getRefs();
             if (!tocPanel?.classList.contains('is-active')) return;
 
             const clickedPanel = tocPanel.contains(event.target);
-            const clickedTrigger = tocTrigger?.contains(event.target) || handyTrigger?.contains(event.target);
+            const clickedTrigger = tocTrigger?.contains(event.target);
             if (!clickedPanel && !clickedTrigger) {
                 setPanelOpen(false);
             }
@@ -461,7 +431,7 @@ export function initExpressiveFloatingTOC() {
             const isOnlyTocMutation = mutations.every((mutation) => {
                 const target = mutation.target;
                 return target instanceof Element
-                    && Boolean(target.closest('#m3-sticky-toc, .m3-toc-scrim, #m3-toc-trigger, #m3-handy-toc-trigger'));
+                    && Boolean(target.closest('#m3-sticky-toc, .m3-toc-scrim, #m3-toc-trigger'));
             });
 
             if (isOnlyTocMutation) return;

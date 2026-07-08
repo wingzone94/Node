@@ -10,7 +10,15 @@
 }
 
 .m3-game-card--has-steam-toggle {
-    padding-bottom: 56px;
+    padding-bottom: 64px;
+}
+
+.m3-game-card--has-steam-toggle:has(.node-library-steam-control[open]) {
+    padding-bottom: 120px;
+}
+
+.m3-game-card--has-steam-toggle:has(.node-library-steam-control[open]) .node-library-steam-panel:not([hidden]) {
+    margin-bottom: 56px;
 }
 
 .m3-game-card__header {
@@ -66,6 +74,10 @@
         var(--md-sys-color-surface-container-low) 72%,
         var(--md-sys-color-surface-container-high) 28%
     );
+}
+
+.m3-game-card__stores[hidden] {
+    display: none;
 }
 
 .m3-game-card__actions {
@@ -328,9 +340,47 @@
 }
 
 .node-library-steam-control__switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.node-library-steam-control__toggle {
+    position: relative;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--md-sys-color-outline-variant);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+    transition: background-color 0.2s var(--m3-motion-easing), box-shadow 0.2s var(--m3-motion-easing);
+}
+
+.node-library-steam-control__toggle::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
     width: 18px;
     height: 18px;
-    accent-color: var(--node-article-accent, #FF9900);
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    transition: transform 0.2s var(--m3-motion-easing);
+}
+
+.node-library-steam-control__switch input:checked + .node-library-steam-control__toggle {
+    background: var(--node-article-accent, #FF9900);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--node-article-accent, #FF9900) 72%, #000 12%);
+}
+
+.node-library-steam-control__switch input:checked + .node-library-steam-control__toggle::after {
+    transform: translateX(18px);
+}
+
+.node-library-steam-control__switch input:focus-visible + .node-library-steam-control__toggle {
+    outline: 3px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 42%, transparent);
+    outline-offset: 2px;
 }
 
 .node-library-steam-control:not([open]) .node-library-steam-control__switch {
@@ -569,6 +619,37 @@
     box-shadow: var(--m3-elevation-1);
 }
 
+.m3-platform-button--has-note {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 48px;
+    padding-block: 7px;
+}
+
+.m3-platform-button__main {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.m3-platform-button__note {
+    display: block;
+    max-width: 100%;
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1.05;
+    opacity: 0.88;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.m3-platform-button[hidden] {
+    display: none;
+}
+
 .m3-platform-button:hover {
     transform: translateY(-2px);
     box-shadow: var(--m3-elevation-2);
@@ -625,6 +706,61 @@
     color: #111111;
 }
 
+.node-library-platform-link,
+.node-library-nintendo-link {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    max-width: min(100%, 240px);
+}
+
+.node-library-platform-warning,
+.node-library-nintendo-warning {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    min-height: 30px;
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 86%, transparent);
+    border-radius: 999px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: var(--m3-elevation-1);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+}
+
+.node-library-platform-warning[hidden],
+.node-library-nintendo-warning[hidden] {
+    display: none;
+}
+
+.node-library-platform-warning::after,
+.node-library-nintendo-warning::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 9px;
+    height: 9px;
+    border-right: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 86%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 86%, transparent);
+    background: var(--md-sys-color-surface-container-highest);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.node-library-platform-link .m3-platform-button,
+.node-library-nintendo-link .m3-platform-button {
+    width: 100%;
+    justify-content: center;
+}
+
 @media (max-width: 600px) {
     .m3-game-card {
         border-radius: 20px;
@@ -641,6 +777,18 @@
         padding-inline: 12px;
         font-size: 0.72rem;
         white-space: nowrap;
+    }
+
+    .node-library-platform-link,
+    .node-library-nintendo-link {
+        width: min(100%, 260px);
+        max-width: 100%;
+    }
+
+    .node-library-platform-warning,
+    .node-library-nintendo-warning {
+        width: 100%;
+        font-size: 0.68rem;
     }
 
     .m3-platform-action {

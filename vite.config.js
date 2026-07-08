@@ -1,8 +1,23 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { readdirSync, unlinkSync } from 'fs';
+
+// assets/ には images/ fonts/ pwa/ や手動配置の blocks.js があるため
+// emptyOutDir は使えない。代わりにハッシュ付きバンドル（name.hash.js の
+// 2ドット形式）だけをビルド開始時に削除する。
+const cleanHashedBundles = () => ({
+  name: 'clean-hashed-bundles',
+  buildStart() {
+    const dir = resolve(__dirname, 'assets/js');
+    for (const f of readdirSync(dir)) {
+      if (/^.+\..+\.js$/.test(f)) unlinkSync(resolve(dir, f));
+    }
+  }
+});
 
 export default defineConfig({
   base: './',
+  plugins: [cleanHashedBundles()],
   build: {
     manifest: true,
     outDir: 'assets',

@@ -5,9 +5,33 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+if ( ! function_exists( 'node_register_block_category' ) ) {
+    /**
+     * Node 固有ブロックをまとめる「Node」ブロックカテゴリーをインサーターに追加する。
+     */
+    function node_register_block_category( $categories ) {
+        foreach ( $categories as $category ) {
+            if ( isset( $category['slug'] ) && 'node' === $category['slug'] ) {
+                return $categories;
+            }
+        }
+        array_unshift(
+            $categories,
+            [
+                'slug'  => 'node',
+                'title' => 'Node',
+                'icon'  => null,
+            ]
+        );
+        return $categories;
+    }
+    add_filter( 'block_categories_all', 'node_register_block_category' );
+}
+
 if ( ! function_exists( 'node_register_m3_blocks' ) ) {
     function node_register_m3_blocks() {
         register_block_type('node/media-label', [
+            'category'      => 'node',
             'editor_script' => 'node-editor-js',
             'editor_style'  => 'node-editor-css',
             'render_callback' => function($attributes) {
@@ -15,12 +39,34 @@ if ( ! function_exists( 'node_register_m3_blocks' ) ) {
             }
         ]);
         register_block_type('node/voting', [
+            'category'      => 'node',
             'editor_script' => 'node-editor-js',
             'render_callback' => 'node_render_voting_refined'
         ]);
         register_block_type('node/sort-table', [
+            'category'      => 'node',
             'editor_script' => 'node-editor-js',
             'render_callback' => 'node_render_sort_table_block'
+        ]);
+        register_block_type('node/embed', [
+            'category'        => 'node',
+            'editor_script'   => 'luminous-blocks-editor',
+            'attributes'      => [
+                'url' => [ 'type' => 'string', 'default' => '' ],
+            ],
+            'render_callback' => 'node_render_embed_block'
+        ]);
+        // node/notice — お知らせ / 注意 / 重要 / 補足 の静的コールアウトブロック。
+        // 保存時に HTML 確定（render_callback なし）。フロントの配色はテーマの
+        // src/styles/_notice.css（style.css にバンドル）が担当する。
+        register_block_type('node/notice', [
+            'category'      => 'node',
+            'editor_script' => 'luminous-blocks-editor',
+            'attributes'    => [
+                'type'  => [ 'type' => 'string', 'default' => 'info' ],
+                'title' => [ 'type' => 'string', 'default' => '' ],
+                'shape' => [ 'type' => 'string', 'default' => 'rounded' ],
+            ],
         ]);
     }
 }

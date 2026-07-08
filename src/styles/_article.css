@@ -199,7 +199,7 @@
     stroke-linecap: round;
     stroke-dasharray: 100;
     stroke-dashoffset: 0;
-    opacity: 0;
+    opacity: 1;
     animation: none;
 }
 
@@ -233,25 +233,48 @@
     z-index: 1;
     color: var(--reading-accent);
     font-variation-settings: 'FILL' 1, 'wght' 600;
-    opacity: 0;
-    transform: scale(0.76);
+    opacity: 1;
+    transform: scale(1);
     animation: none;
 }
 
 .m3-article__reading-badge-expressive.is-reading-badge-animated .m3-reading-circle__bg {
-    animation: m3CircleTrackFade 1.15s cubic-bezier(0.2, 0, 0, 1) 0.38s forwards;
+    animation: m3CircleTrackFade 1.05s cubic-bezier(0.2, 0, 0, 1) 0.18s forwards;
 }
 
 .m3-article__reading-badge-expressive.is-reading-badge-animated .m3-reading-circle__progress {
-    animation: m3CircleDrawNatural 2.25s cubic-bezier(0.22, 1, 0.36, 1) 0.56s forwards;
+    animation: m3CircleDrawNatural 2.45s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
 }
 
 .m3-article__reading-badge-expressive.is-reading-badge-animated .m3-reading-circle__head {
-    animation: m3CircleHeadDraw 2.25s cubic-bezier(0.22, 1, 0.36, 1) 0.56s forwards;
+    animation: m3CircleHeadDraw 2.45s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
 }
 
 .m3-article__reading-badge-expressive.is-reading-badge-animated .m3-reading-badge__gauge .material-symbols-outlined {
-    animation: m3ReadingIconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.92s forwards;
+    animation: m3ReadingIconPop 0.52s cubic-bezier(0.2, 0, 0, 1) 2.34s forwards;
+}
+
+.m3-article__reading-badge-expressive.is-reading-badge-complete .m3-reading-circle__bg {
+    opacity: 1;
+    animation: none;
+}
+
+.m3-article__reading-badge-expressive.is-reading-badge-complete .m3-reading-circle__progress {
+    opacity: 1;
+    stroke-dashoffset: calc(100 - var(--target-progress, 0));
+    animation: none;
+}
+
+.m3-article__reading-badge-expressive.is-reading-badge-complete .m3-reading-circle__head {
+    opacity: 1;
+    transform: rotate(var(--target-angle, 0deg)) scale(1);
+    animation: none;
+}
+
+.m3-article__reading-badge-expressive.is-reading-badge-complete .m3-reading-badge__gauge .material-symbols-outlined {
+    opacity: 1;
+    transform: scale(1);
+    animation: none;
 }
 
 .m3-article__reading-badge-expressive .m3-reading-badge-content {
@@ -341,6 +364,16 @@
         stroke-dashoffset: 100;
     }
 
+    52% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+    }
+
+    72% {
+        opacity: 1;
+        stroke-dashoffset: calc((100 - var(--target-progress, 0)) * 0.42);
+    }
+
     100% {
         opacity: 1;
         stroke-dashoffset: calc(100 - var(--target-progress, 0));
@@ -367,6 +400,15 @@
         opacity: 1;
     }
 
+    52% {
+        opacity: 1;
+        transform: rotate(360deg) scale(1);
+    }
+
+    72% {
+        transform: rotate(calc(var(--target-angle, 0deg) + (360deg - var(--target-angle, 0deg)) * 0.42)) scale(1.03);
+    }
+
     100% {
         opacity: 1;
         transform: rotate(var(--target-angle, 0deg)) scale(1);
@@ -375,13 +417,13 @@
 
 @keyframes m3ReadingIconPop {
     0% {
-        opacity: 0;
-        transform: scale(0.76);
+        opacity: 1;
+        transform: scale(1);
     }
 
-    72% {
+    64% {
         opacity: 1;
-        transform: scale(1.12);
+        transform: scale(1.06);
     }
 
     100% {
@@ -768,8 +810,9 @@
 .m3-article__featured-image {
     position: relative;
     width: 100%;
-    min-height: clamp(200px, 40vw, 450px);
     height: auto;
+    /* 見切れ解消: 記事ごとの自然なアスペクト比で表示（強制 min-height を撤廃）。
+       極端に縦長の画像だけ img 側の max-height で上限を設け、はみ出しを防ぐ。 */
     overflow: hidden;
     border-radius: 32px 32px 0 0;
     background-color: var(--md-sys-color-surface-container-high);
@@ -808,10 +851,15 @@
 .m3-article__featured-img {
     width: 100%;
     height: auto;
-    min-height: clamp(200px, 40vw, 450px);
+    /* 自然なアスペクト比で全体表示。縦長画像は max-height で上限を設け、
+       その際は contain＋背景色で全体を収める（見切れゼロ）。
+       上限は視口高さに連動（50vh）し、13インチノートでも大型ディスプレイでも
+       モバイルでも読者の環境に応じて自動調整される。 */
+    max-height: clamp(240px, 50vh, 600px);
     display: block;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
+    background-color: var(--md-sys-color-surface-container-high);
 }
 
 /* Category labels positioned below the title, centered */
@@ -1076,7 +1124,7 @@
 .m3-article__body h1,
 .m3-article__body h2,
 .m3-article__body h3,
-.m3-article__body h4,
+.m3-article__body h4:not(.m3-blogcard__title),
 .m3-article__body h5,
 .m3-article__body h6 {
     font-family: var(--font-heading);
@@ -1102,7 +1150,7 @@
 .m3-article__body h1 { font-size: 2.2rem; }
 .m3-article__body h2 { font-size: 1.85rem; }
 .m3-article__body h3 { font-size: 1.45rem; border-bottom-width: 3px; }
-.m3-article__body h4 { font-size: 1.25rem; border-bottom-width: 2px; }
+.m3-article__body h4:not(.m3-blogcard__title) { font-size: 1.25rem; border-bottom-width: 2px; }
 .m3-article__body h5 { font-size: 1.1rem; border-bottom-width: 2px; opacity: 0.85; }
 .m3-article__body h6 { font-size: 1rem; border-bottom-width: 2px; opacity: 0.75; }
 
@@ -1702,11 +1750,67 @@
 .m3-label--category-more {
     font-size: 11px;
     font-weight: 800;
-    color: var(--node-article-on-accent, #ffffff);
+    /* カード・シングルとも文字色は常に白（動的アクセントの明暗に追従させない） */
+    color: #ffffff;
     background: var(--node-article-accent, #FF9900);
     padding: 2px 8px;
     border-radius: 6px;
     opacity: 0.8;
+}
+
+/* シングルヒーロー: 4つ目以降は +N トグルで開くまで非表示 */
+.m3-article__category-group:not(.is-card) .m3-label--category.is-overflow {
+    display: none;
+}
+
+.m3-article__category-group:not(.is-card).is-expanded .m3-label--category.is-overflow {
+    display: inline-flex;
+}
+
+.m3-article__category-group:not(.is-card).is-expanded .m3-label--category-more--toggle {
+    display: none;
+}
+
+.m3-label--category-more--toggle {
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s;
+}
+
+.m3-label--category-more--toggle:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* シングルヒーロー: プライマリ（先頭）は塗りのまま、その他はアウトラインピル。
+ * 文字・枠はカテゴリカラーを黒/白と混色してコントラストを確保（薄色対策）。
+ * _cards.css の !important（背景・白文字・border:none）をより高い詳細度で上書きする。 */
+.m3-article__category-group:not(.is-card) .m3-label--category.is-secondary,
+.m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:visited,
+.m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:hover,
+.m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:focus-visible {
+    background-color: var(--md-sys-color-surface-container-low, #ffffff) !important;
+    color: color-mix(in srgb, var(--category-color, #FF9900) 72%, black) !important;
+    border: 1.5px solid color-mix(in srgb, var(--category-color, #FF9900) 60%, black) !important;
+    border-radius: 999px;
+    box-shadow: none;
+}
+
+.m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:hover {
+    background-color: color-mix(in srgb, var(--category-color, #FF9900) 10%, var(--md-sys-color-surface-container-low, #ffffff)) !important;
+}
+
+[data-theme="dark"] .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary,
+[data-theme="dark"] .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:visited,
+[data-theme="dark"] .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:hover,
+[data-theme="dark"] .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:focus-visible {
+    color: color-mix(in srgb, var(--category-color, #FF9900) 62%, white) !important;
+    border-color: color-mix(in srgb, var(--category-color, #FF9900) 55%, white) !important;
+}
+
+[data-theme="dark"] .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:hover {
+    background-color: color-mix(in srgb, var(--category-color, #FF9900) 16%, var(--md-sys-color-surface-container-low, #25221b)) !important;
 }
 
 .m3-article__meta-info {

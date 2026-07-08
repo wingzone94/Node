@@ -159,4 +159,5 @@ $misskey_share_url = 'https://misskey-hub.net/share/?text=' . $encoded_title . '
             <span class="m3-share-btn__label m3-copy-label">コピー</span>
         </button>
     </div>
+    <?php get_template_part( 'template-parts/preferred-source', null, array( 'context' => 'article' ) ); ?>
 </div>

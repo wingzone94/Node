@@ -26,11 +26,11 @@
 @import './_comments.css';
 @import './_toc-sidebar.css';
 @import './_fab.css';
-@import './_bottom-bar.css';
 @import './_hero-toc.css';
 @import './_buttons.css';
 
 /* Specialized modules */
+@import './_notice.css';
 @import './_blogcard-ai.css';
 @import './_fact-check.css';
 @import './_adblock-modal.css';

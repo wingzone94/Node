@@ -33,8 +33,7 @@
 }
 
 /* ブログカードは本文幅内で自然に収まる（手動中央揃え不要） */
-.m3-article__body .m3-blogcard,
-.m3-article__body .m3-blogcard__link {
+.m3-article__body .m3-blogcard {
     width: 100%;
     max-width: 100%;
     margin-inline: auto;

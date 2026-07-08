@@ -4,7 +4,6 @@ body:not(.single):not(.single-post) .m3-header__progress-container {
 }
 
 body:not(.single):not(.single-post) #m3-toc-trigger,
-body:not(.single):not(.single-post) #m3-handy-toc-trigger,
 body:not(.single):not(.single-post) #m3-sticky-toc {
     display: none !important;
 }

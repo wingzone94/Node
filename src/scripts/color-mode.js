@@ -70,7 +70,7 @@ export function initColorMode() {
         document
             .querySelectorAll('#theme-toggle .material-symbols-outlined, #m3-theme-toggle-handy .material-symbols-outlined')
             .forEach(icon => {
-                const iconName = isDark ? 'nights_stay' : 'wb_sunny';
+                const iconName = isDark ? 'dark_mode' : 'light_mode';
                 if (window.NodeMaterialSymbols) {
                     window.NodeMaterialSymbols.setIcon(icon, iconName);
                     return;

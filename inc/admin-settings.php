@@ -57,6 +57,25 @@ function node_register_settings() {
     register_setting( 'node_settings_group', 'node_ogp_enabled' );
     register_setting( 'node_settings_group', 'node_ogp_bg_id' );
     register_setting( 'node_settings_group', 'node_ogp_logo_id' );
+
+    // --- Google 優先ソース CTA ---
+    register_setting( 'node_settings_group', 'node_preferred_source_enabled', array(
+        'sanitize_callback' => static function ( $value ) {
+            return '1' === (string) $value ? '1' : '0';
+        },
+    ) );
+    register_setting( 'node_settings_group', 'node_preferred_source_placement', array(
+        'sanitize_callback' => static function ( $value ) {
+            $allowed = array( 'article', 'footer', 'both' );
+            return in_array( $value, $allowed, true ) ? $value : 'article';
+        },
+    ) );
+    register_setting( 'node_settings_group', 'node_preferred_source_url', array(
+        'sanitize_callback' => static function ( $value ) {
+            $url = esc_url_raw( $value );
+            return $url ?: NODE_PREFERRED_SOURCE_DEFAULT_URL;
+        },
+    ) );
 }
 add_action( 'admin_init', 'node_register_settings' );
 
@@ -214,6 +233,45 @@ function node_render_settings_page() {
                 </table>
             </div>
 
+            <!-- Google 優先ソース CTA -->
+            <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-search"></span> Google 優先ソース CTA
+                </h2>
+                <p class="description">読者が任意で Luminous Core を Google 検索の優先ソースに追加するための補助導線です。</p>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">優先ソースCTAを表示する</th>
+                        <td>
+                            <?php $preferred_source_enabled = get_option( 'node_preferred_source_enabled', '1' ); ?>
+                            <input type="hidden" name="node_preferred_source_enabled" value="0" />
+                            <label>
+                                <input type="checkbox" name="node_preferred_source_enabled" value="1" <?php checked( $preferred_source_enabled, '1' ); ?> />
+                                表示する
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">表示場所</th>
+                        <td>
+                            <?php $preferred_source_placement = get_option( 'node_preferred_source_placement', 'article' ); ?>
+                            <select name="node_preferred_source_placement">
+                                <option value="article" <?php selected( $preferred_source_placement, 'article' ); ?>>記事下部のみ</option>
+                                <option value="footer" <?php selected( $preferred_source_placement, 'footer' ); ?>>フッターのみ</option>
+                                <option value="both" <?php selected( $preferred_source_placement, 'both' ); ?>>記事下部＋フッター</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">優先ソースURL</th>
+                        <td>
+                            <input type="url" name="node_preferred_source_url" value="<?php echo esc_attr( get_option( 'node_preferred_source_url', NODE_PREFERRED_SOURCE_DEFAULT_URL ) ); ?>" class="regular-text" />
+                            <p class="description">初期値: <code><?php echo esc_html( NODE_PREFERRED_SOURCE_DEFAULT_URL ); ?></code></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
             <!-- テーマのアップデート -->
             <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                 <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
@@ -286,7 +344,10 @@ function node_render_settings_page() {
                                 var local = response.data.local_version;
                                 if (response.data.update_available) {
                                     $('#update-check-result').html('<p style="color: #FF9900; font-weight: bold;">新しいバージョン (v' + remote + ') が見つかりました！</p>');
-                                    $('#luminous-install-update').show();
+                                    $('#luminous-install-update').text('最新版をインストール').show();
+                                } else if (response.data.install_available) {
+                                    $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。同じバージョンを再インストールできます。</p>');
+                                    $('#luminous-install-update').text('同じバージョンを再インストール').show();
                                 } else {
                                     $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。</p>');
                                     $('#luminous-install-update').hide();

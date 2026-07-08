@@ -15,6 +15,37 @@ function node_generate_product_link($url, $type = 'amazon') {
 add_shortcode('m3_product', 'node_product_card_shortcode');
 // --- ユーティリティ ---
 
+function node_get_total_published_posts(): int {
+    $cached = get_transient('node_total_published_posts');
+
+    if (false !== $cached) {
+        return (int) $cached;
+    }
+
+    $posts_query = new WP_Query(
+        array(
+            'post_type'           => 'post',
+            'post_status'         => 'publish',
+            'ignore_sticky_posts' => true,
+            'posts_per_page'      => 1,
+            'fields'              => 'ids',
+        )
+    );
+    $total       = (int) $posts_query->found_posts;
+
+    set_transient('node_total_published_posts', $total, 12 * HOUR_IN_SECONDS);
+
+    return $total;
+}
+
+function node_delete_total_published_posts_transient(...$args): void {
+    delete_transient('node_total_published_posts');
+}
+
+add_action('save_post', 'node_delete_total_published_posts_transient');
+add_action('deleted_post', 'node_delete_total_published_posts_transient');
+add_action('transition_post_status', 'node_delete_total_published_posts_transient');
+
 function node_get_relative_date($post_id = null) {
     $post_id = $post_id ?: get_the_ID();
     $post_time = get_the_time('U', $post_id);
@@ -394,7 +425,67 @@ function node_get_post_categories_for_display( $post_id = null ) {
         return array();
     }
 
-    return node_deduplicate_post_categories( get_the_category( $post_id ) );
+    $assigned_categories = get_the_category( $post_id );
+    $categories          = node_deduplicate_post_categories( $assigned_categories );
+    $primary_id = absint( get_post_meta( $post_id, '_node_primary_category', true ) );
+    if ( ! $primary_id ) {
+        return $categories;
+    }
+
+    foreach ( $categories as $index => $category ) {
+        if ( (int) $category->term_id !== $primary_id ) {
+            continue;
+        }
+
+        if ( 0 === $index ) {
+            return $categories;
+        }
+
+        unset( $categories[ $index ] );
+        array_unshift( $categories, $category );
+        return array_values( $categories );
+    }
+
+    foreach ( $assigned_categories as $category ) {
+        if ( ! $category || is_wp_error( $category ) || ! isset( $category->term_id ) ) {
+            continue;
+        }
+
+        if ( (int) $category->term_id === $primary_id ) {
+            array_unshift( $categories, $category );
+            return array_values( $categories );
+        }
+    }
+
+    return $categories;
+}
+
+function node_get_primary_category( $post_id = null ): ?WP_Term {
+    $post_id = $post_id ? (int) $post_id : (int) get_the_ID();
+    if ( ! $post_id ) {
+        return null;
+    }
+
+    $assigned_categories = get_the_category( $post_id );
+    $categories          = node_deduplicate_post_categories( $assigned_categories );
+    if ( empty( $categories ) ) {
+        return null;
+    }
+
+    $primary_id = absint( get_post_meta( $post_id, '_node_primary_category', true ) );
+    if ( $primary_id ) {
+        foreach ( $assigned_categories as $category ) {
+            if ( ! $category || is_wp_error( $category ) || ! isset( $category->term_id ) ) {
+                continue;
+            }
+
+            if ( (int) $category->term_id === $primary_id ) {
+                return $category;
+            }
+        }
+    }
+
+    return $categories[0];
 }
 
 function node_the_category_labels($post_id = null) {
@@ -403,23 +494,42 @@ function node_the_category_labels($post_id = null) {
     if (empty($categories)) return;
     
     $is_card = !is_single();
-    // カード表示なら3つ、シングルページならすべて（999個）表示
-    $limit = $is_card ? 3 : 999;
+    // カード・シングルとも初期表示は3つまで。超過分は +N バッジ（index.phpと同仕様）。
+    // シングルでは +N がトグルボタンになり、クリックで全カテゴリを表示する。
+    $limit = 3;
     $count = count($categories);
-    $display_cats = array_slice($categories, 0, $limit);
+    $display_cats = $is_card ? array_slice($categories, 0, $limit) : $categories;
 
     echo '<div class="m3-article__category-group' . ($is_card ? ' is-card' : '') . '">';
     if (!$is_card) {
-        echo '<span class="m3-article__category-label"><span class="material-symbols-outlined">folder</span>CATEGORY</span>';
+        // PC(1001px〜)ではCSSで文字を隠しアイコン(📁)のみ表示。ホバー/フォーカスで
+        // 上方向に「この記事に属しているカテゴリ表記です」の吹き出しを出す。
+        echo '<span class="m3-article__category-label" tabindex="0" aria-label="CATEGORY: この記事に属しているカテゴリ表記です">'
+            . '<span class="material-symbols-outlined" aria-hidden="true">folder</span>'
+            . '<span class="m3-article__category-label-text">CATEGORY</span>'
+            . '<span class="m3-category-info-bubble" role="tooltip" aria-hidden="true">この記事に属しているカテゴリ表記です</span>'
+            . '</span>';
     }
-    
-    foreach ($display_cats as $cat) {
-        echo node_render_category_label($cat);
+
+    foreach ($display_cats as $index => $cat) {
+        // シングルヒーローでは先頭（プライマリ）のみ塗り、以降はアウトラインピル
+        $label_class = 'm3-label--category';
+        if (!$is_card && $index > 0) {
+            $label_class .= ' is-secondary';
+        }
+        if (!$is_card && $index >= $limit) {
+            $label_class .= ' is-overflow';
+        }
+        echo node_render_category_label($cat, array('class' => $label_class));
     }
-    
+
     if ($count > $limit) {
         $remaining = $count - $limit;
-        echo '<span class="m3-label--category-more" title="さらに ' . $remaining . ' 件のカテゴリがあります">+' . $remaining . '</span>';
+        if ($is_card) {
+            echo '<span class="m3-label--category-more" title="さらに ' . $remaining . ' 件のカテゴリがあります">+' . $remaining . '</span>';
+        } else {
+            echo '<button type="button" class="m3-label--category-more m3-label--category-more--toggle" aria-expanded="false" title="残り ' . $remaining . ' 件のカテゴリを表示">+' . $remaining . '</button>';
+        }
     }
     echo '</div>';
 }

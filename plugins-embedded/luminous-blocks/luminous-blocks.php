@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:  Luminous Blocks
+ * Plugin Name:  Node Blocks
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  Gutenberg カスタムブロック（Smart Sort Table, Voting）および外部サービス埋め込み（Apple Music, Spotify, Google Maps）。
- * Version:      1.0.0
+ * Version:      1.2.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LUMINOUS_BLOCKS_VERSION', '1.0.0' );
+define( 'LUMINOUS_BLOCKS_VERSION', '1.2.0' );
 define( 'LUMINOUS_BLOCKS_DIR', plugin_dir_path( __FILE__ ) );
 
 $luminous_blocks_embedded_dir = get_template_directory() . '/plugins-embedded/luminous-blocks/';
@@ -53,6 +53,7 @@ final class Luminous_Blocks {
 		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/apple-music.php';
 		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/google-map.php';
 		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/spotify.php';
+		require_once LUMINOUS_BLOCKS_DIR . 'includes/blocks/embed.php';
 		require_once LUMINOUS_BLOCKS_DIR . 'includes/media-label.php';
 		require_once LUMINOUS_BLOCKS_DIR . 'includes/voting.php';
 		require_once LUMINOUS_BLOCKS_DIR . 'includes/oembed-handlers.php';
@@ -100,6 +101,9 @@ final class Luminous_Blocks {
 				true
 			);
 		}
+
+		// node/notice のフロント配色はテーマの style.css（_notice.css）が担当。
+		// プラグインからの個別 enqueue は不要。
 	}
 
 	public function enqueue_editor_assets(): void {
@@ -112,7 +116,7 @@ final class Luminous_Blocks {
 		wp_enqueue_script(
 			'luminous-blocks-editor',
 			$editor_asset['url'],
-			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post' ],
+			[ 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post', 'wp-i18n', 'wp-api-fetch' ],
 			$editor_asset['version'],
 			true
 		);

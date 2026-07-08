@@ -122,6 +122,112 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
+.node-preferred-source {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: min(100%, 680px);
+    margin: 24px auto 0;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.node-preferred-source__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 338px);
+    aspect-ratio: 338 / 106;
+    max-width: 100%;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    line-height: 0;
+    text-decoration: none !important;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), filter 0.2s;
+}
+
+.node-preferred-source__button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+}
+
+.node-preferred-source__button:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: 3px;
+}
+
+.node-preferred-source__badge {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.node-preferred-source__badge--dark {
+    display: none;
+}
+
+.node-preferred-source__text {
+    max-width: 34rem;
+    margin: 0;
+    color: inherit;
+    font-size: 0.84rem;
+    font-weight: 650;
+    line-height: 1.7;
+    text-align: center;
+}
+
+[data-theme="dark"] .node-preferred-source {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+[data-theme="dark"] .node-preferred-source__badge--light {
+    display: none;
+}
+
+[data-theme="dark"] .node-preferred-source__badge--dark {
+    display: block;
+}
+
+.node-preferred-source--footer {
+    align-items: flex-start;
+    width: 100%;
+    margin: 18px 0 0;
+}
+
+.node-preferred-source--footer .node-preferred-source__button {
+    width: min(100%, 260px);
+}
+
+.node-preferred-source--footer .node-preferred-source__text {
+    max-width: 24rem;
+    text-align: left;
+}
+
+@media (max-width: 599px) {
+    .node-preferred-source {
+        width: min(100%, 320px);
+        margin-top: 20px;
+        padding: 0 12px;
+        box-sizing: border-box;
+    }
+
+    .node-preferred-source__button {
+        width: min(100%, 300px);
+    }
+
+    .node-preferred-source__text {
+        font-size: 0.78rem;
+        line-height: 1.65;
+    }
+
+    .node-preferred-source--footer {
+        align-items: flex-start;
+        width: 100%;
+        padding: 0;
+    }
+}
+
 /* Brand Colors */
 .m3-share-btn--x { background-color: #000000 !important; color: #ffffff !important; }
 .m3-share-btn--facebook { background-color: #1877F2 !important; color: #ffffff !important; }

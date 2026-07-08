@@ -1,63 +1,34 @@
 /* ==========================================================================
    Blog Card — Material 3 Expressive
-   Shape contrast / rich color / motion / state layer
+   Unified surface / stretched link / integrated copy + share actions
    ========================================================================== */
 
-.m3-blogcard,
-a.m3-blogcard__link {
-    --m3-blogcard-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-    --m3-blogcard-shadow-hover: 0 12px 28px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+.m3-blogcard-wrap {
+    margin: var(--m3-spacing-m) 0;
+}
 
+.m3-blogcard {
     position: relative;
     display: block;
-    max-width: 100%;
-    margin: var(--m3-spacing-xl) 0;
-    padding: 0;
-    overflow: hidden;
-    cursor: pointer;
-    text-decoration: none;
+    padding: var(--m3-spacing-s);
     color: inherit;
-    background: linear-gradient(
-        145deg,
-        var(--md-sys-color-surface-container-low) 0%,
-        color-mix(in srgb, var(--md-sys-color-surface-container) 65%, var(--md-sys-color-surface-container-low)) 100%
-    );
+    background: var(--md-sys-color-surface-container-low);
     border: 1px solid var(--md-sys-color-outline-variant);
     border-radius: var(--m3-radius-large);
-    box-shadow: var(--m3-blogcard-shadow);
-    transition:
-        transform 0.4s var(--m3-motion-easing),
-        box-shadow 0.4s var(--m3-motion-easing),
-        border-color 0.3s var(--m3-motion-easing),
-        background 0.3s var(--m3-motion-easing);
+    box-shadow: var(--m3-elevation-1);
+    overflow: hidden;
+    transition: transform 0.28s var(--m3-motion-easing),
+                box-shadow 0.28s var(--m3-motion-easing),
+                border-color 0.28s var(--m3-motion-easing);
 }
 
-/* Expressive iris border — hero moment (internal cards only) */
-.m3-blogcard--internal::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1.5px;
-    background: conic-gradient(
-        from 0deg,
-        var(--md-sys-color-primary),
-        color-mix(in srgb, var(--md-sys-color-primary) 50%, #fbbc05),
-        var(--md-sys-color-primary)
-    );
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.35;
-    pointer-events: none;
-    transition: opacity 0.4s var(--m3-motion-easing);
+[data-theme="dark"] .m3-blogcard {
+    background: var(--md-sys-color-surface-container-high);
 }
 
-.m3-blogcard--internal:hover::after,
-.m3-blogcard--internal:focus-visible::after {
-    opacity: 0.75;
+/* Internal accent — primary-colored left edge, same 1px width as the other borders */
+.m3-blogcard--internal {
+    border-left: 1px solid var(--md-sys-color-primary);
 }
 
 /* State layer */
@@ -65,99 +36,88 @@ a.m3-blogcard__link {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 0;
     border-radius: inherit;
     background: var(--md-sys-color-on-surface);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s var(--m3-motion-easing);
-    z-index: 1;
-}
-
-.m3-blogcard:hover::before {
-    opacity: 0.04;
-}
-
-.m3-blogcard:focus-visible::before {
-    opacity: 0.08;
 }
 
 .m3-blogcard:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--m3-blogcard-shadow-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
     border-color: color-mix(in srgb, var(--md-sys-color-primary) 45%, var(--md-sys-color-outline-variant));
 }
 
-.m3-blogcard:focus-visible {
+.m3-blogcard:hover::before { opacity: 0.04; }
+.m3-blogcard:focus-within::before { opacity: 0.06; }
+
+.m3-blogcard:focus-within {
     outline: 2px solid var(--md-sys-color-primary);
-    outline-offset: 3px;
+    outline-offset: 2px;
 }
 
-.m3-blogcard--internal:hover {
-    background: linear-gradient(
-        145deg,
-        color-mix(in srgb, var(--md-sys-color-primary-container) 35%, var(--md-sys-color-surface-container-low)) 0%,
-        var(--md-sys-color-surface-container-low) 100%
-    );
-}
-
-.m3-blogcard__fallback {
-    display: inline-block;
-    padding: var(--m3-spacing-s) var(--m3-spacing-m);
-    border-radius: var(--m3-radius-medium);
-    background: var(--md-sys-color-surface-container);
-    color: var(--md-sys-color-primary);
-    font-weight: 700;
-    word-break: break-all;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.m3-blogcard__external-icon {
-    position: absolute;
-    top: var(--m3-spacing-m);
-    right: var(--m3-spacing-m);
-    z-index: 2;
-    font-size: 18px;
-    color: var(--md-sys-color-primary);
-    opacity: 0.65;
-    transition: opacity 0.3s var(--m3-motion-easing), transform 0.3s var(--m3-motion-easing);
-}
-
-.m3-blogcard--external:hover .m3-blogcard__external-icon {
-    opacity: 1;
-    transform: translate(2px, -2px);
-}
-
-.m3-blogcard__content {
+/* ---- Body: image + text on one unified surface ---- */
+.m3-blogcard__body {
     position: relative;
-    z-index: 2;
+    z-index: 1;
     display: flex;
-    flex-direction: row;
-    min-height: 128px;
+    gap: var(--m3-spacing-m);
+    align-items: stretch;
 }
 
-@media (max-width: 600px) {
-    .m3-blogcard__content {
-        flex-direction: column-reverse;
-        min-height: 0;
-    }
+.m3-blogcard__image {
+    flex-shrink: 0;
+    width: 128px;
+    align-self: stretch;
+    min-height: 96px;
+    overflow: hidden;
+    border-radius: var(--m3-radius-medium);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container) 80%, var(--md-sys-color-outline-variant));
+}
+
+.m3-blogcard__image img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: block;
+    object-fit: cover;
+    border-radius: inherit !important;
 }
 
 .m3-blogcard__text {
     flex: 1;
     min-width: 0;
-    padding: var(--m3-spacing-l);
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: var(--m3-spacing-xs);
+    padding: var(--m3-spacing-xs) var(--m3-spacing-s) var(--m3-spacing-xs) var(--m3-spacing-xs);
+}
+
+/* Title link — the ::after stretches over the whole card (clickable everywhere
+   except the action buttons, which sit on a higher layer). */
+.m3-blogcard__overlay {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 4px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.m3-blogcard__overlay::after {
+    content: '';
+    position: absolute;
+    inset: calc(var(--m3-spacing-s) * -1);
+    z-index: 2;
 }
 
 .m3-blogcard__title {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 800;
-    line-height: 1.45;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.4;
     letter-spacing: 0.01em;
     color: var(--md-sys-color-on-surface);
     display: -webkit-box;
@@ -165,12 +125,24 @@ a.m3-blogcard__link {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    transition: color 0.2s var(--m3-motion-easing);
+}
+
+.m3-blogcard:hover .m3-blogcard__title {
+    color: var(--md-sys-color-primary);
+}
+
+.m3-blogcard__external-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 16px;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 55%, transparent);
 }
 
 .m3-blogcard__description {
     margin: 0;
-    font-size: 0.875rem;
-    line-height: 1.6;
+    font-size: 0.75rem;
+    line-height: 1.5;
     color: color-mix(in srgb, var(--md-sys-color-on-surface) 68%, transparent);
     display: -webkit-box;
     line-clamp: 2;
@@ -179,123 +151,210 @@ a.m3-blogcard__link {
     overflow: hidden;
 }
 
+/* ---- Footer: source (favicon / sitename / badge) + actions ---- */
 .m3-blogcard__footer {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: var(--m3-spacing-s);
-    margin-top: var(--m3-spacing-s);
-    min-height: 28px;
+    margin-top: 2px;
+    min-height: 36px;
+}
+
+.m3-blogcard__source {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
 }
 
 .m3-blogcard__favicon {
-    width: 16px;
-    height: 16px;
-    border-radius: var(--m3-radius-small);
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    margin: 0 !important;
+    object-fit: cover;
+    border-radius: 4px !important;
     flex-shrink: 0;
 }
 
 .m3-blogcard__sitename {
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--md-sys-color-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Action buttons (copy link / system share) — above the stretched link ---- */
+.m3-blogcard__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.m3-blogcard__action {
+    position: relative;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: var(--m3-radius-full);
+    background: transparent;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 60%, transparent);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s var(--m3-motion-easing),
+                color 0.2s var(--m3-motion-easing),
+                transform 0.2s var(--m3-motion-easing);
+}
+
+.m3-blogcard__action:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent);
     color: var(--md-sys-color-primary);
 }
 
-.m3-blogcard__internal-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-    padding: 4px 12px;
-    border-radius: var(--m3-radius-full);
-    background: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.03em;
-    box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+.m3-blogcard__action:active {
+    transform: scale(0.88);
 }
 
-.m3-blogcard__internal-icon {
-    font-size: 14px;
-    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+.m3-blogcard__action:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
 }
 
-.m3-blogcard__image {
-    width: 240px;
-    flex-shrink: 0;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--md-sys-color-surface-container) 80%, var(--md-sys-color-outline-variant));
-    border-start-start-radius: 0;
-    border-start-end-radius: var(--m3-radius-extra-large);
-    border-end-end-radius: 0;
-    border-end-start-radius: var(--m3-radius-medium);
+.m3-blogcard__action-icon {
+    font-size: 20px;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
 }
 
+.m3-blogcard__action.is-success {
+    color: var(--md-sys-color-primary);
+    background: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent);
+}
+
+.m3-blogcard__action.is-success .m3-blogcard__action-icon {
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 20;
+}
+
+/* The share button appears ONLY where the OS share sheet is actually usable
+   (a secure context with navigator.share: Android / iOS / macOS Safari & Chrome /
+   Windows / ChromeOS). JS adds `.has-web-share` to <html> after feature-detecting
+   navigator.share(). Where native share is impossible (e.g. plain http), the share
+   button stays hidden and only the copy button is shown. */
+.m3-blogcard__action--share { display: none; }
+.has-web-share .m3-blogcard__action--share { display: inline-flex; }
+
+/* ---- Fallback (OGP fetch failed) ---- */
+.m3-blogcard__fallback {
+    display: inline-block;
+    padding: var(--m3-spacing-s) var(--m3-spacing-m);
+    border-radius: var(--m3-radius-small);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-primary);
+    font-weight: 700;
+    word-break: break-all;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ---- Brand card (Luminous Core): pre-composed 1200x630 banner on #FF9900.
+   Widen the slot and `contain` the whole banner so the wordmark isn't cropped. ---- */
+.m3-blogcard--brand .m3-blogcard__image {
+    width: clamp(150px, 34%, 230px);
+    background: #FF9900;
+}
+
+.m3-blogcard--brand .m3-blogcard__image img {
+    object-fit: contain;
+}
+
+/* ---- Responsive: stack on narrow screens ---- */
 @media (max-width: 600px) {
+    .m3-blogcard__body {
+        flex-direction: column;
+        gap: var(--m3-spacing-s);
+    }
+
     .m3-blogcard__image {
         width: 100%;
-        height: 168px;
-        border-radius: 0;
-        border-end-start-radius: var(--m3-radius-large);
-        border-end-end-radius: var(--m3-radius-large);
+        height: 150px;
+        align-self: auto;
+    }
+
+    .m3-blogcard--brand .m3-blogcard__image {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1200 / 630;
+    }
+
+    .m3-blogcard__text {
+        padding: 0 var(--m3-spacing-xs) var(--m3-spacing-xs);
     }
 }
 
-.m3-blogcard__image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s var(--m3-motion-easing);
-}
-
-.m3-blogcard:hover .m3-blogcard__image img {
-    transform: scale(1.06);
-}
-
-/* Reduced motion */
+/* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
     .m3-blogcard,
     .m3-blogcard::before,
-    .m3-blogcard--internal::after,
-    .m3-blogcard__external-icon,
-    .m3-blogcard__image img {
+    .m3-blogcard__title,
+    .m3-blogcard__action {
         transition: none;
     }
 
     .m3-blogcard:hover {
         transform: none;
     }
-
-    .m3-blogcard:hover .m3-blogcard__image img {
-        transform: none;
-    }
-
-    .m3-blogcard--external:hover .m3-blogcard__external-icon {
-        transform: none;
-    }
 }
 
-/* Dark mode */
-[data-theme="dark"] .m3-blogcard,
-[data-theme="dark"] a.m3-blogcard__link {
-    background: linear-gradient(
-        145deg,
-        var(--md-sys-color-surface-container-high) 0%,
-        var(--md-sys-color-surface-container) 100%
-    );
+/* ==========================================================================
+   URL 貼り付け埋め込み — X (Twitter) / Google マップ / YouTube
+   ========================================================================== */
+.node-embed {
+    margin: var(--m3-spacing-m) 0;
 }
 
-[data-theme="dark"] .m3-blogcard--internal:hover {
-    background: linear-gradient(
-        145deg,
-        color-mix(in srgb, var(--md-sys-color-primary-container) 40%, var(--md-sys-color-surface-container-high)) 0%,
-        var(--md-sys-color-surface-container-high) 100%
-    );
+/* 16:9 レスポンシブ iframe（YouTube・Google マップ） */
+.node-embed--video,
+.node-embed--map {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--m3-radius-large);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-low);
 }
- 
+
+.node-embed--video iframe,
+.node-embed--map iframe {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border: 0;
+    border-radius: inherit;
+}
+
+/* X (Twitter) の blockquote は中央寄せ。widgets.js が iframe に置換する */
+.node-embed--x {
+    display: flex;
+    justify-content: center;
+}
+
+.node-embed--x .twitter-tweet {
+    margin: 0 auto !important;
+}
+
 /* Sponsor Label (Single Page Hero) */
 .m3-label--sponsor-rtx {
     position: absolute;
@@ -365,8 +424,8 @@ a.m3-blogcard__link {
         #FBBC05,
         #EA4335
     );
-    -webkit-mask: 
-       linear-gradient(#fff 0 0) content-box, 
+    -webkit-mask:
+       linear-gradient(#fff 0 0) content-box,
        linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -497,4 +556,3 @@ a.m3-blogcard__link {
 [data-theme="dark"] .m3-label--ai-summary {
     box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
-

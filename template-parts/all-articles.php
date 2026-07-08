@@ -4,8 +4,7 @@ get_header();
 $paged            = max( 1, (int) get_query_var( 'paged' ) );
 $per_page         = max( 1, (int) NODE_ALL_ARTICLES_PER_PAGE );
 $total_limit      = max( 1, (int) NODE_ALL_ARTICLES_TOTAL_LIMIT );
-$published_posts  = wp_count_posts( 'post' );
-$total_published  = (int) ( $published_posts->publish ?? 0 );
+$total_published  = node_get_total_published_posts();
 $total_displaying = min( $total_published, $total_limit );
 $total_pages      = max( 1, (int) ceil( $total_displaying / $per_page ) );
 

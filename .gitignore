@@ -8,3 +8,7 @@ production_plugins/*.zip
 color_script*.js
 .gemini/
 dist/
+vendor/
+.phpunit.result.cache
+.claude/
+.codex/

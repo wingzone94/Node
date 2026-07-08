@@ -1,13 +1,13 @@
 import './gsap';
 import './scripts/card-animation';
 import './scripts/share-actions';
+import './scripts/blogcard-actions';
 import { initSearchBar } from './scripts/search-bar';
 import { initArticleNavigation } from './scripts/article-navigation';
-import { initDrawer } from './scripts/drawer';
-import { initHandyMode } from './scripts/handy-mode';
 import { initHeroInfoBubble, initLatestGridExpansion, initSectionArchiveLinks } from './scripts/home-layout';
 import { initKeyboardSnackbar } from './scripts/keyboard-snackbar';
 import { initExpressiveFloatingTOC } from './scripts/expressive-toc';
+import { initHeroTOC } from './scripts/hero-toc';
 import { initFloatingActions } from './scripts/floating-actions';
 import { initReadingProgressSingleOnly } from './scripts/reading-progress';
 import { initScrollAnimations } from './scripts/scroll-animations';
@@ -191,29 +191,6 @@ function initNodeLibraryQr() {
     });
 }
 
-function initNodeLibrarySteamEmbedToggles() {
-    document.querySelectorAll('[data-node-library-steam-toggle]').forEach(toggle => {
-        if (toggle.dataset.nodeLibrarySteamReady === 'true') return;
-
-        const panelId = toggle.getAttribute('aria-controls');
-        const panel = panelId ? document.getElementById(panelId) : null;
-        const control = toggle.closest('[data-node-library-steam-control]');
-        if (!panel) return;
-
-        toggle.dataset.nodeLibrarySteamReady = 'true';
-
-        const sync = () => {
-            const isOpen = toggle.checked;
-            panel.hidden = !isOpen;
-            toggle.setAttribute('aria-expanded', String(isOpen));
-            control?.classList.toggle('is-steam-visible', isOpen);
-        };
-
-        toggle.addEventListener('change', sync);
-        sync();
-    });
-}
-
 function initNodeLibraryTabs() {
     document.querySelectorAll('[data-node-library-tabs]').forEach(section => {
         const tabs = Array.from(section.querySelectorAll('[role="tab"][data-node-library-tab]'));
@@ -270,18 +247,128 @@ function initNodeLibraryTabs() {
     });
 }
 
+function initNodeLibraryNintendoWarnings() {
+    const warningTimers = new WeakMap();
+
+    const hideWarning = link => {
+        const warning = link.closest('.node-library-platform-link, .node-library-nintendo-link')?.querySelector('.node-library-platform-warning, .node-library-nintendo-warning');
+        const timer = warningTimers.get(link);
+        if (timer) window.clearTimeout(timer);
+
+        link.dataset.nodeLibraryPlatformArmed = 'false';
+        link.dataset.nodeLibraryNintendoArmed = 'false';
+        link.setAttribute('aria-expanded', 'false');
+        warning?.setAttribute('hidden', '');
+        warningTimers.delete(link);
+    };
+
+    const showWarning = link => {
+        const warning = link.closest('.node-library-platform-link, .node-library-nintendo-link')?.querySelector('.node-library-platform-warning, .node-library-nintendo-warning');
+        if (!warning) return false;
+
+        document.querySelectorAll('[data-node-library-platform-warning][data-node-library-platform-armed="true"], [data-node-library-nintendo-warning][data-node-library-nintendo-armed="true"]').forEach(activeLink => {
+            if (activeLink !== link) hideWarning(activeLink);
+        });
+
+        warning.hidden = false;
+        link.dataset.nodeLibraryPlatformArmed = 'true';
+        link.dataset.nodeLibraryNintendoArmed = 'true';
+        link.setAttribute('aria-expanded', 'true');
+
+        const timer = window.setTimeout(() => hideWarning(link), 3500);
+        warningTimers.set(link, timer);
+        return true;
+    };
+
+    document.querySelectorAll('[data-node-library-platform-warning], [data-node-library-nintendo-warning]').forEach(link => {
+        if (link.dataset.nodeLibraryPlatformReady === 'true' || link.dataset.nodeLibraryNintendoReady === 'true') return;
+
+        link.dataset.nodeLibraryPlatformReady = 'true';
+        link.dataset.nodeLibraryNintendoReady = 'true';
+        link.dataset.nodeLibraryPlatformArmed = 'false';
+        link.dataset.nodeLibraryNintendoArmed = 'false';
+        link.setAttribute('aria-haspopup', 'true');
+        link.setAttribute('aria-expanded', 'false');
+
+        link.addEventListener('click', event => {
+            if (link.dataset.nodeLibraryPlatformArmed === 'true' || link.dataset.nodeLibraryNintendoArmed === 'true') {
+                hideWarning(link);
+                return;
+            }
+
+            if (showWarning(link)) {
+                event.preventDefault();
+            }
+        });
+
+        link.addEventListener('blur', () => {
+            window.setTimeout(() => {
+                if (!link.matches(':focus')) hideWarning(link);
+            }, 80);
+        });
+    });
+}
+
+function initNodeLibrarySteamEmbedToggles() {
+    document.querySelectorAll('[data-node-library-steam-toggle]').forEach(toggle => {
+        if (toggle.dataset.nodeLibrarySteamReady === 'true') return;
+
+        const panelId = toggle.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+        const control = toggle.closest('[data-node-library-steam-control]');
+        const card = toggle.closest('.node-library-card');
+        const steamButtons = card ? Array.from(card.querySelectorAll('.m3-platform-button--steam')) : [];
+        const stores = card?.querySelector('.m3-game-card__stores');
+        if (!panel) return;
+
+        toggle.dataset.nodeLibrarySteamReady = 'true';
+
+        const sync = () => {
+            const isOpen = toggle.checked;
+            panel.hidden = !isOpen;
+            steamButtons.forEach(button => {
+                button.hidden = isOpen;
+            });
+            if (stores) {
+                const activePanel = stores.querySelector('.m3-game-card__store-panel:not([hidden])') || stores.querySelector('.m3-game-card__store-panel');
+                const visibleButtons = activePanel
+                    ? Array.from(activePanel.querySelectorAll('.m3-platform-button')).filter(button => !button.hidden)
+                    : [];
+                stores.hidden = isOpen && visibleButtons.length === 0;
+            }
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            control?.classList.toggle('is-steam-visible', isOpen);
+        };
+
+        toggle.addEventListener('change', sync);
+        sync();
+    });
+}
+
+function initCategoryOverflowToggle() {
+    document.querySelectorAll('.m3-label--category-more--toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const group = toggle.closest('.m3-article__category-group');
+            if (!group) return;
+
+            group.classList.add('is-expanded');
+            toggle.setAttribute('aria-expanded', 'true');
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const initializers = [
         initSearchBar,
-        initDrawer,
         initViewSwitcher,
         initColorModeLoader,
         initNodeLibraryQr,
         initNodeLibraryTabs,
+        initNodeLibraryNintendoWarnings,
         initNodeLibrarySteamEmbedToggles,
         initKeyboardSnackbar,
-        initHandyMode,
         initExpressiveFloatingTOC,
+        initHeroTOC,
         initFloatingActions,
         initSmartHeader,
         initOverdriveScroll,
@@ -294,6 +381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initArticleNavigation,
         initHeroInfoBubble,
         initScrollAnimations,
+        initCategoryOverflowToggle,
     ];
 
     initializers.forEach(init => {

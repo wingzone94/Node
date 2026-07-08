@@ -169,6 +169,13 @@ function node_add_heading_ids( $content ) {
     return preg_replace_callback(
         $pattern,
         static function ( $matches ) use ( &$heading_index, $page_items, &$used_ids ) {
+            // ブログカード等、本文フィルターが後から差し込む見出しは目次項目に含まれない。
+            // これらを見出しとして数えると $heading_index がずれ、著者の見出しへ誤ったIDが付与される
+            // （さらにID重複も起きる）ため、目次収集と同じ生 post_content 由来の見出しだけを対象にする。
+            if ( str_contains( $matches[2], 'm3-blogcard__title' ) ) {
+                return $matches[0];
+            }
+
             $text = node_normalize_toc_heading_text( $matches[3] );
             if ( '' === $text ) {
                 return $matches[0];

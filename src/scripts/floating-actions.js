@@ -12,7 +12,6 @@ export function initFloatingActions() {
     const showBackToTopContext = isSingle || isIndexOrArchiveView();
     const backToTop = document.getElementById('m3-back-to-top');
     const tocTrigger = document.getElementById('m3-toc-trigger');
-    const handyTocTrigger = document.getElementById('m3-handy-toc-trigger');
     const tocPanel = document.getElementById('m3-sticky-toc');
 
     backToTop?.addEventListener('click', (event) => {
@@ -22,7 +21,6 @@ export function initFloatingActions() {
 
     if (!isSingle) {
         tocTrigger?.remove();
-        handyTocTrigger?.remove();
         tocPanel?.classList.remove('is-active');
         tocPanel?.remove();
         document.querySelector('.m3-toc-scrim')?.remove();
