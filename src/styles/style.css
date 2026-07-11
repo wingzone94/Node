@@ -16,6 +16,7 @@
 /* Page and content surfaces */
 @import './_spotlight.css';
 @import './_archive.css';
+@import './_notice.css';
 @import './_search-results.css';
 @import './_cards.css';
 @import './_product-card.css';

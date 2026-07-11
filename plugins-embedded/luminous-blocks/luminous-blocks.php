@@ -112,7 +112,7 @@ final class Luminous_Blocks {
 		wp_enqueue_script(
 			'luminous-blocks-editor',
 			$editor_asset['url'],
-			[ 'wp-blocks', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post' ],
+			[ 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post', 'wp-i18n' ],
 			$editor_asset['version'],
 			true
 		);

@@ -1,0 +1,164 @@
+/* =============================================================
+ * node/notice — お知らせ / 注意 / 重要 / 補足 のコールアウト（フロント）
+ *
+ * テーマの style.css にバンドルされるフロントスタイル。
+ * ブロック登録は luminous-blocks プラグインが担当し、配色はテーマ側で管理。
+ *
+ * 設計:
+ *  - バリアント配色は CSS カスタムプロパティ（--m3-notice-*）で一元管理。
+ *    構造値（余白・角丸・本文色）はテーマの Material 3 トークンを
+ *    フォールバック付きで参照し、ハードコードを避ける。
+ *  - info の配色は Material 3 Expressive の Blue トーナルパレット準拠。
+ *  - ダークは Node v1.1 の SunCalc ベース（[data-theme="dark"]）に整合し、
+ *    薄い背景を「低彩度・低輝度の同系色」へ切替。本文は on-surface を使い
+ *    WCAG AA（4.5:1 以上）を確保。
+ *  - アイコンは Material Symbols フォント（.material-symbols-outlined）。
+ *    色は CSS トークン --m3-notice-accent に連動。エディタプレビューのみ
+ *    canvas 環境の都合でインライン SVG を使用（editor.js 側で処理）。
+ *    角丸・アクセントの扱いは既存カードに統一。
+ *  - 通常引用（.m3-article__body blockquote）と衝突しないよう border /
+ *    背景 / ::before を明示的に上書きする。
+ * ============================================================= */
+
+.m3-article__body .m3-notice {
+    --m3-notice-accent: #0b57d0;
+    --m3-notice-title: #0842a0;
+    --m3-notice-bg: #e8f0fe;
+    --m3-notice-border: #a8c7fa;
+
+    margin: var(--m3-spacing-l, 24px) 0;
+    padding: var(--m3-spacing-m, 16px) var(--m3-spacing-l, 24px);
+    background-color: var(--m3-notice-bg);
+    border: 1px solid var(--m3-notice-border);
+    border-radius: var(--m3-radius-medium, 16px);
+    font-style: normal;
+    color: var(--md-sys-color-on-surface, #2b1700);
+    position: relative;
+}
+
+.m3-article__body .m3-notice::before {
+    content: none;
+    display: none;
+}
+
+.m3-notice__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--m3-spacing-s, 8px);
+    margin-bottom: var(--m3-spacing-s, 8px);
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+.m3-notice__icon {
+    flex: 0 0 auto;
+    font-size: 1.4em;
+    line-height: 1;
+    color: var(--m3-notice-accent);
+}
+
+.m3-notice__title {
+    font-family: var(--font-heading, "Inter", "Noto Sans JP", sans-serif);
+    font-weight: 700;
+    font-style: normal;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+    color: var(--m3-notice-title);
+}
+
+.m3-notice__body {
+    color: var(--md-sys-color-on-surface, #2b1700);
+}
+
+.m3-article__body .m3-notice__body p {
+    margin-bottom: var(--m3-spacing-m, 16px);
+    line-height: 1.8;
+}
+
+.m3-article__body .m3-notice__body > :first-child {
+    margin-top: 0;
+}
+
+.m3-article__body .m3-notice__body > :last-child {
+    margin-bottom: 0 !important;
+}
+
+/* ---- タイプ別トークン（ライト） -------------------------------- */
+
+.m3-article__body .m3-notice--info {
+    --m3-notice-accent: #0b57d0;
+    --m3-notice-title: #0842a0;
+    --m3-notice-bg: #e8f0fe;
+    --m3-notice-border: #a8c7fa;
+}
+
+.m3-article__body .m3-notice--warning {
+    --m3-notice-accent: #a15c00;
+    --m3-notice-title: #7a4500;
+    --m3-notice-bg: #fff3db;
+    --m3-notice-border: #f0d08a;
+}
+
+.m3-article__body .m3-notice--alert {
+    --m3-notice-accent: #b3520e;
+    --m3-notice-title: #8c3e08;
+    --m3-notice-bg: #fef0e6;
+    --m3-notice-border: #f0b88a;
+}
+
+.m3-article__body .m3-notice--memo {
+    --m3-notice-accent: #5f6368;
+    --m3-notice-title: #3c4043;
+    --m3-notice-bg: #f1f3f4;
+    --m3-notice-border: #dadce0;
+}
+
+/* ---- タイプ別トークン（ダーク：低彩度・低輝度の同系色） ---------- */
+
+[data-theme="dark"] .m3-notice--info {
+    --m3-notice-accent: #a8c7fa;
+    --m3-notice-title: #d3e3fd;
+    --m3-notice-bg: #12233d;
+    --m3-notice-border: #33456b;
+}
+
+[data-theme="dark"] .m3-notice--warning {
+    --m3-notice-accent: #f2c265;
+    --m3-notice-title: #fbd98c;
+    --m3-notice-bg: #33280e;
+    --m3-notice-border: #5c481e;
+}
+
+[data-theme="dark"] .m3-notice--alert {
+    --m3-notice-accent: #f0a868;
+    --m3-notice-title: #f5c494;
+    --m3-notice-bg: #2d1e0e;
+    --m3-notice-border: #5c3d1e;
+}
+
+[data-theme="dark"] .m3-notice--memo {
+    --m3-notice-accent: #9aa0a6;
+    --m3-notice-title: #bdc1c6;
+    --m3-notice-bg: #1f2125;
+    --m3-notice-border: #3c4043;
+}
+
+[data-theme="dark"] .m3-article__body .m3-notice,
+[data-theme="dark"] .m3-notice__body {
+    color: var(--md-sys-color-on-surface, #f5efeb);
+}
+
+/* ---- レスポンシブ（モバイルはパディング縮小） ------------------ */
+
+@media (max-width: 600px) {
+    .m3-article__body .m3-notice {
+        margin: var(--m3-spacing-m, 16px) 0;
+        padding: var(--m3-spacing-s, 8px) var(--m3-spacing-m, 16px);
+        border-radius: var(--m3-radius-small, 12px);
+    }
+}
+
+/* ---- 形（shape）: 四角 ---------------------------------------- */
+.m3-article__body .m3-notice.m3-notice--square {
+    border-radius: 0;
+}
