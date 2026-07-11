@@ -75,8 +75,11 @@
                     $manual_modified_date     = get_post_meta( get_the_ID(), '_node_manual_modified_date', true );
                     $has_manual_modified_date = is_string( $manual_modified_date ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $manual_modified_date );
                     $manual_display_date      = $has_manual_modified_date ? str_replace( '-', '/', $manual_modified_date ) : '';
+                    // 手動メタ（保存時の自動記録含む）があれば公開日と同日でも表示する
+                    // （公開後数時間での訂正・追記を当日中に開示するため）。
+                    // 未設定時はWP標準の更新日が投稿日と異なる場合のみ表示。
                     $show_modified_date       = $has_manual_modified_date
-                        ? $manual_display_date !== get_the_date( 'Y/m/d' )
+                        ? true
                         : get_the_modified_date( 'Y/m/d' ) !== get_the_date( 'Y/m/d' );
                     $modified_datetime        = $has_manual_modified_date ? $manual_modified_date : get_the_modified_date( 'c' );
                     $modified_display_date    = $has_manual_modified_date ? $manual_display_date : get_the_modified_date( 'Y/m/d' );

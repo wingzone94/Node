@@ -631,7 +631,8 @@ function node_maybe_auto_record_manual_modified_date( $post_id, $post, $is_updat
 
 	$now = new DateTimeImmutable( 'now', $timezone );
 
-	if ( $now->getTimestamp() - $published_at->getTimestamp() < DAY_IN_SECONDS ) {
+	// 公開から3時間経過で追記日を記録できる（訂正などを当日中に反映するため）
+	if ( $now->getTimestamp() - $published_at->getTimestamp() < 3 * HOUR_IN_SECONDS ) {
 		return;
 	}
 
@@ -711,7 +712,7 @@ function node_enqueue_manual_modified_date_editor_assets() {
 		var value = meta._node_manual_modified_date || '';
 		var publishedAt = postDate ? new Date(postDate) : null;
 		var publishedTime = publishedAt && !isNaN(publishedAt.getTime()) ? publishedAt.getTime() : 0;
-		var canSetManualDate = publishedTime > 0 && Date.now() - publishedTime >= 24 * 60 * 60 * 1000;
+		var canSetManualDate = publishedTime > 0 && Date.now() - publishedTime >= 3 * 60 * 60 * 1000;
 		var minDate = '';
 		var wasSaving = useRef(false);
 		var valueBeforeSave = useRef(value);
@@ -725,7 +726,7 @@ function node_enqueue_manual_modified_date_editor_assets() {
 		}
 
 		if (publishedTime > 0) {
-			var nextDate = new Date(publishedTime + 24 * 60 * 60 * 1000);
+			var nextDate = new Date(publishedTime);
 			minDate = [
 				nextDate.getFullYear(),
 				String(nextDate.getMonth() + 1).padStart(2, '0'),
@@ -767,7 +768,7 @@ function node_enqueue_manual_modified_date_editor_assets() {
 					status: 'info',
 					isDismissible: false
 				},
-				'公開日時から24時間後に設定できます。'
+				'公開から3時間後に設定できます。'
 			) : null,
 			createElement(TextControl, {
 				label: '記事タイトルカードの更新日',
@@ -776,7 +777,7 @@ function node_enqueue_manual_modified_date_editor_assets() {
 				min: minDate,
 				disabled: !canSetManualDate,
 				onChange: setManualDate,
-				help: '公開日時から24時間後に保存すると自動で記録されます。公開日と同じ日付の場合は表示されません。'
+				help: '公開から3時間後に保存すると自動で記録されます。手動で設定した追記日は公開日と同じ日でも表示されます。'
 			}),
 			value ? createElement(
 				Button,
