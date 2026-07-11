@@ -69,12 +69,23 @@
                             <?php echo esc_html(get_the_date('Y/m/d')); ?>
                         </time>
                     </div>
-                    <?php // 追記日: 更新日が投稿日と異なる場合のみ表示（1.1.6） ?>
-                    <?php if (get_the_modified_date('Y/m/d') !== get_the_date('Y/m/d')) : ?>
+                    <?php
+                    // 追記日（v1.2と共通の仕組み）: 手動メタ _node_manual_modified_date を優先し、
+                    // 投稿日と異なる場合のみ表示する
+                    $manual_modified_date     = get_post_meta( get_the_ID(), '_node_manual_modified_date', true );
+                    $has_manual_modified_date = is_string( $manual_modified_date ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $manual_modified_date );
+                    $manual_display_date      = $has_manual_modified_date ? str_replace( '-', '/', $manual_modified_date ) : '';
+                    $show_modified_date       = $has_manual_modified_date
+                        ? $manual_display_date !== get_the_date( 'Y/m/d' )
+                        : get_the_modified_date( 'Y/m/d' ) !== get_the_date( 'Y/m/d' );
+                    $modified_datetime        = $has_manual_modified_date ? $manual_modified_date : get_the_modified_date( 'c' );
+                    $modified_display_date    = $has_manual_modified_date ? $manual_display_date : get_the_modified_date( 'Y/m/d' );
+                    ?>
+                    <?php if ( $show_modified_date ) : ?>
                     <div class="m3-article__meta-item m3-article__modified">
                         <span class="material-symbols-outlined">update</span>
-                        <time datetime="<?php echo esc_attr(get_the_modified_date('c')); ?>">
-                            <?php echo esc_html(sprintf('追記 %s', get_the_modified_date('Y/m/d'))); ?>
+                        <time datetime="<?php echo esc_attr( $modified_datetime ); ?>">
+                            <?php echo esc_html( sprintf( '追記 %s', $modified_display_date ) ); ?>
                         </time>
                     </div>
                     <?php endif; ?>
