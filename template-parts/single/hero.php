@@ -69,6 +69,15 @@
                             <?php echo esc_html(get_the_date('Y/m/d')); ?>
                         </time>
                     </div>
+                    <?php // 追記日: 更新日が投稿日と異なる場合のみ表示（1.1.6） ?>
+                    <?php if (get_the_modified_date('Y/m/d') !== get_the_date('Y/m/d')) : ?>
+                    <div class="m3-article__meta-item m3-article__modified">
+                        <span class="material-symbols-outlined">update</span>
+                        <time datetime="<?php echo esc_attr(get_the_modified_date('c')); ?>">
+                            <?php echo esc_html(sprintf('追記 %s', get_the_modified_date('Y/m/d'))); ?>
+                        </time>
+                    </div>
+                    <?php endif; ?>
                     <?php if (comments_open() || get_comments_number() > 0) : ?>
                     <a href="#comments" class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger">
                         <span class="material-symbols-outlined">chat_bubble</span>
