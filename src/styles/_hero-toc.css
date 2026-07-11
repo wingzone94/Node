@@ -28,4 +28,8 @@
 
 @media (max-width: 768px) {
     .m3-article__title { font-size: 2rem; }
+
+    /* 読了バッジの下にインナー(32px)とオーバーラップ(32px)のボトム余白が
+       二重に積まれ、カード末尾が空洞に見える崩れの修正（1.1.6） */
+    .m3-article__header-inner { padding-bottom: 0; }
 }
