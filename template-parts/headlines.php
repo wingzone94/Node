@@ -35,7 +35,6 @@ $paged = max( 1, (int) get_query_var( 'paged' ) );
 						null,
 						array(
 							'card_class' => 'card-standard',
-							'show_ai'    => false,
 						)
 					);
 				endwhile;

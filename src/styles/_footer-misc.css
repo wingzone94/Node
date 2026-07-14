@@ -66,6 +66,62 @@
     opacity: 0.8;
 }
 
+.m3-footer__social-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--node-footer-foreground);
+    opacity: 0.55;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.m3-footer__social {
+    display: flex;
+    gap: 12px;
+}
+
+.m3-footer__social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--node-footer-foreground) 28%, transparent);
+    color: var(--node-footer-foreground);
+    background: transparent;
+    transition: background-color 0.2s var(--m3-motion-easing), color 0.2s var(--m3-motion-easing), border-color 0.2s var(--m3-motion-easing), transform 0.2s var(--m3-motion-easing);
+}
+
+.m3-footer__social-link svg {
+    display: block;
+}
+
+.m3-footer__social-link:hover,
+.m3-footer__social-link:focus-visible {
+    transform: translateY(-3px);
+}
+
+.m3-footer__social-link--x:hover,
+.m3-footer__social-link--x:focus-visible {
+    background: #000000;
+    border-color: #000000;
+    color: #FFFFFF;
+}
+
+.m3-footer__social-link--discord:hover,
+.m3-footer__social-link--discord:focus-visible {
+    background: #5865F2;
+    border-color: #5865F2;
+    color: #FFFFFF;
+}
+
+.m3-footer__social-link:focus-visible {
+    outline: 2px solid var(--node-footer-accent);
+    outline-offset: 2px;
+}
+
 .m3-footer__links {
     list-style: none;
     padding: 0;

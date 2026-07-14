@@ -84,34 +84,14 @@
 /* ===== End Single Hero Seamless Title Card ===== */
 
 /* ===== Single Hero No-Thumbnail Title Card =====
-   アイキャッチ無し記事でも、有り記事に近い「ヒーロー感」と一体感を出す。
-   hero.php が付与する .has-no-thumbnail を起点に CSS のみで装飾し、
-   PHP テンプレートは変更しない。装飾はカード内（overflow:hidden）に収まる。 */
+   アイキャッチ無し記事は上に詰めたコンパクトなタイトルカードにする。
+   （v1.2初期の疑似ヒーロー装飾＋min-heightは「上の空白」に見えるため撤去） */
 .single .m3-article__header-card.has-no-thumbnail,
 .single-post .m3-article__header-card.has-no-thumbnail {
     border: 0;
     background: var(--md-sys-color-surface-container-low);
     box-shadow: 0 18px 46px rgba(43, 23, 0, 0.12);
-    min-height: clamp(300px, 46vw, 400px);
     overflow: hidden;
-}
-
-.single .m3-article__header-card.has-no-thumbnail::before,
-.single-post .m3-article__header-card.has-no-thumbnail::before {
-    content: "";
-    display: block;
-    min-height: clamp(130px, 24vw, 188px);
-    background:
-        radial-gradient(
-            120% 90% at 100% 0%,
-            color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent) 0%,
-            transparent 62%
-        ),
-        linear-gradient(
-            160deg,
-            color-mix(in srgb, var(--md-sys-color-primary-container) 55%, var(--md-sys-color-surface-container-low)) 0%,
-            var(--md-sys-color-surface-container-low) 100%
-        );
 }
 
 /* タイトル・メタ情報は装飾より前面に配置し、上部余白を適度に締める */
@@ -132,35 +112,10 @@
     box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
 }
 
-[data-theme="dark"] .single .m3-article__header-card.has-no-thumbnail::before,
-[data-theme="dark"] .single-post .m3-article__header-card.has-no-thumbnail::before {
-    background:
-        radial-gradient(
-            120% 90% at 100% 0%,
-            color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent) 0%,
-            transparent 62%
-        ),
-        linear-gradient(
-            160deg,
-            color-mix(in srgb, var(--md-sys-color-surface-container-high) 90%, var(--md-sys-color-surface-container-low)) 0%,
-            var(--md-sys-color-surface-container-low) 100%
-        );
-}
-
 @media (max-width: 600px) {
     .single .m3-article__header-card.has-no-thumbnail .m3-article__header--overlap,
     .single-post .m3-article__header-card.has-no-thumbnail .m3-article__header--overlap {
         padding: 24px clamp(16px, 5vw, 20px) 28px;
-    }
-
-    .single .m3-article__header-card.has-no-thumbnail::before,
-    .single-post .m3-article__header-card.has-no-thumbnail::before {
-        min-height: clamp(102px, 26vw, 152px);
-    }
-
-    .single .m3-article__header-card.has-no-thumbnail,
-    .single-post .m3-article__header-card.has-no-thumbnail {
-        min-height: clamp(250px, 70vw, 320px);
     }
 }
 /* ===== End Single Hero No-Thumbnail Title Card ===== */

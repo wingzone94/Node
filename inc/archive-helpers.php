@@ -57,7 +57,7 @@ function node_get_archive_context() {
 		$context['type']     = 'author';
 		$context['title']    = get_the_author();
 		$context['subtitle'] = __( '著者', 'node' );
-		$context['icon']     = 'folder';
+		$context['icon']     = 'person';
 		$bio                 = get_the_author_meta( 'description', $author_id );
 		if ( $bio ) {
 			$context['description'] = wp_kses_post( $bio );
@@ -93,16 +93,44 @@ function node_get_archive_context() {
 		$context['title']    = post_type_archive_title( '', false );
 		$context['subtitle'] = __( 'アーカイブ', 'node' );
 		$context['icon']     = 'folder';
-		if ( is_post_type_archive( 'node_library' ) ) {
-			$context['subtitle'] = __( 'ライブラリ', 'node' );
-			$context['icon']     = 'menu_book';
-		}
 	} elseif ( function_exists( 'node_get_archive_title' ) ) {
 		$context['title'] = node_get_archive_title();
 	}
 
 	return $context;
 }
+
+/**
+ * Filter the Node Library archive by its saved content type.
+ *
+ * @param WP_Query $query Main query.
+ * @return void
+ */
+function node_filter_library_archive_by_type( $query ) {
+	$is_library_archive = $query->is_post_type_archive( 'node_library' ) || 'node_library' === $query->get( 'post_type' );
+	if ( is_admin() || ! $query->is_main_query() || ! $is_library_archive ) {
+		return;
+	}
+
+	$type = sanitize_key( (string) get_query_var( 'node_library_type' ) );
+	if ( ! $type && isset( $_GET['type'] ) ) {
+		$type = sanitize_key( wp_unslash( $_GET['type'] ) );
+	}
+	if ( ! in_array( $type, array( 'game', 'app' ), true ) ) {
+		return;
+	}
+
+	$query->set(
+		'meta_query',
+		array(
+			array(
+				'key'   => '_node_library_type',
+				'value' => $type,
+			),
+		)
+	);
+}
+add_action( 'pre_get_posts', 'node_filter_library_archive_by_type' );
 
 /**
  * Archive header mark style (same tokens as category labels).
@@ -126,6 +154,154 @@ function node_get_archive_mark_style( $context ) {
 		esc_attr( $on )
 	);
 }
+
+/**
+ * Published-post counts grouped by year/month (for date archive navigation).
+ *
+ * @return array<int, array<int, int>> [ year => [ month => count ] ]
+ */
+function node_get_date_archive_map() {
+	static $map = null;
+
+	if ( null !== $map ) {
+		return $map;
+	}
+
+	global $wpdb;
+
+	$rows = $wpdb->get_results(
+		"SELECT YEAR(post_date) AS y, MONTH(post_date) AS m, COUNT(ID) AS c
+		 FROM {$wpdb->posts}
+		 WHERE post_type = 'post' AND post_status = 'publish'
+		 GROUP BY y, m
+		 ORDER BY y ASC, m ASC"
+	);
+
+	$map = array();
+	foreach ( (array) $rows as $row ) {
+		$map[ (int) $row->y ][ (int) $row->m ] = (int) $row->c;
+	}
+
+	return $map;
+}
+
+/**
+ * Year/month/day currently queried on a date archive.
+ *
+ * @return array{year:int, month:int, day:int}
+ */
+function node_get_queried_date_archive() {
+	$year  = (int) get_query_var( 'year' );
+	$month = (int) get_query_var( 'monthnum' );
+	$day   = (int) get_query_var( 'day' );
+
+	// Fallback for compact date queries (?m=YYYYMM[DD]).
+	$compact = (string) get_query_var( 'm' );
+	if ( ! $year && strlen( $compact ) >= 4 ) {
+		$year  = (int) substr( $compact, 0, 4 );
+		$month = strlen( $compact ) >= 6 ? (int) substr( $compact, 4, 2 ) : $month;
+		$day   = strlen( $compact ) >= 8 ? (int) substr( $compact, 6, 2 ) : $day;
+	}
+
+	return array(
+		'year'  => $year,
+		'month' => $month,
+		'day'   => $day,
+	);
+}
+
+/**
+ * Adjacent year that has published posts.
+ *
+ * @param int $year Base year.
+ * @param int $dir  -1 for previous (older), 1 for next (newer).
+ * @return array{year:int, count:int}|null
+ */
+function node_get_adjacent_archive_year( $year, $dir ) {
+	$map   = node_get_date_archive_map();
+	$years = array_keys( $map );
+
+	if ( $dir < 0 ) {
+		$years = array_reverse( $years );
+	}
+
+	foreach ( $years as $candidate ) {
+		if ( ( $dir < 0 && $candidate < $year ) || ( $dir > 0 && $candidate > $year ) ) {
+			return array(
+				'year'  => $candidate,
+				'count' => array_sum( $map[ $candidate ] ),
+			);
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Adjacent month that has published posts (crosses year boundaries).
+ *
+ * @param int $year  Base year.
+ * @param int $month Base month.
+ * @param int $dir   -1 for previous (older), 1 for next (newer).
+ * @return array{year:int, month:int, count:int}|null
+ */
+function node_get_adjacent_archive_month( $year, $month, $dir ) {
+	$map  = node_get_date_archive_map();
+	$flat = array();
+
+	foreach ( $map as $y => $months ) {
+		foreach ( $months as $m => $count ) {
+			$flat[] = array(
+				'year'  => $y,
+				'month' => $m,
+				'count' => $count,
+			);
+		}
+	}
+
+	if ( $dir < 0 ) {
+		$flat = array_reverse( $flat );
+	}
+
+	$base = $year * 100 + $month;
+	foreach ( $flat as $candidate ) {
+		$key = $candidate['year'] * 100 + $candidate['month'];
+		if ( ( $dir < 0 && $key < $base ) || ( $dir > 0 && $key > $base ) ) {
+			return $candidate;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Apply sort parameter on date archive queries.
+ *
+ * Accepted values for ?sort: date-desc (default), date-asc, modified-desc, modified-asc.
+ */
+function node_date_archive_sort( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! $query->is_date() ) {
+		return;
+	}
+
+	$sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : '';
+
+	switch ( $sort ) {
+		case 'date-asc':
+			$query->set( 'orderby', 'date' );
+			$query->set( 'order', 'ASC' );
+			break;
+		case 'modified-desc':
+			$query->set( 'orderby', 'modified' );
+			$query->set( 'order', 'DESC' );
+			break;
+		case 'modified-asc':
+			$query->set( 'orderby', 'modified' );
+			$query->set( 'order', 'ASC' );
+			break;
+	}
+}
+add_action( 'pre_get_posts', 'node_date_archive_sort' );
 
 /**
  * Merge default archive context with template overrides.

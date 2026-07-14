@@ -483,10 +483,21 @@
 		// SVG（noticeIcon）で描画（canvas に Material Symbols フォントが無いため）。
 		// 保存 HTML（save）は Material Symbols の <span> を出力する。
 		var NOTICE_TYPES = {
-			info:    { label: 'お知らせ', icon: 'info',    accent: '#0B57D0', title: '#0842A0', bg: '#E8F0FE', border: '#A8C7FA' },
+			info:    { label: 'お知らせ', icon: 'campaign', accent: '#0B57D0', title: '#0842A0', bg: '#E8F0FE', border: '#A8C7FA' },
 			warning: { label: '注意',     icon: 'warning', accent: '#A15C00', title: '#7A4500', bg: '#FFF3DB', border: '#F0D08A' },
-			alert:   { label: '重要',     icon: 'report',  accent: '#B3520E', title: '#8C3E08', bg: '#FEF0E6', border: '#F0B88A' },
+			alert:   { label: '重要',     icon: 'priority_high', accent: '#B3520E', title: '#8C3E08', bg: '#FEF0E6', border: '#F0B88A' },
 			memo:    { label: '補足',     icon: 'edit_note', accent: '#5F6368', title: '#3C4043', bg: '#F1F3F4', border: '#DADCE0' },
+		};
+		var NOTICE_LEGACY_ICONS = {
+			info: 'info',
+			warning: 'warning',
+			alert: 'report',
+			memo: 'edit_note',
+		};
+		var NOTICE_ATTRIBUTES = {
+			type:  { type: 'string', default: 'info' },
+			title: { type: 'string', default: '' },
+			shape: { type: 'string', default: 'rounded' },
 		};
 
 		function noticeConfig( type ) {
@@ -494,7 +505,7 @@
 		}
 
 		// エディタプレビュー用：バリアントごとに形状の異なるインライン SVG アイコン。
-		// save では使わない（save は Material Symbols の cfg.icon を出力）。
+		// save では使わない（save は Material Symbols の iconMap を出力）。
 		function noticeIconChildren( type ) {
 			if ( 'warning' === type ) {
 				return [
@@ -557,6 +568,35 @@
 			return a11y;
 		}
 
+		function noticeSaveMarkup( props, iconMap ) {
+			var attributes = props.attributes;
+			var type = attributes.type || 'info';
+			var shape = attributes.shape || 'rounded';
+			var cfg = noticeConfig( type );
+			var title = ( attributes.title && attributes.title.trim() ) ? attributes.title : cfg.label;
+			var icon = iconMap[ type ] || cfg.icon;
+
+			var blockProps = useBlockProps.save( Object.assign( {
+				className: 'm3-notice m3-notice--' + type + ( 'square' === shape ? ' m3-notice--square' : '' ),
+			}, noticeA11y( type ) ) );
+
+			return el(
+				'blockquote',
+				blockProps,
+				el(
+					'div',
+					{ className: 'm3-notice__header' },
+					el( 'span', { className: 'material-symbols-outlined m3-notice__icon', 'aria-hidden': 'true' }, icon ),
+					el( 'span', { className: 'm3-notice__title' }, title )
+				),
+				el(
+					'div',
+					{ className: 'm3-notice__body' },
+					el( InnerBlocks.Content )
+				)
+			);
+		}
+
 		var NOTICE_ALLOWED = [ 'core/paragraph', 'core/list', 'core/heading', 'core/image', 'core/quote', 'core/table', 'core/buttons' ];
 		var NOTICE_TEMPLATE = [ [ 'core/paragraph', {} ] ];
 
@@ -573,11 +613,7 @@
 			icon: 'info-outline',
 			category: 'node',
 			keywords: [ __( 'お知らせ', 'luminous-blocks' ), __( '注意', 'luminous-blocks' ), __( '重要', 'luminous-blocks' ), __( '補足', 'luminous-blocks' ), 'notice', 'callout', 'admonition' ],
-			attributes: {
-				type:  { type: 'string', default: 'info' },
-				title: { type: 'string', default: '' },
-				shape: { type: 'string', default: 'rounded' },
-			},
+			attributes: NOTICE_ATTRIBUTES,
 			supports: {
 				html: false,
 				anchor: true,
@@ -696,32 +732,18 @@
 			},
 
 			save: function ( props ) {
-				var attributes = props.attributes;
-				var type = attributes.type || 'info';
-				var shape = attributes.shape || 'rounded';
-				var cfg = noticeConfig( type );
-				var title = ( attributes.title && attributes.title.trim() ) ? attributes.title : cfg.label;
-
-				var blockProps = useBlockProps.save( Object.assign( {
-					className: 'm3-notice m3-notice--' + type + ( 'square' === shape ? ' m3-notice--square' : '' ),
-				}, noticeA11y( type ) ) );
-
-				return el(
-					'blockquote',
-					blockProps,
-					el(
-						'div',
-						{ className: 'm3-notice__header' },
-						el( 'span', { className: 'material-symbols-outlined m3-notice__icon', 'aria-hidden': 'true' }, cfg.icon ),
-						el( 'span', { className: 'm3-notice__title' }, title )
-					),
-					el(
-						'div',
-						{ className: 'm3-notice__body' },
-						el( InnerBlocks.Content )
-					)
-				);
+				return noticeSaveMarkup( props, NOTICE_TYPES );
 			},
+
+			// 旧保存HTML（info/reportアイコン）を受理し、次回保存時に新アイコンへ移行する。
+			deprecated: [
+				{
+					attributes: NOTICE_ATTRIBUTES,
+					save: function ( props ) {
+						return noticeSaveMarkup( props, NOTICE_LEGACY_ICONS );
+					},
+				},
+			],
 		} );
 	}
 } )( window.wp );

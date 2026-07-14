@@ -51,6 +51,137 @@ final class Node_Series {
 		add_filter( 'rest_pre_insert_post', [ $this, 'validate_series_limit_via_rest' ], 10, 2 );
 		add_action( 'wp_ajax_node_series_term_status', [ $this, 'ajax_term_status' ] );
 		add_action( 'delete_node_series', [ $this, 'cleanup_post_meta_on_term_delete' ], 10, 4 );
+		add_action( 'template_redirect', [ $this, 'handle_legacy_redirect' ], 11 );
+	}
+
+	/**
+	 * 404化でqueried objectが失われた旧カテゴリ/タグのtaxonomyとslugをURIから復元する。
+	 * 旧termが削除済みでもマップ照合できるよう、termの実在は要求しない。
+	 *
+	 * @return array{taxonomy: string, slug: string}|null
+	 */
+	private static function resolve_legacy_source_from_request_uri( string $request_uri ): ?array {
+		$request_path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$home_path    = trim( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+		$relative     = trim( $request_path, '/' );
+
+		if ( '' !== $home_path ) {
+			if ( $relative === $home_path ) {
+				$relative = '';
+			} elseif ( str_starts_with( $relative, $home_path . '/' ) ) {
+				$relative = substr( $relative, strlen( $home_path ) + 1 );
+			}
+		}
+
+		if ( ! preg_match(
+			'#^(category|tag)/([^/]+)(?:/page/[1-9][0-9]*|/feed(?:/(?:feed|rdf|rss|rss2|atom))?)?/?$#i',
+			$relative,
+			$matches
+		) ) {
+			return null;
+		}
+
+		$slug = sanitize_title( rawurldecode( $matches[2] ) );
+
+		if ( '' === $slug ) {
+			return null;
+		}
+
+		return [
+			'taxonomy' => 'category' === strtolower( $matches[1] ) ? 'category' : 'post_tag',
+			'slug'     => $slug,
+		];
+	}
+
+	/**
+	 * 旧カテゴリ/タグアーカイブから移行先シリーズのURLを解決する。
+	 *
+	 * HTTP操作は行わず、対象外または移行先termが存在しない場合はnullを返す。
+	 * 旧term自体は削除済みでもよい（マップのtaxonomy:slugキーだけで照合する）。
+	 * ページ番号は引き継がず、feedとクエリ文字列だけを維持する。
+	 */
+	public static function resolve_legacy_redirect( ?object $queried_object, string $request_uri ): ?string {
+		if ( $queried_object instanceof WP_Term
+			&& in_array( $queried_object->taxonomy, [ 'category', 'post_tag' ], true )
+		) {
+			$source = [
+				'taxonomy' => $queried_object->taxonomy,
+				'slug'     => $queried_object->slug,
+			];
+		} else {
+			$source = self::resolve_legacy_source_from_request_uri( $request_uri );
+		}
+
+		if ( null === $source ) {
+			return null;
+		}
+
+		$redirect_map = get_option( 'node_series_redirect_map', [] );
+
+		if ( ! is_array( $redirect_map ) ) {
+			return null;
+		}
+
+		$map_key            = $source['taxonomy'] . ':' . $source['slug'];
+		$target_series_slug = isset( $redirect_map[ $map_key ] ) && is_string( $redirect_map[ $map_key ] )
+			? trim( $redirect_map[ $map_key ] )
+			: '';
+
+		if ( '' === $target_series_slug ) {
+			return null;
+		}
+
+		$target_series = get_term_by( 'slug', $target_series_slug, 'node_series' );
+
+		if ( ! $target_series instanceof WP_Term ) {
+			return null;
+		}
+
+		$request_path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$feed_type    = '';
+		$is_feed      = (bool) preg_match(
+			'#/(?:feed)(?:/(feed|rdf|rss|rss2|atom))?/?$#i',
+			$request_path,
+			$feed_match
+		);
+
+		if ( $is_feed ) {
+			$feed_type  = isset( $feed_match[1] ) ? strtolower( (string) $feed_match[1] ) : '';
+			$target_url = get_term_feed_link( $target_series->term_id, 'node_series', $feed_type );
+		} else {
+			$target_url = get_term_link( $target_series, 'node_series' );
+		}
+
+		if ( is_wp_error( $target_url ) || ! is_string( $target_url ) || '' === $target_url ) {
+			return null;
+		}
+
+		$query_string = wp_parse_url( $request_uri, PHP_URL_QUERY );
+
+		return is_string( $query_string ) && '' !== $query_string
+			? $target_url . ( str_contains( $target_url, '?' ) ? '&' : '?' ) . $query_string
+			: $target_url;
+	}
+
+	/**
+	 * フロント側の旧カテゴリ/タグアーカイブだけをシリーズへ301転送する。
+	 */
+	public function handle_legacy_redirect(): void {
+		$is_rest_request = defined( 'REST_REQUEST' ) && REST_REQUEST;
+
+		if ( is_admin() || wp_doing_ajax() || $is_rest_request ) {
+			return;
+		}
+
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$target_url  = self::resolve_legacy_redirect( get_queried_object(), $request_uri );
+
+		if ( null === $target_url ) {
+			return;
+		}
+
+		wp_safe_redirect( $target_url, 301 );
+		exit;
 	}
 
 	/**
@@ -293,6 +424,15 @@ final class Node_Series {
 				'rewrite'           => [ 'slug' => 'series' ],
 			]
 		);
+
+		// リライトルールの一回だけflush（node-libraryと同型のバージョン比較方式）。
+		// これが無いと本番で /series/* が404になる（/spotlight/ 事故=CHANGELOG 1.0.3 の再演条件）。
+		// rewrite仕様を変えるときは NODE_SERIES_VERSION を必ず上げること。
+		$current_flush_version = get_option( 'node_series_flushed_version', '0' );
+		if ( version_compare( $current_flush_version, NODE_SERIES_VERSION, '<' ) ) {
+			flush_rewrite_rules( false );
+			update_option( 'node_series_flushed_version', NODE_SERIES_VERSION );
+		}
 	}
 
 	/**
@@ -523,6 +663,20 @@ final class Node_Series {
 	}
 
 	public function save_order_meta_box( int $post_id ): void {
+		// F-3: リビジョン/オートセーブ/権限のガード（enforce_max_posts_per_series と同型）。
+		// これが無いと save_post がリビジョンIDでも発火した際に、
+		// (1) wp_set_object_terms がリビジョンに term を割り当てて object_ids を汚染し、
+		// (2) メタ関数（update/delete_post_meta）は親へリダイレクトされるため、
+		//     constraints 計算で親自身の表示順が「他記事の使用済み」に見えて拒否され、
+		//     delete_post_meta が親の表示順メタを削除する（クラシックエディタで実害確認済み）。
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
 		if ( ! isset( $_POST['node_series_order_nonce'] ) || ! wp_verify_nonce( $_POST['node_series_order_nonce'], 'node_series_save_order' ) ) {
 			return;
 		}
@@ -615,14 +769,26 @@ function node_series_get_posts( int $term_id ): array {
 					'terms'    => $term_id,
 				],
 			],
-			'meta_key'       => NODE_SERIES_ORDER_META_KEY,
-			'orderby'        => [
-				'meta_value_num' => 'ASC',
-				'date'           => 'ASC',
-			],
+			'orderby'        => 'date',
+			'order'          => 'ASC',
 			'no_found_rows'  => true,
 		]
 	);
+
+	usort( $query->posts, function ( WP_Post $a, WP_Post $b ) {
+		$order_a = get_post_meta( $a->ID, NODE_SERIES_ORDER_META_KEY, true );
+		$order_b = get_post_meta( $b->ID, NODE_SERIES_ORDER_META_KEY, true );
+		$has_a   = '' !== $order_a;
+		$has_b   = '' !== $order_b;
+
+		if ( $has_a !== $has_b ) {
+			return $has_a ? -1 : 1;
+		}
+		if ( $has_a && $has_b ) {
+			return (int) $order_a - (int) $order_b;
+		}
+		return strtotime( $a->post_date ) - strtotime( $b->post_date );
+	} );
 
 	return $query->posts;
 }

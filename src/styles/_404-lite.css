@@ -1,0 +1,129 @@
+.m3-404-lite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100% - 32px, 560px);
+  margin-inline: auto;
+  padding: clamp(48px, 10vw, 96px) clamp(20px, 5vw, 48px);
+  text-align: center;
+}
+
+.m3-404-lite__code {
+  margin: 24px 0 0;
+  color: var(--md-sys-color-primary);
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.m3-404-lite__title {
+  margin: 16px 0 0;
+  color: var(--md-sys-color-on-surface);
+  font-size: clamp(1.375rem, 3.5vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.m3-404-lite__message {
+  max-width: 440px;
+  margin: 12px auto 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.m3-404-lite__search {
+  width: 100%;
+  max-width: 440px;
+  margin: 32px auto 0;
+}
+
+.m3-404-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.m3-404-search__field {
+  min-width: 0;
+  flex: 1;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  color: var(--md-sys-color-on-surface);
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  transition: border-color 200ms;
+}
+
+.m3-404-search__field::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-404-search__field:focus {
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+  padding: 0 15px;
+  outline: none;
+}
+
+.m3-404-search__submit {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--md-sys-color-on-primary);
+  background: var(--md-sys-color-primary);
+  font-size: 22px;
+  cursor: pointer;
+  transition: box-shadow 200ms;
+}
+
+.m3-404-search__submit:hover {
+  box-shadow: var(--m3-elevation-1);
+}
+
+.m3-404-search__submit:active {
+  box-shadow: none;
+}
+
+.m3-404-lite__links {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+@media (max-width: 600px) {
+  .m3-404-lite {
+    width: min(100% - 24px, 560px);
+  }
+
+  .m3-404-lite__code {
+    font-size: 2.75rem;
+  }
+
+  .m3-404-search__field {
+    height: 44px;
+  }
+
+  .m3-404-search__submit {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .m3-404-lite__links .m3-button.m3-button--filled {
+    border-radius: 12px;
+    height: 44px;
+    padding: 0 24px;
+    box-shadow: none;
+  }
+}

@@ -1,0 +1,385 @@
+/* ==========================================================================
+   Date Archive — single-line minimal bar
+   ========================================================================== */
+
+.m3-date-archive {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: var(--m3-spacing-m);
+    padding-right: var(--m3-spacing-m);
+    padding-bottom: var(--m3-spacing-l);
+}
+
+/* ----- Bar ----- */
+.m3-date-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 760px;
+    margin: 0 auto var(--m3-spacing-s);
+    padding: 5px 12px;
+    border-radius: var(--m3-radius-large);
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* title-as-dropdown */
+.m3-date-bar__title-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.m3-date-bar__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.m3-date-bar__title-chevron {
+    font-size: 1.15rem;
+    color: var(--md-sys-color-on-surface-variant);
+    pointer-events: none;
+    margin-left: -2px;
+}
+
+.m3-date-bar__title-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.m3-date-bar__count {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+}
+
+/* flex spacer pushes right controls */
+.m3-date-bar__spacer {
+    flex: 1 1 auto;
+}
+
+/* nav arrows */
+.m3-date-bar__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.m3-date-bar__nav:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+    color: var(--md-sys-color-primary);
+}
+
+.m3-date-bar__nav .material-symbols-outlined {
+    font-size: 1.15rem;
+}
+
+/* sort */
+.m3-date-sort {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.m3-date-sort__icon {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: var(--md-sys-color-on-surface-variant);
+    pointer-events: none;
+}
+
+.m3-date-sort__select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--m3-radius-medium);
+    padding: 3px 7px 3px 22px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    line-height: 1.4;
+    transition: border-color 0.15s;
+}
+
+.m3-date-sort__select:hover,
+.m3-date-sort__select:focus-visible {
+    border-color: var(--md-sys-color-primary);
+    outline: none;
+}
+
+/* grid/list toggle */
+.m3-date-bar__toggle {
+    display: flex;
+    border-radius: var(--m3-radius-medium);
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    flex-shrink: 0;
+}
+
+.m3-date-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.m3-date-toggle:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.m3-date-toggle.is-active {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.m3-date-toggle .material-symbols-outlined {
+    font-size: 1.05rem;
+}
+
+/* Feed */
+.m3-date-feed {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* 余白最小化: グリッド既定の大きなpaddingを解除 */
+.m3-date-feed .m3-post-grid,
+.m3-date-feed .m3-post-grid.m3-archive-post-grid {
+    margin: 0;
+    padding: 0;
+}
+
+/* ----- Date-grouped list view (default) ----- */
+.m3-date-groups {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--m3-spacing-l);
+}
+
+/* group header */
+.m3-date-group__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+}
+
+.m3-date-group__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-primary);
+    flex-shrink: 0;
+}
+
+.m3-date-group__icon .material-symbols-outlined {
+    font-size: 1.05rem;
+}
+
+.m3-date-group__title {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: var(--md-sys-color-on-surface);
+}
+
+.m3-date-group__count {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--m3-radius-full);
+    padding: 2px 10px;
+    white-space: nowrap;
+}
+
+/* items */
+.m3-date-group__items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.m3-date-item {
+    --date-item-accent: var(--md-sys-color-primary);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: var(--m3-radius-medium);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+    text-decoration: none;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.m3-date-item:hover {
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+    transform: translateY(-1px);
+}
+
+/* body */
+.m3-date-item__body {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.m3-date-item__title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1.45;
+    color: var(--md-sys-color-on-surface);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    transition: color 0.15s;
+}
+
+.m3-date-item:hover .m3-date-item__title {
+    color: var(--md-sys-color-primary);
+}
+
+.m3-date-item__title.is-untitled {
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 600;
+    font-style: italic;
+}
+
+.m3-date-item__pill {
+    display: inline-block;
+    align-self: flex-start;
+    width: fit-content;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.6rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 6px;
+    border-radius: var(--m3-radius-full);
+    background: color-mix(in srgb, var(--date-item-accent) 14%, var(--md-sys-color-surface-container-low));
+    color: color-mix(in srgb, var(--date-item-accent) 75%, var(--md-sys-color-on-surface));
+}
+
+/* trailing chevron */
+.m3-date-item__chevron {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: color 0.15s, transform 0.15s;
+}
+
+.m3-date-item:hover .m3-date-item__chevron {
+    color: var(--md-sys-color-primary);
+    transform: translateX(2px);
+}
+
+/* dark mode */
+[data-theme="dark"] .m3-date-item {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .m3-date-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* responsive */
+@media screen and (max-width: 600px) {
+    .m3-date-groups {
+        gap: var(--m3-spacing-m);
+    }
+
+    .m3-date-item {
+        gap: 8px;
+        padding: 9px 10px;
+    }
+
+    .m3-date-item__title {
+        font-size: 0.88rem;
+        -webkit-line-clamp: 3;
+    }
+
+    .m3-date-item__chevron {
+        font-size: 1.15rem;
+    }
+}
+
+/* ----- Hero date links (no hover effect) ----- */
+.m3-article__meta .m3-article__date,
+.m3-article__meta .m3-article__modified {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ----- Responsive ----- */
+@media screen and (max-width: 600px) {
+    .m3-date-archive {
+        padding-left: var(--m3-spacing-s);
+        padding-right: var(--m3-spacing-s);
+    }
+
+    .m3-date-bar {
+        padding: 6px 10px;
+        gap: 4px;
+    }
+
+    .m3-date-bar__title {
+        font-size: 0.95rem;
+    }
+
+    .m3-date-sort__select {
+        max-width: 110px;
+        text-overflow: ellipsis;
+    }
+
+}
+
+/* ===== End Date Archive ===== */

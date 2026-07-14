@@ -12,6 +12,15 @@
     global $post;
     $current_post_id = $post->ID ?? get_the_ID();
     $has_thumb = has_post_thumbnail($current_post_id);
+    $linked_library_id = absint( get_post_meta( $current_post_id, '_node_linked_library_id', true ) );
+    if ( ! $linked_library_id ) {
+        $library_card_references = get_post_meta( $current_post_id, '_node_library_card_reference', false );
+        $linked_library_id       = absint( $library_card_references[0] ?? 0 );
+    }
+    $linked_library = $linked_library_id ? get_post( $linked_library_id ) : null;
+    if ( ! $linked_library instanceof WP_Post || 'node_library' !== $linked_library->post_type || 'publish' !== $linked_library->post_status ) {
+        $linked_library = null;
+    }
     ?>
 
     <?php if ($has_thumb) : ?>
@@ -78,22 +87,20 @@
                     <div class="m3-hero-row m3-hero-row--meta">
                         <div class="m3-article__meta-container">
                             <?php
-                            $manual_modified_date     = get_post_meta( get_the_ID(), '_node_manual_modified_date', true );
-                            $has_manual_modified_date = is_string( $manual_modified_date ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $manual_modified_date );
-                            $manual_display_date      = $has_manual_modified_date ? str_replace( '-', '/', $manual_modified_date ) : '';
-                            $show_modified_date       = $has_manual_modified_date
-                                ? true
-                                : get_the_modified_date( 'Y/m/d' ) !== get_the_date( 'Y/m/d' );
-                            $modified_datetime        = $has_manual_modified_date ? $manual_modified_date : get_the_modified_date( 'c' );
-                            $modified_display_date    = $has_manual_modified_date ? $manual_display_date : get_the_modified_date( 'Y/m/d' );
+                            $hero_modified         = node_get_post_modified_display( get_the_ID() );
+                            $modified_datetime     = $hero_modified['datetime'] ?? '';
+                            $modified_display_date = $hero_modified['display'] ?? '';
+                            $show_modified_date    = null !== $hero_modified;
                             ?>
                             <div class="m3-article__meta">
-                                <div class="m3-article__meta-item m3-article__date">
+                                <a href="<?php echo esc_url( get_day_link( get_the_date( 'Y' ), get_the_date( 'n' ), get_the_date( 'j' ) ) ); ?>"
+                                   class="m3-article__meta-item m3-article__date"
+                                   aria-label="<?php echo esc_attr( get_the_date( 'Y年n月j日' ) . 'の記事一覧へ' ); ?>">
                                     <span class="material-symbols-outlined">calendar_today</span>
                                     <time datetime="<?php echo get_the_date('c'); ?>">
                                         <?php echo esc_html(get_the_date('Y/m/d')); ?>
                                     </time>
-                                </div>
+                                </a>
                                 <?php if ( $show_modified_date ) : ?>
                                 <div class="m3-article__meta-item m3-article__modified">
                                     <span class="material-symbols-outlined">update</span>
@@ -102,7 +109,8 @@
                                     </time>
                                 </div>
                                 <?php endif; ?>
-                                <?php if (comments_open() || get_comments_number() > 0) : ?>
+                                <?php // コメント0件のカウンター表示はノイズになるため、1件以上のときだけ出す ?>
+                                <?php if (get_comments_number() > 0) : ?>
                                 <a href="#comments" class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger">
                                     <span class="material-symbols-outlined">chat_bubble</span>
                                     <span><?php echo get_comments_number(); ?></span>
@@ -110,29 +118,23 @@
                                 <?php endif; ?>
                             </div>
                         </div>
+
+                        <?php if ( $linked_library ) : ?>
+                            <?php $linked_library_type = get_post_meta( $linked_library->ID, '_node_library_type', true ); ?>
+                            <a class="m3-article__library-quick-link" href="<?php echo esc_url( get_permalink( $linked_library ) ); ?>">
+                                <span class="material-symbols-outlined" aria-hidden="true"><?php echo 'app' === $linked_library_type ? 'smartphone' : 'sports_esports'; ?></span>
+                                <span class="m3-article__library-quick-link-label">Node Library</span>
+                                <span class="m3-article__library-quick-link-title"><?php echo esc_html( get_the_title( $linked_library ) ); ?></span>
+                                <span class="material-symbols-outlined m3-article__library-quick-link-arrow" aria-hidden="true">arrow_forward</span>
+                            </a>
+                        <?php endif; ?>
                     </div>
 
                 </div>
 
-                <!-- ===== 右カラム: 補足・訴求（バッジ類 → 読了 → 目次） ===== -->
+                <!-- ===== 右カラム: 補足（読了 → 著者 → 開示バッジ → 目次） =====
+                     読者の意思決定に効く順（所要時間が先、開示情報は控えめに後ろ）に積む -->
                 <div class="m3-hero-col m3-hero-col--aside">
-
-                    <!-- AI Disclosure Badges -->
-                    <?php
-                    $has_ai_media = get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1';
-                    $has_ai_text  = get_post_meta(get_the_ID(), '_node_is_ai_text_generated', true) === '1';
-                    if ($has_ai_media || $has_ai_text) :
-                    ?>
-                        <div class="m3-article__ai-disclosure-wrapper">
-                            <?php node_the_post_badges(get_the_ID(), 'expressive', ['ai']); ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
-                        <div class="m3-article__sponsor-bubble-wrapper">
-                            <?php node_the_post_badges(get_the_ID(), 'full', ['sponsor']); ?>
-                        </div>
-                    <?php endif; ?>
 
                     <!-- Expressive Reading Badge (0.9.1 Style) -->
                     <?php
@@ -141,11 +143,11 @@
                     $total_seconds = isset($reading_info['reading_seconds'])
                         ? max(30, (int) $reading_info['reading_seconds'])
                         : max(30, (int) round(($reading_info['chars'] / 550) * 60));
-                    $minutes = (int) floor($total_seconds / 60);
-                    $seconds = $total_seconds % 60;
-                    $reading_time_display = $minutes > 0
-                        ? sprintf('%d分%02d秒', $minutes, $seconds)
-                        : sprintf('%d秒', $seconds);
+                    // 「◯分◯秒」の精密表示は読む前の判断には過剰なため、分単位の目安に丸める
+                    $reading_minutes = (int) ceil($total_seconds / 60);
+                    $reading_time_display = $total_seconds < 60
+                        ? '1分未満で読めます'
+                        : sprintf('約%d分で読めます', $reading_minutes);
                     $reading_progress = isset($reading_info['progress'])
                         ? min(100, max(0, (float) $reading_info['progress']))
                         : 0;
@@ -156,9 +158,13 @@
                         <?php
                         if ($reading_info['chars'] > 200) : // 極端に短い記事は非表示
                         ?>
+                        <?php
+                        // ランク連動の信号色（赤=長い等）は読む前の心理的ハードルになるため、
+                        // ヒーロー内は常にブランドオレンジの穏やかなトーンに固定する
+                        ?>
                         <div class="m3-article__reading-badge-expressive m3-ripple-host"
                              id="m3-hero-reading-badge"
-                             style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>; --reading-rank-color: <?php echo esc_attr($reading_info['badge_color']); ?>; --reading-rank-bg: <?php echo esc_attr($reading_info['badge_bg']); ?>;"
+                             style="--reading-color: #FF9900; --reading-bg: #ffe0b3; --reading-rank-color: #DE7A00; --reading-rank-bg: #ffeccf;"
                              role="button"
                              tabindex="0"
                              aria-expanded="false"
@@ -180,13 +186,12 @@
                             <div class="m3-reading-badge-content">
                                 <span class="m3-reading-badge-text m3-reading-badge-text--main">
                                     <?php echo esc_html($reading_time_display); ?>
-                                    <span class="m3-reading-chars">(約<?php echo esc_html(number_format_i18n($reading_info['chars'])); ?>文字)</span>
                                 </span>
                                 <span class="m3-reading-badge-label">
-                                    <span class="m3-badge-label-main"><?php echo esc_html($reading_info['label']); ?></span>
+                                    <span class="m3-badge-label-main"><?php echo esc_html(sprintf('約%s文字', number_format_i18n($reading_info['chars']))); ?></span>
                                 </span>
                                 <span id="m3-reading-badge-desc" class="m3-reading-badge-text m3-reading-badge-text--desc">
-                                    本文文字数とサイト平均文字数を基準にした読了目安です。
+                                    本文の文字数から550字/分で換算した読了目安です。
                                 </span>
                             </div>
                         </div>
@@ -224,6 +229,23 @@
                         </div>
                         <?php endif; ?>
                     </div>
+                    <?php endif; ?>
+
+                    <!-- 開示バッジ（AI・スポンサー）: 情報チップとして控えめに（CSSでヒーロー内は静音化） -->
+                    <?php
+                    $has_ai_media = get_post_meta(get_the_ID(), '_node_is_ai_generated', true) === '1';
+                    $has_ai_text  = get_post_meta(get_the_ID(), '_node_is_ai_text_generated', true) === '1';
+                    if ($has_ai_media || $has_ai_text) :
+                    ?>
+                        <div class="m3-article__ai-disclosure-wrapper">
+                            <?php node_the_post_badges(get_the_ID(), 'expressive', ['ai']); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (get_post_meta(get_the_ID(), '_node_is_sponsor', true) === '1') : ?>
+                        <div class="m3-article__sponsor-bubble-wrapper">
+                            <?php node_the_post_badges(get_the_ID(), 'full', ['sponsor']); ?>
+                        </div>
                     <?php endif; ?>
 
                     <!-- ヒーロー統合目次プルダウン（ネイティブ <select> ベース） -->
@@ -290,6 +312,7 @@
                 </div>
 
             </div>
+
         </div>
     </header>
 </div>

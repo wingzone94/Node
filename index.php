@@ -55,7 +55,7 @@
                 </div>
                 <div class="m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list" role="list">
                     <?php while ($headline_query->have_posts()) : $headline_query->the_post(); ?>
-                        <?php get_template_part('template-parts/card', null, ['card_class' => 'card-standard', 'show_ai' => false]); ?>
+                        <?php get_template_part('template-parts/card', null, ['card_class' => 'card-standard']); ?>
                     <?php endwhile; wp_reset_postdata(); ?>
                 </div>
             </section>
@@ -86,7 +86,7 @@
                     $switched = true;
                 }
                 $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
-                get_template_part('template-parts/card', null, ['card_class' => $card_class, 'show_ai' => false]);
+                get_template_part('template-parts/card', null, ['card_class' => $card_class]);
             endwhile;
             ?>
                 </div>

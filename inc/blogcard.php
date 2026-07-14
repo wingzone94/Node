@@ -543,7 +543,7 @@ function node_resolve_redirect( string $url ): string {
 		array(
 			'timeout'     => 8,
 			'redirection' => 0,
-			'sslverify'   => false,
+			// sslverify は既定(true)を維持する（絶対原則: 検証無効化の新規追加は禁止）
 		)
 	);
 
@@ -796,5 +796,7 @@ add_filter( 'embed_maybe_make_link', 'node_embed_maybe_make_link', 10, 2 );
 add_filter( 'the_content', 'node_auto_blogcard', 11 );
 // wpautop(10) の後にプレースホルダを実カード/埋め込みへ復元する。autoembed(8) 由来の
 // 破壊を回避するため、優先度は必ず 10 より大きくすること。
-add_filter( 'the_content', 'node_blogcard_hydrate', 20 );
+// 21固定: lightbox(20)より必ず後に走らせ、カード内画像がlightboxリンクで包まれるのを防ぐ
+// （従来はrequire順でのみ保たれていた脆い不変条件の明示化。STRUCTURAL-REVIEW-1.2 F-8）
+add_filter( 'the_content', 'node_blogcard_hydrate', 21 );
 add_action( 'wp_footer', 'node_print_twitter_widgets' );

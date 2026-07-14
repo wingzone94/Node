@@ -14,8 +14,12 @@ require_once dirname( __DIR__ ) . '/vendor/wp-phpunit/wp-phpunit/includes/functi
 tests_add_filter(
 	'muplugins_loaded',
 	function () {
-		require dirname( __DIR__ ) . '/inc/blogcard.php';
-		require dirname( __DIR__ ) . '/plugins-embedded/node-series/node-series.php';
+		$theme_dir = dirname( __DIR__ );
+
+		add_filter( 'template_directory', static fn() => $theme_dir );
+		add_filter( 'stylesheet_directory', static fn() => $theme_dir );
+		add_filter( 'template_directory_uri', static fn() => 'http://example.org/wp-content/themes/node' );
+		add_filter( 'stylesheet_directory_uri', static fn() => 'http://example.org/wp-content/themes/node' );
 	}
 );
 

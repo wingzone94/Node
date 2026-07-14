@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.4
+ * Version:      1.3.5
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.4' );
+define( 'NODE_LIBRARY_VERSION', '1.3.5' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_LIBRARY_BADGE_BASE_URL', 'https://luminous-core.net/wp-content/themes/Node/plugins-embedded/node-library/assets/images/' );
 
@@ -162,6 +162,10 @@ function node_library_infer_hardware_from_platform( string $platform ): string {
  * Node Library Main Class
  */
 final class Node_Library {
+	private const CARD_REFERENCE_META        = '_node_library_card_reference';
+	private const LIBRARY_DEPENDENCY_META    = '_node_library_card_dependency';
+	private const REUSABLE_DEPENDENCY_META   = '_node_library_reusable_block_dependency';
+	private const REFERENCE_INDEX_VERSION    = '3';
 
 	private static ?self $instance = null;
 
@@ -174,8 +178,13 @@ final class Node_Library {
 
 	private function __construct() {
 		add_action( 'init', [ $this, 'register_cpt' ] );
+		add_filter( 'query_vars', [ $this, 'register_library_archive_query_var' ] );
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ $this, 'save_meta_boxes' ] );
+		add_action( 'wp_after_insert_post', [ $this, 'synchronize_library_card_references_after_save' ], 20, 4 );
+		add_action( 'before_delete_post', [ $this, 'remove_library_card_references_before_delete' ], 10, 2 );
+		add_action( 'after_delete_post', [ $this, 'synchronize_references_after_dependency_delete' ], 10, 2 );
+		add_action( 'init', [ $this, 'migrate_library_card_references' ], 20 );
 		
 		// テーマのフックに応答（タグの下に表示）
 		add_action( 'luminous_after_tags', [ $this, 'render_library_card_on_post' ] );
@@ -761,11 +770,26 @@ final class Node_Library {
 
 		register_post_type( 'node_library', $args );
 
+		add_rewrite_tag( '%node_library_type%', '(game|app)' );
+		add_rewrite_rule( '^node-library/(game|app)/page/([0-9]{1,})/?$', 'index.php?post_type=node_library&node_library_type=$matches[1]&paged=$matches[2]', 'top' );
+		add_rewrite_rule( '^node-library/(game|app)/?$', 'index.php?post_type=node_library&node_library_type=$matches[1]', 'top' );
+
 		$current_flush_version = get_option( 'node_library_flushed_version', '0' );
 		if ( version_compare( $current_flush_version, NODE_LIBRARY_VERSION, '<' ) ) {
 			flush_rewrite_rules();
 			update_option( 'node_library_flushed_version', NODE_LIBRARY_VERSION );
 		}
+	}
+
+	/**
+	 * Register the type query variable used by dedicated Library archives.
+	 *
+	 * @param array<int, string> $query_vars Public query variables.
+	 * @return array<int, string>
+	 */
+	public function register_library_archive_query_var( array $query_vars ): array {
+		$query_vars[] = 'node_library_type';
+		return array_values( array_unique( $query_vars ) );
 	}
 
 	/**
@@ -948,6 +972,262 @@ final class Node_Library {
 				update_post_meta( $post_id, '_node_linked_library_id', sanitize_text_field( $_POST['node_linked_library_id'] ) );
 			}
 		}
+	}
+
+	/**
+	 * Keep the reverse lookup synchronized after posts or Library dependencies change.
+	 *
+	 * Regular posts replace their own index. Dependency posts are selected through
+	 * dedicated metadata so a reusable block or Library change stays incremental.
+	 *
+	 * @param int     $post_id     Post ID.
+	 * @param WP_Post $post        Saved post.
+	 * @param bool    $update      Whether this is an existing post update.
+	 * @param WP_Post $post_before Post object before the update.
+	 * @return void
+	 */
+	public function synchronize_library_card_references_after_save( int $post_id, WP_Post $post, bool $update, ?WP_Post $post_before ): void {
+		if ( 'post' === $post->post_type ) {
+			$this->index_post_library_card_references( $post_id, $post, $update );
+			return;
+		}
+
+		if ( 'wp_block' === $post->post_type ) {
+			$this->synchronize_posts_for_dependency( self::REUSABLE_DEPENDENCY_META, $post_id );
+		} elseif ( 'node_library' === $post->post_type ) {
+			$this->synchronize_posts_for_dependency( self::LIBRARY_DEPENDENCY_META, $post_id );
+		}
+	}
+
+	/**
+	 * Remove reverse lookup data before a post is permanently deleted.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Post being deleted.
+	 * @return void
+	 */
+	public function remove_library_card_references_before_delete( int $post_id, WP_Post $post ): void {
+		if ( 'post' === $post->post_type ) {
+			delete_post_meta( $post_id, self::CARD_REFERENCE_META );
+			delete_post_meta( $post_id, self::LIBRARY_DEPENDENCY_META );
+			delete_post_meta( $post_id, self::REUSABLE_DEPENDENCY_META );
+		}
+	}
+
+	/**
+	 * Rebuild referencing posts after a reusable block or Library item is deleted.
+	 *
+	 * @param int     $post_id Deleted post ID.
+	 * @param WP_Post $post    Deleted post object.
+	 * @return void
+	 */
+	public function synchronize_references_after_dependency_delete( int $post_id, WP_Post $post ): void {
+		if ( 'wp_block' === $post->post_type ) {
+			$this->synchronize_posts_for_dependency( self::REUSABLE_DEPENDENCY_META, $post_id );
+		} elseif ( 'node_library' === $post->post_type ) {
+			$this->synchronize_posts_for_dependency( self::LIBRARY_DEPENDENCY_META, $post_id );
+		}
+	}
+
+	/**
+	 * Index library-card blocks embedded in a regular post for reverse lookup.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Saved post.
+	 * @param bool    $update  Whether this is an existing post update.
+	 * @return void
+	 */
+	public function index_post_library_card_references( int $post_id, WP_Post $post, bool $update ): void {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		$indexable_statuses = array( 'publish', 'future', 'draft', 'pending', 'private' );
+		$reference_data     = in_array( $post->post_status, $indexable_statuses, true )
+			? $this->get_library_card_reference_data_from_blocks( parse_blocks( $post->post_content ) )
+			: array(
+				'library_ids'           => array(),
+				'library_dependencies'  => array(),
+				'reusable_dependencies' => array(),
+			);
+
+		$this->replace_post_meta_ids( $post_id, self::CARD_REFERENCE_META, $reference_data['library_ids'] );
+		$this->replace_post_meta_ids( $post_id, self::LIBRARY_DEPENDENCY_META, $reference_data['library_dependencies'] );
+		$this->replace_post_meta_ids( $post_id, self::REUSABLE_DEPENDENCY_META, $reference_data['reusable_dependencies'] );
+	}
+
+	/**
+	 * Replace a multi-value integer meta index only when its normalized value changes.
+	 *
+	 * @param int             $post_id  Post ID.
+	 * @param string          $meta_key Meta key.
+	 * @param array<int, int> $ids      Indexed IDs.
+	 * @return void
+	 */
+	private function replace_post_meta_ids( int $post_id, string $meta_key, array $ids ): void {
+		$ids = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+		$current_ids = array_values(
+			array_unique(
+				array_filter( array_map( 'absint', get_post_meta( $post_id, $meta_key, false ) ) )
+			)
+		);
+
+		sort( $ids, SORT_NUMERIC );
+		sort( $current_ids, SORT_NUMERIC );
+
+		if ( $current_ids === $ids ) {
+			return;
+		}
+
+		delete_post_meta( $post_id, $meta_key );
+		foreach ( $ids as $id ) {
+			add_post_meta( $post_id, $meta_key, (string) $id, false );
+		}
+	}
+
+	/**
+	 * Build the reverse-lookup index for cards already embedded before this feature.
+	 *
+	 * @return void
+	 */
+	public function migrate_library_card_references(): void {
+		if ( self::REFERENCE_INDEX_VERSION === get_option( 'node_library_card_reference_index_version' ) ) {
+			return;
+		}
+
+		$this->synchronize_all_post_library_card_references();
+		update_option( 'node_library_card_reference_index_version', self::REFERENCE_INDEX_VERSION, false );
+	}
+
+	/**
+	 * Re-index only posts that depend on the saved/deleted Library item or reusable block.
+	 *
+	 * Dependency metadata is kept independently from valid card references, so trashing
+	 * and restoring a dependency can both be handled without scanning every post.
+	 *
+	 * @param string $meta_key      Dependency meta key.
+	 * @param int    $dependency_id Library item or reusable block ID.
+	 * @return void
+	 */
+	public function synchronize_posts_for_dependency( string $meta_key, int $dependency_id ): void {
+		if (
+			$dependency_id <= 0 ||
+			! in_array( $meta_key, array( self::LIBRARY_DEPENDENCY_META, self::REUSABLE_DEPENDENCY_META ), true )
+		) {
+			return;
+		}
+
+		$post_ids = get_posts(
+			array(
+				'post_type'              => 'post',
+				'post_status'            => array( 'publish', 'future', 'draft', 'pending', 'private' ),
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_key'               => $meta_key,
+				'meta_value'             => (string) $dependency_id,
+			)
+		);
+
+		foreach ( $post_ids as $post_id ) {
+			$post = get_post( $post_id );
+			if ( $post instanceof WP_Post ) {
+				$this->index_post_library_card_references( (int) $post_id, $post, true );
+			}
+		}
+	}
+
+	/**
+	 * Reconcile the complete reverse-lookup index for every regular post.
+	 *
+	 * This repairs data created while the plugin was inactive or before a new
+	 * synchronization trigger was introduced. Per-save synchronization remains
+	 * incremental after this one-time full pass.
+	 *
+	 * @return void
+	 */
+	public function synchronize_all_post_library_card_references(): void {
+		$post_statuses = array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' );
+
+		$post_ids = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => $post_statuses,
+				'posts_per_page' => -1,
+				'fields'          => 'ids',
+				'no_found_rows'   => true,
+			)
+		);
+
+		foreach ( $post_ids as $post_id ) {
+			$post = get_post( $post_id );
+			if ( $post instanceof WP_Post ) {
+				$this->index_post_library_card_references( (int) $post_id, $post, true );
+			}
+		}
+	}
+
+	/**
+	 * Extract Node Library item IDs from nested block content.
+	 *
+	 * @param array<int, array<string, mixed>> $blocks Parsed blocks.
+	 * @return array{library_ids: array<int, int>, library_dependencies: array<int, int>, reusable_dependencies: array<int, int>}
+	 */
+	private function get_library_card_reference_data_from_blocks( array $blocks, array $visited_reusable_blocks = array() ): array {
+		$data = array(
+			'library_ids'           => array(),
+			'library_dependencies'  => array(),
+			'reusable_dependencies' => array(),
+		);
+
+		foreach ( $blocks as $block ) {
+			if ( ! is_array( $block ) ) {
+				continue;
+			}
+
+			if ( 'node-library/item-card' === ( $block['blockName'] ?? '' ) ) {
+				$library_id = absint( $block['attrs']['libraryId'] ?? 0 );
+				if ( $library_id ) {
+					$data['library_dependencies'][] = $library_id;
+					$library_item = get_post( $library_id );
+					if ( $library_item instanceof WP_Post && 'node_library' === $library_item->post_type && 'trash' !== $library_item->post_status ) {
+						$data['library_ids'][] = $library_id;
+					}
+				}
+			}
+
+			if ( 'core/block' === ( $block['blockName'] ?? '' ) ) {
+				$reusable_block_id = absint( $block['attrs']['ref'] ?? 0 );
+				if ( $reusable_block_id ) {
+					$data['reusable_dependencies'][] = $reusable_block_id;
+					if ( ! in_array( $reusable_block_id, $visited_reusable_blocks, true ) ) {
+						$reusable_block = get_post( $reusable_block_id );
+						if ( $reusable_block instanceof WP_Post && 'wp_block' === $reusable_block->post_type && 'trash' !== $reusable_block->post_status ) {
+							$next_visited = array_merge( $visited_reusable_blocks, array( $reusable_block_id ) );
+							$nested_data  = $this->get_library_card_reference_data_from_blocks( parse_blocks( $reusable_block->post_content ), $next_visited );
+							foreach ( array_keys( $data ) as $key ) {
+								$data[ $key ] = array_merge( $data[ $key ], $nested_data[ $key ] );
+							}
+						}
+					}
+				}
+			}
+
+			if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
+				$nested_data = $this->get_library_card_reference_data_from_blocks( $block['innerBlocks'], $visited_reusable_blocks );
+				foreach ( array_keys( $data ) as $key ) {
+					$data[ $key ] = array_merge( $data[ $key ], $nested_data[ $key ] );
+				}
+			}
+		}
+
+		foreach ( array_keys( $data ) as $key ) {
+			$data[ $key ] = array_values( array_unique( array_filter( array_map( 'absint', $data[ $key ] ) ) ) );
+		}
+
+		return $data;
 	}
 
 	/**

@@ -67,6 +67,8 @@ export function initHeroTOC() {
         const DATE_READY_TIMEOUT_MS = 1200;
         let autoOpenTimer = 0;
         let userInteractedWithBadge = false;
+        // 一度表示して閉じたら以後は再展開させない（ワンショット表示）
+        let badgeLocked = false;
 
         const waitForHeroDateReady = (callback) => {
             const startedAt = Date.now();
@@ -108,8 +110,18 @@ export function initHeroTOC() {
             }, AUTO_OPEN_DELAY_MS);
         };
 
+        const lockBadge = () => {
+            badgeLocked = true;
+            readingBadge.classList.add('is-badge-locked');
+            readingBadge.removeAttribute('role');
+            readingBadge.removeAttribute('tabindex');
+            readingBadge.removeAttribute('aria-expanded');
+            readingBadge.removeAttribute('aria-label');
+        };
+
         const syncBadgeInteractive = () => {
             if (mobileQuery.matches) {
+                if (badgeLocked) return; // 表示済みロック中は静的アイコンのまま
                 readingBadge.setAttribute('role', 'button');
                 readingBadge.setAttribute('tabindex', '0');
                 readingBadge.setAttribute('aria-expanded', String(readingBadge.classList.contains('is-badge-open')));
@@ -119,7 +131,8 @@ export function initHeroTOC() {
                 // PC は常時全文表示（クリック不可）なのでインタラクティブ属性を外す
                 clearAutoOpenTimer();
                 userInteractedWithBadge = false;
-                readingBadge.classList.remove('is-badge-open');
+                badgeLocked = false;
+                readingBadge.classList.remove('is-badge-open', 'is-badge-locked');
                 readingBadge.removeAttribute('role');
                 readingBadge.removeAttribute('tabindex');
                 readingBadge.removeAttribute('aria-expanded');
@@ -127,11 +140,17 @@ export function initHeroTOC() {
         };
 
         const toggleBadge = () => {
-            if (!mobileQuery.matches) return;
+            if (!mobileQuery.matches || badgeLocked) return;
             userInteractedWithBadge = true;
             clearAutoOpenTimer();
-            const open = readingBadge.classList.toggle('is-badge-open');
-            readingBadge.setAttribute('aria-expanded', String(open));
+            if (readingBadge.classList.contains('is-badge-open')) {
+                // 一度表示した内容を閉じたら、以後は再展開不可（静的アイコン化）
+                readingBadge.classList.remove('is-badge-open');
+                lockBadge();
+            } else {
+                readingBadge.classList.add('is-badge-open');
+                readingBadge.setAttribute('aria-expanded', 'true');
+            }
         };
 
         readingBadge.addEventListener('click', toggleBadge);

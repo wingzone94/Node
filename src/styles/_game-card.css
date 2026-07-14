@@ -767,6 +767,16 @@
         padding: 20px;
     }
 
+    /* padding ショートハンドが --has-steam-toggle の予約余白（padding-bottom）を
+     * 上書きし、Steam設定の「…」がストアピルに重なるのを防ぐ */
+    .m3-game-card--has-steam-toggle {
+        padding-bottom: 64px;
+    }
+
+    .m3-game-card--has-steam-toggle:has(.node-library-steam-control[open]) {
+        padding-bottom: 120px;
+    }
+
     .m3-game-card__stores {
         margin-inline: -4px;
     }

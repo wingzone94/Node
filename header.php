@@ -322,9 +322,9 @@
                             <div class="m3-search-section m3-desktop-hidden">
                                 <label class="m3-search-section-label"><span class="material-symbols-outlined">sort</span> 並び順</label>
                                 <div class="m3-radio-group">
-                                    <label class="m3-radio-item"><input type="radio" name="m3_sort" value="date" checked><span class="m3-radio-label">新着</span></label>
-                                    <label class="m3-radio-item"><input type="radio" name="m3_sort" value="views"><span class="m3-radio-label">人気</span></label>
-                                    <label class="m3-radio-item"><input type="radio" name="m3_sort" value="comments"><span class="m3-radio-label">コメント</span></label>
+                                    <label class="m3-radio-item"><input type="radio" name="m3_sort" value="newest" checked><span class="m3-radio-label">新着</span></label>
+                                    <label class="m3-radio-item"><input type="radio" name="m3_sort" value="oldest"><span class="m3-radio-label">古い順</span></label>
+                                    <?php // 「人気(views)」「コメント」ソートはバックエンド（inc/search.php）未実装のためUIから退避（STRUCTURAL-REVIEW-1.2 F-11。実装可否はv1.3のF-16で判断） ?>
                                 </div>
                             </div>
                         </div>
@@ -348,13 +348,8 @@
                                 <div class="m3-search-section">
                                     <!-- Range Slider -->
                                     <label class="m3-search-section-label"><span class="material-symbols-outlined">schedule</span> 読了目安・ボリューム</label>
-                                    <div class="m3-radio-group">
-                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="all" checked><span class="m3-radio-label">すべて</span></label>
-                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="short"><span class="m3-radio-label">~5分</span></label>
-                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="medium"><span class="m3-radio-label">~10分</span></label>
-                                        <label class="m3-radio-item"><input type="radio" name="m3_reading_time" value="long"><span class="m3-radio-label">15分~</span></label>
-                                    </div>
-                                    
+                                    <?php // 読了目安（m3_reading_time）はバックエンド未実装のためUIから退避（F-11）。文字数範囲（m3_min/m3_max）は実装済みなので残す ?>
+
                                     <div class="m3-slider-container">
                                         <div class="m3-search-section-label m3-search-section-label--sub"><span class="material-symbols-outlined">straighten</span> 文字数範囲</div>
                                         <div class="m3-range-slider" id="m3-word-count-slider">
@@ -387,7 +382,7 @@
                                     <label class="m3-platform-chip m3-platform-chip--image"><input type="checkbox" name="m3_media_type[]" value="image"><span>画像</span></label>
                                     <label class="m3-platform-chip m3-platform-chip--video"><input type="checkbox" name="m3_media_type[]" value="video"><span>動画</span></label>
                                     <label class="m3-platform-chip m3-platform-chip--youtube"><input type="checkbox" name="m3_media_type[]" value="youtube"><span>YouTube</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--ai"><input type="checkbox" name="m3_media_type[]" value="ai"><span>AI生成</span></label>
+                                    <?php // 「AI生成」チップは m3_media_type[]=ai がバックエンド未対応（実装済みなのは別パラメータ m3_ai）のためUIから退避（F-11） ?>
                                 </div>
                             </div>
                         </div>

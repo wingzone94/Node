@@ -247,6 +247,58 @@ function initNodeLibraryTabs() {
     });
 }
 
+function initNodeLibraryAccordionMotion() {
+    const supportsAccordionMotion = CSS.supports('interpolate-size: allow-keywords')
+        && CSS.supports('selector(details::details-content)');
+
+    if (!supportsAccordionMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    document.querySelectorAll('.node-library-single__more').forEach(details => {
+        if (details.dataset.nodeLibraryAccordionReady === 'true') return;
+
+        const summary = details.querySelector(':scope > summary');
+        if (!summary) return;
+
+        details.dataset.nodeLibraryAccordionReady = 'true';
+
+        summary.addEventListener('click', event => {
+            if (!details.open || details.dataset.nodeLibraryClosing === 'true') return;
+
+            event.preventDefault();
+            details.dataset.nodeLibraryClosing = 'true';
+
+            const finishClosing = () => {
+                window.clearTimeout(fallbackTimer);
+                details.removeEventListener('transitionend', handleTransitionEnd);
+                details.open = false;
+                delete details.dataset.nodeLibraryClosing;
+            };
+
+            const handleTransitionEnd = transitionEvent => {
+                if (transitionEvent.propertyName === 'block-size') finishClosing();
+            };
+
+            const fallbackTimer = window.setTimeout(finishClosing, 420);
+            details.addEventListener('transitionend', handleTransitionEnd);
+        });
+    });
+}
+
+function initNodeLibraryFilterNavigation() {
+    const archive = document.querySelector('.node-library-archive');
+    if (!archive || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    archive.querySelectorAll('.node-library-filter__item').forEach(link => {
+        link.addEventListener('click', event => {
+            if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.href === window.location.href) return;
+
+            event.preventDefault();
+            archive.classList.add('is-filter-leaving');
+            window.setTimeout(() => window.location.assign(link.href), 180);
+        });
+    });
+}
+
 function initNodeLibraryNintendoWarnings() {
     const warningTimers = new WeakMap();
 
@@ -364,6 +416,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         initColorModeLoader,
         initNodeLibraryQr,
         initNodeLibraryTabs,
+        initNodeLibraryAccordionMotion,
+        initNodeLibraryFilterNavigation,
         initNodeLibraryNintendoWarnings,
         initNodeLibrarySteamEmbedToggles,
         initKeyboardSnackbar,

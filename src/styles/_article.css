@@ -811,11 +811,10 @@
     position: relative;
     width: 100%;
     height: auto;
-    /* 見切れ解消: 記事ごとの自然なアスペクト比で表示（強制 min-height を撤廃）。
-       極端に縦長の画像だけ img 側の max-height で上限を設け、はみ出しを防ぐ。 */
+    /* 見切れ解消: 記事ごとの自然なアスペクト比で全体表示。
+       レターボックス（サイドパネル）は使わないため背景色は持たせない。 */
     overflow: hidden;
     border-radius: 32px 32px 0 0;
-    background-color: var(--md-sys-color-surface-container-high);
     z-index: 1;
 }
 
@@ -849,17 +848,11 @@
 
 .m3-article__featured-image img,
 .m3-article__featured-img {
+    /* 幅に合わせて縮尺を自動調整し、自然なアスペクト比のまま全体を見せる。
+       contain＋背景色のレターボックス（サイドパネル）は違和感が強いため廃止。 */
     width: 100%;
     height: auto;
-    /* 自然なアスペクト比で全体表示。縦長画像は max-height で上限を設け、
-       その際は contain＋背景色で全体を収める（見切れゼロ）。
-       上限は視口高さに連動（50vh）し、13インチノートでも大型ディスプレイでも
-       モバイルでも読者の環境に応じて自動調整される。 */
-    max-height: clamp(240px, 50vh, 600px);
     display: block;
-    object-fit: contain;
-    object-position: center;
-    background-color: var(--md-sys-color-surface-container-high);
 }
 
 /* Category labels positioned below the title, centered */
@@ -1130,8 +1123,13 @@
     font-family: var(--font-heading);
     font-weight: 900;
     margin: var(--m3-spacing-xxxl) 0 var(--m3-spacing-m);
-    border-bottom: 4px solid var(--md-sys-color-primary-container);
-    display: inline-block;
+    /* 動的カラーの primary-container は画像シードによって背景と同化するため、
+       記事アクセント直系の色で下線の視認性を常に担保する */
+    border-bottom: 4px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 45%, transparent);
+    /* inline-block だと連続する見出し（h2直後のh3等）が同一行に並ぶため、
+       block + fit-content で「下線は文字幅・行は必ず分離」を両立する */
+    display: block;
+    width: fit-content;
     line-height: 1.25;
     letter-spacing: -0.01em;
     font-feature-settings: "palt" 1;

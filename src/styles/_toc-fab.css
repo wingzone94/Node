@@ -38,6 +38,16 @@
         visibility: hidden !important;
         pointer-events: none !important;
     }
+
+    /* ヒーロー統合目次（hero-toc.js）がヒーロー通過を検知したら、
+     * モバイルでも目次FABを解放して追従導線を引き継ぐ。 */
+    body.is-hero-passed .m3-action-stack.is-singular #m3-toc-trigger {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: scale(1) !important;
+        pointer-events: auto !important;
+    }
 }
 
 body.is-active-toc .m3-action-stack .m3-fab:not(#m3-toc-trigger) {

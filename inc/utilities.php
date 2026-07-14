@@ -68,6 +68,49 @@ function node_get_relative_date($post_id = null) {
     return $full_date;
 }
 
+/**
+ * 追記日（最終更新日）の表示情報を返す。
+ *
+ * 手動メタ（_node_manual_modified_date、保存時の自動記録含む）があれば
+ * 公開日と同日でも表示する（公開後数時間での訂正・追記を当日中に開示するため）。
+ * メタがない場合は更新日が公開日と異なる日のときのみ表示する。
+ *
+ * display_short はカード等の狭い場所向けの短縮表記（公開年と同じ年なら年を省く）。
+ *
+ * @return array{datetime: string, display: string, display_short: string}|null 表示不要なら null
+ */
+function node_get_post_modified_display($post_id = null) {
+    $post_id = $post_id ?: get_the_ID();
+
+    $manual     = get_post_meta($post_id, '_node_manual_modified_date', true);
+    $has_manual = is_string($manual) && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $manual, $m);
+
+    if ($has_manual) {
+        $short = ($m[1] === get_the_date('Y', $post_id))
+            ? sprintf('%d/%d', (int) $m[2], (int) $m[3])
+            : str_replace('-', '/', $manual);
+        return [
+            'datetime'      => $manual,
+            'display'       => str_replace('-', '/', $manual),
+            'display_short' => $short,
+        ];
+    }
+
+    if (get_the_modified_date('Y/m/d', $post_id) === get_the_date('Y/m/d', $post_id)) {
+        return null;
+    }
+
+    $short = (get_the_modified_date('Y', $post_id) === get_the_date('Y', $post_id))
+        ? get_the_modified_date('n/j', $post_id)
+        : get_the_modified_date('Y/n/j', $post_id);
+
+    return [
+        'datetime'      => get_the_modified_date('c', $post_id),
+        'display'       => get_the_modified_date('Y/m/d', $post_id),
+        'display_short' => $short,
+    ];
+}
+
 function node_get_image_seed_color($attachment_id) {
     if (!$attachment_id) return null;
     $cached = get_post_meta($attachment_id, '_node_seed_color', true);
@@ -747,32 +790,41 @@ function node_get_article_ranking_info($post_id = null) {
     if (!$post_id) $post_id = get_the_ID();
     $content = get_post_field('post_content', $post_id);
     $chars = mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
+    /*
+     * 実用基準（2026-07-11改定）:
+     * - 長さ判定はサイト平均との相対比較をやめ、絶対文字数で判定する
+     *   （テスト環境や記事構成の偏りで基準が振れないように）。
+     * - 読了時間は日本語Webの標準的な読速 550字/分 の固定換算。
+     */
+    $rank_thresholds = [
+        'short'          => 1500,   // 〜1,500字: 短い
+        'somewhat_short' => 3000,   // 〜3,000字: やや短い
+        'standard'       => 6000,   // 〜6,000字: 標準
+        'somewhat_long'  => 10000,  // 〜10,000字: やや長い（それ以上は長い）
+    ];
 
-    $avg = node_get_global_average_chars();
-    $max = node_get_global_max_chars();
-
-    if ($chars < $avg * 0.4) {
+    if ($chars < $rank_thresholds['short']) {
         $rank = 'short';
         $label = '短い';
         $color = '#C8E6C9'; $on_color = '#1B5E20';
         $container_color = '#E8F5E9';
         $badge_color = '#00895A';
         $badge_bg = '#D7F8E9';
-    } elseif ($chars < $avg * 0.8) {
+    } elseif ($chars < $rank_thresholds['somewhat_short']) {
         $rank = 'somewhat_short';
         $label = 'やや短い';
         $color = '#DCEDC8'; $on_color = '#33691E';
         $container_color = '#F1F8E9';
         $badge_color = '#2E9B63';
         $badge_bg = '#E4FAEF';
-    } elseif ($chars < $avg * 1.2) {
+    } elseif ($chars < $rank_thresholds['standard']) {
         $rank = 'standard';
         $label = '標準';
         $color = '#E3F2FD'; $on_color = '#0D47A1';
         $container_color = '#E1F5FE';
         $badge_color = '#0067D8';
         $badge_bg = '#DCEBFF';
-    } elseif ($chars < $avg * 1.6) {
+    } elseif ($chars < $rank_thresholds['somewhat_long']) {
         $rank = 'somewhat_long';
         $label = 'やや長い';
         $color = '#FFF9C4'; $on_color = '#F57F17';
@@ -788,11 +840,12 @@ function node_get_article_ranking_info($post_id = null) {
         $badge_bg = '#FFE1DD';
     }
 
-    $progress = min(100, round(($chars / $max) * 100));
-    $site_average_chars = max(1, (int) round($avg));
-    // サイト平均文字数を「標準3分」とみなし、記事文字数に応じて秒単位で読了時間を算出
-    $seconds_per_char = (3 * 60) / $site_average_chars;
-    $reading_seconds = max(30, (int) round($chars * $seconds_per_char));
+    // ゲージは「長い」の下限（10,000字）を100%として充填
+    $progress = min(100, round(($chars / $rank_thresholds['somewhat_long']) * 100));
+
+    // 読了時間: 550字/分の固定換算（最低30秒）
+    $chars_per_minute = 550;
+    $reading_seconds = max(30, (int) round(($chars / $chars_per_minute) * 60));
     $reading = max(1, (int) ceil($reading_seconds / 60));
 
     return [

@@ -7,6 +7,10 @@ const paths = (process.env.NODE_VISUAL_PATHS ?? '/,/?s=node')
   .split(',')
   .map((path) => path.trim())
   .filter(Boolean);
+const expectedStatuses = new Map(
+  Object.entries(JSON.parse(process.env.NODE_VISUAL_EXPECTED_STATUSES ?? '{}'))
+    .map(([path, status]) => [path, Number(status)]),
+);
 
 const viewports = [
   { name: 'desktop', width: 1440, height: 1000 },
@@ -169,17 +173,21 @@ async function run() {
       const browserErrors = [];
 
       page.on('pageerror', (error) => {
-        browserErrors.push(`pageerror: ${error.message}`);
+        browserErrors.push({ details: `pageerror: ${error.message}`, url: '' });
       });
 
       page.on('console', (message) => {
         if (message.type() === 'error') {
-          browserErrors.push(`console: ${message.text()}`);
+          browserErrors.push({
+            details: `console: ${message.text()}`,
+            url: message.location().url || '',
+          });
         }
       });
 
       for (const path of paths) {
         const url = urlForPath(path);
+        const expectedStatus = expectedStatuses.get(path) ?? 200;
         const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
         const status = response?.status() ?? 0;
         const title = await page.title();
@@ -189,17 +197,26 @@ async function run() {
         await page.screenshot({ path: screenshotPath, fullPage: true });
 
         const layoutIssues = await inspectTextLayout(page);
+        const unexpectedBrowserErrors = browserErrors.splice(0).filter((error) => {
+          const isExpectedDocumentError = status === expectedStatus
+            && expectedStatus >= 400
+            && error.url === url
+            && error.details.includes(`status of ${expectedStatus}`);
+
+          return !isExpectedDocumentError;
+        });
         results.push({
           viewport: viewport.name,
           url,
           status,
+          expectedStatus,
           title,
           screenshotPath,
           issues: [
-            ...(status >= 400 || status === 0
-              ? [{ type: 'http-status', details: `HTTP status ${status}` }]
+            ...(status !== expectedStatus
+              ? [{ type: 'http-status', details: `expected ${expectedStatus}, got ${status}` }]
               : []),
-            ...browserErrors.splice(0).map((details) => ({ type: 'browser-error', details })),
+            ...unexpectedBrowserErrors.map((error) => ({ type: 'browser-error', details: error.details })),
             ...layoutIssues,
           ],
         });
@@ -220,7 +237,7 @@ async function run() {
 
   for (const result of results) {
     console.log(`\n[${result.viewport}] ${result.url}`);
-    console.log(`- HTTP: ${result.status}`);
+    console.log(`- HTTP: ${result.status} (expected ${result.expectedStatus})`);
     console.log(`- Title: ${result.title}`);
     console.log(`- Screenshot: ${result.screenshotPath}`);
 

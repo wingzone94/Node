@@ -73,13 +73,15 @@ body.admin-bar .m3-header {
 
 /* ===== Fixed Header Content Offset ===== */
 .m3-home-layout,
-.m3-archive-layout {
+.m3-archive-layout,
+.m3-date-archive {
     padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + 12px);
 }
 
 @media screen and (max-width: 600px) {
     .m3-home-layout,
-    .m3-archive-layout {
+    .m3-archive-layout,
+    .m3-date-archive {
         padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + 12px);
     }
 }
@@ -130,7 +132,7 @@ body.admin-bar .m3-header {
         gap: 2px;
         border-radius: 20px;
         font-size: 0.78rem;
-        line-height: 1;
+        line-height: 1.4;
         white-space: nowrap;
     }
 

@@ -115,6 +115,23 @@ function node_get_advanced_search_args( $params ) {
 		$args['date_query'] = array( $date_query );
 	}
 
+	// 3.5 並び順（メイン検索と件数取得で同じ契約を共有する）
+	$sort = isset( $params['m3_sort'] ) ? sanitize_key( $params['m3_sort'] ) : '';
+	if ( 'word_count' === $sort ) {
+		$args['meta_key'] = '_node_char_count';
+		$args['orderby']  = 'meta_value_num';
+		$args['order']    = 'DESC';
+	} elseif ( 'oldest' === $sort ) {
+		$args['orderby'] = 'date';
+		$args['order']   = 'ASC';
+	} elseif ( 'newest' === $sort ) {
+		$args['orderby'] = 'date';
+		$args['order']   = 'DESC';
+	} elseif ( 'alpha' === $sort ) {
+		$args['orderby'] = 'title';
+		$args['order']   = 'ASC';
+	}
+
 	// 4. AI生成フィルタ
 	if ( ! empty( $params['m3_ai'] ) && $params['m3_ai'] !== 'all' ) {
 		if ( $params['m3_ai'] === 'only' ) {
@@ -147,7 +164,17 @@ function node_get_advanced_search_args( $params ) {
 
 	// 5.5 メディアタイプ・埋め込みフィルタ (Content Search)
 	if ( ! empty( $params['m3_media_type'] ) ) {
-		$types = (array) $params['m3_media_type'];
+		$allowed_types = array( 'image', 'video', 'map', 'youtube', 'sns', 'download' );
+		$types         = array_map( 'sanitize_key', (array) $params['m3_media_type'] );
+		$types         = array_values( array_intersect( $types, $allowed_types ) );
+
+		if ( empty( $types ) ) {
+			return $args;
+		}
+
+		// リクエストのグローバル値ではなく、WP_Query 自身へ条件を渡す。
+		// これによりGETの検索結果とPOSTのAJAX件数が同じ条件で評価される。
+		$args['node_media_types'] = $types;
 		// フィルタを一回だけ追加するようにする（グローバルなどで管理）
 		if ( ! has_filter( 'posts_where', 'node_content_media_search_filter' ) ) {
 			add_filter( 'posts_where', 'node_content_media_search_filter', 10, 2 );
@@ -165,7 +192,8 @@ function node_content_media_search_filter( $where, $query ) {
 
 	// メインクエリまたは特定の AJAX クエリでのみ動作させる
 	if ( ( $query->is_main_query() && $query->is_search() ) || $query->get( 'node_is_ajax_search' ) ) {
-		$types = isset( $_GET['m3_media_type'] ) ? (array) $_GET['m3_media_type'] : array();
+		$types      = (array) $query->get( 'node_media_types' );
+		$conditions = array();
 		
 		foreach ( $types as $type ) {
 			$pattern = '';
@@ -177,9 +205,13 @@ function node_content_media_search_filter( $where, $query ) {
 			elseif ( $type === 'download' ) $pattern = '\\.(pdf|zip|exe|dmg|rar|7z)';
 			
 			if ( ! empty( $pattern ) ) {
-				// 各条件を AND で結合
-				$where .= " AND {$wpdb->posts}.post_content REGEXP '" . esc_sql( $pattern ) . "'";
+				$conditions[] = "{$wpdb->posts}.post_content REGEXP '" . esc_sql( $pattern ) . "'";
 			}
+		}
+
+		// 同一ファセット内の複数選択はOR。例:「画像」「動画」なら、どちらかを含む記事。
+		if ( ! empty( $conditions ) ) {
+			$where .= ' AND (' . implode( ' OR ', $conditions ) . ')';
 		}
 	}
 
@@ -194,50 +226,63 @@ function node_advanced_search_query( $query ) {
 		return;
 	}
 
+	// 件数取得AJAX（node_get_search_count_for_params）と同じ母集合で検索する。
+	// これが無いとメイン検索に固定ページ等が混ざり、モーダルの件数表示と結果が食い違う。
+	$query->set( 'post_type', 'post' );
+	$query->set( 'post_status', 'publish' );
+
 	$advanced_args = node_get_advanced_search_args( $_GET );
 
-	if ( ! empty( $advanced_args['tax_query'] ) ) {
-		$query->set( 'tax_query', $advanced_args['tax_query'] );
-	}
-	if ( ! empty( $advanced_args['meta_query'] ) ) {
-		$query->set( 'meta_query', $advanced_args['meta_query'] );
-	}
-	if ( ! empty( $advanced_args['date_query'] ) ) {
-		$query->set( 'date_query', $advanced_args['date_query'] );
-	}
+	$forwarded_keys = array(
+		'tax_query',
+		'meta_query',
+		'date_query',
+		'meta_key',
+		'orderby',
+		'order',
+		'node_media_types',
+	);
 
-	// 並び替え
-	$sort = isset( $_GET['m3_sort'] ) ? sanitize_text_field( $_GET['m3_sort'] ) : '';
-	if ( $sort === 'word_count' ) {
-		$query->set( 'meta_key', '_node_char_count' );
-		$query->set( 'orderby', 'meta_value_num' );
-		$query->set( 'order', 'DESC' );
-	} elseif ( $sort === 'oldest' ) {
-		$query->set( 'orderby', 'date' );
-		$query->set( 'order', 'ASC' );
-	} elseif ( $sort === 'newest' ) {
-		$query->set( 'orderby', 'date' );
-		$query->set( 'order', 'DESC' );
-	} elseif ( $sort === 'alpha' ) {
-		$query->set( 'orderby', 'title' );
-		$query->set( 'order', 'ASC' );
+	foreach ( $forwarded_keys as $key ) {
+		if ( ! empty( $advanced_args[ $key ] ) ) {
+			$query->set( $key, $advanced_args[ $key ] );
+		}
 	}
 }
 add_action( 'pre_get_posts', 'node_advanced_search_query' );
 
 /**
+ * 件数取得AJAXで使うPOSTパラメータを返す。
+ *
+ * @return array<string, mixed>
+ */
+function node_get_search_count_request_params() {
+	return wp_unslash( $_POST );
+}
+
+/**
+ * 詳細検索条件に一致する公開記事数を返す。
+ *
+ * @param array<string, mixed> $params 検索条件。
+ */
+function node_get_search_count_for_params( $params ) {
+	$args                       = node_get_advanced_search_args( $params );
+	$args['posts_per_page']     = 1;
+	$args['fields']             = 'ids';
+	$args['no_found_rows']      = false;
+	$args['node_is_ajax_search'] = true;
+
+	$query = new WP_Query( $args );
+
+	return (int) $query->found_posts;
+}
+
+/**
  * AJAXで検索ヒット件数を取得する
  */
 function node_ajax_get_search_count() {
-	$args = node_get_advanced_search_args( $_GET );
-	$args['posts_per_page'] = -1;
-	$args['fields']         = 'ids';
-	$args['node_is_ajax_search'] = true; // カスタムフラグを付与
-	
-	// AJAX時は他のアクションを妨げないよう、一時的にメインクエリっぽく振る舞わせる（必要なら）
-	$query = new WP_Query( $args );
-	$count = $query->found_posts;
-	
+	$count = node_get_search_count_for_params( node_get_search_count_request_params() );
+
 	wp_send_json_success( array( 'count' => $count ) );
 }
 add_action( 'wp_ajax_node_get_search_count', 'node_ajax_get_search_count' );

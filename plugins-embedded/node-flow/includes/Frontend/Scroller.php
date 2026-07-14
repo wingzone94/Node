@@ -67,6 +67,49 @@ class Scroller {
     }
 
     /**
+     * クライアントから届く query 配列を、無限スクロールに必要な既知キーだけに絞る。
+     *
+     * get_current_query_vars() が実際にJSへ渡すのは標準アーカイブ（カテゴリー / タグ /
+     * 検索 / 投稿者 / 日付 / シリーズ）の絞り込み変数のみ。ここではその許可キーだけを
+     * 通し、meta_query / post_type / post_status など WP_Query への任意注入を遮断する。
+     * post_type / post_status は呼び出し側で publish・post に強制するため許可しない。
+     *
+     * @param array $query_params クライアント由来の query 配列。
+     * @return array 許可キーのみを残したクエリ変数。
+     */
+    private function whitelist_query_vars( array $query_params ) {
+        $allowed_keys = [
+            // カテゴリーアーカイブ
+            'cat',
+            'category_name',
+            // タグアーカイブ
+            'tag',
+            'tag_id',
+            // 検索
+            's',
+            // 投稿者アーカイブ
+            'author',
+            'author_name',
+            // 日付アーカイブ
+            'year',
+            'monthnum',
+            'day',
+            'w',
+            // シリーズ（node_series タクソノミー）
+            'node_series',
+        ];
+
+        $safe = [];
+        foreach ( $allowed_keys as $key ) {
+            if ( isset( $query_params[ $key ] ) && '' !== $query_params[ $key ] && [] !== $query_params[ $key ] ) {
+                $safe[ $key ] = $query_params[ $key ];
+            }
+        }
+
+        return $safe;
+    }
+
+    /**
      * REST API コールバック: 投稿のHTML片を返す
      */
     public function get_posts_html( \WP_REST_Request $request ) {
@@ -77,8 +120,13 @@ class Scroller {
             $query_params = [];
         }
 
-        $args = array_merge( $query_params, [
+        // セキュリティ: クライアント由来の query は既知キーだけに絞り込む。
+        // meta_query / post_type / post_status などの任意注入を防ぐ（F-4）。
+        $safe_query = $this->whitelist_query_vars( $query_params );
+
+        $args = array_merge( $safe_query, [
             'paged'       => $page,
+            'post_type'   => 'post',
             'post_status' => 'publish',
         ]);
 

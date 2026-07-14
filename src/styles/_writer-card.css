@@ -42,12 +42,12 @@
 .m3-writer-card__label {
     font-size: 1rem;
     font-weight: 800;
-    color: var(--md-sys-color-on-surface);
+    color: #FFFFFF;
     margin: 0 0 6px 0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    background: var(--md-sys-color-surface);
-    padding: 4px 12px;
+    background: #FF9900;
+    padding: 4px 14px;
     border-radius: 100px;
     box-shadow: var(--m3-elevation-1);
 }
@@ -77,8 +77,16 @@
     flex-grow: 1;
 }
 
+.m3-writer-card__name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-bottom: 8px;
+}
+
 .m3-writer-card__name {
-    margin: 0 0 8px 0;
+    margin: 0;
     font-size: 1.25rem;
     font-weight: 900;
     color: var(--md-sys-color-on-surface);
@@ -93,26 +101,114 @@
 
 .m3-writer-card__sns {
     display: flex;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.m3-sns-icon {
-    width: 36px;
-    height: 36px;
-    display: flex;
+/* SNS・Webサービスのピル型チップ（M3 assist chip調）
+ * ブランドあり: 各サービスのイメージカラー（--writer-pill-bg/fg をテンプレート側で注入）
+ * ブランドなし: 白背景（ライト/ダーク共通） */
+.m3-writer-pill {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface-variant);
+    gap: 8px;
+    padding: 6px 14px 6px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--writer-pill-bg, #FFFFFF);
+    color: var(--writer-pill-fg, #45413B);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
     text-decoration: none;
-    transition: all 0.2s var(--m3-motion-easing);
+    transition: filter 0.2s var(--m3-motion-easing), box-shadow 0.2s var(--m3-motion-easing), transform 0.2s var(--m3-motion-easing);
 }
 
-.m3-sns-icon:hover {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    transform: scale(1.1);
+.m3-writer-pill--brand {
+    border-color: transparent;
+}
+
+.m3-writer-pill:hover {
+    filter: brightness(1.08);
+    box-shadow: var(--m3-elevation-1);
+    transform: translateY(-2px);
+}
+
+.m3-writer-pill:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.m3-writer-pill__icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    fill: currentColor;
+}
+
+.m3-writer-pill__symbol {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.m3-writer-pill__label {
+    white-space: nowrap;
+}
+
+/* ライターごとの記事一覧チップ（白背景×ブランドオレンジ #FF9900 の融合UI）
+ * WRITER INFO ラベル（#FF9900塗り）と対になる白ベースのチップ。
+ * 件数バッジだけ #FF9900 を反転で載せ、2つの要素で色を往復させる */
+.m3-writer-card__archive-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px 5px 12px;
+    border-radius: 100px;
+    border: 1.5px solid #FF9900;
+    background: #FFFFFF;
+    color: #DE7A00;
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    transition: background-color 0.2s var(--m3-motion-easing), box-shadow 0.2s var(--m3-motion-easing), transform 0.2s var(--m3-motion-easing);
+}
+
+.m3-writer-card__archive-link:hover {
+    background: #FFF4E2;
+    box-shadow: 0 2px 10px rgba(255, 153, 0, 0.28);
+    transform: translateY(-2px);
+}
+
+.m3-writer-card__archive-link:focus-visible {
+    outline: 2px solid #FF9900;
+    outline-offset: 2px;
+}
+
+.m3-writer-card__archive-link .material-symbols-outlined {
+    font-size: 16px;
+    color: #FF9900;
+}
+
+.m3-writer-card__archive-count {
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: #FF9900;
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+/* ダークモード: 白ピルのままだと面だけ浮くため、カード面に馴染む暗色ベースへ。
+   ボーダーと件数バッジの #FF9900 はそのまま「色の往復」を維持する */
+[data-theme="dark"] .m3-writer-card__archive-link {
+    background: var(--md-sys-color-surface-container-high);
+    color: #FFB566;
+}
+
+[data-theme="dark"] .m3-writer-card__archive-link:hover {
+    background: color-mix(in srgb, #FF9900 16%, var(--md-sys-color-surface-container-high));
+    box-shadow: 0 2px 10px rgba(255, 153, 0, 0.2);
 }
 
 @media (max-width: 600px) {
@@ -121,8 +217,41 @@
         align-items: center;
         text-align: center;
     }
-    
+
     .m3-writer-card__sns {
         justify-content: center;
+        gap: 10px;
     }
+
+    .m3-writer-card__name-row {
+        justify-content: center;
+    }
+
+    /* モバイルはフルサイズピルをやめ、フッターのソーシャルボタンと同じ
+       円形アイコンに短縮する（ラベルは title / aria-label で保持） */
+    .m3-writer-pill {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .m3-writer-pill__label {
+        display: none;
+    }
+
+    .m3-writer-pill__icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .m3-writer-pill__symbol {
+        font-size: 20px;
+    }
+}
+
+/* ダークモード: 黒系ブランド（X/GitHub）のピルが背景に沈まないよう微細な縁取り */
+[data-theme="dark"] .m3-writer-pill--brand {
+    border-color: color-mix(in srgb, #FFFFFF 18%, transparent);
 }

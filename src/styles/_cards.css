@@ -10,7 +10,8 @@
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: 32px;
     width: 100%;
-    align-items: start;
+    /* 行内のカード高さを揃える（画像あり/なし混在時のがたつき防止） */
+    align-items: stretch;
 }
 
 /* LATESTセクション専用のコンテナ設定 (Ver 0.7.0) */
@@ -19,7 +20,7 @@
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
     gap: 40px;
     width: 100%;
-    align-items: start;
+    align-items: stretch;
     margin-bottom: 48px;
 }
 
@@ -40,10 +41,13 @@
 .m3-post-grid__container.m3-post-grid--list .m3-card__visual {
     width: 280px;
     flex-shrink: 0;
+    /* 横並び時は自然なアスペクト比の画像を縦中央に置く（バー埋めはしない） */
+    display: flex;
+    align-items: center;
 }
 
 .m3-post-grid__container.m3-post-grid--list .m3-card__image-link {
-    height: 100%;
+    height: auto;
 }
 
 .m3-post-grid__container.m3-post-grid--list .m3-card__content {
@@ -132,27 +136,42 @@
 
 .m3-card__image-link {
     display: block;
+    position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
     overflow: hidden;
 }
 
 .m3-card__image-link img {
+    /* 幅に合わせて縮尺を自動調整し、自然なアスペクト比のまま全体を見せる。
+       固定16:9枠＋ぼかしレターボックス（サイドパネル）は違和感が強いため廃止。 */
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    display: block;
     transition: transform 0.6s var(--m3-motion-easing);
 }
 
-/* 2. Labels (Ver 0.7.0 Style: Absolute Top-Left & Orange Pills) */
-.m3-card__labels {
+/* Dark surfaces need a restrained image luminance so bright thumbnails do not
+   read like separate light-mode panels. Keep the source image unchanged. */
+.m3-card__image-gradient {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    inset: 0;
+    pointer-events: none;
+    transition: background-color 0.3s var(--m3-motion-easing);
+}
+
+[data-theme="dark"] .m3-card__image-gradient {
+    background-color: rgb(0 0 0 / 22%);
+}
+
+[data-theme="dark"] .m3-card:hover .m3-card__image-gradient {
+    background-color: rgb(0 0 0 / 12%);
+}
+
+/* 2. Labels (v1.2: 画像に重ねない通常フロー配置) */
+.m3-card__labels {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    z-index: 10;
 }
 
 /* --- No Image Card Adjustments (Ver 0.7.0) --- */
@@ -172,12 +191,9 @@
     margin-bottom: 12px;
 }
 
-/* No-image adjustments: Global Compact Style */
-.m3-card--no-image {
-    height: auto !important;
-    min-height: auto !important;
-}
-
+/* No-image adjustments:
+   標準グリッドでは行の高さいっぱいに伸ばして揃える（height強制はしない）。
+   リスト系ビューは個別ルール（--list / --2col-list）側で高さを制御する。 */
 .m3-card--no-image .m3-card__content {
     padding-top: 24px;
 }
@@ -200,32 +216,31 @@
     flex-direction: row !important;
 }
 
-/* Ensure heights are natural in the grid */
+/* Ensure rows align evenly in the grid */
 .m3-post-grid__container:not(.m3-post-grid--list) {
-    align-items: start;
+    align-items: stretch;
 }
 
-/* Badge Area (Remaining badges on image like AI summary) */
-.m3-card__labels {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 10;
+/* Badge Area: v1.2からアイキャッチに重ねず、本文エリアのカテゴリ行右端に置く */
+.m3-card__topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.m3-card__topline .m3-card__category-container {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.m3-card__labels--inline {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    pointer-events: none;
-}
-
-.m3-card__labels > * {
-    pointer-events: auto;
-}
-
-.m3-card__labels--no-image {
-    position: static !important;
-    transform: none !important;
-    margin-bottom: 12px;
-    padding: 0;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 /* Label Styling */
@@ -399,45 +414,34 @@
     color: inherit;
 }
 
-/* AI Accordion */
-.m3-card__ai-accordion {
-    background: var(--md-sys-color-surface-container-highest);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--md-sys-color-outline-variant);
+/* --- カード全面クリック（stretched link 方式） ---
+   タイトルリンクの当たり判定を ::after でカード全体へ広げる。
+   リンクは1つのままなのでスクリーンリーダー/タブ移動の冗長化を避けられる。
+   カード内の他の操作対象（カテゴリ・バッジ・AI要約アコーディオン）は
+   z-index で上に逃がして個別クリックを維持する。 */
+.m3-card__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
 }
 
-.m3-card__ai-summary-toggle {
-    padding: 10px 12px;
-    cursor: pointer;
-    list-style: none;
+.m3-card__title a:focus-visible::after {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: -2px;
+    border-radius: 28px;
 }
 
-.m3-card__ai-toggle-inner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--md-sys-color-primary);
-}
-
-.m3-card__ai-body {
-    padding: 0 12px 12px;
-}
-
-.m3-card__ai-text {
-    font-size: 0.8rem;
-    line-height: 1.5;
-    margin: 0;
-    color: var(--md-sys-color-on-surface-variant);
-}
-
+.m3-card .m3-card__category-container,
+.m3-card .m3-card__labels--inline,
 /* 4. Footer */
 .m3-card__footer {
     margin-top: auto;
     padding-top: 16px;
     display: flex;
+    /* 極小幅では日付ブロックごと著者名の下へ折り返す（途中改行はさせない） */
+    flex-wrap: wrap;
+    row-gap: 6px;
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid var(--md-sys-color-outline-variant);
@@ -456,6 +460,25 @@
     border: 1px solid var(--md-sys-color-outline-variant);
 }
 
+.m3-card__dates {
+    /* 投稿日と追記日は常に1行（追記日は短縮表記で幅を確保） */
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    column-gap: 10px;
+    min-width: 0;
+    /* フッターが2段組に折り返した際も右寄せを維持 */
+    margin-left: auto;
+}
+
+/* 極小幅では相対時間「（N時間前）」を隠して1行を維持する */
+@media (max-width: 374px) {
+    .m3-card__date-rel {
+        display: none;
+    }
+}
+
 .m3-card__date {
     display: flex;
     align-items: center;
@@ -463,10 +486,22 @@
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--md-sys-color-on-surface-variant);
+    /* 和文カーニングで全角の年月日・括弧のアキを詰める */
+    font-feature-settings: "palt";
+    font-variant-numeric: tabular-nums;
+    /* 「（N時間前）」の途中で折り返させない */
+    white-space: nowrap;
 }
 
 .m3-card__date .material-symbols-outlined {
     font-size: 14px;
+}
+
+/* 追記日（最終更新日）: 公開日より一段控えめに */
+.m3-card__date--modified {
+    font-size: 0.7rem;
+    font-weight: 700;
+    opacity: 0.85;
 }
 
 @media (min-width: 1024px) {

@@ -113,14 +113,14 @@ Phase D                 v1.3モバイルナビ本体
 - 想定リスク: ほぼゼロ。万一失敗してもマップ埋め込みが「変換できず空文字→カードフォールバック」に落ちるだけ。
 - 三層・sslverify根拠: sslverify=true原則の回復そのもの。
 
-**F-3: `save_order_meta_box()` のガード追加**
+**F-3: `save_order_meta_box()` のガード追加** — ✅ 実施済み（2026-07-13 Round 5。3ガード追加、T-5テスト3件追補〈リビジョンガード・権限ガード・キルチェーン回帰〉、全80件パス。Classic Editor実機検証: 2回連続の本文変更更新でorder=3保持・リビジョン4本・term汚染ゼロ確認）
 - 対象: `plugins-embedded/node-series/node-series.php`
 - 意図: リビジョン/オートセーブ/権限のガードが無く、リビジョンIDに対する term割当・メタ書込（データ汚染）が起こり得る。
 - 最小差分方針: 冒頭に `wp_is_post_revision` / `wp_is_post_autosave` / `current_user_can('edit_post')` の3ガードを追加（`enforce_max_posts_per_series` と同型）。
 - 想定リスク: 既存の正常保存経路には無影響（既存14テストがそのまま回帰網になる）。
 - 三層根拠: 状態管理の堅牢化はNode Utility内で完結。通信なし。
 
-**F-4: node-flow REST クエリのホワイトリスト化**
+**F-4: node-flow REST クエリのホワイトリスト化** — ✅ 実施済み（2026-07-13 Round 5。`whitelist_query_vars()` 導入、T-9テスト `tests/node-flow-rest-test.php` 9件追加）
 - 対象: `plugins-embedded/node-flow/includes/Frontend/Scroller.php`
 - 意図: クライアント任意の `query` を WP_Query に直マージしている入力面を閉じる（meta_query/post_type等の外部注入防止）。本番で稼働中のため①。
 - 最小差分方針: `get_posts_html()` で許可キーのみ抽出（`cat, tag, s, author, year, monthnum, day, node_series` 等、`get_current_query_vars()` が実際に渡すもの）。`post_status=publish` 強制は維持。
@@ -129,7 +129,7 @@ Phase D                 v1.3モバイルナビ本体
 
 ### ②v1.2内
 
-**F-9: シリーズ目次クエリの「順序メタ無し記事」包含**（F-1の前に実施可・独立）
+**F-9: シリーズ目次クエリの「順序メタ無し記事」包含**（F-1の前に実施可・独立） — ✅ 実施済み（2026-07-13 Round 5。実装は meta_query OR ではなく tax_query＋usort で同等挙動を実現〈許容逸脱〉。T-5追補・APIスキーマ凍結テスト済み）
 - 対象: `node-series.php` `node_series_get_posts()`
 - 意図: 現行は `meta_key` 指定によるINNER JOINで、**順序メタ未設定の記事（クイック編集でのシリーズ割当等）が目次・話数計算から静かに脱落**し、「自分が載っていない目次」が出る。
 - 最小差分方針: `meta_query` を `relation=OR`（EXISTS / NOT EXISTS）にし、orderby を `メタ値昇順→日付昇順` に維持。メタ無しは末尾へ。

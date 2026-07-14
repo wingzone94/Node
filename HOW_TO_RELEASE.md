@@ -38,11 +38,29 @@ NODE_VISUAL_PATHS="/,/sample-post/,/category/news/,/?s=node" bun run verify:visu
 
 スクリーンショットは `scratch/visual-check/` 以下に保存されます。検査が失敗した場合、HTTPエラー、ブラウザエラー、文字の横はみ出し、縦方向のクリップ、極端に詰まった行間の候補を確認し、問題が残る場合はZIP生成に進みません。
 
+### 2-b. Node Library 回帰スイート（Node Libraryコード変更時は必須）
+
+Node Library（`plugins-embedded/node-library/`）のコードを変更したリリースでは、ZIP生成前に回帰スイートを必ず実行します（NODE_LIBRARY_REGRESSION_PLAN.md 準拠）。
+
+```bash
+# 1. フィクスチャ記事の決定的再作成（LocalWPのphpバイナリで実行）
+"/Users/saitoutatsuya/Library/Application Support/Local/lightning-services/php-8.2.30+1/bin/darwin/bin/php" \
+  -d mysqli.default_socket="/Users/saitoutatsuya/Library/Application Support/Local/run/Q39UjXsTt/mysql/mysqld.sock" \
+  scripts/library-fixtures.php
+
+# 2. Playwright回帰チェック（タブ・ボタン・注記・Steamトグル・機種警告・モバイル幅）
+bun scripts/library-regression.mjs
+```
+
+全項目passし、代表スクリーンショット（`scratch/library-regression/`）を確認できるまでZIP生成に進みません。フィクスチャは `node-library-regression-*` スラッグのみ操作するため、実運用データには影響しません。
+
 ## 3. 不要なファイルのクリーンアップ（任意）
 開発時のキャッシュファイルや不要な`.DS_Store`ファイルなどが混入しないよう整理します。
 
 ## 4. 本番用ZIPファイルの生成
 プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
+
+配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
 
 ```bash
 rm -f node.zip
@@ -58,10 +76,24 @@ rsync -a \
   --exclude='.cursor/' \
   --exclude='.gemini/' \
   --exclude='.codex/' \
+  --exclude='.claude/' \
   --exclude='.agents/' \
   --exclude='scratch/' \
   --exclude='production_plugins/' \
   --exclude='src/' \
+  --exclude='vendor/' \
+  --exclude='tests/' \
+  --exclude='test-results/' \
+  --exclude='composer.json' \
+  --exclude='composer.lock' \
+  --exclude='phpunit.xml.dist' \
+  --exclude='.phpunit.result.cache' \
+  --exclude='STATUS.md' \
+  --exclude='NODE-2.0.md' \
+  --exclude='STRUCTURAL-REVIEW-1.2.md' \
+  --exclude='REFACTORING_PLAN.md' \
+  --exclude='NODE_LIBRARY_REGRESSION_PLAN.md' \
+  --exclude='1.2*.md' \
   --exclude='AGENTS.md' \
   --exclude='GEMINI.md' \
   --exclude='AI.md' \

@@ -176,7 +176,17 @@ function node_the_breadcrumbs() {
     echo '<a itemprop="item" href="' . esc_url( home_url( '/' ) ) . '"><span itemprop="name">ホーム</span></a>';
     echo '<meta itemprop="position" content="1" /></li>';
 
-    if ( is_singular() ) {
+    if ( is_singular( 'node_library' ) ) {
+        $library_url = get_post_type_archive_link( 'node_library' );
+        echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
+        echo '<li class="m3-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
+        echo '<a itemprop="item" href="' . esc_url( $library_url ) . '"><span itemprop="name">Node Library</span></a>';
+        echo '<meta itemprop="position" content="2" /></li>';
+        echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
+        echo '<li class="m3-breadcrumbs__item m3-breadcrumbs__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
+        echo '<span itemprop="name">' . esc_html( get_the_title() ) . '</span>';
+        echo '<meta itemprop="position" content="3" /></li>';
+    } elseif ( is_singular() ) {
         $cat = node_get_primary_category();
         if ( $cat ) {
             echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
@@ -188,6 +198,28 @@ function node_the_breadcrumbs() {
         echo '<li class="m3-breadcrumbs__item m3-breadcrumbs__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
         echo '<span itemprop="name">' . esc_html( get_the_title() ) . '</span>';
         echo '<meta itemprop="position" content="3" /></li>';
+    } elseif ( is_year() || is_month() || is_day() ) {
+        $pos = 2;
+        $y = (int) get_query_var( 'year' );
+        $m = (int) get_query_var( 'monthnum' );
+        $d = (int) get_query_var( 'day' );
+        if ( is_month() || is_day() ) {
+            echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
+            echo '<li class="m3-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
+            echo '<a itemprop="item" href="' . esc_url( get_year_link( $y ) ) . '"><span itemprop="name">' . esc_html( $y . '年' ) . '</span></a>';
+            echo '<meta itemprop="position" content="' . $pos++ . '" /></li>';
+        }
+        if ( is_day() ) {
+            echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
+            echo '<li class="m3-breadcrumbs__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
+            echo '<a itemprop="item" href="' . esc_url( get_month_link( $y, $m ) ) . '"><span itemprop="name">' . esc_html( $m . '月' ) . '</span></a>';
+            echo '<meta itemprop="position" content="' . $pos++ . '" /></li>';
+        }
+        $current_label = is_year() ? $y . '年' : ( is_month() ? $m . '月' : $d . '日' );
+        echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
+        echo '<li class="m3-breadcrumbs__item m3-breadcrumbs__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';
+        echo '<span itemprop="name">' . esc_html( $current_label ) . '</span>';
+        echo '<meta itemprop="position" content="' . $pos . '" /></li>';
     } elseif ( is_category() || is_tag() || is_tax() ) {
         echo '<li class="m3-breadcrumbs__separator"><span class="material-symbols-outlined">chevron_right</span></li>';
         echo '<li class="m3-breadcrumbs__item m3-breadcrumbs__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">';

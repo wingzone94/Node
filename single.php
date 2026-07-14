@@ -16,11 +16,9 @@
             
 
             <?php
-                        // AI 要約を取得
                         $ai_summary    = get_post_meta( get_the_ID(), '_node_ai_summary', true );
                         $tone_color    = get_post_meta( get_the_ID(), '_node_ai_tone_color', true );
                         $keywords      = get_post_meta( get_the_ID(), '_node_ai_keywords', true );
-                        // コンポーネントへ渡す引数配列
                         $ai_args = array(
                             'summary'    => $ai_summary,
                             'mode'       => 'single',

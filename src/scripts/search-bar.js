@@ -281,10 +281,13 @@ export function initSearchBar() {
 
     // --- Search Hit Counter ---
     let debounceTimer;
+    let countRequestController;
+    let countRequestSequence = 0;
     function updateHitCount() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             const data = new FormData();
+            data.append('s', searchInput.value.trim());
             modal.querySelectorAll('input, select').forEach(input => {
                 if (input.type === 'checkbox' || input.type === 'radio') {
                     if (input.checked) data.append(input.name, input.value);
@@ -298,15 +301,22 @@ export function initSearchBar() {
 
             const counter = document.getElementById('m3-search-hit-count');
             const applyBtn = document.getElementById('m3-advanced-search-apply');
+            const requestSequence = ++countRequestSequence;
+
+            countRequestController?.abort();
+            countRequestController = new AbortController();
 
             if (counter) counter.style.opacity = '0.5';
 
             fetch(m3_ajax.ajax_url, {
                 method: 'POST',
-                body: params
+                body: params,
+                signal: countRequestController.signal
             })
                 .then(res => res.json())
                 .then(res => {
+                    if (requestSequence !== countRequestSequence) return;
+
                     if (res.success && counter) {
                         counter.textContent = res.data.count;
                         counter.style.opacity = '1';
@@ -316,6 +326,17 @@ export function initSearchBar() {
                             applyBtn.style.opacity = res.data.count === 0 ? '0.5' : '1';
                         }
                     }
+                })
+                .catch(error => {
+                    if (error.name !== 'AbortError' && requestSequence === countRequestSequence && counter) {
+                        counter.textContent = '—';
+                        counter.style.opacity = '1';
+                        if (applyBtn) {
+                            // 件数取得の失敗を「0件」と扱わず、通常の検索送信は許可する。
+                            applyBtn.disabled = false;
+                            applyBtn.style.opacity = '1';
+                        }
+                    }
                 });
         }, 300);
     }
@@ -323,6 +344,9 @@ export function initSearchBar() {
     modal.querySelectorAll('input, select').forEach(input => {
         input.addEventListener('change', () => { updateHitCount(); updateTabStatus(); });
         if (input.type === 'text' || input.type === 'number') input.addEventListener('input', () => { updateHitCount(); updateTabStatus(); });
+    });
+    searchInput.addEventListener('input', () => {
+        if (modal.classList.contains('is-active')) updateHitCount();
     });
 
     // --- Apply Search ---
@@ -368,7 +392,7 @@ export function initSearchBar() {
     modalReset?.addEventListener('click', () => {
         modal.querySelectorAll('input, select').forEach(input => {
             if (input.type === 'checkbox') input.checked = false;
-            else if (input.type === 'radio') input.checked = (input.value === 'all' || input.value === 'date');
+            else if (input.type === 'radio') input.checked = (input.value === 'all' || input.value === 'date' || input.value === 'newest');
             else if (input.tagName === 'SELECT') input.selectedIndex = 0;
             else if (input.id === 'm3-min-chars') input.value = 0;
             else if (input.id === 'm3-max-chars') input.value = 10000;

@@ -21,6 +21,9 @@ $links        = array_values(
 );
 $header_text  = get_option( 'node_library_header_text', 'GAME / APP INFO' );
 $button_text  = get_option( 'node_library_button_text', 'で見る' );
+$library_permalink = isset( $lib_post ) && $lib_post instanceof WP_Post && 'node_library' === $lib_post->post_type
+    ? get_permalink( $lib_post )
+    : '';
 $store_tabs_id = wp_unique_id( 'node-library-store-tabs-' );
 $badge_base_url = defined( 'NODE_LIBRARY_BADGE_BASE_URL' )
     ? NODE_LIBRARY_BADGE_BASE_URL
@@ -498,6 +501,13 @@ $render_store_link  = static function ( $link ) use ( $button_text, $badge_base_
         <h4 class="m3-game-card__title"><?php echo esc_html($title); ?></h4>
         <?php if ($summary) : ?>
             <p class="m3-game-card__summary"><?php echo esc_html($summary); ?></p>
+        <?php endif; ?>
+
+        <?php if ( $library_permalink ) : ?>
+            <a class="m3-game-card__details-link" href="<?php echo esc_url( $library_permalink ); ?>">
+                <?php esc_html_e( '詳細を見る', 'node-library' ); ?>
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </a>
         <?php endif; ?>
 
         <?php if ( ! empty( $store_groups ) ) : ?>

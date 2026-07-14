@@ -1,6 +1,4 @@
 <?php
-get_header();
-
 $paged            = max( 1, (int) get_query_var( 'paged' ) );
 $per_page         = max( 1, (int) NODE_ALL_ARTICLES_PER_PAGE );
 $total_limit      = max( 1, (int) NODE_ALL_ARTICLES_TOTAL_LIMIT );
@@ -16,6 +14,8 @@ if ( $paged > $total_pages ) {
 	include get_404_template();
 	exit;
 }
+
+get_header();
 
 $offset     = ( $paged - 1 ) * $per_page;
 $remaining  = max( 0, $total_displaying - $offset );
@@ -64,7 +64,6 @@ $archive_base = trailingslashit( node_get_all_articles_url() );
 						null,
 						array(
 							'card_class' => 'card-standard',
-							'show_ai'    => false,
 						)
 					);
 				endwhile;
