@@ -240,6 +240,23 @@
     width: 161px;
 }
 
+/* App Store / Google Play もバッジ画像からリンクさせる（ピルは使わない）。 */
+.m3-platform-store-badge-link:not(.m3-platform-store-badge-link--always) {
+    display: inline-flex;
+}
+
+.m3-platform-action--qr .m3-platform-button--desktop {
+    display: none;
+}
+
+.m3-platform-store-badge-link--ios .m3-platform-store-badge {
+    width: 148px;
+}
+
+.m3-platform-store-badge-link--android .m3-platform-store-badge {
+    width: 152px;
+}
+
 .m3-platform-steam-embed {
     width: min(100%, 646px);
     min-height: 190px;
@@ -810,13 +827,8 @@
         min-width: 0;
     }
 
-    .m3-platform-action--qr .m3-platform-button--desktop,
     .m3-platform-action--qr .m3-platform-qr-toggle {
         display: none;
-    }
-
-    .m3-platform-store-badge-link:not(.m3-platform-store-badge-link--always) {
-        display: inline-flex;
     }
 
     .m3-platform-store-badge-link--ios .m3-platform-store-badge {

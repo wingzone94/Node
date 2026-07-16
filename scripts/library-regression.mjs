@@ -36,7 +36,9 @@ function check(fixture, label, ok, detail = '') {
 /** 現在可視のプラットフォームボタン（ピル＋常時表示バッジ）を収集する。 */
 async function visibleButtons(page) {
   return page.$$eval(
-    '.node-library-card .m3-platform-button, .node-library-card .m3-platform-store-badge-link--always',
+    // App Store / Google Play はピルではなくバッジ画像リンクから遷移するため、
+    // 常時表示（mac/windows）に限らず全ストアバッジリンクを可視ボタンとして数える。
+    '.node-library-card .m3-platform-button, .node-library-card .m3-platform-store-badge-link',
     (els) =>
       els
         .filter((el) => !el.hidden && el.offsetParent !== null)
