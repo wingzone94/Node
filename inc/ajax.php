@@ -139,6 +139,17 @@ add_action(
 		}
 
 		error_log( 'Luminous Update: Update installed successfully (build: ' . ( $installed_build ?? 'unknown' ) . ')' );
+
+		// Node Connect（有効時のみ購読）へアップデート完了イベントを通知する
+		do_action(
+			'node_connect_event',
+			'node_updated',
+			array(
+				'title'   => 'Node テーマを更新しました',
+				'message' => 'インストールされたビルド: ' . ( $installed_build ?? '不明' ),
+			)
+		);
+
 		wp_send_json_success(
 			array(
 				'message'         => 'Update installed successfully',

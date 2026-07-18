@@ -105,6 +105,7 @@ rsync -a \
   --exclude='.phpunit.result.cache' \
   --exclude='STATUS.md' \
   --exclude='NODE-2.0.md' \
+  --exclude='NODE-1.3.md' \
   --exclude='STRUCTURAL-REVIEW-1.2.md' \
   --exclude='REFACTORING_PLAN.md' \
   --exclude='NODE_LIBRARY_REGRESSION_PLAN.md' \

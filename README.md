@@ -1,7 +1,7 @@
 # Node
 ### WordPress Theme for Luminous Core
 
-![Version](https://img.shields.io/badge/version-1.2.0-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.2.1-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0+-21759b?style=for-the-badge&logo=wordpress)
 
@@ -18,6 +18,12 @@ README は導入と運用ガイドに集中し、リリース履歴は `CHANGELO
 - **プラットフォーム・ブランド連携:** デバイスごとの公式ブランドカラーをUIに反映（Windows, iOS, Android, Nintendo, PlayStation, Xbox）。
 - **AI 連携:** Gemini API を活用した記事要約（保存済みデータの高速表示に対応）。
 - **PWA 対応:** オフライン閲覧やホーム画面へのインストールをサポート。
+
+## v1.2.1 (2026.07.19)
+Node 1.3「Connect」で正式提供予定の外部連携プラグイン **node-connect（ベータ版）** を同梱するマイナーアップデートです。本番環境での動作検証を目的としています。
+
+- **node-connect ベータ版を同梱** — 記事の公開・更新・非公開化・削除を Discord へ自動通知する Webhook 基盤。設定 → 外部連携から Webhook URL（最大3件）とイベントを選んで利用します。テーマZIP内の `plugins-embedded/node-connect/` および `production_plugins/node-connect.zip`（インストール用）として同梱。
+- テーマ更新（Luminous Settings の更新インストール）成功時に `node_connect_event` を発火するフックを追加。
 
 ## v1.2.0 (2026.07.18)
 Node の記事体験を一新するメジャーアップデートです。詳細は [CHANGELOG.md](./CHANGELOG.md) を参照してください。
