@@ -158,13 +158,9 @@
                         <?php
                         if ($reading_info['chars'] > 200) : // 極端に短い記事は非表示
                         ?>
-                        <?php
-                        // ランク連動の信号色（赤=長い等）は読む前の心理的ハードルになるため、
-                        // ヒーロー内は常にブランドオレンジの穏やかなトーンに固定する
-                        ?>
                         <div class="m3-article__reading-badge-expressive m3-ripple-host"
                              id="m3-hero-reading-badge"
-                             style="--reading-color: #FF9900; --reading-bg: #ffe0b3; --reading-rank-color: #DE7A00; --reading-rank-bg: #ffeccf;"
+                             style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>; --reading-rank-color: <?php echo esc_attr($reading_info['badge_color']); ?>; --reading-rank-bg: <?php echo esc_attr($reading_info['badge_bg']); ?>;"
                              role="button"
                              tabindex="0"
                              aria-expanded="false"

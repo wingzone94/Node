@@ -24,7 +24,8 @@
 }
 
 .m3-header.is-hidden {
-    transform: translateY(-100%);
+    /* 管理バー(ログイン時)の分も含めて完全に画面外へ退避させる */
+    transform: translateY(calc(-100% - var(--wp-admin-bar-offset, 0px)));
 }
 
 .m3-header__inner { 

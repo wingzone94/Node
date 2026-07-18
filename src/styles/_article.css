@@ -1450,6 +1450,10 @@
     box-shadow: none;
 }
 
+.m3-article__body sup[data-fn] a[id] {
+    scroll-margin-top: calc(var(--node-header-content-offset) + 16px);
+}
+
 .m3-article__body .wp-block-footnotes li:target {
     border-radius: 16px;
     background: color-mix(in srgb, var(--node-article-accent-container, #fedcbe) 58%, transparent);

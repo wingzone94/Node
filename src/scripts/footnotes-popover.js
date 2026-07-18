@@ -100,7 +100,7 @@ const initFootnoteTabs = () => {
             if (mobile) mobile.textContent = `ページ ${count}件 / 全体 ${totalCount}件`;
         };
 
-        const activate = (targetPage, shouldFocus = false) => {
+        const activate = (targetPage, shouldFocus = false, scrollTabIntoView = true) => {
             let activeTab = null;
 
             tabs.forEach(tab => {
@@ -110,7 +110,19 @@ const initFootnoteTabs = () => {
 
                 if (isActive) {
                     activeTab = tab;
-                    tab.scrollIntoView({ block: 'nearest', inline: 'center' });
+
+                    if (scrollTabIntoView) {
+                        tab.scrollIntoView({ block: 'nearest', inline: 'center' });
+                    } else {
+                        // 初期表示ではページ全体を縦スクロールさせず、タブ帯の中だけ横位置を合わせる
+                        const strip = tab.closest('.node-footnotes__tabs');
+
+                        if (strip) {
+                            const stripRect = strip.getBoundingClientRect();
+                            const tabRect = tab.getBoundingClientRect();
+                            strip.scrollLeft += tabRect.left - stripRect.left - (strip.clientWidth - tabRect.width) / 2;
+                        }
+                    }
 
                     if (shouldFocus) {
                         tab.focus({ preventScroll: true });
@@ -159,7 +171,7 @@ const initFootnoteTabs = () => {
         });
 
         const activeTab = tabs.find(tab => tab.getAttribute('aria-selected') === 'true') || tabs[0];
-        activate(activeTab.dataset.footnoteTab);
+        activate(activeTab.dataset.footnoteTab, false, false);
     });
 };
 
