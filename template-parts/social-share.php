@@ -135,18 +135,18 @@ $misskey_share_url = 'https://misskey-hub.net/share/?text=' . $encoded_title . '
             <span class="m3-share-btn__label">Misskey</span>
         </a>
 
-        <!-- システムシェア (モバイルのみ) -->
-        <?php if (wp_is_mobile()) : ?>
-        <button class="m3-share-btn m3-share-btn--system" 
-                id="m3-system-share-trigger" 
+        <!-- システムシェア: wp_is_mobile() はキャッシュ済みHTMLでUAと食い違うため、
+             常に出力して navigator.share 対応ブラウザのみJSで表示する -->
+        <button class="m3-share-btn m3-share-btn--system"
+                id="m3-system-share-trigger"
                 data-url="<?php echo esc_url($permalink); ?>"
                 data-share-title="<?php echo esc_attr($title); ?>"
-                title="システムシェア" 
-                aria-label="システムのシェア機能を開く">
+                title="システムシェア"
+                aria-label="システムのシェア機能を開く"
+                hidden>
             <span class="material-symbols-outlined" aria-hidden="true">share</span>
             <span class="m3-share-btn__label">シェア</span>
         </button>
-        <?php endif; ?>
 
         <!-- リンクをコピー -->
         <button class="m3-share-btn m3-share-btn--copy" 

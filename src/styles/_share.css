@@ -46,10 +46,16 @@
     overflow: visible !important;
     white-space: nowrap !important; /* 改行を禁止 */
 }
-.m3-share-btn__label { 
-    font-weight: 800 !important; 
+.m3-share-btn__label {
+    font-weight: 800 !important;
     font-size: 13px !important;
-    display: inline !important; 
+    display: inline !important;
+}
+
+/* システムシェアは navigator.share 対応ブラウザでのみJSが hidden を外す。
+   上の display:flex !important に負けないよう明示的に隠す */
+.m3-share-buttons .m3-share-btn--system[hidden] {
+    display: none !important;
 }
 
 /* Mobile Share Buttons - Aggressive Fix */

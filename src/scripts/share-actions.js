@@ -8,6 +8,18 @@
     const copyResetTimers = new WeakMap();
     let copyToastTimer = 0;
 
+    // システムシェアボタンはHTMLでは hidden で出力し、
+    // Web Share API 対応ブラウザ（iOS/Android/macOS Safari/Windows Chrome・Edge等）でのみ表示する
+    const revealSystemShareButtons = () => {
+        if (typeof navigator.share !== 'function') return;
+        document.querySelectorAll('.m3-share-btn--system[hidden]').forEach((btn) => btn.removeAttribute('hidden'));
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', revealSystemShareButtons);
+    } else {
+        revealSystemShareButtons();
+    }
+
     const showCopyToast = () => {
         let toast = document.querySelector('.node-copy-toast');
 
