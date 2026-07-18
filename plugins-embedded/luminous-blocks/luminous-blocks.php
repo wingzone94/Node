@@ -3,7 +3,7 @@
  * Plugin Name:  Node Blocks
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  Gutenberg カスタムブロック（Smart Sort Table, Voting）および外部サービス埋め込み（Apple Music, Spotify, Google Maps）。
- * Version:      1.2.0
+ * Version:      1.2.1
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT

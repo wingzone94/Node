@@ -3,7 +3,7 @@
  * Plugin Name:  Node Interactivity
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  スポイラー（目隠し）、CERO Z 年齢確認ダイアログ。Node テーマと連携。
- * Version:      1.2.0
+ * Version:      1.2.1
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT

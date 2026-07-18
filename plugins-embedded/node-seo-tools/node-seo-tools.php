@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Node SEO Tools
  * Description: X / Discord 向けシェア画像（OGP）の自動生成とメタタグ出力。公式素材をベースに合成します。
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Luminous Core Teams
  * Text Domain: node-seo-tools
  * Requires PHP: 8.0

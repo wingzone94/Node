@@ -3,7 +3,7 @@
  * Plugin Name: Node Flow
  * Plugin URI: https://github.com/wingzone94/Node
  * Description: フロントエンドUXと動的ルーティングを担当するプラグイン。ハイブリッド・スクローラー機能などを提供します。
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Luminous Core Teams
  * Text Domain: node-flow
  */
