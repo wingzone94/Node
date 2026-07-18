@@ -3,7 +3,7 @@
  * Plugin Name: Node Signal
  * Plugin URI: https://github.com/wingzone94/Node
  * Description: メディアの収益化とユーザビリティを両立するためのマネタイズ・検知層プラグイン。報酬レート管理や広告ブロック検知UIを提供します。
- * Version: 1.2.1
+ * Version: 1.2.0
  * Author: Luminous Core Teams
  * Text Domain: node-signal
  */

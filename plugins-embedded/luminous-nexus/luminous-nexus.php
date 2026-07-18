@@ -3,7 +3,7 @@
  * Plugin Name:  Node Nexus
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理、商品カード、ブログカード（OGP 取得）。Node テーマと連携。
- * Version:      1.2.1
+ * Version:      1.2.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT

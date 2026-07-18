@@ -3,7 +3,7 @@
  * Plugin Name:  Node Series
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  連載/シリーズ機能。記事をシリーズにまとめ、シリーズ内の前後記事・目次を取得する機能を提供。
- * Version:      1.2.1
+ * Version:      1.2.0
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-series
