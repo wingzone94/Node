@@ -281,7 +281,9 @@ function node_render_settings_page() {
                 
                 <div id="luminous-update-info" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                     <p>現在のバージョン: <strong>v<?php echo esc_html( node_get_theme_version() ); ?></strong></p>
-                    <p class="description">フッター表示（v<?php echo esc_html( node_get_theme_version() ); ?>）と同じ style.css の Version を参照しています。</p>
+                    <?php $node_build_info = function_exists( 'node_get_build_info' ) ? node_get_build_info() : null; ?>
+                    <p>現在のビルド: <strong><?php echo esc_html( $node_build_info['build_id'] ?? '不明（build.json なし）' ); ?></strong></p>
+                    <p class="description">フッター表示（v<?php echo esc_html( node_get_theme_version() ); ?>）と同じ style.css の Version を参照しています。同一バージョンのまま node.zip が更新された場合はビルド識別子で検知します。</p>
                     <div id="update-check-result"></div>
                 </div>
 
@@ -346,8 +348,16 @@ function node_render_settings_page() {
                                     $('#update-check-result').html('<p style="color: #FF9900; font-weight: bold;">新しいバージョン (v' + remote + ') が見つかりました！</p>');
                                     $('#luminous-install-update').text('最新版をインストール').show();
                                 } else if (response.data.install_available) {
-                                    $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。同じバージョンを再インストールできます。</p>');
-                                    $('#luminous-install-update').text('同じバージョンを再インストール').show();
+                                    if (response.data.build_update_available) {
+                                        $('#update-check-result').html('<p style="color: #FF9900; font-weight: bold;">同一バージョン (v' + local + ') の新しいビルドが配信されています。<br>配信中: ' + response.data.remote_build + '<br>インストール済み: ' + (response.data.local_build || '不明') + '</p>');
+                                        $('#luminous-install-update').text('新しいビルドを再インストール').show();
+                                    } else if (response.data.remote_build && response.data.local_build && response.data.remote_build === response.data.local_build) {
+                                        $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョン・最新ビルドです (v' + local + ' / ' + response.data.local_build + ')。同じバージョンを再インストールできます。</p>');
+                                        $('#luminous-install-update').text('同じバージョンを再インストール').show();
+                                    } else {
+                                        $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。ビルド比較は利用できません（配信側またはインストール側に build.json がありません）。同じバージョンを再インストールできます。</p>');
+                                        $('#luminous-install-update').text('同じバージョンを再インストール').show();
+                                    }
                                 } else {
                                     $('#update-check-result').html('<p style="color: #4CAF50;">最新バージョンです (v' + local + ')。</p>');
                                     $('#luminous-install-update').hide();
@@ -382,10 +392,11 @@ function node_render_settings_page() {
                         },
                         success: function(response) {
                             if (response.success) {
-                                updateStatus('インストール完了！ページをリロードします...', 100);
+                                var installedBuild = (response.data && response.data.installed_build) ? '（ビルド: ' + response.data.installed_build + '）' : '';
+                                updateStatus('インストール完了！' + installedBuild + ' ページをリロードします...', 100);
                                 setTimeout(function() {
                                     location.reload();
-                                }, 2000);
+                                }, 2500);
                             } else {
                                 updateStatus('エラー: ' + response.data, 0);
                                 btn.prop('disabled', false);

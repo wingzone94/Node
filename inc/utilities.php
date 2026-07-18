@@ -864,6 +864,35 @@ function node_get_article_ranking_info($post_id = null) {
 }
 
 /**
+ * テーマの build.json（リリース毎のビルド識別子）を読む
+ *
+ * 同日リリースはバージョンを上げず node.zip だけ更新する運用のため、
+ * バージョンとは独立にビルドを識別する手段としてリリース時に生成される。
+ * 存在しない（旧ビルド・開発中）場合は null。
+ */
+function node_get_build_info() {
+    static $cache  = null;
+    static $loaded = false;
+
+    if ( $loaded ) {
+        return $cache;
+    }
+    $loaded = true;
+
+    $path = get_template_directory() . '/build.json';
+    if ( ! file_exists( $path ) ) {
+        return $cache;
+    }
+
+    $data = json_decode( (string) file_get_contents( $path ), true );
+    if ( is_array( $data ) && ! empty( $data['build_id'] ) ) {
+        $cache = $data;
+    }
+
+    return $cache;
+}
+
+/**
  * フッターメニューのフォールバック
  */
 function node_footer_menu_fallback() {

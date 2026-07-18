@@ -31,13 +31,33 @@ add_action(
 		$update_available = version_compare( $remote_version, $local_version, '>' );
 		$install_available = version_compare( $remote_version, $local_version, '>=' );
 
+		// 同日リリースはバージョン据え置きで node.zip だけ更新されるため、
+		// バージョンとは独立に build.json のビルド識別子も比較する。
+		// ?cb= は raw URL の CDN キャッシュ回避。
+		$local_build_info = function_exists( 'node_get_build_info' ) ? node_get_build_info() : null;
+		$local_build      = $local_build_info['build_id'] ?? null;
+
+		$remote_build   = null;
+		$build_response = wp_remote_get( 'https://raw.githubusercontent.com/wingzone94/Node/refs/heads/master/build.json?cb=' . time() );
+		if ( ! is_wp_error( $build_response ) && 200 === wp_remote_retrieve_response_code( $build_response ) ) {
+			$build_data = json_decode( wp_remote_retrieve_body( $build_response ), true );
+			if ( is_array( $build_data ) && ! empty( $build_data['build_id'] ) ) {
+				$remote_build = (string) $build_data['build_id'];
+			}
+		}
+
+		$same_version = ! $update_available && $install_available;
+
 		wp_send_json_success(
 			array(
 				'local_version'    => $local_version,
 				'remote_version'   => $remote_version,
 				'update_available'  => $update_available,
 				'install_available' => $install_available,
-				'same_version'      => ! $update_available && $install_available,
+				'same_version'      => $same_version,
+				'local_build'       => $local_build,
+				'remote_build'      => $remote_build,
+				'build_update_available' => $same_version && $remote_build && $remote_build !== $local_build,
 			)
 		);
 	}
@@ -108,7 +128,22 @@ add_action(
 			wp_clean_themes_cache();
 		}
 
-		error_log( 'Luminous Update: Update installed successfully' );
-		wp_send_json_success( 'Update installed successfully' );
+		// インストール直後の build.json を読み、どのビルドが入ったかを検証可能にする
+		$installed_build = null;
+		$build_path      = $theme_dir . '/build.json';
+		if ( $wp_filesystem->exists( $build_path ) ) {
+			$build_data = json_decode( (string) $wp_filesystem->get_contents( $build_path ), true );
+			if ( is_array( $build_data ) && ! empty( $build_data['build_id'] ) ) {
+				$installed_build = (string) $build_data['build_id'];
+			}
+		}
+
+		error_log( 'Luminous Update: Update installed successfully (build: ' . ( $installed_build ?? 'unknown' ) . ')' );
+		wp_send_json_success(
+			array(
+				'message'         => 'Update installed successfully',
+				'installed_build' => $installed_build,
+			)
+		);
 	}
 );

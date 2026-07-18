@@ -58,6 +58,21 @@ bun scripts/library-regression.mjs
 開発時のキャッシュファイルや不要な`.DS_Store`ファイルなどが混入しないよう整理します。
 
 ## 4. 本番用ZIPファイルの生成
+
+### 4-a. build.json（ビルド識別子）の更新（必須）
+同日リリースはバージョンを据え置いたまま `node.zip` を更新する運用のため、リリース（=ZIP生成）のたびに **`build.json` を必ず再生成**します。Luminous Settings の更新チェックはバージョンに加えてこの `build_id` を比較し、同一バージョンでも新しいビルドの配信を検知・検証します（`inc/ajax.php` / `inc/utilities.php` の `node_get_build_info()`）。
+
+```bash
+printf '{\n    "build_id": "%s",\n    "built_at": "%s",\n    "version": "%s"\n}\n' \
+  "$(date -u +%Y%m%dT%H%M%SZ)-$(git rev-parse --short HEAD)" \
+  "$(date -u +%FT%TZ)" \
+  "$(grep -m1 '^Version:' style.css | awk '{print $2}')" > build.json
+```
+
+- `build_id` は「UTC時刻 + ZIP生成時点の HEAD 短縮SHA」。SHAはリリースコミット自体ではなく**生成時点のHEAD**を指す（識別子としての一意性はタイムスタンプが担保）。
+- `build.json` は配布ZIPに含め、**コミットにも含めます**（更新チェックが raw URL `https://raw.githubusercontent.com/wingzone94/Node/master/build.json` を参照するため）。
+
+### 4-b. ZIP生成
 プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
 
 配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
@@ -151,6 +166,7 @@ zipinfo -1 /tmp/node-remote.zip | head
 - `node.zip` がHTTP 200で取得できること。
 - ZIP内のルートディレクトリが `Node/` であること。
 - ZIP内の `Node/style.css` も同じ `Version` を返すこと。
+- **ZIP内の `Node/build.json` と raw の `build.json` が今回生成した `build_id` に一致すること**（`unzip -p /tmp/node-remote.zip Node/build.json`）。同一バージョンのリリースではこれが唯一の反映確認手段。
 - `Author` は `Luminous Core Teams` のまま維持すること。
 
 注意:
