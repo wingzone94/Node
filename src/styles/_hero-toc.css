@@ -58,7 +58,13 @@
 .m3-article__library-quick-link > .material-symbols-outlined {
     flex: 0 0 auto;
     font-size: 1rem;
-    color: var(--md-sys-color-primary);
+    /* 動的カラーで --md-sys-color-primary が灰色に解決される記事があるため、
+       AI開示チップと同様にブランドオレンジへ固定（ライトは白背景向けに濃いめ） */
+    color: #DE7A00;
+}
+
+[data-theme="dark"] .m3-article__library-quick-link > .material-symbols-outlined {
+    color: #FF9900;
 }
 
 .m3-article__library-quick-link-label {
@@ -80,9 +86,15 @@
 
 .m3-article__library-quick-link:hover,
 .m3-article__library-quick-link:focus-visible {
-    border-color: var(--md-sys-color-primary);
+    border-color: #DE7A00;
     background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-primary);
+    color: #DE7A00;
+}
+
+[data-theme="dark"] .m3-article__library-quick-link:hover,
+[data-theme="dark"] .m3-article__library-quick-link:focus-visible {
+    border-color: #FF9900;
+    color: #FF9900;
 }
 
 .m3-article__library-quick-link:hover .m3-article__library-quick-link-arrow,
@@ -91,7 +103,7 @@
 }
 
 .m3-article__library-quick-link:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary);
+    outline: 2px solid #DE7A00;
     outline-offset: 3px;
 }
 

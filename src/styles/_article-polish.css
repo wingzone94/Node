@@ -122,7 +122,7 @@
 
 /* ===== Article Hyperlink Visibility ===== */
 .m3-article__body a:where(
-    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-game-card__details-link):not(.wp-block-button__link)
 ) {
     color: #005fcb;
     text-decoration-line: underline;
@@ -132,26 +132,26 @@
 }
 
 .m3-article__body a:where(
-    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-game-card__details-link):not(.wp-block-button__link)
 ):hover,
 .m3-article__body a:where(
-    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-game-card__details-link):not(.wp-block-button__link)
 ):focus-visible {
     color: #004a9f;
     text-decoration-thickness: 0.12em;
 }
 
 [data-theme="dark"] .m3-article__body a:where(
-    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-game-card__details-link):not(.wp-block-button__link)
 ) {
     color: #8ab4ff;
 }
 
 [data-theme="dark"] .m3-article__body a:where(
-    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-game-card__details-link):not(.wp-block-button__link)
 ):hover,
 [data-theme="dark"] .m3-article__body a:where(
-    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.wp-block-button__link)
+    :not(.m3-button):not(.m3-card__image-link):not(.m3-blogcard):not(.m3-blogcard__overlay):not(.m3-toc-link):not(.m3-share-btn):not(.m3-platform-button):not(.m3-game-card__details-link):not(.wp-block-button__link)
 ):focus-visible {
     color: #b6ccff;
 }

@@ -315,8 +315,17 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	color: var(--md-sys-color-primary);
 	font-weight: 700;
+}
+
+.node-library-shelf-card__action {
+	color: var(--md-sys-color-primary);
+}
+
+/* 記事の動的カラーで --md-sys-color-primary が灰色に解決されると
+   読めなくなるため、リンク色は黒系（on-surface）に固定する */
+.m3-game-card .m3-game-card__details-link {
+	color: var(--md-sys-color-on-surface);
 }
 
 .node-library-empty-state {
