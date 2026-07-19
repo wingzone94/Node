@@ -47,11 +47,7 @@ function node_register_settings() {
     register_setting( 'node_settings_group', 'luminous_nexus_disclosure_rakuten' );
     
     // --- X (Twitter) 連携設定 ---
-    register_setting( 'node_settings_group', 'node_x_api_key' );
-    register_setting( 'node_settings_group', 'node_x_api_secret' );
-    register_setting( 'node_settings_group', 'node_x_access_token' );
-    register_setting( 'node_settings_group', 'node_x_access_token_secret' );
-    register_setting( 'node_settings_group', 'node_x_post_template' );
+    // node-connect プラグイン（設定 → 外部連携）へ移設。オプション名は node_x_* のまま互換維持。
 
     // --- OGP設定 ---
     register_setting( 'node_settings_group', 'node_ogp_enabled' );
@@ -92,6 +88,49 @@ function node_render_settings_page() {
             wp_nonce_field( 'node_save_gemini', 'node_gemini_settings_nonce' );
             ?>
             
+            <!-- メンテナンスモード -->
+            <div class="m3-admin-card" id="node-maintenance" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid <?php echo node_maintenance_is_enabled() ? '#FF9900' : '#e0e0e0'; ?>; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-hammer"></span> メンテナンスモード
+                    <?php if ( node_maintenance_is_enabled() ) : ?>
+                        <span style="font-size: 12px; font-weight: 700; color: #fff; background: #FF9900; padding: 2px 10px; border-radius: 999px;">有効</span>
+                    <?php endif; ?>
+                </h2>
+                <p class="description" style="margin-top: 0;">
+                    有効にすると、サイトのフロント側に専用のメンテナンス画面（HTTP 503）を表示します。管理画面とログイン画面は影響を受けません。
+                    <strong>管理者にもメンテナンス画面が表示されます</strong>が、画面内に管理画面へ戻るリンクが出ます。
+                </p>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">メンテナンスモード</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_ENABLED ); ?>" value="1" <?php checked( node_maintenance_is_enabled() ); ?> />
+                                有効にする
+                            </label>
+                            <p class="description">切り替えると node-connect 経由で Discord へ開始・終了が通知されます（購読設定が必要）。</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">復旧予定時刻</th>
+                        <td>
+                            <input type="datetime-local" name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_ETA ); ?>" value="<?php echo esc_attr( (string) get_option( NODE_MAINTENANCE_OPTION_ETA, '' ) ); ?>" />
+                            <p class="description">
+                                設定すると、メンテナンス画面にカウントダウンと進捗ゲージが表示されます（未設定なら非表示）。
+                                サイトのタイムゾーン（<?php echo esc_html( wp_timezone_string() ); ?>）で解釈されます。
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">表示メッセージ</th>
+                        <td>
+                            <textarea name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_MESSAGE ); ?>" rows="3" class="large-text" placeholder="<?php echo esc_attr( NODE_MAINTENANCE_DEFAULT_MESSAGE ); ?>"><?php echo esc_textarea( (string) get_option( NODE_MAINTENANCE_OPTION_MESSAGE, '' ) ); ?></textarea>
+                            <p class="description">空欄の場合は既定の文面を表示します。</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
             <!-- Gemini設定（管理者自身の個人キー。ライターは ユーザー → プロフィール で設定） -->
             <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                 <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
@@ -175,41 +214,7 @@ function node_render_settings_page() {
                 </table>
             </div>
 
-            <!-- X (Twitter) 連携設定 -->
-            <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <h2 style="margin-top: 0; color: #1DA1F2; display: flex; align-items: center; gap: 10px;">
-                    <span class="dashicons dashicons-twitter"></span> X (Twitter) 連携設定
-                </h2>
-                <p class="description">記事の公開時に自動でポストするための設定です。X Developer Platform で Free 以上のプランが必要です。</p>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">API Key</th>
-                        <td><input type="text" name="node_x_api_key" value="<?php echo esc_attr( get_option( 'node_x_api_key' ) ); ?>" class="regular-text" /></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">API Key Secret</th>
-                        <td><input type="password" name="node_x_api_secret" value="<?php echo esc_attr( get_option( 'node_x_api_secret' ) ); ?>" class="regular-text" /></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Access Token</th>
-                        <td><input type="text" name="node_x_access_token" value="<?php echo esc_attr( get_option( 'node_x_access_token' ) ); ?>" class="regular-text" /></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Access Token Secret</th>
-                        <td><input type="password" name="node_x_access_token_secret" value="<?php echo esc_attr( get_option( 'node_x_access_token_secret' ) ); ?>" class="regular-text" /></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">投稿テンプレート</th>
-                        <td>
-                            <textarea name="node_x_post_template" rows="6" class="large-text" placeholder="【新着記事】{{title}}&#10;&#10;{{summary}}&#10;&#10;続きはこちら： {{url}}&#10;#Node #{{category}}"><?php echo esc_textarea( get_option( 'node_x_post_template', "【新着記事】{{title}}\n\n{{summary}}\n\n続きはこちら： {{url}}\n#Node #{{category}}" ) ); ?></textarea>
-                            <p class="description">
-                                使用可能な変数: <code>{{title}}</code> (タイトル), <code>{{url}}</code> (URL), <code>{{summary}}</code> (AI要約/抜粋), <code>{{category}}</code> (カテゴリ名)<br>
-                                ※AIを使わず、これらの変数を記事データに自動で置き換えて投稿します。
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+            <!-- X (Twitter) 連携設定は node-connect プラグイン（設定 → 外部連携）へ移設 -->
 
             <!-- OGP自動生成設定 -->
             <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">

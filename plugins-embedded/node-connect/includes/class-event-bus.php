@@ -23,7 +23,7 @@ final class Node_Connect_Event_Bus {
 	public const EVENT_AI_FAILED            = 'ai_failed';
 	public const EVENT_NODE_UPDATED         = 'node_updated';
 
-	// 1.3初期では発火しない予約イベント（設定画面にも出さない）。
+	// テーマ側のメンテナンスモード（inc/maintenance.php）から発火する。
 	public const EVENT_MAINTENANCE_START = 'maintenance_start';
 	public const EVENT_MAINTENANCE_END   = 'maintenance_end';
 
@@ -66,6 +66,8 @@ final class Node_Connect_Event_Bus {
 			self::EVENT_FACT_CHECK_COMPLETED => 'ファクトチェック完了',
 			self::EVENT_AI_FAILED            => 'AI処理の失敗',
 			self::EVENT_NODE_UPDATED         => 'Nodeアップデート',
+			self::EVENT_MAINTENANCE_START    => 'メンテナンスの開始',
+			self::EVENT_MAINTENANCE_END      => 'メンテナンスの終了',
 		];
 	}
 
@@ -164,8 +166,16 @@ final class Node_Connect_Event_Bus {
 	/**
 	 * 重複送信防止。post_id + イベント種別 + URL のハッシュを transient に記録し、
 	 * TTL内の同一通知を抑止する。送信してよければ true。
+	 *
+	 * 記事に紐つかないイベント（メンテナンスの開始・終了）は抑止の対象外にする。
+	 * post_id が常に0のため、作業中に入切を繰り返すと2回目以降が握り潰されてしまい、
+	 * かつWPフックの多重発火ではなく管理者の明示的な操作なので毎回通知してよい。
 	 */
 	private static function mark_dedup( string $event, array $payload, string $url ): bool {
+		if ( in_array( $event, [ self::EVENT_MAINTENANCE_START, self::EVENT_MAINTENANCE_END ], true ) ) {
+			return true;
+		}
+
 		$post_id = (int) ( $payload['post_id'] ?? 0 );
 		$key     = 'node_connect_sent_' . md5( $post_id . '|' . $event . '|' . $url );
 
