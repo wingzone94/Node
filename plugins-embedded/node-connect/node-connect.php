@@ -3,7 +3,7 @@
  * Plugin Name:  Node Connect
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  外部サービス連携基盤（ベータ版）。記事の公開・更新などのイベントを Webhook（Discord）へ通知する。Node テーマと連携。
- * Version:      1.3.3
+ * Version:      1.3.4
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_CONNECT_VERSION', '1.3.3' );
+define( 'NODE_CONNECT_VERSION', '1.3.4' );
 define( 'NODE_CONNECT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_CONNECT_MAX_WEBHOOKS', 3 );
 
@@ -142,4 +142,16 @@ final class Node_Connect {
 	}
 }
 
-add_action( 'plugins_loaded', [ 'Node_Connect', 'instance' ] );
+/**
+ * 初期化エントリポイント。
+ *
+ * テーマ同梱（functions.php の $embedded_plugins）からの読み込みと、
+ * 単体プラグインとしてのインストールの両対応。テーマ側のローダーは
+ * この関数の有無で二重読み込みを判定するため、他の同梱プラグイン
+ * （node_series_init 等）と同じく名前付き関数として公開する。
+ */
+function node_connect_init() {
+	Node_Connect::instance();
+}
+
+add_action( 'plugins_loaded', 'node_connect_init' );

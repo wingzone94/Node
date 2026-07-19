@@ -68,6 +68,7 @@ $embedded_plugins = [
 	'node-library/node-library.php'         => 'node_library_init',
 	'node-seo-tools/node-seo-tools.php'     => 'node_seo_tools_init',
 	'node-series/node-series.php'           => 'node_series_init',
+	'node-connect/node-connect.php'         => 'node_connect_init',
 ];
 
 foreach ( $embedded_plugins as $plugin_file => $init_func ) {
