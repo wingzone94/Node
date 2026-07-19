@@ -3,7 +3,7 @@
  * Plugin Name:  Node Series
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  連載/シリーズ機能。記事をシリーズにまとめ、シリーズ内の前後記事・目次を取得する機能を提供。
- * Version:      1.2.0
+ * Version:      1.2.1
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-series
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_SERIES_VERSION', '1.2.0' );
+define( 'NODE_SERIES_VERSION', '1.2.1' );
 define( 'NODE_SERIES_ORDER_META_KEY', '_node_series_order' );
 define( 'NODE_SERIES_COLOR_TERM_META_KEY', 'node_series_color' );
 define( 'NODE_SERIES_COLOR_OVERRIDE_META_KEY', '_node_series_color_override' );
@@ -775,7 +775,17 @@ function node_series_get_posts( int $term_id ): array {
 		]
 	);
 
-	usort( $query->posts, function ( WP_Post $a, WP_Post $b ) {
+	return node_series_sort_posts( $query->posts );
+}
+
+/**
+ * 投稿一覧をシリーズの表示順（_node_series_order昇順→投稿日昇順）で並べ替える。
+ *
+ * @param WP_Post[] $posts 並べ替え対象の投稿。
+ * @return WP_Post[]
+ */
+function node_series_sort_posts( array $posts ): array {
+	usort( $posts, function ( WP_Post $a, WP_Post $b ) {
 		$order_a = get_post_meta( $a->ID, NODE_SERIES_ORDER_META_KEY, true );
 		$order_b = get_post_meta( $b->ID, NODE_SERIES_ORDER_META_KEY, true );
 		$has_a   = '' !== $order_a;
@@ -790,7 +800,36 @@ function node_series_get_posts( int $term_id ): array {
 		return strtotime( $a->post_date ) - strtotime( $b->post_date );
 	} );
 
-	return $query->posts;
+	return $posts;
+}
+
+/**
+ * 「この投稿を表示している文脈」でのシリーズ内投稿一覧を返す。
+ *
+ * 一覧の基本は公開済み記事のみ（node_series_get_posts）だが、表示中の投稿自身が
+ * 未公開（下書き・レビュー待ち・予約など＝プレビュー閲覧中）の場合、公開限定の
+ * 一覧に含まれず執筆中に表示確認ができないため、表示中の投稿に限って一覧へ合流させる。
+ * 他の未公開記事は従来どおり一覧に含めない（下書きの漏えい防止）。
+ *
+ * @param int $post_id 表示中の投稿ID。
+ * @param int $term_id node_series term ID。
+ * @return WP_Post[]
+ */
+function node_series_get_display_posts( int $post_id, int $term_id ): array {
+	$posts = node_series_get_posts( $term_id );
+
+	if ( in_array( $post_id, wp_list_pluck( $posts, 'ID' ), true ) ) {
+		return $posts;
+	}
+
+	$current = get_post( $post_id );
+
+	if ( $current instanceof WP_Post && has_term( $term_id, 'node_series', $current ) ) {
+		$posts[] = $current;
+		$posts   = node_series_sort_posts( $posts );
+	}
+
+	return $posts;
 }
 
 /**
@@ -834,7 +873,7 @@ function node_series_get_adjacent( int $post_id, string $direction ): ?WP_Post {
 		return null;
 	}
 
-	$posts = node_series_get_posts( $term->term_id );
+	$posts = node_series_get_display_posts( $post_id, $term->term_id );
 	$index = null;
 
 	foreach ( $posts as $i => $post ) {
@@ -855,7 +894,9 @@ function node_series_get_adjacent( int $post_id, string $direction ): ?WP_Post {
 
 /**
  * テンプレート表示用のシリーズ目次データを返す。
- * シリーズ内の記事が1件以下の場合はnullを返す（タクソノミーの登録自体は維持される）。
+ * シリーズに属していない場合はnullを返す。第1回のみのシリーズ（1件）でも表示する
+ * （1.2.1: 従来は1件以下を非表示にしていたが、連載開始直後の記事でシリーズ設定が
+ * 一切反映されず「設定が効いていない」ように見えるため、1件から表示する仕様に変更）。
  *
  * @param int $post_id 投稿ID。
  * @return array{term: WP_Term, items: array<int, array{id:int, title:string, url:string, is_current:bool}>}|null
@@ -867,11 +908,9 @@ function node_series_get_toc_data( int $post_id ): ?array {
 		return null;
 	}
 
-	$posts = node_series_get_posts( $term->term_id );
+	$posts = node_series_get_display_posts( $post_id, $term->term_id );
 
-	// シリーズ内の記事が1件以下の場合は、タクソノミー上の登録は維持したまま
-	// （内部的には登録可能）、記事上にはシリーズ表記を一切表示しない。
-	if ( count( $posts ) <= 1 ) {
+	if ( empty( $posts ) ) {
 		return null;
 	}
 

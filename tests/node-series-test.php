@@ -182,11 +182,52 @@ class Node_Series_Test extends WP_UnitTestCase {
 
 	// --- 目次データ (node_series_get_toc_data) ----------------------------------
 
-	public function test_toc_data_is_null_for_single_post_series(): void {
-		$term_id = $this->create_series_term( '単独記事は非表示' );
+	/**
+	 * 1.2.1仕様変更: 第1回のみ（1件）のシリーズでも目次を表示する。
+	 * （従来は1件以下を非表示にしていたが、連載開始直後にシリーズ設定が
+	 * 一切反映されず「設定が効いていない」ように見えるため変更。）
+	 */
+	public function test_toc_data_present_for_single_post_series(): void {
+		$term_id = $this->create_series_term( '単独記事も表示' );
 		$post_id = $this->create_post_in_series( $term_id, 1, 'publish' );
 
-		$this->assertNull( node_series_get_toc_data( $post_id ) );
+		$toc = node_series_get_toc_data( $post_id );
+
+		$this->assertNotNull( $toc );
+		$this->assertCount( 1, $toc['items'] );
+		$this->assertSame( $post_id, $toc['items'][0]['id'] );
+		$this->assertTrue( $toc['items'][0]['is_current'] );
+
+		$pos = node_series_get_position( $post_id );
+		$this->assertNotNull( $pos );
+		$this->assertSame( 1, $pos['index'] );
+		$this->assertSame( 1, $pos['total'] );
+	}
+
+	/**
+	 * 1.2.1: 表示中の記事自身が未公開（レビュー待ち・下書き＝プレビュー閲覧中）でも、
+	 * 自分自身は目次・位置情報に含める（執筆中に表示確認できるようにする）。
+	 */
+	public function test_toc_data_includes_own_unpublished_post(): void {
+		$term_id      = $this->create_series_term( '未公開の自記事を包含' );
+		$post_1       = $this->create_post_in_series( $term_id, 1, 'publish' );
+		$pending_post = $this->create_post_in_series( $term_id, 2, 'pending' );
+
+		$toc = node_series_get_toc_data( $pending_post );
+
+		$this->assertNotNull( $toc );
+		$this->assertCount( 2, $toc['items'] );
+		$this->assertSame( $post_1, $toc['items'][0]['id'] );
+		$this->assertSame( $pending_post, $toc['items'][1]['id'] );
+		$this->assertTrue( $toc['items'][1]['is_current'] );
+
+		$pos = node_series_get_position( $pending_post );
+		$this->assertSame( 2, $pos['index'] );
+		$this->assertSame( 2, $pos['total'] );
+
+		// 公開記事側から見た目次には、他人の未公開記事は従来どおり含まれない。
+		$toc_public = node_series_get_toc_data( $post_1 );
+		$this->assertCount( 1, $toc_public['items'] );
 	}
 
 	public function test_toc_data_present_for_multi_post_series(): void {
