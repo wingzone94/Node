@@ -138,6 +138,54 @@ class Node_Connect_Test extends WP_UnitTestCase {
 		$this->assertSame( 'post_unpublished', $queued[0][0] );
 	}
 
+	/**
+	 * 非公開化の購読をオフにすると、記事を非公開にしても通知が送られない
+	 * （設定画面のトグルで止められることの回帰テスト）。他イベントは影響を受けない。
+	 */
+	public function test_unsubscribing_unpublished_stops_notification(): void {
+		$events = array_keys( Node_Connect_Event_Bus::get_event_catalog() );
+		update_option(
+			Node_Connect_Event_Bus::OPTION_WEBHOOKS,
+			[
+				[
+					'label'   => 'テスト',
+					'url'     => 'https://discord.com/api/webhooks/test',
+					'events'  => array_values( array_diff( $events, [ Node_Connect_Event_Bus::EVENT_POST_UNPUBLISHED ] ) ),
+					'enabled' => true,
+				],
+			]
+		);
+
+		$post_id = self::factory()->post->create( [ 'post_status' => 'publish' ] );
+		$this->clear_cron();
+
+		wp_update_post(
+			[
+				'ID'          => $post_id,
+				'post_status' => 'draft',
+			]
+		);
+
+		$this->assertCount( 0, $this->get_queued_deliveries(), '非公開化の購読オフで通知されない' );
+
+		// 購読を残した他イベント（更新）は従来どおり送信される。
+		wp_update_post(
+			[
+				'ID'          => $post_id,
+				'post_status' => 'publish',
+			]
+		);
+		$this->clear_cron();
+		wp_update_post(
+			[
+				'ID'         => $post_id,
+				'post_title' => '更新',
+			]
+		);
+
+		$this->assertSame( [ 'post_updated' ], array_column( $this->get_queued_deliveries(), 0 ) );
+	}
+
 	public function test_trash_published_post_queues_post_deleted(): void {
 		$post_id = self::factory()->post->create( [ 'post_status' => 'publish' ] );
 		$this->clear_cron();

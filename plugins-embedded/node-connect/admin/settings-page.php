@@ -49,8 +49,58 @@ add_action(
 				'sanitize_callback' => 'node_connect_sanitize_webhooks',
 			]
 		);
+
+		// --- X（Twitter）自動投稿 ---
+		register_setting(
+			'node_connect_group',
+			Node_Connect_X_Poster::OPTION_ENABLED,
+			[
+				'sanitize_callback' => static fn( $value ) => '1' === (string) $value ? '1' : '',
+			]
+		);
+		register_setting(
+			'node_connect_group',
+			Node_Connect_X_Poster::OPTION_TEMPLATE,
+			[
+				'sanitize_callback' => static fn( $value ) => sanitize_textarea_field( (string) $value ),
+			]
+		);
+		foreach ( [
+			Node_Connect_X_Poster::OPTION_API_KEY,
+			Node_Connect_X_Poster::OPTION_API_SECRET,
+			Node_Connect_X_Poster::OPTION_ACCESS_TOKEN,
+			Node_Connect_X_Poster::OPTION_ACCESS_TOKEN_SECRET,
+		] as $node_connect_x_option ) {
+			register_setting(
+				'node_connect_group',
+				$node_connect_x_option,
+				[
+					'sanitize_callback' => static fn( $value ) => node_connect_sanitize_x_credential( $value, $node_connect_x_option ),
+				]
+			);
+		}
 	}
 );
+
+/**
+ * X認証情報の保存。空欄は「変更しない」＝保存済みの値を維持（マスク表示のため
+ * 画面に既存値を再出力しない方式）。「認証情報をすべて削除」チェック時は空にする。
+ *
+ * @param mixed $value
+ */
+function node_connect_sanitize_x_credential( $value, string $option_name ): string {
+	if ( ! empty( $_POST['node_connect_x_clear'] ) ) {
+		if ( Node_Connect_X_Poster::OPTION_ACCESS_TOKEN === $option_name ) {
+			delete_option( Node_Connect_X_Poster::OPTION_SCREEN_NAME );
+		}
+		return '';
+	}
+	$value = trim( (string) $value );
+	if ( '' === $value ) {
+		return (string) get_option( $option_name, '' );
+	}
+	return sanitize_text_field( $value );
+}
 
 /**
  * Webhook設定の保存。URL欄が空なら保存済みURLを維持する（マスク表示のため
@@ -137,6 +187,122 @@ add_action(
 );
 
 /**
+ * 「Xと連携」開始（admin-post）。request_token を取得してXの認可画面へ転送する。
+ */
+add_action(
+	'admin_post_node_connect_x_connect',
+	static function (): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		check_admin_referer( 'node_connect_x_connect' );
+
+		// Xは登録済みCallback URLとの完全一致を要求するため、可変パラメータ（nonce等）は付けない。
+		// コールバック側のCSRF対策は、開始時に保存するワンタイムの request_token 照合で担保する。
+		$callback = admin_url( 'admin-post.php?action=node_connect_x_callback' );
+		$result   = Node_Connect_X_Poster::start_authorization( $callback );
+
+		if ( is_wp_error( $result ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					[
+						'page'          => 'node-connect',
+						'x_test_result' => 'ng',
+						'x_test_status' => rawurlencode( $result->get_error_message() ),
+					],
+					admin_url( 'options-general.php' )
+				)
+			);
+			exit;
+		}
+
+		wp_redirect( $result ); // 外部（X認可画面）への転送のため wp_safe_redirect は使わない。
+		exit;
+	}
+);
+
+/**
+ * 「Xと連携」コールバック（admin-post）。verifier をトークンに交換して保存する。
+ */
+add_action(
+	'admin_post_node_connect_x_callback',
+	static function (): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		// nonceは使わない（XのCallback URL完全一致要件のため）。connect開始時に transient へ
+		// 保存した request_token と一致しない限り complete_authorization が失敗するため、
+		// 第三者が用意したトークンでの偽装コールバックは成立しない。
+
+		$token    = sanitize_text_field( (string) ( $_GET['oauth_token'] ?? '' ) );
+		$verifier = sanitize_text_field( (string) ( $_GET['oauth_verifier'] ?? '' ) );
+
+		if ( '' === $token || '' === $verifier ) {
+			$result = new WP_Error( 'node_connect_x', '連携がキャンセルされたか、パラメータが不足しています。' );
+		} else {
+			$result = Node_Connect_X_Poster::complete_authorization( $token, $verifier );
+		}
+
+		$args = is_wp_error( $result )
+			? [
+				'x_test_result' => 'ng',
+				'x_test_status' => rawurlencode( $result->get_error_message() ),
+			]
+			: [
+				'x_connected' => '1',
+			];
+
+		wp_safe_redirect( add_query_arg( [ 'page' => 'node-connect' ] + $args, admin_url( 'options-general.php' ) ) );
+		exit;
+	}
+);
+
+/**
+ * X連携解除（admin-post）。
+ */
+add_action(
+	'admin_post_node_connect_x_disconnect',
+	static function (): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		check_admin_referer( 'node_connect_x_disconnect' );
+
+		Node_Connect_X_Poster::disconnect();
+
+		wp_safe_redirect( add_query_arg( [ 'page' => 'node-connect' ], admin_url( 'options-general.php' ) ) );
+		exit;
+	}
+);
+
+/**
+ * X認証テスト（admin-post）。GET /2/users/me で検証（投稿はしない）。
+ */
+add_action(
+	'admin_post_node_connect_x_test',
+	static function (): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		check_admin_referer( 'node_connect_x_test' );
+
+		$result = Node_Connect_X_Poster::test_credentials();
+
+		wp_safe_redirect(
+			add_query_arg(
+				[
+					'page'          => 'node-connect',
+					'x_test_result' => $result['ok'] ? 'ok' : 'ng',
+					'x_test_status' => rawurlencode( $result['status'] ),
+				],
+				admin_url( 'options-general.php' )
+			)
+		);
+		exit;
+	}
+);
+
+/**
  * 送信履歴のクリア（admin-post）。
  */
 add_action(
@@ -155,6 +321,39 @@ add_action(
 );
 
 /**
+ * トグルスイッチ型のチェックボックスを描画する。
+ *
+ * input は通常の checkbox のまま（保存処理・input名は従来と完全互換）で、
+ * 見た目だけをトラック＋ノブのトグルに置き換える。ロック（グレーアウト）時も
+ * disabled 属性は使わない: disabled にすると値がPOSTされず、保存のたびに
+ * ロック中の購読設定が消えてしまうため、CSS の pointer-events と tabindex で
+ * 操作だけを止める（値は保持されたまま送信される）。
+ *
+ * @param array{name:string, checked:bool, text?:string, value?:string, data?:array<string,string>} $args
+ */
+function node_connect_render_toggle( array $args ): void {
+	$name    = (string) $args['name'];
+	$checked = ! empty( $args['checked'] );
+	$text    = (string) ( $args['text'] ?? '' );
+	$value   = (string) ( $args['value'] ?? '1' );
+	$data    = (array) ( $args['data'] ?? [] );
+
+	$data_attrs = '';
+	foreach ( $data as $data_key => $data_value ) {
+		$data_attrs .= sprintf( ' data-%s="%s"', esc_attr( $data_key ), esc_attr( $data_value ) );
+	}
+	?>
+	<label class="nc-toggle">
+		<input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>" <?php checked( $checked ); ?><?php echo $data_attrs; // 各値はesc_attr済み ?> />
+		<span class="nc-toggle__track" aria-hidden="true"></span>
+		<?php if ( '' !== $text ) : ?>
+			<span class="nc-toggle__text"><?php echo esc_html( $text ); ?></span>
+		<?php endif; ?>
+	</label>
+	<?php
+}
+
+/**
  * 設定画面の描画。
  */
 function node_connect_render_settings_page(): void {
@@ -167,6 +366,20 @@ function node_connect_render_settings_page(): void {
 	$card_style = 'background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);';
 	$h2_style   = 'margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;';
 	?>
+	<style>
+		.nc-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; margin: 2px 0; vertical-align: middle; }
+		.nc-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+		.nc-toggle__track { position: relative; width: 40px; height: 22px; flex-shrink: 0; border-radius: 999px; background: #c3c4c7; transition: background 0.15s ease; }
+		.nc-toggle__track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: transform 0.15s ease; }
+		.nc-toggle input:checked + .nc-toggle__track { background: #FF9900; }
+		.nc-toggle input:checked + .nc-toggle__track::after { transform: translateX(18px); }
+		.nc-toggle input:focus-visible + .nc-toggle__track { outline: 2px solid #FF9900; outline-offset: 2px; }
+		/* ロック＝親機能が無効のため操作不可（値は保持されたまま送信される） */
+		.nc-toggle.is-locked { opacity: 0.45; pointer-events: none; }
+		.nc-toggle.is-locked .nc-toggle__track { background: #dcdcde; }
+		.nc-toggle.is-locked input:checked + .nc-toggle__track { background: #e8c99a; }
+		.nc-toggle-list .nc-toggle { display: flex; margin-bottom: 6px; }
+	</style>
 	<div class="wrap">
 		<h1 style="margin-bottom: 30px;">外部連携設定（Node Connect）</h1>
 
@@ -174,8 +387,24 @@ function node_connect_render_settings_page(): void {
 			<?php $test_ok = 'ok' === $_GET['test_result']; ?>
 			<div class="notice <?php echo $test_ok ? 'notice-success' : 'notice-error'; ?> is-dismissible">
 				<p>
-					<?php echo $test_ok ? '✅ テスト通知を送信しました。Discord側で受信を確認してください。' : '❌ テスト通知の送信に失敗しました。'; ?>
+					<?php echo $test_ok ? 'テスト通知を送信しました。Discord側で受信を確認してください。' : 'テスト通知の送信に失敗しました。'; ?>
 					（<?php echo esc_html( rawurldecode( (string) ( $_GET['test_status'] ?? '' ) ) ); ?>）
+				</p>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['x_connected'] ) ) : ?>
+			<div class="notice notice-success is-dismissible">
+				<p>Xアカウントと連携しました。</p>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['x_test_result'] ) ) : ?>
+			<?php $x_test_ok = 'ok' === $_GET['x_test_result']; ?>
+			<div class="notice <?php echo $x_test_ok ? 'notice-success' : 'notice-error'; ?> is-dismissible">
+				<p>
+					<?php echo $x_test_ok ? 'X APIの認証に成功しました。' : 'X APIの認証に失敗しました。キーとトークンを確認してください。'; ?>
+					（<?php echo esc_html( rawurldecode( (string) ( $_GET['x_test_status'] ?? '' ) ) ); ?>）
 				</p>
 			</div>
 		<?php endif; ?>
@@ -191,20 +420,32 @@ function node_connect_render_settings_page(): void {
 					<tr>
 						<th scope="row">Webhook通知</th>
 						<td>
-							<label>
-								<input type="checkbox" name="<?php echo esc_attr( Node_Connect_Event_Bus::OPTION_ENABLED ); ?>" value="1" <?php checked( $enabled ); ?> />
-								有効にする
-							</label>
-							<p class="description">オフにすると、すべてのイベント通知が送信されません。</p>
+							<?php
+							node_connect_render_toggle(
+								[
+									'name'    => Node_Connect_Event_Bus::OPTION_ENABLED,
+									'checked' => $enabled,
+									'text'    => '有効にする',
+									'data'    => [ 'nc-role' => 'master' ],
+								]
+							);
+							?>
+							<p class="description">オフにすると、すべてのイベント通知が送信されません（配下の設定はグレーアウトされます）。</p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">一時停止</th>
 						<td>
-							<label>
-								<input type="checkbox" name="<?php echo esc_attr( Node_Connect_Event_Bus::OPTION_PAUSED ); ?>" value="1" <?php checked( $paused ); ?> />
-								すべての通知を一時停止する
-							</label>
+							<?php
+							node_connect_render_toggle(
+								[
+									'name'    => Node_Connect_Event_Bus::OPTION_PAUSED,
+									'checked' => $paused,
+									'text'    => 'すべての通知を一時停止する',
+									'data'    => [ 'nc-role' => 'pause' ],
+								]
+							);
+							?>
 							<p class="description">設定を残したまま送信だけを止めたいとき（メンテナンス作業中など）に使います。</p>
 						</td>
 					</tr>
@@ -250,25 +491,44 @@ function node_connect_render_settings_page(): void {
 						<tr>
 							<th scope="row">このWebhookの通知</th>
 							<td>
-								<label>
-									<input type="checkbox" name="node_connect_webhooks[<?php echo (int) $i; ?>][enabled]" value="1" <?php checked( null === $webhook || $webhook['enabled'] ); ?> />
-									有効にする
-								</label>
-								<p class="description">オフにすると、このWebhookだけ送信を止められます。</p>
+								<?php
+								node_connect_render_toggle(
+									[
+										'name'    => 'node_connect_webhooks[' . (int) $i . '][enabled]',
+										'checked' => null === $webhook || $webhook['enabled'],
+										'text'    => '有効にする',
+										'data'    => [
+											'nc-role'    => 'webhook-enabled',
+											'nc-webhook' => (string) $i,
+										],
+									]
+								);
+								?>
+								<p class="description">オフにすると、このWebhookだけ送信を止められます（イベントの購読設定はグレーアウトされ、保持されたまま送信だけ止まります）。</p>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row">通知するイベント</th>
 							<td>
-								<fieldset>
-									<?php foreach ( $catalog as $event_id => $event_label ) : ?>
-										<label style="display: block; margin-bottom: 4px;">
-											<input type="checkbox" name="node_connect_webhooks[<?php echo (int) $i; ?>][events][]" value="<?php echo esc_attr( $event_id ); ?>" <?php checked( null !== $webhook && in_array( $event_id, $webhook['events'], true ) ); ?> />
-											<?php echo esc_html( $event_label ); ?>
-										</label>
-									<?php endforeach; ?>
+								<fieldset class="nc-toggle-list">
+									<?php
+									foreach ( $catalog as $event_id => $event_label ) {
+										node_connect_render_toggle(
+											[
+												'name'    => 'node_connect_webhooks[' . (int) $i . '][events][]',
+												'checked' => null !== $webhook && in_array( $event_id, $webhook['events'], true ),
+												'text'    => $event_label,
+												'value'   => $event_id,
+												'data'    => [
+													'nc-role'    => 'event',
+													'nc-webhook' => (string) $i,
+												],
+											]
+										);
+									}
+									?>
 								</fieldset>
-								<p class="description">チェックしたイベントだけが、このWebhookへ送信されます。AI関連のイベントは今後のアップデートで発火します。</p>
+								<p class="description">オンにしたイベントだけが、このWebhookへ送信されます。AI関連のイベントは今後のアップデートで発火します。</p>
 							</td>
 						</tr>
 						<?php if ( null !== $webhook && '' !== $webhook['url'] ) : ?>
@@ -283,6 +543,97 @@ function node_connect_render_settings_page(): void {
 					</table>
 				</div>
 			<?php endfor; ?>
+
+			<?php
+			$x_enabled     = Node_Connect_X_Poster::is_enabled();
+			$x_credentials = [
+				Node_Connect_X_Poster::OPTION_API_KEY    => 'API Key',
+				Node_Connect_X_Poster::OPTION_API_SECRET => 'API Key Secret',
+			];
+			$x_has_app     = null !== Node_Connect_X_Poster::get_app_credentials();
+			$x_ready       = null !== Node_Connect_X_Poster::get_credentials();
+			$x_screen_name = (string) get_option( Node_Connect_X_Poster::OPTION_SCREEN_NAME, '' );
+			?>
+			<div class="m3-admin-card" style="<?php echo esc_attr( $card_style ); ?>">
+				<h2 style="<?php echo esc_attr( $h2_style ); ?>">
+					<span class="dashicons dashicons-twitter"></span> X（Twitter）自動投稿
+				</h2>
+				<p class="description">記事の新規公開時（予約公開を含む）に、テンプレートから作った投稿文を自動でXへポストします。投稿は記事1件につき1回だけで、記事編集画面の「X投稿」ボックスから記事ごとに除外できます。X Developer Platform の Free 以上のプランと、書き込み権限付きのキー・トークンが必要です。</p>
+				<table class="form-table">
+					<tr>
+						<th scope="row">自動投稿</th>
+						<td>
+							<?php
+							node_connect_render_toggle(
+								[
+									'name'    => Node_Connect_X_Poster::OPTION_ENABLED,
+									'checked' => $x_enabled,
+									'text'    => '有効にする',
+									'data'    => [ 'nc-role' => 'x-enabled' ],
+								]
+							);
+							?>
+							<p class="description">オフの間は自動投稿されません（記事編集画面からの手動投稿はいつでも使えます）。</p>
+						</td>
+					</tr>
+					<?php foreach ( $x_credentials as $x_option => $x_label ) : ?>
+						<?php $x_value = (string) get_option( $x_option, '' ); ?>
+						<tr>
+							<th scope="row"><?php echo esc_html( $x_label ); ?></th>
+							<td>
+								<?php if ( '' !== $x_value ) : ?>
+									<p style="margin-top: 0;"><code>…<?php echo esc_html( mb_substr( $x_value, -4 ) ); ?></code>（設定済み）</p>
+								<?php endif; ?>
+								<input type="password" name="<?php echo esc_attr( $x_option ); ?>" value="" class="regular-text" placeholder="<?php echo '' !== $x_value ? '変更する場合のみ入力' : ''; ?>" autocomplete="new-password" />
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					<tr>
+						<th scope="row">アカウント連携</th>
+						<td>
+							<?php if ( $x_ready ) : ?>
+								<p style="margin-top: 0;">
+									連携済み<?php echo '' !== $x_screen_name ? '： <strong>@' . esc_html( $x_screen_name ) . '</strong>' : ''; ?>
+								</p>
+								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=node_connect_x_disconnect' ), 'node_connect_x_disconnect' ) ); ?>" class="button">連携を解除</a>
+							<?php elseif ( $x_has_app ) : ?>
+								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=node_connect_x_connect' ), 'node_connect_x_connect' ) ); ?>" class="button button-primary">Xと連携（ログイン）</a>
+								<p class="description">Xの認可画面が開きます。許可すると投稿用トークンが自動で保存されます。<br>事前に X Developer Portal のアプリ設定（User authentication settings）で Read and write 権限と、Callback URL に次のURLを<strong>そのまま</strong>登録してください:<br><code><?php echo esc_html( admin_url( 'admin-post.php?action=node_connect_x_callback' ) ); ?></code></p>
+							<?php else : ?>
+								<p class="description" style="margin-top: 0;">先に API Key / API Key Secret を保存すると、ここに「Xと連携」ボタンが表示されます。</p>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">認証情報の削除</th>
+						<td>
+							<label>
+								<input type="checkbox" name="node_connect_x_clear" value="1" />
+								保存時に認証情報（API Key・連携トークン）をすべて削除する
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">投稿テンプレート</th>
+						<td>
+							<textarea name="<?php echo esc_attr( Node_Connect_X_Poster::OPTION_TEMPLATE ); ?>" rows="6" class="large-text"><?php echo esc_textarea( Node_Connect_X_Poster::get_template() ); ?></textarea>
+							<p class="description">
+								使用可能な変数: <code>{{title}}</code>（タイトル）, <code>{{url}}</code>（URL）, <code>{{summary}}</code>（AI要約があれば要約、なければ抜粋）, <code>{{category}}</code>（カテゴリ名）, <code>{{tags}}</code>（記事タグのハッシュタグ列）<br>
+								投稿全体がXの上限（日本語約140文字・URLは23文字換算）に収まるよう、要約は自動で切り詰め、タグは入り切る分だけ付きます。
+							</p>
+						</td>
+					</tr>
+					<?php if ( $x_ready ) : ?>
+						<tr>
+							<th scope="row">認証テスト</th>
+							<td>
+								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=node_connect_x_test' ), 'node_connect_x_test' ) ); ?>" class="button">認証を確認</a>
+								<p class="description">保存済みのキーでアカウント情報を取得して確認します（投稿はされません）。</p>
+							</td>
+						</tr>
+					<?php endif; ?>
+				</table>
+			</div>
 
 			<?php submit_button( '設定を保存' ); ?>
 		</form>
@@ -308,9 +659,15 @@ function node_connect_render_settings_page(): void {
 						<?php foreach ( $log as $entry ) : ?>
 							<tr>
 								<td><?php echo esc_html( (string) ( $entry['time'] ?? '' ) ); ?></td>
-								<td><?php echo esc_html( Node_Connect_Event_Bus::get_event_catalog()[ $entry['event'] ?? '' ] ?? (string) ( $entry['event'] ?? '' ) ); ?></td>
+								<?php
+								$node_connect_log_labels = Node_Connect_Event_Bus::get_event_catalog() + [
+									'test'   => '接続テスト',
+									'x_post' => 'X自動投稿',
+								];
+								?>
+								<td><?php echo esc_html( $node_connect_log_labels[ $entry['event'] ?? '' ] ?? (string) ( $entry['event'] ?? '' ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $entry['label'] ?? '' ) ); ?></td>
-								<td><?php echo ! empty( $entry['ok'] ) ? '✅' : '❌'; ?> <?php echo esc_html( (string) ( $entry['status'] ?? '' ) ); ?></td>
+								<td><?php echo ! empty( $entry['ok'] ) ? '[OK]' : '[失敗]'; ?> <?php echo esc_html( (string) ( $entry['status'] ?? '' ) ); ?></td>
 								<td><?php echo (int) ( $entry['attempt'] ?? 1 ); ?>回目</td>
 							</tr>
 						<?php endforeach; ?>
@@ -322,5 +679,51 @@ function node_connect_render_settings_page(): void {
 			<?php endif; ?>
 		</div>
 	</div>
+	<script>
+	( function () {
+		var masterInput = document.querySelector( 'input[data-nc-role="master"]' );
+
+		function all( selector ) {
+			return Array.prototype.slice.call( document.querySelectorAll( selector ) );
+		}
+
+		function setLocked( input, locked ) {
+			var label = input.closest( '.nc-toggle' );
+			if ( label ) {
+				label.classList.toggle( 'is-locked', locked );
+			}
+			// disabled属性は使わない（値がPOSTされなくなり保存で設定が消えるため）。
+			// pointer-events はCSS側、キーボード操作は tabindex で止める。
+			input.tabIndex = locked ? -1 : 0;
+			input.setAttribute( 'aria-disabled', locked ? 'true' : 'false' );
+		}
+
+		function refresh() {
+			var masterOn = ! masterInput || masterInput.checked;
+
+			all( 'input[data-nc-role="pause"]' ).forEach( function ( input ) {
+				setLocked( input, ! masterOn );
+			} );
+			all( 'input[data-nc-role="webhook-enabled"]' ).forEach( function ( input ) {
+				setLocked( input, ! masterOn );
+			} );
+			all( 'input[data-nc-role="event"]' ).forEach( function ( input ) {
+				var webhookToggle = document.querySelector(
+					'input[data-nc-role="webhook-enabled"][data-nc-webhook="' + input.getAttribute( 'data-nc-webhook' ) + '"]'
+				);
+				setLocked( input, ! masterOn || ( webhookToggle && ! webhookToggle.checked ) );
+			} );
+			// X自動投稿はWebhook通知から独立した機能のためロック連動しない。
+		}
+
+		document.addEventListener( 'change', function ( event ) {
+			if ( event.target && event.target.matches && event.target.matches( 'input[data-nc-role]' ) ) {
+				refresh();
+			}
+		} );
+
+		refresh();
+	} )();
+	</script>
 	<?php
 }

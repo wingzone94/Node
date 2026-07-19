@@ -3,7 +3,7 @@
  * Plugin Name:  Node Connect
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  外部サービス連携基盤（ベータ版）。記事の公開・更新などのイベントを Webhook（Discord）へ通知する。Node テーマと連携。
- * Version:      1.3.0-beta.1
+ * Version:      1.3.3
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_CONNECT_VERSION', '1.3.0-beta.1' );
+define( 'NODE_CONNECT_VERSION', '1.3.3' );
 define( 'NODE_CONNECT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_CONNECT_MAX_WEBHOOKS', 3 );
 
@@ -45,17 +45,20 @@ final class Node_Connect {
 		require_once NODE_CONNECT_DIR . 'includes/class-discord-formatter.php';
 		require_once NODE_CONNECT_DIR . 'includes/class-webhook-sender.php';
 		require_once NODE_CONNECT_DIR . 'includes/class-event-bus.php';
+		require_once NODE_CONNECT_DIR . 'includes/class-x-poster.php';
 
 		if ( is_admin() ) {
 			require_once NODE_CONNECT_DIR . 'admin/settings-page.php';
+			require_once NODE_CONNECT_DIR . 'admin/meta-box-x-post.php';
 		}
 	}
 
 	private function register_hooks(): void {
 		Node_Connect_Event_Bus::instance()->register();
+		Node_Connect_X_Poster::instance()->register();
 
-		// 機能全体が無効なら投稿イベントの監視自体を登録しない（§1.2）。
-		if ( ! Node_Connect_Event_Bus::is_enabled() ) {
+		// Webhook通知・X自動投稿とも無効なら投稿イベントの監視自体を登録しない（§1.2）。
+		if ( ! Node_Connect_Event_Bus::is_enabled() && ! Node_Connect_X_Poster::is_enabled() ) {
 			return;
 		}
 
