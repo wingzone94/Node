@@ -46,7 +46,8 @@
     flex-grow: 1;
     display: flex;
     align-items: baseline;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    min-width: 0;
     gap: 8px;
     font-size: 1.1rem;
     font-weight: 900;
@@ -54,7 +55,17 @@
     transition: opacity 0.15s var(--m3-motion-easing);
 }
 
-/* 開いたら「目次」ラベルは消え、現在回・シリーズ説明の文章に切り替わる */
+/* シリーズ名は1行固定でカード幅に収める。JS（initSeriesNameFit）が
+   字詰め→縮小の順にフィットさせ、それでも溢れる場合の最終保険がellipsis。 */
+.m3-series-toc__series-name {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* 開いたらシリーズ名ラベルは消え、現在回・シリーズ説明の文章に切り替わる */
 .m3-series-toc__toggle[aria-expanded="true"] .m3-series-toc__toggle-label {
     display: none;
 }
@@ -79,6 +90,7 @@
 .m3-series-toc__count {
     display: inline-flex;
     align-items: center;
+    flex-shrink: 0;
     padding: 2px 10px;
     border-radius: 100px;
     background: var(--node-series-color, #FF9900);

@@ -28,13 +28,13 @@ $node_series_style     = $node_series_color ? ' style="--node-series-color: ' . 
 				class="m3-series-toc__toggle"
 				aria-expanded="false"
 				aria-controls="<?php echo esc_attr( $node_series_panel_id ); ?>"
-				aria-label="目次: シリーズ「<?php echo esc_attr( $node_series_toc['term']->name ); ?>」"
+				aria-label="シリーズ「<?php echo esc_attr( $node_series_toc['term']->name ); ?>」の記事一覧"
 			>
 				<span class="m3-series-toc__toggle-icon">
 					<span class="material-symbols-outlined">auto_stories</span>
 				</span>
 				<span class="m3-series-toc__toggle-label">
-					目次
+					<span class="m3-series-toc__series-name" data-series-name-fit><?php echo esc_html( $node_series_toc['term']->name ); ?></span>
 					<?php if ( $node_series_position ) : ?>
 					<span class="m3-series-toc__count"><?php echo esc_html( $node_series_position['index'] . ' / ' . $node_series_position['total'] ); ?></span>
 					<?php endif; ?>
