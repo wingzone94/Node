@@ -3,7 +3,7 @@
  * Plugin Name:  Node Connect
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  外部サービス連携基盤（ベータ版）。記事の公開・更新などのイベントを Webhook（Discord）へ通知する。Node テーマと連携。
- * Version:      1.3.4
+ * Version:      1.3.5
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,9 +17,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_CONNECT_VERSION', '1.3.4' );
+/**
+ * 既に別経路（単体プラグイン or テーマ同梱）で読み込み済みなら何もしない。
+ *
+ * テーマ側のローダー（functions.php の $embedded_plugins）は node_connect_init() の
+ * 有無で二重読み込みを判定するが、1.3.3 以前の単体プラグインはこの関数を持たないため
+ * 判定をすり抜け、定数の再定義警告と Cannot redeclare class Node_Connect の
+ * 致命的エラーを起こしていた（1.2.3 で本番障害・1.2.4 で修正）。
+ * ローダー側の判定に依存せず、このファイル自身を冪等にして再発を防ぐ。
+ *
+ * 判定に class_exists() は使えない。PHPは無条件のクラス宣言をコンパイル時に
+ * 巻き上げるため、このファイル自身の Node_Connect を検知して常に true になり、
+ * 定数が未定義のまま return してしまう。実行時にしか定義されない定数で判定する。
+ * 併せて class / function の宣言を条件付きにし、巻き上げによるコンパイル時の
+ * 再宣言エラー自体を起こさないようにする。
+ */
+if ( defined( 'NODE_CONNECT_VERSION' ) ) {
+	return;
+}
+
+define( 'NODE_CONNECT_VERSION', '1.3.5' );
 define( 'NODE_CONNECT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_CONNECT_MAX_WEBHOOKS', 3 );
+
+// 条件付き宣言にすることでコンパイル時の早期束縛（巻き上げ）を回避する。
+if ( ! class_exists( 'Node_Connect', false ) ) :
 
 /**
  * プラグイン初期化
@@ -142,6 +164,10 @@ final class Node_Connect {
 	}
 }
 
+endif;
+
+if ( ! function_exists( 'node_connect_init' ) ) :
+
 /**
  * 初期化エントリポイント。
  *
@@ -153,5 +179,7 @@ final class Node_Connect {
 function node_connect_init() {
 	Node_Connect::instance();
 }
+
+endif;
 
 add_action( 'plugins_loaded', 'node_connect_init' );

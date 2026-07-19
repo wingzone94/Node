@@ -71,13 +71,18 @@ $embedded_plugins = [
 	'node-connect/node-connect.php'         => 'node_connect_init',
 ];
 
+// 単体プラグインとして導入済みのものは、そちらを優先して同梱版を読み込まない。
+// 初期化関数の有無だけで判定すると、その関数を持たない古い版が単体で入っている環境で
+// 判定をすり抜け、Cannot redeclare の致命的エラーになる（1.2.3 の node-connect 障害）。
+$node_active_plugins = (array) get_option( 'active_plugins', [] );
+
 foreach ( $embedded_plugins as $plugin_file => $init_func ) {
 	$path = NODE_THEME_DIR . '/plugins-embedded/' . $plugin_file;
 
-	if ( function_exists( $init_func ) ) {
+	if ( function_exists( $init_func ) || in_array( $plugin_file, $node_active_plugins, true ) ) {
 		continue;
 	}
-	
+
 	if ( file_exists( $path ) ) {
 		require_once $path;
 		// 読み込んだ直後に初期化関数を直接実行（plugins_loaded フックを待たずに確実に起動）
