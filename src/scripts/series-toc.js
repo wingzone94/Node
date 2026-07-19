@@ -31,7 +31,8 @@ const initSeriesInfoToggle = () => {
  * 段階的に詰めて1行へ収める。それでも溢れる場合はCSSのellipsisが最終保険。
  */
 const initSeriesNameFit = () => {
-    const KERNING_STEPS = [0, -0.02, -0.035, -0.05]; // em
+    // 初段''はテーマ既定の字間（継承値）のまま測る。詰めるのは溢れた場合のみ。
+    const KERNING_STEPS = ['', '-0.02em', '-0.035em', '-0.05em'];
     const MIN_FONT_SIZE = 0.85; // rem（展開時説明文と同等の下限）
     const FONT_STEP = 0.05;
 
@@ -44,14 +45,17 @@ const initSeriesNameFit = () => {
         const overflows = () => el.scrollWidth > el.clientWidth;
 
         for (const spacing of KERNING_STEPS) {
-            el.style.letterSpacing = `${spacing}em`;
+            el.style.letterSpacing = spacing;
             if (!overflows()) return;
         }
 
         const baseSize = parseFloat(window.getComputedStyle(el).fontSize)
             / parseFloat(window.getComputedStyle(document.documentElement).fontSize);
 
-        for (let size = baseSize - FONT_STEP; size >= MIN_FONT_SIZE; size -= FONT_STEP) {
+        // 0.05刻みの浮動小数点誤差で最小値がスキップされないよう、ステップ数で回す
+        const steps = Math.round((baseSize - MIN_FONT_SIZE) / FONT_STEP);
+        for (let i = 1; i <= steps; i++) {
+            const size = Math.max(baseSize - FONT_STEP * i, MIN_FONT_SIZE);
             el.style.fontSize = `${size}rem`;
             if (!overflows()) return;
         }
