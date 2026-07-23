@@ -353,8 +353,27 @@
     }
 
     .m3-hero-col--aside .m3-article__reading-badge-expressive.is-badge-open .m3-reading-badge-content {
-        max-width: min(76vw, 340px);
+        max-width: min(88vw, 360px);
         opacity: 1;
+    }
+
+    /* 展開後の読了時間・文字数・判定ピルは1行厳守（見切れ防止に字送りを詰める） */
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-badge-content {
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-badge-text--main {
+        white-space: nowrap;
+        font-size: clamp(0.7rem, 3vw, 0.82rem);
+    }
+
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-badge-label {
+        flex: 0 0 auto;
+    }
+
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-badge-label-main {
+        white-space: nowrap;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -609,16 +628,34 @@
         margin: 0;
     }
 
+    /* 読了時間・文字数・判定ピルは必ず1行に収める（折返し禁止）。
+       狭い右カラム(~280px)に収めるため、この文脈だけ字送りを詰める。 */
     .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-badge-content {
         min-width: 0;
-        flex-wrap: wrap;
-        gap: 6px;
+        flex-wrap: nowrap;
+        gap: 5px;
     }
 
     .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-badge-text--main {
-        white-space: normal;
-        overflow-wrap: anywhere;
-        line-height: 1.25;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        line-height: 1.2;
+        font-size: clamp(0.66rem, 0.9vw, 0.74rem);
+    }
+
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-chars {
+        font-size: 0.86em;
+        margin-left: 0.1em;
+    }
+
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-reading-badge-label {
+        flex: 0 0 auto;
+        padding: 2px 6px;
+    }
+
+    .m3-hero-col--aside .m3-article__reading-badge-expressive .m3-badge-label-main {
+        font-size: 0.64rem;
+        white-space: nowrap;
     }
 
     /* --- PC補足: 著者情報 ＋ ページ数 --- */
