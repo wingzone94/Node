@@ -186,6 +186,12 @@
                                 <span class="m3-reading-badge-label">
                                     <span class="m3-badge-label-main"><?php echo esc_html(sprintf('約%s文字', number_format_i18n($reading_info['chars']))); ?></span>
                                 </span>
+                                <!-- 判定結果チップ（M3 Expressive: 判定カラー連動のトーナルチップ＋先頭ドット。
+                                     円ゲージ・カラーと同じ「長さの判定」を語で明示する） -->
+                                <span class="m3-reading-rank-chip" data-rank="<?php echo esc_attr($reading_info['rank']); ?>">
+                                    <span class="m3-reading-rank-chip__dot" aria-hidden="true"></span>
+                                    <span class="m3-reading-rank-chip__label"><?php echo esc_html($reading_info['label']); ?></span>
+                                </span>
                                 <span id="m3-reading-badge-desc" class="m3-reading-badge-text m3-reading-badge-text--desc">
                                     本文の文字数から550字/分で換算した読了目安です。
                                 </span>

@@ -804,19 +804,21 @@ function node_get_article_ranking_info($post_id = null) {
     ];
 
     if ($chars < $rank_thresholds['short']) {
+        // 短い = 薄緑（ライム寄りの黄緑）。やや短いのエメラルドと明確に色相を分ける。
         $rank = 'short';
         $label = '短い';
-        $color = '#C8E6C9'; $on_color = '#1B5E20';
-        $container_color = '#E8F5E9';
-        $badge_color = '#00895A';
-        $badge_bg = '#D7F8E9';
+        $color = '#DCEDC8'; $on_color = '#33691E';
+        $container_color = '#F3FAE4';
+        $badge_color = '#7CB342';
+        $badge_bg = '#EDF6D8';
     } elseif ($chars < $rank_thresholds['somewhat_short']) {
+        // やや短い = エメラルド（青緑）。短いの薄緑と一目で判別できるようにする。
         $rank = 'somewhat_short';
         $label = 'やや短い';
-        $color = '#DCEDC8'; $on_color = '#33691E';
-        $container_color = '#F1F8E9';
-        $badge_color = '#2E9B63';
-        $badge_bg = '#E4FAEF';
+        $color = '#C8E6C9'; $on_color = '#004D40';
+        $container_color = '#E4FAF3';
+        $badge_color = '#009E7F';
+        $badge_bg = '#CFF3E9';
     } elseif ($chars < $rank_thresholds['standard']) {
         $rank = 'standard';
         $label = '標準';
@@ -840,8 +842,17 @@ function node_get_article_ranking_info($post_id = null) {
         $badge_bg = '#FFE1DD';
     }
 
-    // ゲージは「長い」の下限（10,000字）を100%として充填
-    $progress = min(100, round(($chars / $rank_thresholds['somewhat_long']) * 100));
+    // ゲージの進み具合は「判定ランク」と同期させる（短い→長いで段階的に充填）。
+    // 生の文字数比ではなく判定結果に一致させることで、円ゲージ・判定カラー・
+    // ランクチップが同じ「長さの判定」を指すようにする。
+    $rank_progress_map = [
+        'short'          => 20,
+        'somewhat_short' => 40,
+        'standard'       => 60,
+        'somewhat_long'  => 80,
+        'long'           => 100,
+    ];
+    $progress = $rank_progress_map[$rank] ?? min(100, round(($chars / $rank_thresholds['somewhat_long']) * 100));
 
     // 読了時間: 550字/分の固定換算（最低30秒）
     $chars_per_minute = 550;

@@ -532,6 +532,7 @@ require_once NODE_THEME_DIR . '/inc/cleanup.php';
  * -------------------------------------------------------
  */
 function node_user_contact_methods( $methods ) {
+    $methods['discord']       = 'Discord (URL)';
     $methods['custom_link_1'] = '追加リンク 1 (URL)';
     $methods['custom_link_2'] = '追加リンク 2 (URL)';
     $methods['custom_link_3'] = '追加リンク 3 (URL)';
