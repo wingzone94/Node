@@ -49,3 +49,6 @@
 @import './_article-polish.css';
 @import './_toc-fab.css';
 @import './_content-flow.css';
+
+/* Print (must be last: overrides everything under @media print) */
+@import './_print.css';

@@ -53,6 +53,7 @@ require_once NODE_THEME_DIR . '/inc/ogp-generator.php';
 require_once NODE_THEME_DIR . '/inc/toc-engine.php';
 require_once NODE_THEME_DIR . '/inc/blogcard.php';
 require_once NODE_THEME_DIR . '/inc/maintenance.php';
+require_once NODE_THEME_DIR . '/inc/print.php';
 
 /**
  * -------------------------------------------------------
@@ -551,14 +552,17 @@ add_filter( 'user_contactmethods', 'node_user_contact_methods' );
 function node_critical_inline_styles() {
     // フロントエンド: 最優先でレンダリングブロックを解除
     if ( ! is_admin() ) {
+        // 背景色は @media screen 限定にする（印刷時に _print.css の白背景を潰さないため）
         echo '<style id="node-critical-fouc-fix">
-            html {
-                background-color: #FFF4E5 !important;
-            }
-            html[data-theme="dark"],
-            body[data-theme="dark"] ~ html,
-            [data-theme="dark"] {
-                background-color: #1B1812 !important;
+            @media screen {
+                html {
+                    background-color: #FFF4E5 !important;
+                }
+                html[data-theme="dark"],
+                body[data-theme="dark"] ~ html,
+                [data-theme="dark"] {
+                    background-color: #1B1812 !important;
+                }
             }
             body {
                 opacity: 1 !important;

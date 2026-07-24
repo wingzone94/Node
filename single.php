@@ -11,6 +11,7 @@
     ?>
 
         <article id="post-<?php the_ID(); ?>" <?php post_class('m3-article'); ?> data-m3-multipage="<?php echo esc_attr( $current_multipage ); ?>">
+<?php node_print_the_header(); ?>
 <?php get_template_part('template-parts/single/hero'); ?>
             
             
@@ -144,7 +145,8 @@
                 </div>
             <?php endif; ?>
             <?php get_template_part('template-parts/single/footer'); ?>
-            
+            <?php node_print_the_footer(); ?>
+
         </article>
 
         <?php get_template_part('template-parts/single/related'); ?>

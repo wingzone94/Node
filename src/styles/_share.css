@@ -276,6 +276,13 @@
     border-color: transparent !important;
 }
 
+/* 印刷ボタン（Node 1.3 第5段階）。SNSと区別するニュートラル配色 */
+.m3-share-btn--print {
+    background-color: #5f6368 !important;
+    color: #ffffff !important;
+    border: 1px solid #5f6368 !important;
+}
+
 .node-copy-toast {
     position: fixed;
     left: 50%;
