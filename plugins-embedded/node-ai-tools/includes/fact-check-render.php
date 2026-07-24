@@ -214,7 +214,7 @@ if ( ! function_exists( 'node_ai_render_fact_check_front' ) ) {
 			</summary>
 			<div class="m3-fact-check__body">
 				<p class="m3-fact-check__disclaimer">
-					<?php esc_html_e( 'AI と Google Search による参考情報です。編集者が確認済みの内容を含みますが、最終的な正確性は原文・公式情報をご確認ください。', 'node-ai-tools' ); ?>
+					<?php esc_html_e( 'AI と Google Search による参考情報です。これは確認箇所の抽出支援であり、編集者が確認済みの内容を含みますが、最終的な正確性は原文・公式情報をご確認ください。', 'node-ai-tools' ); ?>
 				</p>
 				<?php if ( ! empty( $data['summary'] ) ) : ?>
 					<p class="m3-fact-check__overview"><?php echo esc_html( (string) $data['summary'] ); ?></p>

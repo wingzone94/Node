@@ -50,14 +50,21 @@ final class Node_AI_Tools {
 	private function load_dependencies(): void {
 		require_once NODE_AI_DIR . 'includes/guidelines-fetcher.php';
 		require_once NODE_AI_DIR . 'includes/class-gemini-api.php';
+		require_once NODE_AI_DIR . 'includes/providers/interface-node-ai-provider.php';
+		require_once NODE_AI_DIR . 'includes/providers/class-provider-gemini.php';
+		require_once NODE_AI_DIR . 'includes/providers/class-provider-qwen.php';
+		require_once NODE_AI_DIR . 'includes/providers/class-provider-ollama.php';
+		require_once NODE_AI_DIR . 'includes/class-ai-core.php';
 		require_once NODE_AI_DIR . 'includes/fact-check-render.php';
 		require_once NODE_AI_DIR . 'includes/ajax-handlers.php';
+		require_once NODE_AI_DIR . 'includes/auto-check.php';
 		require_once NODE_AI_DIR . 'includes/meta-handlers.php';
 
 		if ( is_admin() ) {
 			require_once NODE_AI_DIR . 'admin/meta-box-ai-summary.php';
 			require_once NODE_AI_DIR . 'admin/meta-box-fact-check.php';
 			require_once NODE_AI_DIR . 'admin/meta-box-featured-image-ai.php';
+			require_once NODE_AI_DIR . 'admin/settings-page-ai.php';
 		}
 	}
 
@@ -77,6 +84,11 @@ final class Node_AI_Tools {
         // AJAX ハンドラの登録
         add_action( 'wp_ajax_node_generate_ai_summary', 'node_ai_ajax_generate_summary' );
         add_action( 'wp_ajax_node_ai_fact_check', 'node_ai_ajax_fact_check' );
+
+        // ファクトチェックの自動実行（下書き保存時に予約 → cron 実行）と公開ゲート
+        add_action( 'wp_after_insert_post', 'node_ai_maybe_schedule_fact_check', 20, 2 );
+        add_action( 'node_ai_auto_fact_check', 'node_ai_run_auto_fact_check' );
+        add_filter( 'rest_pre_insert_post', 'node_ai_gate_publish_without_fact_check', 10, 2 );
 
         // フロント: 編集者確認済みファクトチェックを記事ヘッダー直後に表示
         add_action( 'luminous_after_article_header', [ $this, 'render_front_fact_check' ], 12 );
@@ -146,7 +158,7 @@ final class Node_AI_Tools {
             'Fact Check (ファクトチェック)',
             'node_ai_render_fact_check_meta_box',
             'post',
-            'normal',
+            'side',
             'default'
         );
 

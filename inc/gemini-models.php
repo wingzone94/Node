@@ -175,10 +175,12 @@ if ( ! function_exists( 'node_gemini_format_api_error' ) ) {
  * @return array<string, string>
  */
 function node_get_gemini_model_fallback_options(): array {
+	// 2026-07-19 に ListModels API の実一覧で存在確認済みのIDのみ（Flash/Lite系を先頭）
 	return array(
+		'gemini-3.1-flash-lite'  => 'Gemini 3.1 Flash-Lite',
+		'gemini-3.5-flash'       => 'Gemini 3.5 Flash',
 		'gemini-2.5-flash'       => 'Gemini 2.5 Flash',
-		'gemini-2.5-pro'         => 'Gemini 2.5 Pro',
-		'gemini-2.0-flash'       => 'Gemini 2.0 Flash',
+		'gemini-3.1-pro-preview' => 'Gemini 3.1 Pro Preview',
 		'gemini-2.0-flash-lite'  => 'Gemini 2.0 Flash-Lite',
 	);
 }
@@ -201,6 +203,11 @@ function node_resolve_gemini_api_key_for_models( int $user_id = 0 ): string {
 		if ( '' !== $key ) {
 			return $key;
 		}
+	}
+
+	$site_key = trim( (string) get_option( 'node_ai_gemini_api_key', '' ) );
+	if ( '' !== $site_key ) {
+		return $site_key;
 	}
 
 	if ( defined( 'GEMINI_API_KEY' ) && GEMINI_API_KEY ) {
@@ -227,7 +234,7 @@ function node_parse_gemini_model_entry( array $model ): ?array {
 		return null;
 	}
 
-	if ( preg_match( '/(embedding|embed|aqa|imagen|veo|tts|live|computer-use)/i', $id ) ) {
+	if ( preg_match( '/(embedding|embed|aqa|imagen|veo|tts|live|computer-use|image|robotics)/i', $id ) ) {
 		return null;
 	}
 
@@ -351,6 +358,15 @@ function node_fetch_gemini_models_from_api( string $api_key, bool $force_refresh
 		);
 	}
 
+	// Gemini 3系以降の Pro / Flash には思考量（thinkingLevel）High / Low の選択肢を追加する。
+	// `<モデルID>@high` 形式の仮想IDで、API送信時に thinkingConfig.thinkingLevel へ変換される（Node_Gemini_API）
+	foreach ( array_keys( $models ) as $id ) {
+		if ( preg_match( '/^gemini-[3-9](?:\.\d+)?-(?:pro|flash)(?:-preview)?$/', $id ) ) {
+			$models[ $id . '@high' ] = $models[ $id ] . '（思考量: High）';
+			$models[ $id . '@low' ]  = $models[ $id ] . '（思考量: Low）';
+		}
+	}
+
 	uasort(
 		$models,
 		static function ( string $label_a, string $label_b ): int {
@@ -434,10 +450,17 @@ function node_get_gemini_model_options_for_user( int $user_id ): array {
  * デフォルトモデル（Flash 系を優先）
  */
 function node_get_default_gemini_model(): string {
+	// AI設定のサイト既定モデル（option）が最優先
+	$site_default = trim( (string) get_option( 'node_ai_gemini_model', '' ) );
+	if ( '' !== $site_default && node_is_valid_gemini_model_id( $site_default ) ) {
+		return $site_default;
+	}
+
 	$options = node_get_gemini_model_options();
 
 	foreach ( array_keys( $options ) as $id ) {
-		if ( false !== stripos( $id, 'flash' ) ) {
+		// 思考量つき仮想ID（@high / @low）は既定にしない
+		if ( false !== stripos( $id, 'flash' ) && false === strpos( $id, '@' ) ) {
 			return $id;
 		}
 	}
@@ -452,7 +475,7 @@ function node_get_default_gemini_model(): string {
  * @param string $model モデル ID。
  */
 function node_is_valid_gemini_model_id( string $model ): bool {
-	return (bool) preg_match( '/^gemini-[a-z0-9][a-z0-9.-]*$/i', $model );
+	return (bool) preg_match( '/^gemini-[a-z0-9][a-z0-9.-]*(?:@(?:high|low))?$/i', $model );
 }
 
 /**

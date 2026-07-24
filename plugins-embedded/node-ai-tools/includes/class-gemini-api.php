@@ -35,6 +35,11 @@ class Node_Gemini_API {
                 : '';
         }
 
+        // サイト共通キー（AI設定）をフォールバック。個人キー未登録のライターに適用
+        if ( empty( $this->api_key ) ) {
+            $this->api_key = trim( (string) get_option( 'node_ai_gemini_api_key', '' ) );
+        }
+
         // 開発環境のみ: wp-config.php の GEMINI_API_KEY 定数をフォールバック
         if ( empty( $this->api_key ) && defined( 'GEMINI_API_KEY' ) && GEMINI_API_KEY ) {
             $this->api_key = (string) GEMINI_API_KEY;
@@ -71,6 +76,13 @@ class Node_Gemini_API {
                 : 'gemini-2.0-flash';
         }
         
+        // `<モデルID>@high` / `@low` は思考量（thinkingLevel）つき仮想ID。実IDと思考量に分解する
+        $thinking_level = '';
+        if ( preg_match( '/^(.+)@(high|low)$/i', $model_name, $m ) ) {
+            $model_name     = $m[1];
+            $thinking_level = strtolower( $m[2] );
+        }
+
         $url = $this->api_url_base . $model_name . ':generateContent?key=' . $this->api_key;
 
         $payload = [
@@ -86,6 +98,10 @@ class Node_Gemini_API {
                 'responseMimeType' => $options['response_mime_type'],
             ]
         ];
+
+        if ( '' !== $thinking_level ) {
+            $payload['generationConfig']['thinkingConfig'] = array( 'thinkingLevel' => $thinking_level );
+        }
 
         if ( ! empty( $options['google_search_grounding'] ) ) {
             $payload['tools'] = array(
@@ -203,6 +219,7 @@ class Node_Gemini_API {
 
         $system_prompt = 'あなたはテクニカルブログ「Luminous Core」のファクトチェック補助アシスタントです。
 Google Search の検索結果を参照し、記事内の事実関係に関わる主張を抽出して検証してください。
+これは確認箇所の抽出支援であり、真偽の最終判定はしないことに留意してください。最終判断は必ず人間の編集者が行います。
 あわせて、提供される Luminous Core 運営ガイドラインに照らし、コンプライアンス違反の可能性がある記述も指摘してください。
 ガイドライン違反は status を uncertain または likely_incorrect とし、note に該当ルールを簡潔に記載してください。
 以下の JSON 形式のみで回答してください。
@@ -234,7 +251,7 @@ Google Search の検索結果を参照し、記事内の事実関係に関わる
             $prompt,
             array(
                 'system_instruction'        => $system_prompt,
-                'response_mime_type'      => 'application/json',
+                'response_mime_type'      => 'text/plain',
                 'temperature'             => 0.2,
                 'max_tokens'              => 4096,
                 'google_search_grounding' => true,

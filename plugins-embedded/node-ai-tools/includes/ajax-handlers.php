@@ -79,6 +79,7 @@ if ( ! function_exists( 'node_ai_ajax_generate_summary' ) ) {
             // 保存
             update_post_meta( $post_id, '_node_ai_summary', sanitize_textarea_field( $data['summary'] ) );
             // カウンタ更新
+            $attempts = (int) get_post_meta( $post_id, '_node_ai_summary_attempts', true );
             update_post_meta( $post_id, '_node_ai_summary_attempts', $attempts + 1 );
             update_post_meta( $post_id, '_node_ai_summary_last_attempt', current_time( 'mysql' ) );
 
@@ -116,7 +117,21 @@ if ( ! function_exists( 'node_ai_parse_json_response' ) ) {
         $clean = trim( (string) $clean );
         $data  = json_decode( $clean, true );
 
-        return ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) ? $data : null;
+        if ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) {
+            return $data;
+        }
+
+        // text/plain 応答ではJSONの前後に説明文が付くことがあるため、最初の { から最後の } までを抽出して再試行
+        $start = strpos( $clean, '{' );
+        $end   = strrpos( $clean, '}' );
+        if ( false !== $start && false !== $end && $end > $start ) {
+            $data = json_decode( substr( $clean, $start, $end - $start + 1 ), true );
+            if ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) {
+                return $data;
+            }
+        }
+
+        return null;
     }
 }
 
@@ -165,45 +180,11 @@ if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
             wp_send_json_error( array( 'message' => $result->get_error_message() ) );
         }
 
-        $data = node_ai_parse_json_response( (string) ( $result['text'] ?? '' ) );
-        if ( null === $data || empty( $data['claims'] ) || ! is_array( $data['claims'] ) ) {
-            wp_send_json_error( array( 'message' => 'ファクトチェック結果の解析に失敗しました。' ) );
+        // 整形・保存は自動実行（cron）と共通の処理を使う（includes/auto-check.php）
+        $payload = node_ai_store_fact_check_result( $post_id, $result );
+        if ( is_wp_error( $payload ) ) {
+            wp_send_json_error( array( 'message' => $payload->get_error_message() ) );
         }
-
-        $grounding = is_array( $result['grounding'] ?? null ) ? $result['grounding'] : array();
-        $sources   = function_exists( 'node_ai_extract_grounding_sources' )
-            ? node_ai_extract_grounding_sources( $grounding )
-            : array();
-
-        $payload = array(
-            'summary'         => sanitize_text_field( (string) ( $data['summary'] ?? '' ) ),
-            'overall_risk'    => sanitize_key( (string) ( $data['overall_risk'] ?? 'medium' ) ),
-            'claims'          => array(),
-            'sources'         => $sources,
-            'search_queries'  => array_map( 'sanitize_text_field', (array) ( $grounding['webSearchQueries'] ?? array() ) ),
-            'grounded'        => ! empty( $sources ) || ! empty( $grounding['webSearchQueries'] ),
-            'guidelines_used' => ! empty( $result['guidelines_used'] ),
-            'checked_at'      => current_time( 'mysql' ),
-        );
-
-        foreach ( $data['claims'] as $claim ) {
-            if ( ! is_array( $claim ) ) {
-                continue;
-            }
-            $payload['claims'][] = array(
-                'claim'      => sanitize_text_field( (string) ( $claim['claim'] ?? '' ) ),
-                'status'     => sanitize_key( (string) ( $claim['status'] ?? 'uncertain' ) ),
-                'confidence' => sanitize_key( (string) ( $claim['confidence'] ?? 'low' ) ),
-                'note'       => sanitize_textarea_field( (string) ( $claim['note'] ?? '' ) ),
-            );
-        }
-
-        if ( empty( $payload['claims'] ) ) {
-            wp_send_json_error( array( 'message' => '検証対象の主張が見つかりませんでした。' ) );
-        }
-
-        update_post_meta( $post_id, '_node_ai_fact_check', wp_json_encode( $payload, JSON_UNESCAPED_UNICODE ) );
-        update_post_meta( $post_id, '_node_ai_fact_check_approved', '' );
 
         wp_send_json_success( $payload );
     }
