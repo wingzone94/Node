@@ -71,7 +71,7 @@ class Node_AI_Provider_Gemini implements Node_AI_Provider {
 		if ( function_exists( 'node_get_user_gemini_model' ) && $this->user_id > 0 ) {
 			return node_get_user_gemini_model( $this->user_id );
 		}
-		return function_exists( 'node_get_default_gemini_model' ) ? node_get_default_gemini_model() : 'gemini-2.0-flash';
+		return function_exists( 'node_get_default_gemini_model' ) ? node_get_default_gemini_model() : 'gemini-3.5-flash';
 	}
 
 	/**

@@ -13,9 +13,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// テーマ（優先度10）が親メニューを登録した後に走らせる。
+// プラグインは functions.php より先に読み込まれるため、同じ優先度だと親が未登録になる
 add_action(
 	'admin_menu',
 	static function (): void {
+		// Node Settings（テーマ側の add_menu_page）配下へ入れる。
+		// 親が未登録の場合（プラグイン単体利用）は従来どおり「設定」配下へ退避する
+		if ( menu_page_url( 'luminous-settings', false ) ) {
+			add_submenu_page(
+				'luminous-settings',
+				'Node AI 設定',
+				'AI',
+				'manage_options',
+				'node-ai',
+				'node_ai_render_settings_page'
+			);
+			return;
+		}
+
 		add_options_page(
 			'Node AI 設定',
 			'Node AI',
@@ -23,7 +39,8 @@ add_action(
 			'node-ai',
 			'node_ai_render_settings_page'
 		);
-	}
+	},
+	20
 );
 
 add_action(
@@ -36,6 +53,17 @@ add_action(
 				'sanitize_callback' => static function ( $value ): string {
 					$value = (string) $value;
 					return in_array( $value, Node_AI_Core::PROVIDERS, true ) ? $value : 'gemini';
+				},
+			)
+		);
+
+		// アイキャッチの alt 自動生成
+		register_setting(
+			'node_ai_group',
+			'node_ai_auto_alt',
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					return '1' === (string) $value ? '1' : '0';
 				},
 			)
 		);
@@ -285,6 +313,14 @@ function node_ai_render_settings_page(): void {
 							<th scope="row">サイト既定モデルID</th>
 							<td>
 								<input type="text" name="node_ai_gemini_model" value="<?php echo esc_attr( (string) get_option( 'node_ai_gemini_model', '' ) ); ?>" class="regular-text" placeholder="空欄で自動選択（Flash系優先）" />
+								<p class="description" style="margin-top:12px;">
+									<input type="hidden" name="node_ai_auto_alt" value="0" />
+									<label>
+										<input type="checkbox" name="node_ai_auto_alt" value="1" <?php checked( function_exists( 'node_ai_auto_alt_enabled' ) && node_ai_auto_alt_enabled() ); ?> />
+										アイキャッチの代替テキスト（alt）が未設定のとき、保存後に自動生成する
+									</label><br>
+									<span>既に alt がある画像は書き換えません。生成は保存の約30秒後にバックグラウンドで実行され、失敗しても公開は妨げません。</span>
+								</p>
 								<p class="description">個人設定でモデル未選択のライターに適用される既定モデルです。</p>
 							</td>
 						</tr>
