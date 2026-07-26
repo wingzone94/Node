@@ -117,54 +117,16 @@ class Node_AI_Auto_Check_Test extends WP_UnitTestCase {
 
 	// --- 公開ゲート ---
 
-	private function prepared( int $post_id, string $status ): stdClass {
-		$prepared              = new stdClass();
-		$prepared->ID          = $post_id;
-		$prepared->post_status = $status;
-		$prepared->post_author = $this->author_id;
-		return $prepared;
-	}
 
-	public function test_gate_blocks_publish_without_fact_check() {
+	// --- 1.3: ファクトチェックは「必須」から「推奨」へ（公開ゲートは撤去済み） ---
+
+	public function test_auto_check_is_still_scheduled_even_though_publish_is_open() {
+		// 「推奨」に変えても自動実行そのものは止めない
 		$post_id = $this->make_draft();
-		$result  = node_ai_gate_publish_without_fact_check( $this->prepared( $post_id, 'publish' ), null );
-		$this->assertWPError( $result );
-		$this->assertSame( 'node_ai_fact_check_required', $result->get_error_code() );
-	}
+		wp_clear_scheduled_hook( 'node_ai_auto_fact_check', array( $post_id ) );
 
-	public function test_gate_blocks_scheduling_without_fact_check() {
-		$post_id = $this->make_draft();
-		$result  = node_ai_gate_publish_without_fact_check( $this->prepared( $post_id, 'future' ), null );
-		$this->assertWPError( $result );
-	}
-
-	public function test_gate_allows_publish_with_fact_check() {
-		$post_id = $this->make_draft();
-		update_post_meta( $post_id, '_node_ai_fact_check', '{"claims":[{"claim":"c"}]}' );
-		$result = node_ai_gate_publish_without_fact_check( $this->prepared( $post_id, 'publish' ), null );
-		$this->assertNotWPError( $result );
-	}
-
-	public function test_gate_skips_author_without_key() {
-		$no_key_author = $this->factory->user->create( array( 'role' => 'editor' ) );
-		$post_id       = $this->make_draft( array( 'post_author' => $no_key_author ) );
-
-		$prepared              = $this->prepared( $post_id, 'publish' );
-		$prepared->post_author = $no_key_author;
-		$result = node_ai_gate_publish_without_fact_check( $prepared, null );
-		$this->assertNotWPError( $result );
-	}
-
-	public function test_gate_skips_already_published_post() {
-		$post_id = $this->make_draft( array( 'post_status' => 'publish' ) );
-		$result  = node_ai_gate_publish_without_fact_check( $this->prepared( $post_id, 'publish' ), null );
-		$this->assertNotWPError( $result );
-	}
-
-	public function test_gate_skips_draft_save() {
-		$post_id = $this->make_draft();
-		$result  = node_ai_gate_publish_without_fact_check( $this->prepared( $post_id, 'draft' ), null );
-		$this->assertNotWPError( $result );
+		node_ai_maybe_schedule_fact_check( $post_id, get_post( $post_id ) );
+		$this->assertNotFalse( wp_next_scheduled( 'node_ai_auto_fact_check', array( $post_id ) ) );
 	}
 
 	// --- Mock Handlers ---

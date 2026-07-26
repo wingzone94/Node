@@ -154,7 +154,7 @@ final class Node_AI_Core {
   "claims": [
     {
       "claim": "記事中の主張（原文に近い形）",
-      "status": "likely_correct / uncertain / likely_incorrect / unverifiable のいずれか",
+      "status": "correct / likely_correct / uncertain / likely_incorrect / unverifiable のいずれか。correct=信頼できる情報源で裏付けが取れた、likely_correct=概ね正しいが出典未確認や細部に幅がある、uncertain=要確認、likely_incorrect=誤りの可能性が高い、unverifiable=検証できない",
       "confidence": "high / medium / low のいずれか",
       "note": "根拠・補足（日本語）"
     }
@@ -208,12 +208,33 @@ final class Node_AI_Core {
 	 * @return string|WP_Error 生テキスト（JSON文字列想定）。
 	 */
 	public function proofread( string $content, int $user_id = 0, int $post_id = 0 ) {
-		$system = 'あなたは日本語テクニカルブログの校正者です。誤字脱字・文法誤り・表記ゆれ・読みにくい表現を指摘してください。
-以下の JSON 形式のみで回答してください（コードブロック禁止）。指摘は最大10件。
+		$system = 'あなたは商業メディア水準の日本語校閲者です。読者に配信して恥ずかしくない日本語かを厳しく見てください。
+以下の JSON 形式のみで回答してください（コードブロック禁止）。指摘は最大15件。
+
+type は次のいずれかを厳密に使うこと:
+  typo        = 誤字・脱字・変換ミス（同音異義語の誤変換を含む）
+  grammar     = 文法の誤り。主語と述語のねじれ、係り受けの不整合、助詞の誤用、
+                時制の不一致、修飾語の位置による多義
+  usage       = 国語的な誤り・言葉遣い。次を必ず見ること:
+                ・慣用句/ことわざの誤用（例「的を得る」→「的を射る」「汚名挽回」→「汚名返上」）
+                ・重言（例「頭痛が痛い」「まず最初に」「約〜程度」「各〜ごとに」）
+                ・ら抜き言葉、い抜き言葉、さ入れ言葉
+                ・敬語の誤り（二重敬語、尊敬語と謙譲語の取り違え、「〜させていただく」の乱用）
+                ・語の意味の取り違え（例「役不足」「情けは人の為ならず」「確信犯」）
+                ・話し言葉/若者言葉の混入（例「なので」の文頭使用、「〜的には」「めっちゃ」）
+  style       = 表記ゆれ・用字用語の不統一。漢字とひらがなの使い分け（形式名詞「こと・とき・もの」、
+                補助動詞「〜していく」等はひらがなが原則）、送り仮名、数字・単位・記号の統一、
+                全角半角の混在、句読点の打ち方
+  readability = 冗長・一文が長すぎる・同語反復・二重否定など読みにくい表現
+  meaning     = 解釈違い・誤解を招く断定・事実と異なる言い回し
+
+指摘は必ず原文どおりに引用し、修正案は文脈に沿った自然な日本語にすること。
+好みの問題にすぎない書き換えは指摘しないこと（誤りとして説明できるものだけ）。
+
 {
   "summary": "全体所見（1〜2文）",
   "issues": [
-    { "original": "問題のある原文", "suggestion": "修正案", "reason": "理由（簡潔に）", "severity": "low / medium / high" }
+    { "type": "typo", "original": "問題のある原文", "suggestion": "修正案", "reason": "理由（簡潔に）", "severity": "low / medium / high" }
   ]
 }';
 
@@ -224,7 +245,9 @@ final class Node_AI_Core {
 				'system_instruction' => $system,
 				'json'               => true,
 				'temperature'        => 0.2,
-				'max_tokens'         => 2048,
+				// 思考モデルは maxOutputTokens を思考にも消費するため、
+				// JSON が途中で切れないよう長めに確保する
+				'max_tokens'         => 8192,
 			),
 			$user_id,
 			$post_id

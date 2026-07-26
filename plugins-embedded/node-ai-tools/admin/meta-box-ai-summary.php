@@ -22,6 +22,8 @@ function node_ai_render_summary_meta_box($post) {
     // Model selection
     $user_id = get_current_user_id();
     $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
+        // 保存値は `<モデルID>@<思考量>` 形式。一覧はモデルIDのみのため分解して照合する
+        $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
     $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
     
     if ( ! empty( $models ) ) {

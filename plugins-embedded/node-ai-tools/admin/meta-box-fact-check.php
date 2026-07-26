@@ -29,7 +29,7 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 		<?php if ( $has_key ) : ?>
 			<p class="description">
 				下書き保存すると自動でファクトチェックが実行されます（約1分後に結果が保存されます。再読み込みで表示）。
-				<strong>ファクトチェック未実行のうちは記事を公開できません。</strong>
+				<strong>公開前の実行を推奨します（未実施でも公開はできます）。</strong>
 			</p>
 		<?php endif; ?>
 		<?php if ( '' !== $auto_error ) : ?>
@@ -59,6 +59,8 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
         // Model selection
         $user_id = get_current_user_id();
         $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
+        // 保存値は `<モデルID>@<思考量>` 形式。一覧はモデルIDのみのため分解して照合する
+        $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
         $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
         
         if ( ! empty( $models ) ) {
@@ -94,6 +96,7 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 			border-radius: 8px;
 			background: #fff;
 		}
+		.node-fact-check-meta-box .node-fact-check__claim--correct { border-left: 4px solid #007017; }
 		.node-fact-check-meta-box .node-fact-check__claim--likely_correct { border-left: 4px solid #00a32a; }
 		.node-fact-check-meta-box .node-fact-check__claim--uncertain { border-left: 4px solid #dba617; }
 		.node-fact-check-meta-box .node-fact-check__claim--likely_incorrect { border-left: 4px solid #d63638; }

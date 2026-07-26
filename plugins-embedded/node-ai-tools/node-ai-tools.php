@@ -58,6 +58,8 @@ final class Node_AI_Tools {
 		require_once NODE_AI_DIR . 'includes/fact-check-render.php';
 		require_once NODE_AI_DIR . 'includes/ajax-handlers.php';
 		require_once NODE_AI_DIR . 'includes/auto-check.php';
+		require_once NODE_AI_DIR . 'includes/alt-text.php';
+
 		require_once NODE_AI_DIR . 'includes/meta-handlers.php';
 
 		if ( is_admin() ) {
@@ -65,6 +67,7 @@ final class Node_AI_Tools {
 			require_once NODE_AI_DIR . 'admin/meta-box-fact-check.php';
 			require_once NODE_AI_DIR . 'admin/meta-box-featured-image-ai.php';
 			require_once NODE_AI_DIR . 'admin/settings-page-ai.php';
+			require_once NODE_AI_DIR . 'admin/post-list-column.php';
 		}
 	}
 
@@ -84,14 +87,22 @@ final class Node_AI_Tools {
         // AJAX ハンドラの登録
         add_action( 'wp_ajax_node_generate_ai_summary', 'node_ai_ajax_generate_summary' );
         add_action( 'wp_ajax_node_ai_fact_check', 'node_ai_ajax_fact_check' );
+        add_action( 'wp_ajax_node_ai_proofread', 'node_ai_ajax_proofread' );
 
-        // ファクトチェックの自動実行（下書き保存時に予約 → cron 実行）と公開ゲート
+        // アイキャッチの alt 自動生成（保存時に予約 → cron 実行）。既存 alt は上書きしない
+        add_action( 'wp_after_insert_post', 'node_ai_maybe_schedule_alt_generation', 25, 2 );
+        add_action( 'node_ai_auto_alt', 'node_ai_run_auto_alt' );
+
+        // ファクトチェックの自動実行（下書き保存時に予約 → cron 実行）。
+        // 公開はブロックしない（未実施なら公開直前に警告を出す「推奨」運用）
         add_action( 'wp_after_insert_post', 'node_ai_maybe_schedule_fact_check', 20, 2 );
         add_action( 'node_ai_auto_fact_check', 'node_ai_run_auto_fact_check' );
-        add_filter( 'rest_pre_insert_post', 'node_ai_gate_publish_without_fact_check', 10, 2 );
 
         // フロント: 編集者確認済みファクトチェックを記事ヘッダー直後に表示
         add_action( 'luminous_after_article_header', [ $this, 'render_front_fact_check' ], 12 );
+
+        // ブロックエディタ右ペイン（PluginDocumentSettingPanel）から編集する post meta
+        add_action( 'init', [ $this, 'register_ai_post_meta' ] );
 
         // メタボックス・エディタ拡張
         if ( is_admin() ) {
@@ -102,6 +113,26 @@ final class Node_AI_Tools {
 	}
 
     /**
+     * ブロックエディタ右ペインのパネルから編集する post meta を REST に公開する。
+     * アンダースコア始まりの meta は auth_callback がないと REST に出ないため明示する。
+     */
+    public function register_ai_post_meta(): void {
+        register_post_meta(
+            'post',
+            '_node_ai_fact_check_approved',
+            array(
+                'type'          => 'string',
+                'single'        => true,
+                'default'       => '',
+                'show_in_rest'  => true,
+                'auth_callback' => static function ( $allowed, $meta_key, $post_id ) {
+                    return current_user_can( 'edit_post', $post_id );
+                },
+            )
+        );
+    }
+
+    /**
      * ブロックエディタ用アセット
      */
     public function enqueue_block_editor_assets(): void {
@@ -110,6 +141,19 @@ final class Node_AI_Tools {
             return;
         }
 
+        // アイコン用（dashicons はスタイルのハンドル。スクリプト依存に入れると依存解決に失敗し
+        // スクリプト自体が出力されなくなるため、必ず wp_enqueue_style で読み込む）
+        wp_enqueue_style( 'dashicons' );
+
+        // 結果の持ち出し（コピー / .md）はファクトチェックと校正で共通
+        wp_enqueue_script(
+            'node-ai-export',
+            NODE_AI_URL . 'assets/js/ai-export.js',
+            array(),
+            NODE_AI_VERSION,
+            true
+        );
+
         wp_enqueue_script(
             'node-ai-editor-featured-image',
             NODE_AI_URL . 'assets/js/editor-featured-image.js',
@@ -117,6 +161,59 @@ final class Node_AI_Tools {
             NODE_AI_VERSION,
             true
         );
+
+        // 記事チェックUI（右ペイン）。ファクトチェックと校正を1パネルに統合している。
+        // クラシックメタボックスは context='side' でもブロックエディタでは
+        // 下部の「メタボックス」領域に落ちるため、こちらへ移した
+        wp_enqueue_script(
+            'node-ai-editor-article-check',
+            NODE_AI_URL . 'assets/js/editor-article-check.js',
+            array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data', 'node-ai-export' ),
+            NODE_AI_VERSION,
+            true
+        );
+
+        $post    = get_post();
+        $post_id = $post instanceof \WP_Post ? (int) $post->ID : 0;
+        $user_id = get_current_user_id();
+
+        // 保存値は `<モデルID>@<思考量>` 形式（1.2 系と互換）。UI では2つに分けて出す
+        $stored_model = function_exists( 'node_get_user_gemini_model' ) ? node_get_user_gemini_model( $user_id ) : '';
+        $selection    = function_exists( 'node_split_gemini_model' )
+            ? node_split_gemini_model( $stored_model )
+            : array( 'model' => $stored_model, 'thinking' => '' );
+
+        wp_localize_script(
+            'node-ai-editor-article-check',
+            'nodeAiFactCheck',
+            array(
+                'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+                'nonce'           => wp_create_nonce( 'node_ai_fact_check_action' ),
+                'statusLabels'    => function_exists( 'node_ai_fact_check_status_labels' ) ? node_ai_fact_check_status_labels() : array(),
+                'riskLabels'      => function_exists( 'node_ai_fact_check_risk_labels' ) ? node_ai_fact_check_risk_labels() : array(),
+                'models'          => function_exists( 'node_get_gemini_model_options_for_user' ) ? node_get_gemini_model_options_for_user( $user_id ) : array(),
+                'currentModel'    => $selection['model'],
+                'thinkingLevels'  => function_exists( 'node_gemini_thinking_levels' ) ? node_gemini_thinking_levels() : array(),
+                'currentThinking' => $selection['thinking'],
+                'thinkingModels'  => function_exists( 'node_get_gemini_thinking_models' ) ? node_get_gemini_thinking_models( $user_id ) : array(),
+                'data'            => ( $post_id && function_exists( 'node_ai_get_fact_check_data' ) ) ? node_ai_get_fact_check_data( $post_id ) : null,
+                'hasKey'          => ( $post_id && function_exists( 'node_ai_author_has_api_key' ) ) ? node_ai_author_has_api_key( (int) $post->post_author ) : false,
+                'autoError'       => $post_id ? (string) get_post_meta( $post_id, '_node_ai_fact_check_error', true ) : '',
+            )
+        );
+
+        // 校正・誤字脱字チェック（読者要望で 1.3 に追加）は同じパネルに統合済み。
+        // 設定値だけ統合パネルへ渡す
+        wp_localize_script(
+            'node-ai-editor-article-check',
+            'nodeAiProofread',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'node_ai_proofread_action' ),
+                'data'    => ( $post_id && function_exists( 'node_ai_get_proofread_data' ) ) ? node_ai_get_proofread_data( $post_id ) : null,
+            )
+        );
+
     }
 
     /**
@@ -153,17 +250,18 @@ final class Node_AI_Tools {
             'side',
             'high'
         );
-        add_meta_box(
-            'node_ai_fact_check',
-            'Fact Check (ファクトチェック)',
-            'node_ai_render_fact_check_meta_box',
-            'post',
-            'side',
-            'default'
-        );
-
-        // ブロックエディタでは PluginDocumentSettingPanel を使うためメタボックスは出さない
+        // ブロックエディタでは PluginDocumentSettingPanel（右ペイン）を使うためメタボックスは出さない。
+        // context='side' を指定してもブロックエディタでは下部の「メタボックス」領域に落ちるため
         if ( ! $this->uses_block_editor_for_posts() ) {
+            add_meta_box(
+                'node_ai_fact_check',
+                'Fact Check (ファクトチェック)',
+                'node_ai_render_fact_check_meta_box',
+                'post',
+                'side',
+                'default'
+            );
+
             add_meta_box(
                 'node_ai_featured_image',
                 'AI アイキャッチ',

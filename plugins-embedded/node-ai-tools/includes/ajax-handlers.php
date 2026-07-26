@@ -190,4 +190,115 @@ if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
     }
 }
 
+if ( ! function_exists( 'node_ai_get_proofread_data' ) ) {
+    /**
+     * 保存済みの校正結果を返す
+     *
+     * @param int $post_id 投稿ID。
+     * @return array<string, mixed>|null
+     */
+    function node_ai_get_proofread_data( int $post_id ): ?array {
+        $stored = get_post_meta( $post_id, '_node_ai_proofread', true );
+        if ( ! is_string( $stored ) || '' === $stored ) {
+            return null;
+        }
+
+        $data = json_decode( $stored, true );
+
+        return is_array( $data ) && isset( $data['issues'] ) ? $data : null;
+    }
+}
+
+if ( ! function_exists( 'node_ai_ajax_proofread' ) ) {
+    /**
+     * 誤字脱字・校正チェック AJAX ハンドラ（AI Core 経由）
+     *
+     * 読者からの要望で 1.3 に追加。ファクトチェックと違い公開ゲートには絡めず、
+     * 執筆者向けの指摘表示のみを行う（修正の適用は人間が判断する）。
+     */
+    function node_ai_ajax_proofread(): void {
+        check_ajax_referer( 'node_ai_proofread_action', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( array( 'message' => '権限がありません。' ) );
+        }
+
+        $post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+        $post    = $post_id ? get_post( $post_id ) : null;
+        if ( ! $post ) {
+            wp_send_json_error( array( 'message' => '記事が見つかりません。' ) );
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            wp_send_json_error( array( 'message' => 'この記事を編集する権限がありません。' ) );
+        }
+
+        // エディタ上の未保存本文を優先し、無ければ保存済み本文を使う
+        $content = isset( $_POST['content'] ) && '' !== trim( (string) wp_unslash( $_POST['content'] ) )
+            ? (string) wp_unslash( $_POST['content'] )
+            : (string) $post->post_content;
+
+        $content = trim( strip_shortcodes( wp_strip_all_tags( $content ) ) );
+        if ( '' === $content ) {
+            wp_send_json_error( array( 'message' => '記事本文が空です。' ) );
+        }
+
+        if ( ! function_exists( 'node_ai_core' ) ) {
+            wp_send_json_error( array( 'message' => 'AI Core が読み込まれていません。' ) );
+        }
+
+        $core = node_ai_core();
+        if ( ! $core->is_enabled() ) {
+            wp_send_json_error( array( 'message' => 'AI機能が無効です。設定 → Node AI から有効化してください。' ) );
+        }
+
+        $result = $core->proofread( $content, get_current_user_id(), $post_id );
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+        }
+
+        $raw = is_array( $result ) ? (string) ( $result['text'] ?? '' ) : (string) $result;
+
+        $data = node_ai_parse_json_response( $raw );
+        if ( null === $data || ! isset( $data['issues'] ) || ! is_array( $data['issues'] ) ) {
+            wp_send_json_error( array( 'message' => '校正結果の解析に失敗しました。' ) );
+        }
+
+        $payload = array(
+            'summary'    => sanitize_text_field( (string) ( $data['summary'] ?? '' ) ),
+            'issues'     => array(),
+            'checked_at' => current_time( 'mysql' ),
+        );
+
+        foreach ( $data['issues'] as $issue ) {
+            if ( ! is_array( $issue ) ) {
+                continue;
+            }
+
+            $original = sanitize_text_field( (string) ( $issue['original'] ?? '' ) );
+            if ( '' === $original ) {
+                continue;
+            }
+
+            // 種別はアイコン表示に使う。想定外の値は typo 扱いにフォールバック
+            $type = sanitize_key( (string) ( $issue['type'] ?? '' ) );
+            if ( ! in_array( $type, array( 'typo', 'grammar', 'usage', 'style', 'readability', 'meaning' ), true ) ) {
+                $type = 'typo';
+            }
+
+            $payload['issues'][] = array(
+                'type'       => $type,
+                'original'   => $original,
+                'suggestion' => sanitize_text_field( (string) ( $issue['suggestion'] ?? '' ) ),
+                'reason'     => sanitize_textarea_field( (string) ( $issue['reason'] ?? '' ) ),
+                'severity'   => sanitize_key( (string) ( $issue['severity'] ?? 'low' ) ),
+            );
+        }
+
+        update_post_meta( $post_id, '_node_ai_proofread', wp_json_encode( $payload, JSON_UNESCAPED_UNICODE ) );
+
+        wp_send_json_success( $payload );
+    }
+}
+
 // 登録はプラグインのメインファイルで行う
