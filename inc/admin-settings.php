@@ -13,13 +13,28 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Add Settings Menu
  */
 function node_add_admin_menu() {
-    $page = add_options_page(
-        'Luminous Theme Settings',
-        'Luminous Settings',
+    // 「設定」配下に埋もれていたが、AI・外部連携と並ぶ運営の入口なので
+    // ダッシュボードのトップレベルへ独立させる（1.3）
+    $page = add_menu_page(
+        'Node Settings',
+        'Node Settings',
+        'manage_options',
+        'luminous-settings',
+        'node_render_settings_page',
+        'dashicons-admin-generic',
+        58 // 「外観」の少し上（プラグインの並びと衝突しにくい位置）
+    );
+
+    // 親と同じスラッグの子を先頭に置き、サブメニュー名が「Node Settings」の重複表示になるのを避ける
+    add_submenu_page(
+        'luminous-settings',
+        'Node Settings',
+        'テーマ設定',
         'manage_options',
         'luminous-settings',
         'node_render_settings_page'
     );
+
     add_action( 'admin_print_scripts-' . $page, function() {
         wp_enqueue_media();
     } );
@@ -129,11 +144,21 @@ function node_render_settings_page() {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row">開始予定時刻</th>
+                        <td>
+                            <input type="datetime-local" name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_START ); ?>" value="<?php echo esc_attr( (string) get_option( NODE_MAINTENANCE_OPTION_START, '' ) ); ?>" />
+                            <p class="description">
+                                設定した場合、有効化済みでもこの時刻までは通常表示を維持し、到達後にメンテナンス画面へ切り替えます。
+                                サイトのタイムゾーン（<?php echo esc_html( wp_timezone_string() ); ?>）で解釈されます。
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row">復旧予定時刻</th>
                         <td>
                             <input type="datetime-local" name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_ETA ); ?>" value="<?php echo esc_attr( (string) get_option( NODE_MAINTENANCE_OPTION_ETA, '' ) ); ?>" />
                             <p class="description">
-                                設定すると、メンテナンス画面にカウントダウンと進捗ゲージが表示されます（未設定なら非表示）。
+                                設定すると、メンテナンス画面にカウントダウンと進捗ゲージが表示され、到達後は自動解除して Luminous Core のトップへ移動します（未設定なら非表示）。
                                 サイトのタイムゾーン（<?php echo esc_html( wp_timezone_string() ); ?>）で解釈されます。
                             </p>
                         </td>

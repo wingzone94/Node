@@ -96,6 +96,33 @@ add_action('manage_post_posts_custom_column', 'node_render_spotlight_column', 10
  * 管理画面の列幅を調整
  */
 function node_admin_spotlight_style() {
-    echo '<style>.column-node_spotlight { width: 100px; text-align: center; }</style>';
+    $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+    if ( ! $screen || 'edit-post' !== $screen->id ) {
+        return;
+    }
+    ?>
+    <style>
+        .column-node_spotlight { width: 60px; text-align: center; }
+
+        /*
+         * 投稿一覧の列幅調整。
+         * SPOTLIGHT・FC・報酬レート・特単・シリーズと列が多く、タイトル列が
+         * 数十pxまで潰れて1文字ずつ改行される状態になっていたため、
+         * タイトルに幅を確保し、分類系を抑える。
+         */
+        @media screen and (min-width: 783px) {
+            .post-type-post .wp-list-table .column-title { width: 26%; }
+            .post-type-post .wp-list-table .column-author { width: 8%; }
+            .post-type-post .wp-list-table .column-categories,
+            .post-type-post .wp-list-table .column-tags { width: 10%; }
+            .post-type-post .wp-list-table .column-taxonomy-node_series { width: 9%; }
+
+            /* 幅を指定しない列が 0 まで潰れて見出しが縦組みになるため、
+               狭い列にも必ず幅を与える */
+            .post-type-post .wp-list-table .column-ad_reward_rate { width: 80px; }
+            .post-type-post .wp-list-table .column-is_special_rate { width: 64px; }
+        }
+    </style>
+    <?php
 }
 add_action('admin_head', 'node_admin_spotlight_style');

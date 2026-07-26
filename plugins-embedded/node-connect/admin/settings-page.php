@@ -12,9 +12,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// テーマ（優先度10）が親メニューを登録した後に走らせる。
+// プラグインは functions.php より先に読み込まれるため、同じ優先度だと親が未登録になる
 add_action(
 	'admin_menu',
 	static function (): void {
+		// Node Settings（テーマ側の add_menu_page）配下へ入れる。
+		// 親が未登録の場合（プラグイン単体利用）は従来どおり「設定」配下へ退避する
+		if ( menu_page_url( 'luminous-settings', false ) ) {
+			add_submenu_page(
+				'luminous-settings',
+				'外部連携設定',
+				'外部連携',
+				'manage_options',
+				'node-connect',
+				'node_connect_render_settings_page'
+			);
+			return;
+		}
+
 		add_options_page(
 			'外部連携設定',
 			'外部連携',
@@ -22,7 +38,8 @@ add_action(
 			'node-connect',
 			'node_connect_render_settings_page'
 		);
-	}
+	},
+	20
 );
 
 add_action(
