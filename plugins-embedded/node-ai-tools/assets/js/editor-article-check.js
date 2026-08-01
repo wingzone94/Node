@@ -630,7 +630,9 @@
 				{
 					// 保存形式は `<モデルID>@<思考量>`（1.2 系と互換）
 					gemini_model:
-						model && supportsThinking && thinking ? model + '@' + thinking : model,
+						factSettings.providerId === 'gemini'
+							? ( model && supportsThinking && thinking ? model + '@' + thinking : model )
+							: '',
 				},
 				function ( data ) {
 					setFactResults( data );
@@ -854,7 +856,9 @@
 				{
 					// 保存形式は `<モデルID>@<思考量>`（1.2 系と互換）
 					gemini_model:
-						model && supportsThinking && thinking ? model + '@' + thinking : model,
+						factSettings.providerId === 'gemini'
+							? ( model && supportsThinking && thinking ? model + '@' + thinking : model )
+							: '',
 				},
 				function ( data ) {
 					setFactResults( data );
@@ -909,7 +913,9 @@
 			el(
 				'p',
 				{ style: { fontSize: '12px', color: '#646970', marginTop: 0 } },
-				'事実関係（Google Search 参照）と日本語表現をまとめて点検します。確認箇所の抽出支援であり、最終判断は編集者が行います。'
+				factSettings.providerId === 'gemini'
+					? '事実関係（Google Search 参照）と日本語表現をまとめて点検します。確認箇所の抽出支援であり、最終判断は編集者が行います。'
+					: '事実関係と日本語表現をまとめて点検します。確認箇所の抽出支援であり、最終判断は編集者が行います。'
 			),
 			factSettings.hasKey
 				? el(

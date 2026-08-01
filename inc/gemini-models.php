@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Gemini API モデル一覧の動的取得
  *

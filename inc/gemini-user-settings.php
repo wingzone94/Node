@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Gemini API 設定 — ライター個別（user_meta）
  *

@@ -1,7 +1,7 @@
 # Node
 ### WordPress Theme for Luminous Core
 
-![Version](https://img.shields.io/badge/version-1.2.4-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.3.0-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0+-21759b?style=for-the-badge&logo=wordpress)
 
@@ -16,7 +16,7 @@ README は導入と運用ガイドに集中し、リリース履歴は `CHANGELO
 - **インテリジェント詳細検索:** 読了時間、文字数、プラットフォーム、AI生成の有無などで高度な絞り込みが可能。
 - **フローティング・ナビゲーション:** 記事ページでの目次アクセス、コメント移動、トップ戻りをスムーズに。
 - **プラットフォーム・ブランド連携:** デバイスごとの公式ブランドカラーをUIに反映（Windows, iOS, Android, Nintendo, PlayStation, Xbox）。
-- **AI 連携:** Gemini API を活用した記事要約（保存済みデータの高速表示に対応）。
+- **AI 連携:** Gemini・Qwen・Ollamaを共通基盤から利用し、記事要約・ファクトチェック補助・校正を支援。
 - **PWA 対応:** オフライン閲覧やホーム画面へのインストールをサポート。
 
 ## v1.2.1 (2026.07.19)

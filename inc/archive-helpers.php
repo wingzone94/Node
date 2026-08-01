@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Archive page context helpers (category, tag, author, date, taxonomy).
  *

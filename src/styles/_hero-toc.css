@@ -345,7 +345,13 @@
         max-width: 0;
         opacity: 0;
         overflow: hidden;
-        transition: max-width 0.35s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease;
+        transform: translateX(-8px);
+        /* 省略→フル展開を滑らかに。max-width の overshoot を抑えつつ
+           easeOutQuint で減速、内容は少し遅らせてフェードインさせる。 */
+        transition:
+            max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.32s ease 0.06s,
+            transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .m3-hero-col--aside .m3-article__reading-badge-expressive.is-badge-open {
@@ -353,8 +359,9 @@
     }
 
     .m3-hero-col--aside .m3-article__reading-badge-expressive.is-badge-open .m3-reading-badge-content {
-        max-width: min(76vw, 340px);
+        max-width: min(88vw, 360px);
         opacity: 1;
+        transform: translateX(0);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -598,8 +605,8 @@
     }
 
     /* 読了バッジは狭い右カラム幅（~280px）に収める。既存トーンは維持したまま
-       グリッド化してラベルの見切れを防ぐ（モバイル同様の折返し挙動）。
-       幅は内容にフィットさせ、カラム内で中央に揃える。 */
+       グリッド化してゲージと本文を別カラムに分離（衝突しない）。フォントは従来のまま、
+       狭幅では読了時間・文字数・判定チップが自然に段落ちする（レスポンシブ）。 */
     .m3-hero-col--aside .m3-article__reading-badge-expressive {
         display: inline-grid;
         grid-template-columns: 30px minmax(0, 1fr);

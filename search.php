@@ -1,4 +1,6 @@
-<?php 
+<?php
+declare(strict_types=1);
+
 /**
  * 検索結果ページ
  */
@@ -124,9 +126,9 @@ get_header(); ?>
         </div>
     </div>
 
-    <div class="m3-post-grid m3-search-results-grid">
+    <div class="l-card-grid m3-post-grid m3-search-results-grid">
         <?php if (have_posts()) : ?>
-            <div class="m3-post-grid__container">
+            <div class="l-card-grid__items m3-post-grid__container">
                 <?php
                 while (have_posts()) : the_post();
                     get_template_part('template-parts/article-card', null, ['card_class' => 'card-standard']);

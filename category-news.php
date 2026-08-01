@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ニュース（HEADLINE）カテゴリ専用アーカイブテンプレート
  *

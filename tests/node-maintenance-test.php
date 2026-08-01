@@ -16,6 +16,7 @@ class Node_Maintenance_Test extends WP_UnitTestCase {
 	public function tear_down() {
 		delete_option( NODE_MAINTENANCE_OPTION_ENABLED );
 		delete_option( NODE_MAINTENANCE_OPTION_MESSAGE );
+		delete_option( NODE_MAINTENANCE_OPTION_START );
 		delete_option( NODE_MAINTENANCE_OPTION_ETA );
 		delete_option( NODE_MAINTENANCE_OPTION_STARTED );
 		node_maintenance_event_queue( null, true );
@@ -92,6 +93,44 @@ class Node_Maintenance_Test extends WP_UnitTestCase {
 		$this->assertSame( '', node_maintenance_sanitize_eta( '' ) );
 	}
 
+	public function test_scheduled_start_is_parsed_and_sanitized(): void {
+		$expected = new DateTimeImmutable( '2026-08-01 01:30', wp_timezone() );
+		update_option( NODE_MAINTENANCE_OPTION_START, '2026-08-01T01:30' );
+
+		$this->assertSame( $expected->getTimestamp(), node_maintenance_get_scheduled_start() );
+		$this->assertSame( '2026-08-01T01:30', node_maintenance_sanitize_start( '2026-08-01T01:30' ) );
+		$this->assertSame( '', node_maintenance_sanitize_start( '2026-08-01 01:30' ) );
+	}
+
+	public function test_future_scheduled_start_keeps_normal_site_visible(): void {
+		update_option(
+			NODE_MAINTENANCE_OPTION_START,
+			( new DateTimeImmutable( '@' . ( time() + HOUR_IN_SECONDS ) ) )->setTimezone( wp_timezone() )->format( 'Y-m-d\TH:i' )
+		);
+		update_option( NODE_MAINTENANCE_OPTION_ENABLED, '1' );
+
+		$this->assertFalse( node_maintenance_should_display(), '開始予定時刻までは通常サイトを表示する' );
+		$this->assertTrue( node_maintenance_is_enabled(), '予約自体は有効のまま保持する' );
+	}
+
+	public function test_progress_uses_scheduled_start_when_set(): void {
+		update_option(
+			NODE_MAINTENANCE_OPTION_START,
+			( new DateTimeImmutable( '@' . ( time() - 2 * HOUR_IN_SECONDS ) ) )->setTimezone( wp_timezone() )->format( 'Y-m-d\TH:i' )
+		);
+		update_option( NODE_MAINTENANCE_OPTION_STARTED, time() - 10 * HOUR_IN_SECONDS );
+		update_option(
+			NODE_MAINTENANCE_OPTION_ETA,
+			( new DateTimeImmutable( '@' . ( time() + 2 * HOUR_IN_SECONDS ) ) )->setTimezone( wp_timezone() )->format( 'Y-m-d\TH:i' )
+		);
+
+		$progress = node_maintenance_get_progress();
+
+		$this->assertNotNull( $progress );
+		$this->assertGreaterThanOrEqual( 49, $progress );
+		$this->assertLessThanOrEqual( 51, $progress );
+	}
+
 	// --- 進捗ゲージ -----------------------------------------------------------
 
 	public function test_progress_is_null_without_start_or_eta(): void {
@@ -124,6 +163,18 @@ class Node_Maintenance_Test extends WP_UnitTestCase {
 		);
 
 		$this->assertNull( node_maintenance_get_progress(), '予定時刻を過ぎたらゲージは出さない' );
+	}
+
+	public function test_expired_maintenance_is_automatically_disabled(): void {
+		update_option(
+			NODE_MAINTENANCE_OPTION_ETA,
+			( new DateTimeImmutable( '@' . ( time() - HOUR_IN_SECONDS ) ) )->setTimezone( wp_timezone() )->format( 'Y-m-d\TH:i' )
+		);
+		update_option( NODE_MAINTENANCE_OPTION_ENABLED, '1' );
+
+		$this->assertFalse( node_maintenance_should_display(), '終了時刻後は通常サイトを表示する' );
+		$this->assertFalse( node_maintenance_is_enabled(), 'メンテナンス設定も自動で解除する' );
+		$this->assertNull( node_maintenance_get_started_at(), '自動解除時に開始時刻を消去する' );
 	}
 
 	// --- 切り替え時の副作用 ---------------------------------------------------

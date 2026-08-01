@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Luminous Core Theme Functions
  *
@@ -26,8 +28,43 @@ define( 'NODE_PREFERRED_SOURCE_DEFAULT_URL', 'https://google.com/preferences/sou
 // Official Google preferred source badges are served from production uploads, not bundled in the theme.
 define( 'NODE_PREFERRED_SOURCE_BADGE_BASE_URL', 'https://luminous-core.net/wp-content/uploads/2026/07/' );
 
+$node_composer_autoloader = NODE_THEME_DIR . '/vendor/autoload.php';
+
+if ( file_exists( $node_composer_autoloader ) ) {
+	require_once $node_composer_autoloader;
+}
+
+/**
+ * Keep the theme classes loadable when a distribution omits Composer's vendor directory.
+ * Composer remains the primary PSR-4 loader; this fallback mirrors its NodeTheme\\ mapping.
+ */
+spl_autoload_register(
+	static function ( string $class_name ): void {
+		$namespace_prefix = 'NodeTheme\\';
+
+		if ( 0 !== strpos( $class_name, $namespace_prefix ) ) {
+			return;
+		}
+
+		$relative_class = substr( $class_name, strlen( $namespace_prefix ) );
+
+		if ( '' === $relative_class || 1 !== preg_match( '/\A[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*\z/D', $relative_class ) ) {
+			return;
+		}
+
+		$class_file     = NODE_THEME_DIR . '/src/' . str_replace( '\\', '/', $relative_class ) . '.php';
+
+		if ( is_readable( $class_file ) ) {
+			require_once $class_file;
+		}
+	}
+);
+
 require_once NODE_THEME_DIR . '/inc/theme-setup.php';
 define( 'NODE_THEME_VERSION', node_get_theme_version() );
+
+\NodeTheme\Setup\ThemeSupport::register();
+\NodeTheme\Hooks\CustomHooks::register();
 
 /**
  * -------------------------------------------------------
@@ -41,7 +78,6 @@ require_once NODE_THEME_DIR . '/inc/ajax.php';
 require_once NODE_THEME_DIR . '/inc/spotlight.php';
 require_once NODE_THEME_DIR . '/inc/archive-helpers.php';
 require_once NODE_THEME_DIR . '/inc/media.php';
-require_once NODE_THEME_DIR . '/inc/search.php';
 require_once NODE_THEME_DIR . '/inc/utilities.php';
 require_once NODE_THEME_DIR . '/inc/gemini-helper.php';
 require_once NODE_THEME_DIR . '/inc/gemini-models.php';
@@ -61,6 +97,7 @@ require_once NODE_THEME_DIR . '/inc/print.php';
  * -------------------------------------------------------
  */
 $embedded_plugins = [
+	'luminous-core-engine/luminous-core-engine.php' => 'luminous_core_engine_init',
 	'node-signal/node-signal.php'           => 'node_signal_init',
 	'luminous-blocks/luminous-blocks.php'   => 'luminous_blocks_init',
 	'node-ai-tools/node-ai-tools.php'       => 'node_ai_core_init',
@@ -93,118 +130,6 @@ foreach ( $embedded_plugins as $plugin_file => $init_func ) {
 		}
 	}
 }
-
-/**
- * Vite manifest の import チェーンを依存順で登録（ES module）。
- *
- * @param array<string, mixed> $manifest
- * @param string               $key
- * @param array<string, bool>  $seen
- * @return string[] Script handles in load order.
- */
-function node_register_vite_chain( array $manifest, string $key, array &$seen = array() ): array {
-	if ( ! isset( $manifest[ $key ] ) || isset( $seen[ $key ] ) ) {
-		return array();
-	}
-
-	$handles = array();
-
-	if ( ! empty( $manifest[ $key ]['imports'] ) && is_array( $manifest[ $key ]['imports'] ) ) {
-		foreach ( $manifest[ $key ]['imports'] as $import_key ) {
-			$handles = array_merge( $handles, node_register_vite_chain( $manifest, $import_key, $seen ) );
-		}
-	}
-
-	$slug   = sanitize_title( str_replace( array( '/', '_', '.' ), '-', $key ) );
-	$handle = 'node-vite-' . $slug;
-	$file   = $manifest[ $key ]['file'];
-	$path   = NODE_THEME_DIR . '/assets/' . $file;
-	$asset_version = $manifest[ $key ]['file'] ?? (string) time();
-
-	wp_register_script(
-		$handle,
-		NODE_THEME_URI . '/assets/' . $file,
-		array(),
-		$asset_version,
-		true
-	);
-	wp_script_add_data( $handle, 'type', 'module' );
-
-	$seen[ $key ]     = true;
-	$handles[]        = $handle;
-
-	return $handles;
-}
-
-/**
- * -------------------------------------------------------
- * 3. Vite アセット読み込み（CSS/JS）
- * -------------------------------------------------------
- */
-function node_enqueue_assets() {
-
-	$manifest_path = NODE_THEME_DIR . '/assets/.vite/manifest.json';
-
-	if ( file_exists( $manifest_path ) ) {
-		$manifest = json_decode( file_get_contents( $manifest_path ), true );
-
-		// メイン JS（vendor チャンク → main の順、type=module）
-		if ( isset( $manifest['src/main.js']['file'] ) ) {
-			$seen    = array();
-			$handles = node_register_vite_chain( $manifest, 'src/main.js', $seen );
-
-			foreach ( $handles as $handle ) {
-				wp_enqueue_script( $handle );
-			}
-
-			$main_handle = end( $handles );
-			if ( $main_handle ) {
-					wp_localize_script(
-						$main_handle,
-						'm3_ajax',
-						array(
-							'ajax_url' => admin_url( 'admin-ajax.php' ),
-							'home_url' => home_url( '/' ),
-							'all_articles_url' => node_get_all_articles_url(),
-						)
-					);
-				}
-			}
-
-		// メイン CSS (main.js に紐づくもの)
-		if ( isset( $manifest['src/main.js']['css'] ) ) {
-			foreach ( $manifest['src/main.js']['css'] as $css_file ) {
-				$css_path    = NODE_THEME_DIR . '/assets/' . $css_file;
-				$css_version = file_exists( $css_path ) ? (string) filemtime( $css_path ) : NODE_THEME_VERSION;
-
-				wp_enqueue_style(
-					'node-main-css',
-					NODE_THEME_URI . '/assets/' . $css_file,
-					array(),
-					$css_version
-				);
-			}
-		}
-		
-		// メイン スタイルシート (src/styles/style.css)
-		if ( isset( $manifest['src/styles/style.css']['file'] ) ) {
-			$style_file    = $manifest['src/styles/style.css']['file'];
-			$style_path    = NODE_THEME_DIR . '/assets/' . $style_file;
-			$style_version = file_exists( $style_path ) ? (string) filemtime( $style_path ) : NODE_THEME_VERSION;
-
-			wp_enqueue_style(
-				'node-style-css',
-				NODE_THEME_URI . '/assets/' . $style_file,
-				array(),
-				$style_version
-			);
-		}
-	}
-
-	// Google Fonts & Material Symbols are now handled in header.php for performance.
-	luminous_enqueue_plugin_scripts();
-}
-add_action( 'wp_enqueue_scripts', 'node_enqueue_assets' );
 
 /**
  * 全記事一覧ページ（上限付き）のURLを返す。
@@ -442,6 +367,8 @@ add_filter( 'pre_get_document_title', 'luminous_brand_normalize', 999 );
  * -------------------------------------------------------
  */
 function luminous_core_auto_post_slug( $slug, $post_ID, $post_status, $post_type ) {
+	$slug = (string) $slug;
+
     // ID未確定（wp_insert_post の新規挿入時は 0）の場合は書き換えない。
     // 書き換えると全記事が「post-0」に衝突し、シングルクエリが複数件を返して
     // ループ二重描画→comments.php の関数再宣言 Fatal を誘発する。
@@ -533,6 +460,7 @@ require_once NODE_THEME_DIR . '/inc/cleanup.php';
  * -------------------------------------------------------
  */
 function node_user_contact_methods( $methods ) {
+    $methods['discord']       = 'Discord (URL)';
     $methods['custom_link_1'] = '追加リンク 1 (URL)';
     $methods['custom_link_2'] = '追加リンク 2 (URL)';
     $methods['custom_link_3'] = '追加リンク 3 (URL)';

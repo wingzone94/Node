@@ -10,6 +10,16 @@
     margin-bottom: 32px;
 }
 
+/* Reserve the ligature icon box before Material Symbols finishes loading. */
+.special-features .m3-spotlight-badge > .material-symbols-outlined {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+    font-size: 24px;
+    line-height: 1;
+}
+
 .special-features__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

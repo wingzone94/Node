@@ -2,8 +2,8 @@
 /**
  * Plugin Name:  Node AI Tools
  * Plugin URI:   https://github.com/wingzone94/Node
- * Description:  Gemini API 連携による AI 要約生成・ファクトチェック補助・読了時間自動計算。Node テーマと連携。
- * Version:      1.2.0
+ * Description:  複数AIプロバイダーによる要約生成・ファクトチェック補助・校正・読了時間自動計算。Node テーマと連携。
+ * Version:      2.0.0
  * Author:       Luminous Core Teams
  * Author URI:   https://github.com/wingzone94
  * License:      MIT
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_AI_VERSION', '1.2.0' );
+define( 'NODE_AI_VERSION', '2.0.0' );
 define( 'NODE_AI_DIR', plugin_dir_path( __FILE__ ) );
 
 $node_ai_embedded_dir = get_template_directory() . '/plugins-embedded/node-ai-tools/';
@@ -98,6 +98,9 @@ final class Node_AI_Tools {
         add_action( 'wp_after_insert_post', 'node_ai_maybe_schedule_fact_check', 20, 2 );
         add_action( 'node_ai_auto_fact_check', 'node_ai_run_auto_fact_check' );
 
+        // 公開処理をブロックしないよう、AI要約の生成本体はcronで実行する。
+        add_action( 'node_ai_auto_generate_summary', [ $this, 'run_auto_generate_ai_summary' ] );
+
         // フロント: 編集者確認済みファクトチェックを記事ヘッダー直後に表示
         add_action( 'luminous_after_article_header', [ $this, 'render_front_fact_check' ], 12 );
 
@@ -176,6 +179,7 @@ final class Node_AI_Tools {
         $post    = get_post();
         $post_id = $post instanceof \WP_Post ? (int) $post->ID : 0;
         $user_id = get_current_user_id();
+        $provider_id = function_exists( 'node_ai_core' ) ? node_ai_core()->get_provider_id() : 'gemini';
 
         // 保存値は `<モデルID>@<思考量>` 形式（1.2 系と互換）。UI では2つに分けて出す
         $stored_model = function_exists( 'node_get_user_gemini_model' ) ? node_get_user_gemini_model( $user_id ) : '';
@@ -191,11 +195,12 @@ final class Node_AI_Tools {
                 'nonce'           => wp_create_nonce( 'node_ai_fact_check_action' ),
                 'statusLabels'    => function_exists( 'node_ai_fact_check_status_labels' ) ? node_ai_fact_check_status_labels() : array(),
                 'riskLabels'      => function_exists( 'node_ai_fact_check_risk_labels' ) ? node_ai_fact_check_risk_labels() : array(),
-                'models'          => function_exists( 'node_get_gemini_model_options_for_user' ) ? node_get_gemini_model_options_for_user( $user_id ) : array(),
+                'providerId'      => $provider_id,
+                'models'          => 'gemini' === $provider_id && function_exists( 'node_get_gemini_model_options_for_user' ) ? node_get_gemini_model_options_for_user( $user_id ) : array(),
                 'currentModel'    => $selection['model'],
-                'thinkingLevels'  => function_exists( 'node_gemini_thinking_levels' ) ? node_gemini_thinking_levels() : array(),
+                'thinkingLevels'  => 'gemini' === $provider_id && function_exists( 'node_gemini_thinking_levels' ) ? node_gemini_thinking_levels() : array(),
                 'currentThinking' => $selection['thinking'],
-                'thinkingModels'  => function_exists( 'node_get_gemini_thinking_models' ) ? node_get_gemini_thinking_models( $user_id ) : array(),
+                'thinkingModels'  => 'gemini' === $provider_id && function_exists( 'node_get_gemini_thinking_models' ) ? node_get_gemini_thinking_models( $user_id ) : array(),
                 'data'            => ( $post_id && function_exists( 'node_ai_get_fact_check_data' ) ) ? node_ai_get_fact_check_data( $post_id ) : null,
                 'hasKey'          => ( $post_id && function_exists( 'node_ai_author_has_api_key' ) ) ? node_ai_author_has_api_key( (int) $post->post_author ) : false,
                 'autoError'       => $post_id ? (string) get_post_meta( $post_id, '_node_ai_fact_check_error', true ) : '',
@@ -300,31 +305,37 @@ final class Node_AI_Tools {
         $existing_summary = get_post_meta($post_id, '_node_ai_summary', true);
         if ( ! empty($existing_summary) ) return;
 
+        if ( false === wp_next_scheduled( 'node_ai_auto_generate_summary', array( $post_id ) ) ) {
+            wp_schedule_single_event( time() + 30, 'node_ai_auto_generate_summary', array( $post_id ) );
+        }
+    }
+
+    /**
+     * cron: 公開済み記事の要約をCore経由で生成する。既存要約は上書きしない。
+     */
+    public function run_auto_generate_ai_summary( int $post_id ): void {
+        $post = get_post( $post_id );
+        if ( ! $post instanceof \WP_Post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) return;
+        if ( '' !== trim( (string) get_post_meta( $post_id, '_node_ai_summary', true ) ) ) return;
+
         // 本文の取得（ショートコードとタグを除去）
         $content = strip_shortcodes(strip_tags($post->post_content));
         if ( empty(trim($content)) ) return;
 
-        if ( class_exists( 'Node_Gemini_API' ) ) {
-            $api = new Node_Gemini_API();
-            $result = $api->generate_summary($content);
+        if ( ! function_exists( 'node_ai_core' ) || ! node_ai_core()->is_enabled() ) return;
 
-            if ( ! is_wp_error($result) ) {
-                $clean_result = preg_replace('/^```(?:json)?\s*/i', '', $result);
-                $clean_result = preg_replace('/```\s*$/', '', $clean_result);
-                $clean_result = trim($clean_result);
+        $user_id = (int) $post->post_author;
+        $result  = node_ai_core()->summarize( $content, array(), $user_id, $post_id );
 
-                $data = json_decode($clean_result, true);
-                if (json_last_error() === JSON_ERROR_NONE && isset($data['summary'])) {
-                    update_post_meta($post_id, '_node_ai_summary', sanitize_textarea_field($data['summary']));
-                    
-                    if (isset($data['tone_color'])) {
-                        update_post_meta($post_id, '_node_ai_tone_color', sanitize_hex_color($data['tone_color']));
-                    }
-                    if (isset($data['vibe_keywords'])) {
-                        update_post_meta($post_id, '_node_ai_keywords', (array) $data['vibe_keywords']);
-                    }
-                }
+        if ( is_wp_error( $result ) ) {
+            if ( function_exists( 'node_ai_dispatch_connect_event' ) ) {
+                node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'summarize', $result->get_error_message() );
             }
+            return;
+        }
+
+        if ( function_exists( 'node_ai_store_summary_result' ) ) {
+            node_ai_store_summary_result( $post_id, $result, $user_id );
         }
     }
 }

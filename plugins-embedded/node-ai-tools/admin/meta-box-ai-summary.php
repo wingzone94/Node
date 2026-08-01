@@ -14,6 +14,7 @@ function node_ai_render_summary_meta_box($post) {
     $custom_prompt = get_post_meta($post->ID, '_node_ai_custom_prompt', true);
     $max_lines     = get_post_meta($post->ID, '_node_ai_max_lines', true) ?: 3;
     $max_chars     = get_post_meta($post->ID, '_node_ai_max_chars', true) ?: 120;
+    $generated_at  = (string) get_post_meta( $post->ID, '_node_ai_summary_generated_at', true );
     
     wp_nonce_field('node_ai_generate_action', 'node_ai_generate_nonce');
     
@@ -26,7 +27,8 @@ function node_ai_render_summary_meta_box($post) {
         $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
     $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
     
-    if ( ! empty( $models ) ) {
+    $is_gemini = ! function_exists( 'node_ai_core' ) || 'gemini' === node_ai_core()->get_provider_id();
+    if ( $is_gemini && ! empty( $models ) ) {
         echo '<p><strong>使用モデル:</strong></p>';
         echo '<select id="node_ai_gemini_model" name="node_ai_gemini_model" style="width:100%; margin-bottom:10px;">';
         foreach ( $models as $id => $label ) {
@@ -50,6 +52,9 @@ function node_ai_render_summary_meta_box($post) {
     echo '</div>';
     
     echo '<p><strong>記事の要約:</strong></p>';
+    if ( '' !== $summary && '' !== $generated_at && strtotime( $generated_at ) < strtotime( $post->post_modified ) ) {
+        echo '<div class="notice notice-warning inline"><p>この記事は要約生成後に更新されています。内容を確認し、必要な場合のみ再生成してください。</p></div>';
+    }
     echo '<textarea id="node_ai_summary_textarea" name="node_ai_summary" style="width:100%; height:100px;" placeholder="AIで生成、または手動入力してください...">'.esc_textarea($summary).'</textarea>';
     
     echo '<p style="margin-top:15px;"><button type="button" id="node_generate_ai_btn" class="button button-primary" data-post-id="'.esc_attr($post->ID).'">AIで要約を生成</button>';
@@ -68,6 +73,10 @@ function node_ai_render_summary_meta_box($post) {
             var maxLines = $('#node_ai_max_lines').val();
             var maxChars = $('#node_ai_max_chars').val();
             var geminiModel = $('#node_ai_gemini_model').length ? $('#node_ai_gemini_model').val() : '';
+
+            if ($.trim($('#node_ai_summary_textarea').val()) !== '' && !window.confirm('現在の要約を上書きして再生成しますか？')) {
+                return;
+            }
             
             btn.prop('disabled', true);
             status.text('生成中...').css('color', '#FF9900');

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * 簡略化された記事カード (HEADLINES用)
  */

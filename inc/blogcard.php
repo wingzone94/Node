@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Node テーマ組み込みブログカード
  *

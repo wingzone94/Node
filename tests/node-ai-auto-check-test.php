@@ -21,6 +21,7 @@ class Node_AI_Auto_Check_Test extends WP_UnitTestCase {
 
 		$this->author_id = $this->factory->user->create( array( 'role' => 'editor' ) );
 		update_user_meta( $this->author_id, 'node_gemini_api_key', 'dummy_key' );
+		update_option( 'node_ai_provider', 'gemini' );
 		wp_set_current_user( $this->author_id );
 	}
 
@@ -56,6 +57,38 @@ class Node_AI_Auto_Check_Test extends WP_UnitTestCase {
 		$post_id       = $this->make_draft( array( 'post_author' => $no_key_author ) );
 		node_ai_maybe_schedule_fact_check( $post_id, get_post( $post_id ) );
 		$this->assertFalse( $this->scheduled( $post_id ) );
+	}
+
+	public function test_provider_off_does_not_schedule_even_with_gemini_key() {
+		update_option( 'node_ai_provider', 'off' );
+		$post_id = $this->make_draft();
+
+		node_ai_maybe_schedule_fact_check( $post_id, get_post( $post_id ) );
+
+		$this->assertFalse( $this->scheduled( $post_id ) );
+	}
+
+	public function test_ollama_schedules_without_api_key() {
+		update_option( 'node_ai_provider', 'ollama' );
+		delete_user_meta( $this->author_id, 'node_gemini_api_key' );
+		$post_id = $this->make_draft();
+
+		node_ai_maybe_schedule_fact_check( $post_id, get_post( $post_id ) );
+
+		$this->assertNotFalse( $this->scheduled( $post_id ) );
+	}
+
+	public function test_qwen_requires_its_site_key() {
+		update_option( 'node_ai_provider', 'qwen' );
+		delete_user_meta( $this->author_id, 'node_gemini_api_key' );
+		$post_id = $this->make_draft();
+
+		node_ai_maybe_schedule_fact_check( $post_id, get_post( $post_id ) );
+		$this->assertFalse( $this->scheduled( $post_id ) );
+
+		update_option( 'node_ai_qwen_api_key', 'qwen-test-key' );
+		node_ai_maybe_schedule_fact_check( $post_id, get_post( $post_id ) );
+		$this->assertNotFalse( $this->scheduled( $post_id ) );
 	}
 
 	public function test_empty_content_does_not_schedule() {
@@ -113,6 +146,32 @@ class Node_AI_Auto_Check_Test extends WP_UnitTestCase {
 
 		$this->assertSame( '', (string) get_post_meta( $post_id, '_node_ai_fact_check', true ) );
 		$this->assertNotSame( '', (string) get_post_meta( $post_id, '_node_ai_fact_check_error', true ) );
+	}
+
+	public function test_summary_store_records_provider_time_and_connect_event() {
+		update_option( 'node_ai_provider', 'qwen' );
+		update_option( 'node_ai_qwen_model', 'qwen-max' );
+		$post_id = $this->make_draft();
+		$events  = array();
+
+		$listener = static function ( $event, $payload ) use ( &$events ): void {
+			$events[] = array( $event, $payload );
+		};
+		add_action( 'node_connect_event', $listener, 999, 2 );
+		$result = node_ai_store_summary_result(
+			$post_id,
+			'{"summary":"保存テスト","tone_color":"#ff9900","vibe_keywords":["Node"]}',
+			$this->author_id
+		);
+		remove_action( 'node_connect_event', $listener, 999 );
+
+		$this->assertIsArray( $result );
+		$this->assertSame( '保存テスト', get_post_meta( $post_id, '_node_ai_summary', true ) );
+		$this->assertSame( 'Qwen', get_post_meta( $post_id, '_node_ai_summary_provider', true ) );
+		$this->assertSame( 'qwen-max', get_post_meta( $post_id, '_node_ai_summary_model', true ) );
+		$this->assertNotSame( '', get_post_meta( $post_id, '_node_ai_summary_generated_at', true ) );
+		$this->assertSame( 'ai_summary_completed', $events[0][0] );
+		$this->assertSame( $post_id, $events[0][1]['post_id'] );
 	}
 
 	// --- 公開ゲート ---

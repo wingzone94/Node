@@ -1,4 +1,8 @@
-<?php get_header(); ?>
+<?php
+declare(strict_types=1);
+
+get_header();
+?>
 <main id="primary" class="site-main m3-home-layout">
     <?php node_the_breadcrumbs(); ?>
 
@@ -53,9 +57,24 @@
                         すべて見る<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </a>
                 </div>
-                <div class="m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list" role="list">
+                <div class="l-card-grid__items l-card-grid--list l-card-grid--two-column-list m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list" role="list">
+                    <?php $headline_priority_assigned = false; ?>
                     <?php while ($headline_query->have_posts()) : $headline_query->the_post(); ?>
-                        <?php get_template_part('template-parts/card', null, ['card_class' => 'card-standard']); ?>
+                        <?php
+                        $prioritize_headline_image = ! $headline_priority_assigned && has_post_thumbnail();
+                        get_template_part(
+                            'template-parts/card',
+                            null,
+                            [
+                                'card_class'         => 'card-standard',
+                                'image_loading'      => $prioritize_headline_image ? 'eager' : 'lazy',
+                                'image_fetchpriority' => $prioritize_headline_image ? 'high' : '',
+                            ]
+                        );
+                        if ( $prioritize_headline_image ) {
+                            $headline_priority_assigned = true;
+                        }
+                        ?>
                     <?php endwhile; wp_reset_postdata(); ?>
                 </div>
             </section>
@@ -64,32 +83,51 @@
     ?>
 
     <?php if (have_posts()) : ?>
-        <?php $is_first_page = (is_home() && !is_paged()); ?>
-        <section class="m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
+        <?php
+        $is_first_page       = (is_home() && !is_paged());
+        $featured_card_limit = 4;
+        $latest_limit        = 9;
+        ?>
+        <section class="l-card-grid m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
             <?php if ($is_first_page) : ?>
                 <div class="m3-surface m3-surface--latest m3-section-spacing">
                     <h2 id="latest-title" class="m3-section-title"><span class="material-symbols-outlined" aria-hidden="true">bolt</span> LATEST <span class="m3-section-title__sub">最新記事</span></h2>
-                    <div class="m3-post-grid__container m3-post-grid__container--featured">
+                    <div class="l-card-grid__items l-card-grid__items--featured m3-post-grid__container m3-post-grid__container--featured">
             <?php else : ?>
                 <div class="m3-surface m3-surface--articles m3-section-spacing">
                     
-                    <div class="m3-post-grid__container is-articles-grid">
+                    <div class="l-card-grid__items m3-post-grid__container is-articles-grid">
             <?php endif; ?>
 
             <?php
             $switched = false;
             while (have_posts()) : the_post();
-                if ($is_first_page && $wp_query->current_post === 4 && !$switched) {
-                    echo '</div></div>'; // close featured container & surface
-                    echo '<div class="m3-divider-wrapper"><hr class="m3-divider m3-divider--expressive" aria-hidden="true"></div>';
-                    echo '<div class="m3-surface m3-surface--articles m3-section-spacing"><div class="m3-post-grid__container is-articles-grid">';
+                if ($is_first_page && $wp_query->current_post === $latest_limit && !$switched) {
+                    ?>
+                    </div>
+                    <a class="m3-latest-see-all m3-button m3-button--text" href="<?php echo esc_url(node_get_all_articles_url()); ?>">
+                        <span class="m3-latest-see-all__text">すべて見る</span>
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </a>
+                    </div>
+                    <div class="m3-divider-wrapper"><hr class="m3-divider m3-divider--expressive" aria-hidden="true"></div>
+                    <div class="m3-surface m3-surface--articles m3-section-spacing"><div class="l-card-grid__items m3-post-grid__container is-articles-grid">
+                    <?php
                     $switched = true;
                 }
-                $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
+                $card_class = ($is_first_page && $wp_query->current_post < $featured_card_limit) ? 'card-featured' : 'card-standard';
                 get_template_part('template-parts/card', null, ['card_class' => $card_class]);
             endwhile;
             ?>
+            <?php if ($is_first_page && !$switched) : ?>
                 </div>
+                <a class="m3-latest-see-all m3-button m3-button--text" href="<?php echo esc_url(node_get_all_articles_url()); ?>">
+                    <span class="m3-latest-see-all__text">すべて見る</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+            <?php else : ?>
+                </div>
+            <?php endif; ?>
             </div>
             <?php if (get_next_posts_link()) : ?>
                 <div class="m3-archive-pill-wrapper m3-section-spacing">

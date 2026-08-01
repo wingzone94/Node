@@ -159,6 +159,34 @@ class Node_Connect_X_Test extends WP_UnitTestCase {
 		$this->assertSame( 6, Node_Connect_X_Poster::weighted_length( 'あいう' ) );
 	}
 
+	public function test_post_specific_text_overrides_template_and_falls_back_when_empty(): void {
+		$post_id = self::factory()->post->create(
+			[
+				'post_status' => 'publish',
+				'post_title'  => '記事別文面テスト',
+			]
+		);
+		$post    = get_post( $post_id );
+
+		update_post_meta( $post_id, Node_Connect_X_Poster::TEXT_META, "この記事だけの投稿文\nhttps://example.com/custom" );
+		$this->assertSame(
+			"この記事だけの投稿文\nhttps://example.com/custom",
+			Node_Connect_X_Poster::get_post_text( $post )
+		);
+
+		delete_post_meta( $post_id, Node_Connect_X_Poster::TEXT_META );
+		update_option( Node_Connect_X_Poster::OPTION_TEMPLATE, '{{title}}' );
+		$this->assertSame( '記事別文面テスト', Node_Connect_X_Poster::get_post_text( $post ), '空欄は全体テンプレートへ戻る' );
+	}
+
+	public function test_post_specific_text_is_sanitized_and_trimmed_to_x_limit(): void {
+		$text = Node_Connect_X_Poster::sanitize_post_text( '<script>alert(1)</script>' . str_repeat( 'あ', 200 ) );
+
+		$this->assertStringNotContainsString( '<script>', $text );
+		$this->assertStringEndsWith( '…', $text );
+		$this->assertLessThanOrEqual( Node_Connect_X_Poster::X_WEIGHTED_LIMIT, Node_Connect_X_Poster::weighted_length( $text ) );
+	}
+
 	// ---- イベントゲート ----
 
 	public function test_new_publish_queues_x_delivery(): void {
@@ -218,6 +246,32 @@ class Node_Connect_X_Test extends WP_UnitTestCase {
 		$this->assertSame( 'x_post', $log[0]['event'] );
 		$this->assertTrue( $log[0]['ok'] );
 		$this->assertCount( 0, $this->get_queued_x_deliveries(), '成功時は再送しない' );
+	}
+
+	public function test_deliver_uses_post_specific_text(): void {
+		$sent_text = '';
+		add_filter(
+			'pre_http_request',
+			static function ( $preempt, array $args ) use ( &$sent_text ) {
+				$body      = json_decode( (string) $args['body'], true );
+				$sent_text = (string) ( $body['text'] ?? '' );
+
+				return [
+					'response' => [ 'code' => 201, 'message' => '' ],
+					'headers'  => [],
+					'body'     => '{}',
+				];
+			},
+			10,
+			2
+		);
+		$post_id = self::factory()->post->create( [ 'post_status' => 'publish' ] );
+		update_post_meta( $post_id, Node_Connect_X_Poster::TEXT_META, '送信する記事別文面' );
+		_set_cron_array( [] );
+
+		Node_Connect_X_Poster::deliver( $post_id, 1 );
+
+		$this->assertSame( '送信する記事別文面', $sent_text );
 	}
 
 	public function test_deliver_4xx_does_not_retry(): void {

@@ -15,7 +15,7 @@
     "isEntry": true
   },
   "src/main.js": {
-    "file": "js/main.Blodsz3B.js",
+    "file": "js/main.DvS690PZ.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
@@ -23,6 +23,7 @@
       "_vendor.CoViGN73.js"
     ],
     "dynamicImports": [
+      "src/scripts/search-platforms.js",
       "src/scripts/color-extraction.js",
       "src/scripts/comment-form.js",
       "src/scripts/header-clock.js",
@@ -60,7 +61,7 @@
     "isDynamicEntry": true
   },
   "src/scripts/footnotes-popover.js": {
-    "file": "js/footnotes-popover.C97BFjnS.js",
+    "file": "js/footnotes-popover.Bs89o-ZW.js",
     "name": "footnotes-popover",
     "src": "src/scripts/footnotes-popover.js",
     "isDynamicEntry": true,
@@ -85,6 +86,12 @@
     "file": "js/reading-badge-animation.DdHPqWo5.js",
     "name": "reading-badge-animation",
     "src": "src/scripts/reading-badge-animation.js",
+    "isDynamicEntry": true
+  },
+  "src/scripts/search-platforms.js": {
+    "file": "js/search-platforms.BIOnupSy.js",
+    "name": "search-platforms",
+    "src": "src/scripts/search-platforms.js",
     "isDynamicEntry": true
   },
   "src/scripts/series-toc.js": {

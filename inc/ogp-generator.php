@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Legacy loader — OGP generation moved to node-seo-tools plugin.
  *

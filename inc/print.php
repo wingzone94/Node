@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * 印刷機能（Node 1.3 第5段階）。
  *

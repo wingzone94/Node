@@ -356,56 +356,45 @@
     align-items: center; 
     padding-right: 4px;
 }
-.m3-search-clear {
-    color: var(--md-sys-color-on-surface-variant) !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
+/* ID指定 — _buttons.css の `.m3-header .m3-icon-button { background: transparent !important }` より優先させる */
+#m3-search-clear {
+    /* 薄いオレンジのティントサークル × オレンジアイコン（検索バーに馴染むトーナル配色） */
+    color: var(--md-sys-color-primary, #FF9900) !important;
+    background: color-mix(in srgb, var(--md-sys-color-primary, #FF9900) 14%, transparent) !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    flex: 0 0 28px !important; /* モバイル幅の .m3-icon-button 用 flex-basis 上書きを打ち消し正円を維持 */
     margin: 0 4px;
-    opacity: 0.7;
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
-.m3-search-clear[hidden] {
+#m3-search-clear[hidden] {
     display: none !important;
 }
-.m3-search-clear:hover {
-    opacity: 1;
-    background: var(--md-sys-color-surface-variant) !important;
-    transform: scale(1.1);
+#m3-search-clear:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary, #FF9900) 26%, transparent) !important;
 }
-.m3-search-clear .material-symbols-outlined {
-    font-size: 20px !important;
+#m3-search-clear .material-symbols-outlined {
+    font-size: 16px !important;
 }
-.m3-search-clear.is-popping {
-    animation: m3-search-clear-pop 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* 検索クリア — 読了ゲージ破壊時と同じ「一瞬で弾けて消える」フェード。破片はJSが .m3-search-shard で飛ばす */
 .m3-search-bar__input.is-dissipating {
     opacity: 0 !important;
-    filter: blur(7px);
-    transform: scale(1.08) translateY(-6px);
-    letter-spacing: 0.2em;
-    transform-origin: left center;
-    transition:
-        opacity 0.18s cubic-bezier(0.4, 0, 1, 1),
-        filter 0.18s cubic-bezier(0.4, 0, 1, 1),
-        transform 0.18s cubic-bezier(0.4, 0, 1, 1),
-        letter-spacing 0.18s cubic-bezier(0.4, 0, 1, 1);
+    filter: blur(2px);
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.m3-search-bar__input.is-reappearing {
-    animation: m3-search-input-reappear 0.12s ease-out;
-}
-@keyframes m3-search-clear-pop {
-    0% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(0.78) rotate(90deg); }
-    100% { transform: scale(1) rotate(0deg); }
-}
-@keyframes m3-search-input-reappear {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* 読了ゲージの .m3-gauge-shard と同系の破片。overflowクリップを避けるため body 直下に fixed で置く */
+.m3-search-shard {
+    position: fixed;
+    width: 5px;
+    height: 5px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 3000;
 }
 .m3-search-trigger-group {
     display: flex;
@@ -497,12 +486,15 @@
 
 /* --- Search Modal (Material 3 Expressive) --- */
 .m3-modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(32, 26, 23, 0.6); backdrop-filter: blur(20px);
-    display: flex; align-items: center; justify-content: center; z-index: 3000;
+    position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none;
+    margin: 0; padding: 0; border: 0; color: inherit; background: transparent;
+    align-items: center; justify-content: center; z-index: 3000;
+    overflow: auto; overscroll-behavior: contain;
     opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease;
 }
+.m3-modal[open] { display: flex; visibility: visible; }
 .m3-modal.is-active { opacity: 1; visibility: visible; }
+.m3-modal::backdrop { background: rgba(32, 26, 23, 0.6); backdrop-filter: blur(20px); }
 
 .m3-modal__content {
     background: var(--md-sys-color-surface-container-low, #ffffff);
@@ -716,6 +708,11 @@
     display: block;
 }
 .m3-suggestion-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
     padding: 12px 24px;
     cursor: pointer;
     font-weight: 700;
@@ -725,8 +722,11 @@
     align-items: center;
     gap: 12px;
 }
-.m3-suggestion-item:hover {
+.m3-suggestion-item:hover,
+.m3-suggestion-item:focus-visible,
+.m3-suggestion-item.is-highlighted {
     background: var(--md-sys-color-surface-variant);
+    outline: none;
 }
 .m3-suggestion-item .material-symbols-outlined {
     font-size: 18px;
@@ -1017,6 +1017,102 @@
 .m3-platform-layout { display: flex; gap: 48px; align-items: stretch; }
 .m3-platform-side { flex: 1; min-width: 0; }
 .m3-platform-divider { width: 1px; background: var(--md-sys-color-outline-variant); opacity: 0.5; margin: 8px 0; }
+.m3-platform-load-state {
+    margin: auto;
+    padding: 48px 24px;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 700;
+    text-align: center;
+}
+
+.m3-search-rest-results {
+    margin: 0 20px 32px;
+    padding: 24px;
+    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 28px;
+}
+
+.m3-search-rest-results[hidden] {
+    display: none;
+}
+
+.m3-search-rest-results__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.m3-search-rest-results__title,
+.m3-search-rest-results__status {
+    margin: 0;
+}
+
+.m3-search-rest-results__title {
+    font-size: 1.25rem;
+}
+
+.m3-search-rest-results__status,
+.m3-search-rest-result__date,
+.m3-search-rest-result__excerpt {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-search-rest-results__list {
+    display: grid;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.m3-search-rest-results__item {
+    padding: 16px;
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 18px;
+}
+
+.m3-search-rest-result__title,
+.m3-search-rest-result__excerpt {
+    margin: 0;
+}
+
+.m3-search-rest-result__title {
+    font-size: 1rem;
+}
+
+.m3-search-rest-result__title a {
+    color: var(--md-sys-color-on-surface);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.m3-search-rest-result__date {
+    display: inline-block;
+    margin-block: 6px;
+    font-size: 0.8rem;
+}
+
+.m3-search-rest-result__excerpt {
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+    .m3-search-rest-results {
+        margin-inline: 16px;
+        padding: 20px 16px;
+    }
+
+    .m3-search-rest-results__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
 
 @media (max-width: 840px) {
     .m3-platform-layout { flex-direction: column; gap: 32px; }

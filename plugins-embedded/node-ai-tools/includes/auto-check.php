@@ -15,11 +15,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! function_exists( 'node_ai_author_has_api_key' ) ) {
 	/**
-	 * 指定ユーザーが Gemini API キーを持つか（開発用定数フォールバック含む）
+	 * 指定ユーザーが選択中のAIプロバイダーを実行できるか。
 	 *
 	 * @param int $user_id ユーザーID。
 	 */
 	function node_ai_author_has_api_key( int $user_id ): bool {
+		if ( function_exists( 'node_ai_core' ) ) {
+			$provider_id = node_ai_core()->get_provider_id();
+			if ( 'off' === $provider_id ) {
+				return false;
+			}
+			if ( 'ollama' === $provider_id ) {
+				return true;
+			}
+			if ( 'qwen' === $provider_id ) {
+				return '' !== trim( (string) get_option( 'node_ai_qwen_api_key', '' ) );
+			}
+		}
+
 		$key = '';
 		if ( function_exists( 'node_get_user_gemini_api_key' ) && $user_id > 0 ) {
 			$key = node_get_user_gemini_api_key( $user_id );
@@ -181,11 +194,18 @@ if ( ! function_exists( 'node_ai_run_auto_fact_check' ) ) {
 		$prev_user = get_current_user_id();
 		wp_set_current_user( $author_id );
 
-		$api    = new Node_Gemini_API( $author_id );
-		$result = $api->fact_check( $content, $post->post_title );
+		if ( ! function_exists( 'node_ai_core' ) || ! node_ai_core()->is_enabled() ) {
+			wp_set_current_user( $prev_user );
+			return;
+		}
+
+		$result = node_ai_core()->fact_check( $content, $post->post_title, $author_id, $post_id );
 
 		if ( is_wp_error( $result ) ) {
 			update_post_meta( $post_id, '_node_ai_fact_check_error', sanitize_text_field( $result->get_error_message() ) );
+			if ( function_exists( 'node_ai_dispatch_connect_event' ) ) {
+				node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'fact_check', $result->get_error_message() );
+			}
 			wp_set_current_user( $prev_user );
 			return;
 		}
@@ -193,9 +213,13 @@ if ( ! function_exists( 'node_ai_run_auto_fact_check' ) ) {
 		$stored = node_ai_store_fact_check_result( $post_id, $result );
 		if ( is_wp_error( $stored ) ) {
 			update_post_meta( $post_id, '_node_ai_fact_check_error', sanitize_text_field( $stored->get_error_message() ) );
+			if ( function_exists( 'node_ai_dispatch_connect_event' ) ) {
+				node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'fact_check', $stored->get_error_message() );
+			}
+		} elseif ( function_exists( 'node_ai_dispatch_connect_event' ) ) {
+			node_ai_dispatch_connect_event( 'fact_check_completed', $post_id, 'fact_check' );
 		}
 
 		wp_set_current_user( $prev_user );
 	}
 }
-

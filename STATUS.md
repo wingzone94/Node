@@ -702,3 +702,77 @@ NODE-1.3.md §6 の印刷機能を実装。1カラム・白背景黒文字の印
 * **ダーク印刷の変数漏れ第2弾を修正**: body にも `data-theme` が付与されており、動的カラーインラインstyleの `[data-theme="dark"]` 変数定義が **body上で再適用**されて html への上書きが継承で届かず、noticeブロック等の文字が印刷でダーク用の薄色（#ebe0d9）のままだった → `_print.css` の変数上書き対象に `html body` / `html body[data-theme]` を追加（notice本文が黒 #000 になることを実機確認）
 * **シェアボタン数の本番との差異調査**（ユーザー報告）: 本番 luminous-core.net の実記事とローカル477のHTMLを比較 → **SNS9種（X/Facebook/LINE/はてブ/Threads/BlueSky/Misskey/システム/コピー）は完全一致**。差分は今回追加した「印刷」ボタン1個のみ＝意図どおり、回帰なし
 * 検証: `composer test` 全252テストgreen（再実行）、`bun x vite build` 通過、post 477 のダーク印刷PDF（9ページ）で読了バッジ展開・AI要約非表示・notice黒文字・白背景維持をすべて確認。※検証スクリプトで一度 `emulateMediaType("screen")` のままPDF化して画面描画を誤検証しかけた（スクリプト側ミス、修正済み）
+
+---
+
+## Work Log: Node 1.3 — 投稿グリッドのM3トークン集約（Codex） / 2026-08-01
+
+### リリース方針
+
+* ユーザー決定により、現在の段階的リファクタリング成果は **Node 1.3** のリリース対象として扱う。
+* Node 2.0向け指示書の設計方針を、既存表示との互換性を維持しながら段階導入する。
+* バージョン表面の更新と配布ZIP生成は、全検証完了後のリリース工程で実施する。
+
+### 今回の完了範囲
+
+* 投稿グリッドの既存間隔（32px・40px・48px）を、同値のM3 spacing由来コンポーネントトークンへ集約。
+* レイアウト寸法・各ピルの白い文字色・生成メディアラベルの配置は変更しない。
+
+### Status
+
+実装継続中。未コミット。Node 1.3のバージョン更新およびZIP生成は未実施。
+
+---
+
+## Work Log: Node 1.3 — AI Core移行・読了バッジ分布基準（Codex） / 2026-08-01
+
+### 完了
+
+* AI要約・ファクトチェックの手動/AJAX/cron経路を `Node_AI_Core` へ統一し、Qwen・Ollama・`provider=off` を全経路で尊重。
+* 要約の生成日時・プロバイダー・モデル記録、古い要約警告、再生成確認、Node Connectの完了/失敗イベントを追加。
+* 公開時の同期AI要約生成を30秒後のcronへ移し、記事公開処理から外部APIを分離。
+* 読了バッジを、健全な分布では中央値=60%・p90=100%の相対基準へ移行。公開20件未満または偏った分布では従来の絶対閾値へ退避。
+
+### 検証
+
+* AI関連47テスト（156 assertions）green。
+* 全283テストを時間制限回避の2バッチで実行し、819 assertions green（読了バッジ追加前）。読了バッジ5テスト（18 assertions）もgreen。
+* `bun x vite build` 成功。
+* cybernode.local実データ: 142記事・中央値55字・p90 2,935字の偏りを検出し、絶対閾値フォールバックが作動。
+* PC/モバイルの検証記事で「長い」・100%・約23分・約12,178文字・赤色を維持。横スクロール、ページ/コンソールエラーなし。
+
+### リリース境界
+
+* `REFACTORING_PLAN.md` は旧1.1.3ブランチ前提のため凍結し、現行未処理タスクから除外。
+* `NODE-2.0.md` の動的カラー子テーマPhase 1〜6は将来のNode 2.0対象。Node 1.3には互換性を変えない基盤のみ同梱する。
+* 未コミット。バージョン表面更新・ZIP生成・X実投稿は未実施。
+
+---
+
+## Work Log: Node 1.3 — リリース候補確定（Codex） / 2026-08-01
+
+### 完了
+
+* テーマを **Node 1.3.0**、Node AI Toolsを **2.0.0** へ更新し、README・CHANGELOG・package metadata・`build.json`を同期。
+* `build_id`: `20260801T073937Z-7c76a52`。
+* メンテナンス機能に開始予定時刻、終了時の自動解除・`https://luminous-core.net/` への遷移、長期カウントダウンの見切れ防止を追加し、リリース候補を再検証。
+* テーマ用と埋め込みNode SEO Tools用に二重収録されていた `NotoSansJP-VF.ttf` を配布時に単一化。SEO画像生成は「プラグイン同梱 → テーマ同梱 → キャッシュ/CDN」の順で解決するため機能を維持する。
+* テスト後に `node.zip` を再生成。サイズ **9,106,037 bytes**、ZIPルート `Node/`、Version 1.3.0、Author `Luminous Core Teams`、Node AI Tools 2.0.0、build ID一致を確認。
+* Node Flowの残確認を実施。cybernode.localでローダーの実トリガー、REST 200、記事16件→26件追加、回転/dashアニメーション、エラーなしを確認。
+
+### 最終検証
+
+* `composer test`: **288 tests / 837 assertions green**。
+* `bun x vite build`: **115 modules / 成功**。
+* `git diff --check`: 成功。
+* cybernode.local: トップ200、検索200、単一記事は正規URLへ遷移後200。Fatal/Warningなし。
+* `bun run verify:visual`: PC/モバイルのトップ・検索・固定ページ・通常アーカイブはHTTP 200、検出問題なし。脚注・Node Library検証記事の候補は、スクリーンショットとcomputed styleで意図的ellipsis / `overflow: visible` であり、実表示の欠けがないことを確認。
+
+### 外部操作・リリース境界
+
+* 初回X実投稿だけは公開投稿を伴うため、コード上の未完了ではなく**ユーザーの明示的な実行許可待ち**。許可なく投稿しない。
+* 現在の変更は未コミット・未push。`master`反映と本番更新確認はリリース操作として別途実行する。
+
+#### Status
+
+Node 1.3のローカル実装・回帰検証・配布ZIP作成は完了。公開X実投稿とGitHubリリース操作のみ未実行。

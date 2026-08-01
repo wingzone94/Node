@@ -37,6 +37,7 @@ final class Node_Connect_X_Poster {
 
 	public const POSTED_META = '_node_x_posted';
 	public const SKIP_META   = '_node_connect_x_skip';
+	public const TEXT_META   = '_node_connect_x_text';
 
 	public const MAX_ATTEMPTS = 3;
 	public const TIMEOUT      = 10;
@@ -74,8 +75,44 @@ final class Node_Connect_X_Poster {
 	private function __construct() {}
 
 	public function register(): void {
+		add_action( 'init', [ self::class, 'register_post_meta_fields' ] );
 		add_action( 'node_connect_event', [ $this, 'handle' ], 10, 2 );
 		add_action( self::CRON_HOOK, [ self::class, 'deliver' ], 10, 2 );
+	}
+
+	/**
+	 * ブロックエディタの文書設定ペインから保存する投稿別設定をRESTへ公開する。
+	 */
+	public static function register_post_meta_fields(): void {
+		$auth_callback = static function ( bool $allowed, string $meta_key, int $post_id ): bool {
+			return current_user_can( 'edit_post', $post_id );
+		};
+
+		register_post_meta(
+			'post',
+			self::TEXT_META,
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'default'           => '',
+				'show_in_rest'      => true,
+				'sanitize_callback' => [ self::class, 'sanitize_post_text' ],
+				'auth_callback'     => $auth_callback,
+			]
+		);
+
+		register_post_meta(
+			'post',
+			self::SKIP_META,
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'default'           => '',
+				'show_in_rest'      => true,
+				'sanitize_callback' => static fn( mixed $value ): string => '1' === (string) $value ? '1' : '',
+				'auth_callback'     => $auth_callback,
+			]
+		);
 	}
 
 	public static function is_enabled(): bool {
@@ -151,7 +188,7 @@ final class Node_Connect_X_Poster {
 			return;
 		}
 
-		$text   = self::render_template( self::get_template(), $post );
+		$text   = self::get_post_text( $post );
 		$result = self::send_tweet( $credentials, $text );
 
 		Node_Connect_Delivery_Log::add(
@@ -216,6 +253,27 @@ final class Node_Connect_X_Poster {
 	}
 
 	/**
+	 * 記事別投稿文を返す。未設定なら従来の全体テンプレートへフォールバックする。
+	 */
+	public static function get_post_text( WP_Post $post ): string {
+		$custom_text = (string) get_post_meta( $post->ID, self::TEXT_META, true );
+		if ( '' !== trim( $custom_text ) ) {
+			return self::sanitize_post_text( $custom_text );
+		}
+
+		return self::render_template( self::get_template(), $post );
+	}
+
+	/**
+	 * 投稿別文面の改行を保ったまま無害化し、Xの重み付き上限へ収める。
+	 */
+	public static function sanitize_post_text( mixed $value ): string {
+		$text = trim( sanitize_textarea_field( (string) $value ) );
+
+		return self::trim_to_weight( $text, self::X_WEIGHTED_LIMIT );
+	}
+
+	/**
 	 * 記事タグを「#タグ1 #タグ2 …」形式にし、重み予算に収まる分だけ返す。
 	 * タグ名の空白と # は除去する（ハッシュタグとして成立させるため）。
 	 */
@@ -266,15 +324,33 @@ final class Node_Connect_X_Poster {
 		}
 
 		$ellipsis_weight = 2;
+		if ( $budget < $ellipsis_weight ) {
+			return '';
+		}
+
+		$target_weight = $budget - $ellipsis_weight;
 		$length          = 0;
 		$result          = '';
-		foreach ( mb_str_split( $text ) as $char ) {
-			$char_weight = strlen( $char ) <= 1 ? 1 : 2;
-			if ( $length + $char_weight > $budget - $ellipsis_weight ) {
-				break;
+		$parts           = preg_split( '#(https?://\S+)#u', $text, -1, PREG_SPLIT_DELIM_CAPTURE );
+
+		foreach ( (array) $parts as $part ) {
+			if ( preg_match( '#^https?://\S+$#u', $part ) ) {
+				if ( $length + self::URL_WEIGHT > $target_weight ) {
+					break;
+				}
+				$result .= $part;
+				$length += self::URL_WEIGHT;
+				continue;
 			}
-			$result .= $char;
-			$length += $char_weight;
+
+			foreach ( mb_str_split( $part ) as $char ) {
+				$char_weight = strlen( $char ) <= 1 ? 1 : 2;
+				if ( $length + $char_weight > $target_weight ) {
+					break 2;
+				}
+				$result .= $char;
+				$length += $char_weight;
+			}
 		}
 
 		return rtrim( $result ) . '…';

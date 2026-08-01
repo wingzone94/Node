@@ -1,0 +1,23 @@
+/* WCAG 2.2 AA contrast corrections for the brand-orange palette. */
+
+/* Keep #FF9900 as the brand/background color and use a darker orange for text. */
+.m3-section-title,
+.m3-breadcrumbs__item a,
+.m3-breadcrumbs__item a:hover,
+.m3-modal__title-group .material-symbols-outlined,
+.m3-suggestion-item .material-symbols-outlined,
+.m3-search-section-label,
+.m3-select-icon,
+.m3-date-icon,
+.m3-date-range-sep,
+.m3-platform-group-label .material-symbols-outlined,
+.m3-search-hits-icon,
+.m3-search-hits-text strong,
+#m3-search-hit-count,
+.m3-comment-card__author,
+.m3-comment-card__actions a,
+.m3-textfield__label,
+.m3-writer-card__archive-link,
+.m3-writer-card__archive-link .material-symbols-outlined {
+    color: var(--md-sys-color-accent-text);
+}

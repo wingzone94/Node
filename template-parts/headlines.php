@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 get_header();
 
 $paged = max( 1, (int) get_query_var( 'paged' ) );
@@ -24,9 +26,9 @@ $paged = max( 1, (int) get_query_var( 'paged' ) );
 		<?php endif; ?>
 	</section>
 
-	<div class="m3-post-grid">
+	<div class="l-card-grid m3-post-grid">
 		<?php if ( have_posts() ) : ?>
-			<div class="m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list">
+			<div class="l-card-grid__items l-card-grid--list l-card-grid--two-column-list m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list">
 				<?php
 				while ( have_posts() ) :
 					the_post();

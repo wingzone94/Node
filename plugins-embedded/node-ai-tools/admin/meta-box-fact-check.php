@@ -63,7 +63,8 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
         $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
         $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
         
-        if ( ! empty( $models ) ) {
+        $is_gemini = ! function_exists( 'node_ai_core' ) || 'gemini' === node_ai_core()->get_provider_id();
+        if ( $is_gemini && ! empty( $models ) ) {
             echo '<p><strong>使用モデル:</strong><br>';
             echo '<select id="node_ai_gemini_model_fact_check" style="width:100%;">';
             foreach ( $models as $id => $label ) {
