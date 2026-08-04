@@ -176,6 +176,43 @@ function node_store_humanize_slug( string $slug ): string {
 }
 
 /**
+ * 取得したページが、要求した商品ページのままかどうかを判定する。
+ *
+ * Xbox は商品ページの取得に失敗すると 403 ではなく xbox.com のトップへ転送する。
+ * この場合 HTTP 200 と「Xbox 公式サイト: 本体、ゲーム、コミュニティ」のような
+ * サイト共通のタイトルが返るため、取得失敗として検知できずカードの題名が壊れる。
+ * 最終 URL が同じストアの商品ページを指しているかを確認して弾く。
+ *
+ * @param string $url       要求した URL。
+ * @param string $final_url リダイレクト解決後の最終 URL（不明なら空文字）。
+ * @return bool 商品ページとみなせるか（最終 URL 不明時は true）。
+ */
+function node_store_response_is_product_page( string $url, string $final_url ): bool {
+	if ( '' === $final_url ) {
+		return true;
+	}
+
+	$requested = node_store_provider( $url );
+	$received  = node_store_provider( $final_url );
+
+	// 商品ページ配下から出た（例: /games/store/... → トップ）場合は別ページ。
+	if ( ( $requested['slug'] ?? '' ) !== ( $received['slug'] ?? '' ) ) {
+		return false;
+	}
+
+	// 商品 ID がパスから消えていたら別ページ。地域切り替えのリダイレクトでは ID は保たれる。
+	// スラッグ型（Dota_2 等）は転送で落ちることがあるため、ID 型のみを対象にする。
+	$segments = array_values( array_filter( explode( '/', (string) parse_url( $url, PHP_URL_PATH ) ), static fn( string $s ): bool => '' !== $s ) );
+	$product  = (string) end( $segments );
+
+	if ( '' === $product || '' !== node_store_humanize_slug( $product ) ) {
+		return true;
+	}
+
+	return str_contains( strtolower( $final_url ), strtolower( $product ) );
+}
+
+/**
  * ストア URL 用のフォールバック OGP 情報を組み立てる。
  *
  * @param string                                          $url      ストア URL。

@@ -400,6 +400,83 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertSame( '', node_store_title_from_url( 'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01', 'playstation' ) );
 	}
 
+	public function test_store_response_is_product_page_detects_redirect_to_store_top(): void {
+		$xbox = 'https://www.xbox.com/ja-JP/games/store/minecraft/9NBLGGH537BL';
+
+		// 最終 URL 不明（pre_http_request 短絡時など）は検証しない。
+		$this->assertTrue( node_store_response_is_product_page( $xbox, '' ) );
+		// 地域だけ変わる転送は商品ページのまま。
+		$this->assertTrue( node_store_response_is_product_page( $xbox, 'https://www.xbox.com/en-US/games/store/minecraft/9NBLGGH537BL' ) );
+		// 商品ページからストアのトップへ飛ばされた場合は別ページ扱い。
+		$this->assertFalse( node_store_response_is_product_page( $xbox, 'https://www.xbox.com/ja-JP/' ) );
+		// 同じストア配下でも商品 ID が消えていれば別ページ。
+		$this->assertFalse( node_store_response_is_product_page( $xbox, 'https://www.xbox.com/ja-JP/games/store/' ) );
+
+		$nintendo = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$this->assertTrue( node_store_response_is_product_page( $nintendo, 'https://store-jp.nintendo.com/item/software/D70010000000964?utm=1' ) );
+		$this->assertFalse( node_store_response_is_product_page( $nintendo, 'https://store-jp.nintendo.com/' ) );
+
+		// スラッグ型（ID ではない）の商品パスは、転送で末尾が落ちても許容する。
+		$steam = 'https://store.steampowered.com/app/570/Dota_2/';
+		$this->assertTrue( node_store_response_is_product_page( $steam, 'https://store.steampowered.com/app/570/' ) );
+	}
+
+	public function test_store_card_falls_back_when_response_redirected_to_store_top(): void {
+		// Xbox は商品ページを取得できないとき 403 ではなくトップへ転送し、
+		// 「Xbox 公式サイト...」というサイト共通のタイトルを 200 で返す。
+		$url = 'https://www.xbox.com/ja-JP/games/store/minecraft/9NBLGGH537BL';
+
+		set_transient(
+			'node_ogp_' . md5( $url ),
+			array(
+				'title'       => 'Xbox 公式サイト: 本体、ゲーム、コミュニティ |Xbox',
+				'description' => 'Xbox のトップページ',
+				'image'       => 'https://www.xbox.com/top.jpg',
+				'favicon'     => '',
+				'site_name'   => 'Xbox',
+				'is_internal' => false,
+				'final_url'   => 'https://www.xbox.com/ja-JP/',
+			),
+			HOUR_IN_SECONDS
+		);
+
+		$html = node_render_blogcard( $url );
+
+		$this->assertStringNotContainsString( 'Xbox 公式サイト', $html );
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-xbox', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_store_card_keeps_scraped_title_when_redirect_stays_on_product_page(): void {
+		$url = 'https://store.playstation.com/ja-jp/product/JP0177-PPSA04466_00-MINECRAFTBEDROCK';
+
+		set_transient(
+			'node_ogp_' . md5( $url ),
+			array(
+				'title'       => 'Minecraft',
+				'description' => 'Minecraft の説明',
+				'image'       => 'https://image.api.playstation.com/cover.png',
+				'favicon'     => '',
+				'site_name'   => 'PlayStation',
+				'is_internal' => false,
+				// 地域リダイレクト後も商品 ID は保たれる。
+				'final_url'   => 'https://store.playstation.com/ja-jp/concept/JP0177-PPSA04466_00-MINECRAFTBEDROCK/',
+			),
+			HOUR_IN_SECONDS
+		);
+
+		$html = node_render_blogcard( $url );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'cover.png', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-playstation', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
 	public function test_store_urls_render_card_even_when_fetch_is_blocked(): void {
 		$cases = array(
 			'https://store-jp.nintendo.com/item/software/D70010000073404'                      => array( 'nintendo', 'ニンテンドーストア' ),

@@ -134,6 +134,9 @@ function node_get_ogp_data( string $url ) {
 	$ogp['image']       = $meta['image'];
 	$ogp['site_name']   = '' !== $meta['site_name'] ? $meta['site_name'] : (string) parse_url( $url, PHP_URL_HOST );
 	$ogp['favicon']     = 'https://www.google.com/s2/favicons?domain=' . rawurlencode( (string) parse_url( $url, PHP_URL_HOST ) ) . '&sz=64';
+	// 転送先を記録する。要求した商品ページとは別のページ（ストアのトップ等）を掴んでいないか、
+	// 呼び出し側が検証できるようにするため。
+	$ogp['final_url']   = node_http_final_url( $response );
 
 	// 題名が取れないページはカードを組み立てられない（node_blogcard_markup() が空を返す）。
 	// 成功として1週間キャッシュせず、失敗として扱う。
@@ -143,6 +146,30 @@ function node_get_ogp_data( string $url ) {
 
 	set_transient( $transient_key, $ogp, WEEK_IN_SECONDS );
 	return $ogp;
+}
+
+/**
+ * HTTP レスポンスからリダイレクト解決後の最終 URL を取り出す。
+ *
+ * `pre_http_request` で短絡されたレスポンス（テスト等）には `http_response` が無いため、
+ * その場合は空文字（＝転送の有無は不明）を返す。
+ *
+ * @param array<string, mixed>|WP_Error $response wp_remote_get の戻り値。
+ * @return string 最終 URL（判定できなければ空文字）。
+ */
+function node_http_final_url( $response ): string {
+	if ( ! is_array( $response ) || empty( $response['http_response'] ) ) {
+		return '';
+	}
+
+	$http_response = $response['http_response'];
+	if ( ! is_object( $http_response ) || ! method_exists( $http_response, 'get_response_object' ) ) {
+		return '';
+	}
+
+	$requests_response = $http_response->get_response_object();
+
+	return is_object( $requests_response ) && ! empty( $requests_response->url ) ? (string) $requests_response->url : '';
 }
 
 /**
@@ -474,7 +501,10 @@ function node_render_blogcard( string $url, bool $brand_override = false ): stri
 	if ( ! empty( $store ) ) {
 		// ストア側のボット防御でメタが取れなくても、URL から組み立てた情報でカードにする
 		// （素のリンクへ落とすと、記事内で他のカードと並んだときに見た目が崩れるため）。
-		if ( ! is_array( $ogp ) || empty( $ogp['title'] ) ) {
+		// 商品ページではなくストアのトップへ転送された場合も、サイト共通のタイトルを
+		// そのまま載せてしまわないようフォールバックへ回す。
+		if ( ! is_array( $ogp ) || empty( $ogp['title'] )
+			|| ! node_store_response_is_product_page( $url, (string) ( $ogp['final_url'] ?? '' ) ) ) {
 			$ogp = node_store_fallback_ogp( $url, $store );
 		} else {
 			$ogp['store']     = $store['slug'];
