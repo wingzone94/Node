@@ -398,7 +398,8 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 	$is_internal = ! empty( $ogp['is_internal'] );
 	$modifier    = $is_internal ? 'm3-blogcard--internal' : 'm3-blogcard--external';
 	if ( ! empty( $ogp['store'] ) ) {
-		// ゲームストアの商品ページは、プラットフォーム色のアクセントとストア名バッジを付ける。
+		// ゲームストアの商品ページは、カード面をプラットフォーム色のトーナルコンテナにする
+		// （構造・余白は標準カードのまま。配色は CSS 側の m3-blogcard--store-* が担当）。
 		$modifier .= ' m3-blogcard--store m3-blogcard--store-' . sanitize_html_class( (string) $ogp['store'] );
 	}
 	if ( ! empty( $ogp['is_brand'] ) ) {
@@ -450,9 +451,6 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 								<img src="<?php echo esc_url( $ogp['favicon'] ); ?>" class="m3-blogcard__favicon" alt="" loading="lazy" decoding="async" width="16" height="16">
 							<?php endif; ?>
 							<span class="m3-blogcard__sitename"><?php echo esc_html( $ogp['site_name'] ); ?></span>
-							<?php if ( ! empty( $ogp['store'] ) ) : ?>
-								<span class="m3-blogcard__store-badge"><?php esc_html_e( 'ストア', 'node' ); ?></span>
-							<?php endif; ?>
 						</span>
 						<span class="m3-blogcard__actions">
 							<button type="button" class="m3-blogcard__action m3-blogcard__action--copy" data-url="<?php echo esc_url( $url ); ?>" data-share-title="<?php echo esc_attr( $share_title ); ?>" title="<?php esc_attr_e( 'リンクをコピー', 'node' ); ?>" aria-label="<?php esc_attr_e( 'リンクをコピー', 'node' ); ?>">
