@@ -400,6 +400,157 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertSame( '', node_store_title_from_url( 'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01', 'playstation' ) );
 	}
 
+	/**
+	 * 任天堂のソフト検索応答をモックする。
+	 *
+	 * @param array<mixed> $payload 応答ボディ（json_encode 前）。
+	 * @param int          $calls   呼び出し回数（参照渡し）。
+	 * @return callable
+	 */
+	private function mock_nintendo_search( array $payload, int &$calls ): callable {
+		$callback = static function ( $preempt, $args, $request_url ) use ( $payload, &$calls ) {
+			if ( ! str_contains( (string) $request_url, 'search.nintendo.jp' ) ) {
+				// 商品ページ側の取得はボット防御を模して 403。
+				return array(
+					'headers'  => array( 'content-type' => 'text/html' ),
+					'body'     => '<html><head><title>Access Denied</title></head></html>',
+					'response' => array(
+						'code'    => 403,
+						'message' => 'Forbidden',
+					),
+					'cookies'  => array(),
+					'filename' => null,
+				);
+			}
+
+			++$calls;
+			return array(
+				'headers'  => array( 'content-type' => 'application/json' ),
+				'body'     => (string) wp_json_encode( $payload ),
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		return $callback;
+	}
+
+	public function test_nintendo_title_id_is_extracted_from_store_urls(): void {
+		$this->assertSame( 'D70010000000964', node_nintendo_title_id( 'https://store-jp.nintendo.com/item/software/D70010000000964' ) );
+		$this->assertSame( '70010000012332', node_nintendo_title_id( 'https://ec.nintendo.com/JP/ja/titles/70010000012332' ) );
+		$this->assertSame( '', node_nintendo_title_id( 'https://www.nintendo.com/jp/store/products/minecraft-switch/' ) );
+	}
+
+	public function test_nintendo_product_id_url_uses_search_lookup_for_title(): void {
+		$url     = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls   = 0;
+		$payload = array(
+			'result' => array(
+				'total' => 1,
+				'items' => array(
+					array(
+						'id'            => 'D70010000000964',
+						'title'         => 'Minecraft',
+						'sales_img_url' => 'https://img-eshop.cdn.nintendo.net/i/minecraft.jpg',
+					),
+				),
+			),
+		);
+
+		$callback = $this->mock_nintendo_search( $payload, $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard( $url );
+
+		// 2回目はキャッシュから返し、検索を再度叩かないこと。
+		node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'minecraft.jpg', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+		$this->assertSame( 1, $calls );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_nintendo_lookup_ignores_items_with_different_id(): void {
+		// 誤った題名を載せるくらいなら、ストア名のままにする。
+		$url     = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls   = 0;
+		$payload = array(
+			'result' => array(
+				'items' => array(
+					array(
+						'id'    => 'D70010000099999',
+						'title' => '全然違うゲーム',
+					),
+				),
+			),
+		);
+
+		$callback = $this->mock_nintendo_search( $payload, $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringNotContainsString( '全然違うゲーム', $html );
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_nintendo_lookup_survives_unexpected_payload(): void {
+		$url      = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls    = 0;
+		$callback = $this->mock_nintendo_search( array( 'unexpected' => 'shape' ), $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		// 応答が想定外でもカードは出す（題名はストア名）。
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_nintendo_lookup_is_skipped_when_title_comes_from_url(): void {
+		// スラッグから題名を作れる URL では検索を叩かない。
+		$url      = 'https://www.nintendo.com/jp/store/products/minecraft-switch/';
+		$calls    = 0;
+		$callback = $this->mock_nintendo_search( array(), $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertSame( 0, $calls );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
 	public function test_store_title_from_url_strips_nintendo_hardware_suffix(): void {
 		// nintendo.com の商品スラッグは機種名で終わるため、題名としては落とす。
 		$this->assertSame( 'Minecraft', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/minecraft-switch/', 'nintendo' ) );

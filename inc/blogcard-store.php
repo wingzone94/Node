@@ -219,6 +219,178 @@ function node_store_response_is_product_page( string $url, string $final_url ): 
 }
 
 /**
+ * ニンテンドーストア URL からソフトのタイトル ID を取り出す。
+ *
+ * store-jp.nintendo.com は `/item/software/D70010000000964`、
+ * ec.nintendo.com は `/titles/70010000012332` の形式。
+ *
+ * @param string $url ストア URL。
+ * @return string タイトル ID（見つからなければ空文字）。
+ */
+function node_nintendo_title_id( string $url ): string {
+	$path = (string) parse_url( $url, PHP_URL_PATH );
+
+	return preg_match( '/\b(D?\d{14})\b/i', $path, $m ) ? strtoupper( $m[1] ) : '';
+}
+
+/**
+ * 任天堂のソフト検索から題名・画像を引く（商品 ID しか無い URL 用）。
+ *
+ * ニンテンドーストアの商品ページはボット防御下にあり、`/item/software/D7001...` のような
+ * ID だけの URL からは題名を復元できない。任天堂が自社サイトの検索に使っている
+ * 公開エンドポイントに ID を投げて題名を得る。
+ *
+ * 応答が想定と違う場合は何も返さない（＝従来どおりストア名を表示する）。誤った題名を
+ * 載せるより、控えめに失敗させる。
+ *
+ * @param string $url ニンテンドーストア URL。
+ * @return array{title: string, image: string}
+ */
+function node_nintendo_store_lookup( string $url ): array {
+	$empty = array(
+		'title' => '',
+		'image' => '',
+	);
+
+	$id = node_nintendo_title_id( $url );
+	if ( '' === $id ) {
+		return $empty;
+	}
+
+	$transient_key = 'node_nintendo_soft_' . md5( $id );
+	$cached        = get_transient( $transient_key );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+	if ( node_blogcard_fetch_failure_marker() === $cached ) {
+		return $empty;
+	}
+
+	$response = wp_safe_remote_get(
+		add_query_arg(
+			array(
+				'q'     => $id,
+				'limit' => 5,
+			),
+			'https://search.nintendo.jp/nintendo_soft/search.json'
+		),
+		array(
+			'timeout'    => 8,
+			'user-agent' => node_blogcard_user_agent(),
+			// sslverify は既定(true)を維持する（絶対原則: 検証無効化の新規追加は禁止）
+		)
+	);
+
+	if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		set_transient( $transient_key, node_blogcard_fetch_failure_marker(), 6 * HOUR_IN_SECONDS );
+		return $empty;
+	}
+
+	$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+	if ( ! is_array( $data ) ) {
+		set_transient( $transient_key, node_blogcard_fetch_failure_marker(), 6 * HOUR_IN_SECONDS );
+		return $empty;
+	}
+
+	$result = node_nintendo_pick_item( $data, $id );
+	set_transient( $transient_key, '' !== $result['title'] ? $result : node_blogcard_fetch_failure_marker(), '' !== $result['title'] ? WEEK_IN_SECONDS : 6 * HOUR_IN_SECONDS );
+
+	return $result;
+}
+
+/**
+ * 検索応答から、要求した ID に一致する項目の題名・画像を取り出す。
+ *
+ * 応答のキー名に依存しすぎないよう、項目のどこかに ID と一致する値があるかで照合する
+ * （フィールド名が変わっても、間違った項目を拾わないことを優先する）。
+ *
+ * @param array<mixed> $data 検索応答（json_decode 済み）。
+ * @param string       $id   要求したタイトル ID。
+ * @return array{title: string, image: string}
+ */
+function node_nintendo_pick_item( array $data, string $id ): array {
+	$empty = array(
+		'title' => '',
+		'image' => '',
+	);
+
+	$items = $data['result']['items'] ?? ( $data['items'] ?? array() );
+	if ( ! is_array( $items ) ) {
+		return $empty;
+	}
+
+	foreach ( $items as $item ) {
+		if ( ! is_array( $item ) || ! node_nintendo_item_matches_id( $item, $id ) ) {
+			continue;
+		}
+
+		$title = trim( (string) ( $item['title'] ?? '' ) );
+		if ( '' === $title ) {
+			continue;
+		}
+
+		return array(
+			'title' => $title,
+			'image' => node_nintendo_item_image( $item ),
+		);
+	}
+
+	return $empty;
+}
+
+/**
+ * 検索結果の項目が、要求したタイトル ID のものかを判定する。
+ *
+ * @param array<mixed> $item 検索結果の1件。
+ * @param string       $id   要求したタイトル ID。
+ * @return bool
+ */
+function node_nintendo_item_matches_id( array $item, string $id ): bool {
+	// D 有無の表記ゆれを吸収して比較する。
+	$needle = ltrim( strtoupper( $id ), 'D' );
+
+	$found = false;
+	array_walk_recursive(
+		$item,
+		static function ( $value ) use ( $needle, &$found ): void {
+			if ( $found || ! is_scalar( $value ) ) {
+				return;
+			}
+			$candidate = ltrim( strtoupper( (string) $value ), 'D' );
+			if ( $candidate === $needle ) {
+				$found = true;
+			}
+		}
+	);
+
+	return $found;
+}
+
+/**
+ * 検索結果の項目から画像 URL を取り出す（フィールド名に依存せず走査する）。
+ *
+ * @param array<mixed> $item 検索結果の1件。
+ * @return string 画像 URL（見つからなければ空文字）。
+ */
+function node_nintendo_item_image( array $item ): string {
+	$image = '';
+
+	array_walk_recursive(
+		$item,
+		static function ( $value ) use ( &$image ): void {
+			if ( '' !== $image || ! is_string( $value ) ) {
+				return;
+			}
+			if ( preg_match( '#^https://[^\s"\']+\.(?:jpg|jpeg|png|webp)(?:\?.*)?$#i', $value ) ) {
+				$image = $value;
+			}
+		}
+	);
+
+	return $image;
+}
+
+/**
  * ストア URL 用のフォールバック OGP 情報を組み立てる。
  *
  * @param string                                          $url      ストア URL。
@@ -227,11 +399,19 @@ function node_store_response_is_product_page( string $url, string $final_url ): 
  */
 function node_store_fallback_ogp( string $url, array $provider ): array {
 	$title = node_store_title_from_url( $url, $provider['slug'] );
+	$image = '';
+
+	// 商品 ID だけの任天堂 URL は、公開検索から題名を引く。
+	if ( '' === $title && 'nintendo' === $provider['slug'] ) {
+		$lookup = node_nintendo_store_lookup( $url );
+		$title  = $lookup['title'];
+		$image  = $lookup['image'];
+	}
 
 	return array(
 		'title'       => '' !== $title ? $title : $provider['name'],
 		'description' => '',
-		'image'       => '',
+		'image'       => $image,
 		'favicon'     => 'https://www.google.com/s2/favicons?domain=' . rawurlencode( (string) parse_url( $url, PHP_URL_HOST ) ) . '&sz=64',
 		'site_name'   => $provider['name'],
 		'is_internal' => false,
