@@ -400,6 +400,64 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertSame( '', node_store_title_from_url( 'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01', 'playstation' ) );
 	}
 
+	public function test_store_title_from_url_strips_nintendo_hardware_suffix(): void {
+		// nintendo.com の商品スラッグは機種名で終わるため、題名としては落とす。
+		$this->assertSame( 'Minecraft', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/minecraft-switch/', 'nintendo' ) );
+		$this->assertSame( 'Minecraft', node_store_title_from_url( 'https://www.nintendo.com/us/store/products/minecraft-for-nintendo-switch/', 'nintendo' ) );
+		$this->assertSame( 'Mario Kart World', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/mario-kart-world-switch-2/', 'nintendo' ) );
+		$this->assertSame( 'The Legend Of Zelda Tears Of The Kingdom', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/the-legend-of-zelda-tears-of-the-kingdom-switch/', 'nintendo' ) );
+	}
+
+	public function test_shortcode_title_attribute_overrides_blocked_store_fetch(): void {
+		// 商品 ID だけの URL は題名を復元できないため、著者が title 属性で指定できる。
+		$url      = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '" title="Minecraft" description="ブロックで遊ぶ" image="https://example.com/minecraft.jpg"]' );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'ブロックで遊ぶ', $html );
+		$this->assertStringContainsString( 'https://example.com/minecraft.jpg', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_shortcode_title_attribute_overrides_scraped_title(): void {
+		$url    = 'https://example.org/some-article';
+		$filter = $this->mock_ogp_response( $url, 'Scraped Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '" title="手動タイトル"]' );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( '手動タイトル', $html );
+		$this->assertStringNotContainsString( 'Scraped Title', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_shortcode_without_overrides_keeps_existing_behaviour(): void {
+		$url    = 'https://example.org/plain-article';
+		$filter = $this->mock_ogp_response( $url, 'Plain Scraped Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '"]' );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( 'Plain Scraped Title', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
 	public function test_store_response_is_product_page_detects_redirect_to_store_top(): void {
 		$xbox = 'https://www.xbox.com/ja-JP/games/store/minecraft/9NBLGGH537BL';
 

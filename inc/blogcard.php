@@ -484,12 +484,14 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 /**
  * ブログカード HTML を生成する。
  *
- * @param string $url           リンク先 URL。
- * @param bool   $brand_override luminous-core.net の場合にブランド画像（ロゴ＋ワードマーク）を
+ * @param string                $url           リンク先 URL。
+ * @param bool                  $brand_override luminous-core.net の場合にブランド画像（ロゴ＋ワードマーク）を
  *                                強制表示するか。`[blogcard]` ショートコードからのみ true を渡す。
+ * @param array<string, string> $overrides     題名・説明・画像の手動指定（`[blogcard]` の属性）。
+ *                                空でない値だけが取得結果を上書きする。
  * @return string
  */
-function node_render_blogcard( string $url, bool $brand_override = false ): string {
+function node_render_blogcard( string $url, bool $brand_override = false, array $overrides = array() ): string {
 	$url = esc_url_raw( $url );
 	if ( empty( $url ) ) {
 		return '';
@@ -512,6 +514,10 @@ function node_render_blogcard( string $url, bool $brand_override = false ): stri
 		}
 	}
 
+	// 手動指定は取得結果より優先する。ボット防御で題名を取れないストアページでも、
+	// 著者が `[blogcard url="..." title="..."]` と書けば正しい題名で表示できる。
+	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
+
 	if ( ! $ogp ) {
 		return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 	}
@@ -529,6 +535,60 @@ function node_render_blogcard( string $url, bool $brand_override = false ): stri
 	}
 
 	return node_blogcard_markup( $ogp, $url );
+}
+
+/**
+ * `[blogcard]` 属性による手動指定を OGP 情報へ反映する。
+ *
+ * 取得に完全に失敗していても、題名が指定されていればカードを組み立てる。
+ *
+ * @param array<string, mixed>|false $ogp       取得済み OGP 情報（失敗時は false）。
+ * @param array<string, string>      $overrides 手動指定（title / description / image）。
+ * @param string                     $url       対象 URL。
+ * @return array<string, mixed>|false
+ */
+function node_blogcard_apply_overrides( $ogp, array $overrides, string $url ) {
+	$title       = trim( (string) ( $overrides['title'] ?? '' ) );
+	$description = trim( (string) ( $overrides['description'] ?? '' ) );
+	$image       = trim( (string) ( $overrides['image'] ?? '' ) );
+
+	if ( '' === $title && '' === $description && '' === $image ) {
+		return $ogp;
+	}
+
+	if ( ! is_array( $ogp ) ) {
+		if ( '' === $title ) {
+			return $ogp;
+		}
+
+		$host = (string) parse_url( $url, PHP_URL_HOST );
+		$ogp  = array(
+			'title'       => '',
+			'description' => '',
+			'image'       => '',
+			'favicon'     => 'https://www.google.com/s2/favicons?domain=' . rawurlencode( $host ) . '&sz=64',
+			'site_name'   => $host,
+			'is_internal' => false,
+		);
+
+		$store = node_store_provider( $url );
+		if ( ! empty( $store ) ) {
+			$ogp['site_name'] = $store['name'];
+			$ogp['store']     = $store['slug'];
+		}
+	}
+
+	if ( '' !== $title ) {
+		$ogp['title'] = $title;
+	}
+	if ( '' !== $description ) {
+		$ogp['description'] = $description;
+	}
+	if ( '' !== $image ) {
+		$ogp['image'] = esc_url_raw( $image );
+	}
+
+	return $ogp;
 }
 
 /**
@@ -898,8 +958,26 @@ function node_embed_maybe_make_link( string $output, string $url ): string {
  * @return string
  */
 function node_blogcard_shortcode( $atts ): string {
-	$atts = shortcode_atts( array( 'url' => '' ), $atts, 'blogcard' );
-	return node_render_blogcard( (string) $atts['url'], true );
+	$atts = shortcode_atts(
+		array(
+			'url'         => '',
+			'title'       => '',
+			'description' => '',
+			'image'       => '',
+		),
+		$atts,
+		'blogcard'
+	);
+
+	return node_render_blogcard(
+		(string) $atts['url'],
+		true,
+		array(
+			'title'       => (string) $atts['title'],
+			'description' => (string) $atts['description'],
+			'image'       => (string) $atts['image'],
+		)
+	);
 }
 
 /**

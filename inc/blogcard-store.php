@@ -135,6 +135,12 @@ function node_store_title_from_url( string $url, string $slug ): string {
 		$candidate = (string) end( $segments );
 	}
 
+	if ( 'nintendo' === $slug ) {
+		// nintendo.com の商品スラッグは機種名で終わる（.../minecraft-switch/）。
+		// 題名としては不要なので落とす。
+		$candidate = (string) preg_replace( '/-(?:for-)?(?:nintendo-)?switch(?:-2)?$/i', '', $candidate );
+	}
+
 	return node_store_humanize_slug( $candidate );
 }
 
