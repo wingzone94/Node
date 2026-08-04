@@ -59,8 +59,13 @@ function node_get_ogp_data( string $url ) {
 
 	$transient_key = 'node_ogp_' . md5( $url );
 	$cached        = get_transient( $transient_key );
-	if ( false !== $cached && is_array( $cached ) ) {
+	if ( is_array( $cached ) ) {
 		return $cached;
+	}
+	// 取得失敗は負のキャッシュとして記録する。これが無いと、失敗する URL では
+	// レンダーのたびに 15 秒タイムアウトの外部 HTTP が走り表示が遅延する。
+	if ( node_blogcard_fetch_failure_marker() === $cached ) {
+		return false;
 	}
 
 	$ogp = array(
@@ -91,17 +96,24 @@ function node_get_ogp_data( string $url ) {
 		array(
 			'timeout'    => 15,
 			'sslverify'  => false,
-			'user-agent' => 'Mozilla/5.0 (compatible; LuminousCore/1.0; +https://luminous-core.net/)',
+			// ゲームストア（任天堂・PlayStation・Xbox 等）はボット防御下にあり、
+			// 「compatible; ...」型の自己申告ボット UA では 403 を返す。同梱の
+			// node-library と同じブラウザ UA に揃えて商品ページを取得できるようにする。
+			'user-agent' => node_blogcard_user_agent(),
+			'headers'    => array(
+				'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+				'Accept-Language' => 'ja,en-US;q=0.9,en;q=0.8',
+			),
 		)
 	);
 
 	if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-		return false;
+		return node_blogcard_cache_failure( $transient_key );
 	}
 
 	$html = wp_remote_retrieve_body( $response );
 	if ( empty( $html ) ) {
-		return false;
+		return node_blogcard_cache_failure( $transient_key );
 	}
 
 	$content_type = (string) wp_remote_retrieve_header( $response, 'content-type' );
@@ -115,15 +127,203 @@ function node_get_ogp_data( string $url ) {
 	libxml_clear_errors();
 
 	$xpath = new DOMXPath( $dom );
+	$meta  = node_extract_page_meta( $xpath, $url );
 
-	$ogp['title']       = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:title"]/@content)' ) ) ?: trim( (string) $xpath->evaluate( 'string(//title)' ) );
-	$ogp['description'] = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:description"]/@content)' ) ) ?: trim( (string) $xpath->evaluate( 'string(//meta[@name="description"]/@content)' ) );
-	$ogp['image']       = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:image"]/@content)' ) );
-	$ogp['site_name']   = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:site_name"]/@content)' ) ) ?: (string) parse_url( $url, PHP_URL_HOST );
+	$ogp['title']       = $meta['title'];
+	$ogp['description'] = $meta['description'];
+	$ogp['image']       = $meta['image'];
+	$ogp['site_name']   = '' !== $meta['site_name'] ? $meta['site_name'] : (string) parse_url( $url, PHP_URL_HOST );
 	$ogp['favicon']     = 'https://www.google.com/s2/favicons?domain=' . rawurlencode( (string) parse_url( $url, PHP_URL_HOST ) ) . '&sz=64';
+
+	// 題名が取れないページはカードを組み立てられない（node_blogcard_markup() が空を返す）。
+	// 成功として1週間キャッシュせず、失敗として扱う。
+	if ( '' === $ogp['title'] ) {
+		return node_blogcard_cache_failure( $transient_key );
+	}
 
 	set_transient( $transient_key, $ogp, WEEK_IN_SECONDS );
 	return $ogp;
+}
+
+/**
+ * OGP 取得に使うブラウザ UA を返す。
+ *
+ * @return string
+ */
+function node_blogcard_user_agent(): string {
+	return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
+}
+
+/**
+ * OGP 取得失敗を表すキャッシュ値。
+ *
+ * @return string
+ */
+function node_blogcard_fetch_failure_marker(): string {
+	return 'node_ogp_fetch_failed';
+}
+
+/**
+ * 取得失敗を短期間キャッシュして false を返す。
+ *
+ * @param string $transient_key キャッシュキー。
+ * @return false
+ */
+function node_blogcard_cache_failure( string $transient_key ) {
+	set_transient( $transient_key, node_blogcard_fetch_failure_marker(), 6 * HOUR_IN_SECONDS );
+	return false;
+}
+
+/**
+ * HTML からカードに必要なメタ情報を抽出する。
+ *
+ * og:*（property）→ og:*（name 表記ゆれ）→ twitter:* → JSON-LD → <title>/description の順で
+ * 補完する。ゲームストアの商品ページは og を持たず JSON-LD（Product / VideoGame）だけを
+ * 出力していることがあるため、単純な og 参照では題名も画像も取れない。
+ *
+ * @param DOMXPath $xpath 解析済みドキュメント。
+ * @param string   $url   元 URL（相対画像 URL の絶対化に使用）。
+ * @return array{title: string, description: string, image: string, site_name: string}
+ */
+function node_extract_page_meta( DOMXPath $xpath, string $url ): array {
+	$meta_content = static function ( string $key ) use ( $xpath ): string {
+		$value = $xpath->evaluate( sprintf( 'string(//meta[@property="%1$s"]/@content)', $key ) );
+		if ( '' === trim( (string) $value ) ) {
+			$value = $xpath->evaluate( sprintf( 'string(//meta[@name="%1$s"]/@content)', $key ) );
+		}
+		return trim( (string) $value );
+	};
+
+	$title       = $meta_content( 'og:title' );
+	$description = $meta_content( 'og:description' );
+	$image       = $meta_content( 'og:image' );
+	$site_name   = $meta_content( 'og:site_name' );
+
+	if ( '' === $title ) {
+		$title = $meta_content( 'twitter:title' );
+	}
+	if ( '' === $description ) {
+		$description = $meta_content( 'twitter:description' );
+	}
+	if ( '' === $image ) {
+		$image = $meta_content( 'twitter:image' );
+	}
+
+	if ( '' === $title || '' === $image || '' === $description ) {
+		$json_ld = node_extract_json_ld_product( $xpath );
+		$title   = '' !== $title ? $title : $json_ld['title'];
+		$image   = '' !== $image ? $image : $json_ld['image'];
+
+		$description = '' !== $description ? $description : $json_ld['description'];
+	}
+
+	if ( '' === $title ) {
+		$title = trim( (string) $xpath->evaluate( 'string(//title)' ) );
+	}
+	if ( '' === $description ) {
+		$description = trim( (string) $xpath->evaluate( 'string(//meta[@name="description"]/@content)' ) );
+	}
+
+	// og:image に相対パスを置くサイトがあるため絶対 URL へ補正する。
+	if ( '' !== $image && ! preg_match( '#^https?://#i', $image ) ) {
+		$absolute = WP_Http::make_absolute_url( $image, $url );
+		$image    = is_string( $absolute ) ? $absolute : '';
+	}
+
+	return array(
+		'title'       => $title,
+		'description' => $description,
+		'image'       => $image,
+		'site_name'   => $site_name,
+	);
+}
+
+/**
+ * JSON-LD から商品情報（name / description / image）を抽出する。
+ *
+ * @param DOMXPath $xpath 解析済みドキュメント。
+ * @return array{title: string, description: string, image: string}
+ */
+function node_extract_json_ld_product( DOMXPath $xpath ): array {
+	$result = array(
+		'title'       => '',
+		'description' => '',
+		'image'       => '',
+	);
+
+	$nodes = $xpath->query( '//script[@type="application/ld+json"]' );
+	if ( ! $nodes instanceof DOMNodeList ) {
+		return $result;
+	}
+
+	$types = array( 'product', 'videogame', 'softwareapplication', 'game', 'mobileapplication' );
+
+	foreach ( $nodes as $node ) {
+		$decoded = json_decode( (string) $node->textContent, true );
+		if ( ! is_array( $decoded ) ) {
+			continue;
+		}
+
+		// トップレベルが配列・@graph 入り・単体オブジェクトのいずれの形式にも対応する。
+		$entries = array();
+		if ( isset( $decoded['@graph'] ) && is_array( $decoded['@graph'] ) ) {
+			$entries = $decoded['@graph'];
+		} elseif ( isset( $decoded[0] ) ) {
+			$entries = $decoded;
+		} else {
+			$entries = array( $decoded );
+		}
+
+		foreach ( $entries as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+
+			$entry_types = (array) ( $entry['@type'] ?? array() );
+			$matched     = false;
+			foreach ( $entry_types as $entry_type ) {
+				if ( in_array( strtolower( (string) $entry_type ), $types, true ) ) {
+					$matched = true;
+					break;
+				}
+			}
+
+			if ( ! $matched ) {
+				continue;
+			}
+
+			$result['title']       = trim( (string) ( $entry['name'] ?? '' ) );
+			$result['description'] = trim( (string) ( $entry['description'] ?? '' ) );
+			$result['image']       = node_json_ld_image_url( $entry['image'] ?? '' );
+
+			return $result;
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * JSON-LD の image プロパティ（文字列 / 配列 / ImageObject）から URL を取り出す。
+ *
+ * @param mixed $image image プロパティの値。
+ * @return string
+ */
+function node_json_ld_image_url( $image ): string {
+	if ( is_string( $image ) ) {
+		return trim( $image );
+	}
+
+	if ( is_array( $image ) ) {
+		if ( isset( $image['url'] ) ) {
+			return trim( (string) $image['url'] );
+		}
+		if ( isset( $image[0] ) ) {
+			return node_json_ld_image_url( $image[0] );
+		}
+	}
+
+	return '';
 }
 
 /**
@@ -170,6 +370,10 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 
 	$is_internal = ! empty( $ogp['is_internal'] );
 	$modifier    = $is_internal ? 'm3-blogcard--internal' : 'm3-blogcard--external';
+	if ( ! empty( $ogp['store'] ) ) {
+		// ゲームストアの商品ページは、プラットフォーム色のアクセントとストア名バッジを付ける。
+		$modifier .= ' m3-blogcard--store m3-blogcard--store-' . sanitize_html_class( (string) $ogp['store'] );
+	}
 	if ( ! empty( $ogp['is_brand'] ) ) {
 		// ブランドバナー（1200x630 のロゴ＋ワードマーク一体画像）は通常のサムネイル枠だと
 		// 中央クロップで文字が切れるため、専用の表示ルールを当てる。
@@ -219,6 +423,9 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 								<img src="<?php echo esc_url( $ogp['favicon'] ); ?>" class="m3-blogcard__favicon" alt="" loading="lazy" decoding="async" width="16" height="16">
 							<?php endif; ?>
 							<span class="m3-blogcard__sitename"><?php echo esc_html( $ogp['site_name'] ); ?></span>
+							<?php if ( ! empty( $ogp['store'] ) ) : ?>
+								<span class="m3-blogcard__store-badge"><?php esc_html_e( 'ストア', 'node' ); ?></span>
+							<?php endif; ?>
 						</span>
 						<span class="m3-blogcard__actions">
 							<button type="button" class="m3-blogcard__action m3-blogcard__action--copy" data-url="<?php echo esc_url( $url ); ?>" data-share-title="<?php echo esc_attr( $share_title ); ?>" title="<?php esc_attr_e( 'リンクをコピー', 'node' ); ?>" aria-label="<?php esc_attr_e( 'リンクをコピー', 'node' ); ?>">
@@ -261,7 +468,20 @@ function node_render_blogcard( string $url, bool $brand_override = false ): stri
 		return '';
 	}
 
-	$ogp = node_get_ogp_data( $url );
+	$store = node_store_provider( $url );
+	$ogp   = node_get_ogp_data( $url );
+
+	if ( ! empty( $store ) ) {
+		// ストア側のボット防御でメタが取れなくても、URL から組み立てた情報でカードにする
+		// （素のリンクへ落とすと、記事内で他のカードと並んだときに見た目が崩れるため）。
+		if ( ! is_array( $ogp ) || empty( $ogp['title'] ) ) {
+			$ogp = node_store_fallback_ogp( $url, $store );
+		} else {
+			$ogp['store']     = $store['slug'];
+			$ogp['site_name'] = $store['name'];
+		}
+	}
+
 	if ( ! $ogp ) {
 		return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 	}
@@ -610,6 +830,13 @@ function node_oembed_dataparse( string $return, object $data, string $url ): str
 
 	if ( '' === $ogp['site_name'] ) {
 		$ogp['site_name'] = $host;
+	}
+
+	// oEmbed 経由でもストアカードの見た目を揃える。
+	$store = node_store_provider( $url );
+	if ( ! empty( $store ) ) {
+		$ogp['store']     = $store['slug'];
+		$ogp['site_name'] = $store['name'];
 	}
 
 	$card = node_blogcard_markup( $ogp, $url );
