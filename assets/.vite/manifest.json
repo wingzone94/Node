@@ -99,6 +99,11 @@
     "src": "src/scripts/table-sorter.js",
     "isDynamicEntry": true
   },
+  "src/styles/editor-blogcard.css": {
+    "file": "css/editor-blogcard.css",
+    "src": "src/styles/editor-blogcard.css",
+    "isEntry": true
+  },
   "src/styles/style.css": {
     "file": "css/style.css",
     "src": "src/styles/style.css",

@@ -1119,7 +1119,155 @@ function node_pre_oembed_internal_result( $result, $url, $args ) {
 	return node_blogcard_defer( $card );
 }
 
+/**
+ * ブロックエディタ用: `node/blogcard` ブロックのフロント側レンダリング。
+ *
+ * @param array<string, mixed> $attributes ブロック属性。
+ * @return string
+ */
+function node_render_blogcard_block( array $attributes ): string {
+	$url = esc_url_raw( (string) ( $attributes['url'] ?? '' ) );
+	if ( '' === $url ) {
+		return '';
+	}
+
+	return node_render_blogcard(
+		$url,
+		false,
+		array(
+			'title'       => (string) ( $attributes['title'] ?? '' ),
+			'description' => (string) ( $attributes['description'] ?? '' ),
+			'image'       => (string) ( $attributes['image'] ?? '' ),
+		)
+	);
+}
+
+/**
+ * `node/blogcard` ブロックを登録する。
+ *
+ * エディタ上でカードのプレビューを出すためのブロック。URL 単独行の自動変換
+ * （oEmbed 経路）はそのまま残るため、既存記事の書き方は変わらない。
+ */
+function node_register_blogcard_block(): void {
+	if ( ! function_exists( 'register_block_type' ) ) {
+		return;
+	}
+
+	register_block_type(
+		'node/blogcard',
+		array(
+			'api_version'     => 2,
+			'attributes'      => array(
+				'url'         => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'title'       => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'description' => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'image'       => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+			),
+			'render_callback' => 'node_render_blogcard_block',
+		)
+	);
+}
+
+/**
+ * エディタ用スクリプトを読み込む。
+ */
+function node_enqueue_blogcard_editor_assets(): void {
+	$relative = '/assets/js/blogcard-editor.js';
+	$path     = get_template_directory() . $relative;
+
+	if ( ! file_exists( $path ) ) {
+		return;
+	}
+
+	wp_enqueue_script(
+		'node-blogcard-editor',
+		get_template_directory_uri() . $relative,
+		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-i18n' ),
+		(string) filemtime( $path ),
+		true
+	);
+}
+
+/**
+ * エディタからカードのプレビュー HTML を取得する REST ルートを登録する。
+ */
+function node_register_blogcard_preview_route(): void {
+	register_rest_route(
+		'node/v1',
+		'/blogcard-preview',
+		array(
+			'methods'             => 'GET',
+			'permission_callback' => static function (): bool {
+				return current_user_can( 'edit_posts' );
+			},
+			'callback'            => 'node_blogcard_preview_response',
+			'args'                => array(
+				'url'         => array(
+					'required' => true,
+					'type'     => 'string',
+				),
+				'title'       => array( 'type' => 'string' ),
+				'description' => array( 'type' => 'string' ),
+				'image'       => array( 'type' => 'string' ),
+			),
+		)
+	);
+}
+
+/**
+ * カードプレビューのレスポンス。
+ *
+ * フロントと同じ node_render_blogcard() を通すため、エディタで見えるものが
+ * そのまま公開後の表示になる（取得結果のキャッシュも共有する）。
+ *
+ * @param WP_REST_Request $request REST リクエスト。
+ * @return array<string, mixed>|WP_Error
+ */
+function node_blogcard_preview_response( WP_REST_Request $request ) {
+	$url = esc_url_raw( (string) $request->get_param( 'url' ) );
+	if ( '' === $url ) {
+		return new WP_Error( 'node_blogcard_bad_url', 'URL が空です', array( 'status' => 400 ) );
+	}
+
+	$html = node_render_blogcard(
+		$url,
+		false,
+		array(
+			'title'       => (string) $request->get_param( 'title' ),
+			'description' => (string) $request->get_param( 'description' ),
+			'image'       => (string) $request->get_param( 'image' ),
+		)
+	);
+
+	if ( '' === $html ) {
+		return new WP_Error( 'node_blogcard_no_card', 'カードを生成できませんでした', array( 'status' => 404 ) );
+	}
+
+	$store = node_store_provider( $url );
+
+	return array(
+		'html'      => $html,
+		'store'     => (string) ( $store['slug'] ?? '' ),
+		'fallback'  => str_contains( $html, 'm3-blogcard__fallback' ),
+	);
+}
+
 add_shortcode( 'blogcard', 'node_blogcard_shortcode' );
+add_action( 'init', 'node_register_blogcard_block' );
+add_action( 'enqueue_block_editor_assets', 'node_enqueue_blogcard_editor_assets' );
+add_action( 'rest_api_init', 'node_register_blogcard_preview_route' );
 add_action( 'init', 'node_register_map_oembed_provider' );
 add_action( 'rest_api_init', 'node_register_maps_oembed_route' );
 add_filter( 'pre_oembed_result', 'node_pre_oembed_internal_result', 10, 3 );

@@ -440,6 +440,110 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		return $callback;
 	}
 
+	public function test_blogcard_block_renders_same_card_as_front_end(): void {
+		$url    = 'https://example.org/block-article';
+		$filter = $this->mock_ogp_response( $url, 'Block Card Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard_block( array( 'url' => $url ) );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( 'Block Card Title', $html );
+		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_blogcard_block_applies_manual_attributes(): void {
+		$url      = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard_block(
+			array(
+				'url'   => $url,
+				'title' => 'Minecraft',
+				'image' => 'https://example.com/mc.jpg',
+			)
+		);
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'mc.jpg', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_blogcard_block_is_registered_as_dynamic_block(): void {
+		$registry = WP_Block_Type_Registry::get_instance();
+
+		$this->assertTrue( $registry->is_registered( 'node/blogcard' ) );
+		$this->assertSame( 'node_render_blogcard_block', $registry->get_registered( 'node/blogcard' )->render_callback );
+	}
+
+	public function test_blogcard_preview_route_returns_card_html(): void {
+		$url    = 'https://example.org/preview-article';
+		$filter = $this->mock_ogp_response( $url, 'Preview Card Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$request = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
+		$request->set_param( 'url', $url );
+
+		$data = node_blogcard_preview_response( $request );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertIsArray( $data );
+		$this->assertStringContainsString( 'Preview Card Title', $data['html'] );
+		$this->assertSame( '', $data['store'] );
+		$this->assertFalse( $data['fallback'] );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_blogcard_preview_route_reports_store_and_rejects_empty_url(): void {
+		$url      = 'https://store.steampowered.com/app/570/Dota_2/';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$request = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
+		$request->set_param( 'url', $url );
+		$data = node_blogcard_preview_response( $request );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertSame( 'steam', $data['store'] );
+		$this->assertStringContainsString( 'm3-blogcard--store-steam', $data['html'] );
+
+		$empty = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
+		$empty->set_param( 'url', '' );
+		$this->assertInstanceOf( WP_Error::class, node_blogcard_preview_response( $empty ) );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_blogcard_preview_route_requires_edit_posts_capability(): void {
+		$routes = rest_get_server()->get_routes();
+		$this->assertArrayHasKey( '/node/v1/blogcard-preview', $routes );
+
+		$permission_callback = $routes['/node/v1/blogcard-preview'][0]['permission_callback'];
+
+		wp_set_current_user( 0 );
+		$this->assertFalse( (bool) call_user_func( $permission_callback ) );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$this->assertTrue( (bool) call_user_func( $permission_callback ) );
+
+		wp_set_current_user( 0 );
+	}
+
 	public function test_nintendo_title_id_is_extracted_from_store_urls(): void {
 		$this->assertSame( 'D70010000000964', node_nintendo_title_id( 'https://store-jp.nintendo.com/item/software/D70010000000964' ) );
 		$this->assertSame( '70010000012332', node_nintendo_title_id( 'https://ec.nintendo.com/JP/ja/titles/70010000012332' ) );

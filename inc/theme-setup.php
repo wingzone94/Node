@@ -69,6 +69,11 @@ function node_theme_setup() {
 	// ブロックエディタに Vite の CSS を適用
 	// add_editor_style( 'assets/css/style.css' );
 
+	// ブログカード（node/blogcard）のプレビュー用スタイルだけをエディタへ適用する。
+	// テーマ全体の style.css を入れるとエディタUIまで巻き込むため、カード関連に限定した
+	// ビルド成果物（src/styles/editor-blogcard.css）を読み込む。
+	add_editor_style( 'assets/css/editor-blogcard.css' );
+
 	// フィードリンク
 	add_theme_support( 'automatic-feed-links' );
 

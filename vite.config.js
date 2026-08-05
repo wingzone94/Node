@@ -26,7 +26,9 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'src/main.js'),
         style: resolve(__dirname, 'src/styles/style.css'),
-        editor: resolve(__dirname, 'src/editor.js')
+        editor: resolve(__dirname, 'src/editor.js'),
+        // ブロックエディタのキャンバスへ add_editor_style() で読み込むカード用CSS
+        'editor-blogcard': resolve(__dirname, 'src/styles/editor-blogcard.css')
       },
       output: {
         entryFileNames: `js/[name].[hash].js`,

@@ -1,0 +1,43 @@
+/* ==========================================================================
+   ブロックエディタ用スタイル（node/blogcard のプレビュー）
+
+   フロントと同じ _blogcard-ai.css / _variables.css をそのまま読み込むため、
+   エディタで見えるカードが公開後の見た目と一致する（定義の二重管理をしない）。
+   `add_editor_style()` 経由でエディタキャンバスにのみ適用される。
+   ========================================================================== */
+
+@import './_variables.css';
+@import './_blogcard-ai.css';
+
+/* --- プレビュー枠 --- */
+.node-blogcard-preview {
+    /* カードはブロック選択のためのクリック領域にする（リンク先へ飛ばさない）。 */
+    pointer-events: none;
+}
+
+.node-blogcard-preview--loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    color: var(--md-sys-color-on-surface, #2b1700);
+    font-size: 13px;
+}
+
+.node-blogcard-preview__empty {
+    margin: 0;
+    padding: 12px;
+    word-break: break-all;
+    opacity: 0.7;
+}
+
+/* エディタには Material Symbols を読み込まないため、
+   アイコン用の合字がそのまま文字として出てしまうのを防ぐ。 */
+.node-blogcard-preview .material-symbols-outlined {
+    font-size: 0;
+}
+
+/* ホバーの浮き上がりはエディタでは邪魔なので止める。 */
+.node-blogcard-preview .m3-blogcard:hover {
+    transform: none;
+}
