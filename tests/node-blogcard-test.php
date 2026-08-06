@@ -480,6 +480,28 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
 	}
 
+	public function test_legacy_node_library_block_renders_identically(): void {
+		// 旧ブロック（node-library/blog-card）は node/blogcard へ統合したが、
+		// 既存記事のために登録・レンダリングは残す。両者の出力が一致すること。
+		if ( ! class_exists( 'Node_Library' ) ) {
+			$this->markTestSkipped( 'node-library が読み込まれていない環境' );
+		}
+
+		$url    = 'https://example.org/legacy-block-article';
+		$filter = $this->mock_ogp_response( $url, 'Legacy Block Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$new    = node_render_blogcard_block( array( 'url' => $url ) );
+		$legacy = Node_Library::instance()->render_blog_card_block( array( 'url' => $url ) );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertSame( $new, $legacy );
+		$this->assertStringContainsString( 'Legacy Block Title', $legacy );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
 	public function test_blogcard_block_is_registered_as_dynamic_block(): void {
 		$registry = WP_Block_Type_Registry::get_instance();
 

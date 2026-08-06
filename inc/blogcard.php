@@ -1194,7 +1194,7 @@ function node_enqueue_blogcard_editor_assets(): void {
 	wp_enqueue_script(
 		'node-blogcard-editor',
 		get_template_directory_uri() . $relative,
-		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-i18n' ),
+		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-i18n', 'wp-hooks' ),
 		(string) filemtime( $path ),
 		true
 	);

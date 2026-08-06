@@ -199,6 +199,32 @@
 	}
 
 	// ------------------------------------------------------------------
+	// 旧ブロック（node-library/blog-card）をインサーターから隠す
+	//
+	// 同じ「ブログカード」が2つ並ぶのを防ぐ。node-library 側でも inserter:false を
+	// 指定しているが、単体プラグインとして古い版が入っている環境でも効くよう、
+	// 登録フィルターでも落とす（登録は残すので既存記事の表示は壊れない）。
+	// ------------------------------------------------------------------
+
+	if ( wp.hooks && wp.hooks.addFilter ) {
+		wp.hooks.addFilter(
+			'blocks.registerBlockType',
+			'node/hide-legacy-blogcard',
+			function ( settings, name ) {
+				if ( 'node-library/blog-card' !== name ) {
+					return settings;
+				}
+
+				var supports = settings.supports || {};
+				supports.inserter = false;
+				settings.supports = supports;
+
+				return settings;
+			}
+		);
+	}
+
+	// ------------------------------------------------------------------
 	// ブロック登録
 	// PHP 側の register_block_type が render_callback 付きで先に登録するため、
 	// 一度 unregister してから JS 側の edit を持つ定義で登録し直す。
@@ -226,6 +252,15 @@
 
 		transforms: {
 			from: [
+				{
+					// 旧ブロック（node-library/blog-card）からの移行。
+					// フロント出力は元から同じ node_render_blogcard() なので見た目は変わらない。
+					type: 'block',
+					blocks: [ 'node-library/blog-card' ],
+					transform: function ( attrs ) {
+						return createBlock( 'node/blogcard', { url: String( attrs.url || '' ) } );
+					},
+				},
 				{
 					type: 'block',
 					blocks: [ 'core/embed' ],
