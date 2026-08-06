@@ -22,6 +22,7 @@
 	var createBlock = wp.blocks.createBlock;
 	var TextControl = wp.components.TextControl;
 	var TextareaControl = wp.components.TextareaControl;
+	var ToggleControl = wp.components.ToggleControl;
 	var Button = wp.components.Button;
 	var Placeholder = wp.components.Placeholder;
 	var Spinner = wp.components.Spinner;
@@ -139,6 +140,7 @@
 			setError( '' );
 
 			var path = '/node/v1/blogcard-preview?url=' + encodeURIComponent( url );
+			path += '&show_image=' + ( false === overrides.showImage ? '0' : '1' );
 			if ( overrides.title ) {
 				path += '&title=' + encodeURIComponent( overrides.title );
 			}
@@ -168,7 +170,7 @@
 			return function () {
 				cancelled = true;
 			};
-		}, [ url, overrides.title, overrides.description, overrides.image ] );
+		}, [ url, overrides.title, overrides.description, overrides.image, overrides.showImage ] );
 
 		if ( isLoading ) {
 			return el(
@@ -245,6 +247,7 @@
 			title: { type: 'string', default: '' },
 			description: { type: 'string', default: '' },
 			image: { type: 'string', default: '' },
+			showImage: { type: 'boolean', default: true },
 		},
 		supports: {
 			html: false,
@@ -362,6 +365,17 @@
 								},
 								__nextHasNoMarginBottom: true,
 							} ),
+							el( ToggleControl, {
+								label: __( 'サムネイル画像を表示', 'node' ),
+								help: attributes.showImage
+									? __( 'リンク先から画像を取得できた場合に表示します。', 'node' )
+									: __( '画像を表示せず、テキストだけのカードにします。', 'node' ),
+								checked: !! attributes.showImage,
+								onChange: function ( value ) {
+									setAttributes( { showImage: !! value } );
+								},
+								__nextHasNoMarginBottom: true,
+							} ),
 							el( TextControl, {
 								label: __( 'タイトル（手動指定）', 'node' ),
 								help: __( 'ストア側の制限でタイトルを取得できない場合に指定します。空なら取得結果を使います。', 'node' ),
@@ -399,6 +413,7 @@
 							title: attributes.title,
 							description: attributes.description,
 							image: attributes.image,
+							showImage: attributes.showImage,
 						},
 					} )
 				)

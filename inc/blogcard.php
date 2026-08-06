@@ -550,7 +550,10 @@ function node_blogcard_apply_overrides( $ogp, array $overrides, string $url ) {
 	$description = trim( (string) ( $overrides['description'] ?? '' ) );
 	$image       = trim( (string) ( $overrides['image'] ?? '' ) );
 
-	if ( '' === $title && '' === $description && '' === $image ) {
+	// サムネイルを出すかどうか（既定は「取得できたら出す」）。
+	$hide_image = array_key_exists( 'show_image', $overrides ) && ! $overrides['show_image'];
+
+	if ( '' === $title && '' === $description && '' === $image && ! $hide_image ) {
 		return $ogp;
 	}
 
@@ -584,6 +587,11 @@ function node_blogcard_apply_overrides( $ogp, array $overrides, string $url ) {
 	}
 	if ( '' !== $image ) {
 		$ogp['image'] = esc_url_raw( $image );
+	}
+
+	// 非表示指定は最後に適用する（手動指定の画像より優先）。
+	if ( $hide_image ) {
+		$ogp['image'] = '';
 	}
 
 	return $ogp;
@@ -962,6 +970,7 @@ function node_blogcard_shortcode( $atts ): string {
 			'title'       => '',
 			'description' => '',
 			'image'       => '',
+			'show_image'  => 'true',
 		),
 		$atts,
 		'blogcard'
@@ -974,6 +983,8 @@ function node_blogcard_shortcode( $atts ): string {
 			'title'       => (string) $atts['title'],
 			'description' => (string) $atts['description'],
 			'image'       => (string) $atts['image'],
+			// `show_image="false"` / `"no"` / `"0"` でサムネイルを消す。
+			'show_image'  => ! in_array( strtolower( trim( (string) $atts['show_image'] ) ), array( 'false', 'no', '0', 'off' ), true ),
 		)
 	);
 }
@@ -1138,6 +1149,7 @@ function node_render_blogcard_block( array $attributes ): string {
 			'title'       => (string) ( $attributes['title'] ?? '' ),
 			'description' => (string) ( $attributes['description'] ?? '' ),
 			'image'       => (string) ( $attributes['image'] ?? '' ),
+			'show_image'  => ! array_key_exists( 'showImage', $attributes ) || (bool) $attributes['showImage'],
 		)
 	);
 }
@@ -1173,6 +1185,10 @@ function node_register_blogcard_block(): void {
 				'image'       => array(
 					'type'    => 'string',
 					'default' => '',
+				),
+				'showImage'   => array(
+					'type'    => 'boolean',
+					'default' => true,
 				),
 			),
 			'render_callback' => 'node_render_blogcard_block',
@@ -1221,6 +1237,10 @@ function node_register_blogcard_preview_route(): void {
 				'title'       => array( 'type' => 'string' ),
 				'description' => array( 'type' => 'string' ),
 				'image'       => array( 'type' => 'string' ),
+				'show_image'  => array(
+					'type'    => 'boolean',
+					'default' => true,
+				),
 			),
 		)
 	);
@@ -1248,6 +1268,7 @@ function node_blogcard_preview_response( WP_REST_Request $request ) {
 			'title'       => (string) $request->get_param( 'title' ),
 			'description' => (string) $request->get_param( 'description' ),
 			'image'       => (string) $request->get_param( 'image' ),
+			'show_image'  => (bool) $request->get_param( 'show_image' ),
 		)
 	);
 

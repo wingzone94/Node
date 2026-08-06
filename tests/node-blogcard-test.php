@@ -502,6 +502,88 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		delete_transient( 'node_ogp_' . md5( $url ) );
 	}
 
+	public function test_blogcard_block_can_hide_thumbnail(): void {
+		$url    = 'https://example.org/thumb-toggle';
+		$filter = $this->mock_ogp_response( $url, 'Thumb Toggle Title', 'https://example.com/thumb.jpg' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$with_image = node_render_blogcard_block( array( 'url' => $url ) );
+		$no_image   = node_render_blogcard_block(
+			array(
+				'url'       => $url,
+				'showImage' => false,
+			)
+		);
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		// 既定は取得できた画像を表示する。
+		$this->assertStringContainsString( 'm3-blogcard__image', $with_image );
+		$this->assertStringContainsString( 'thumb.jpg', $with_image );
+
+		// showImage=false ではサムネイル枠ごと出さない（題名・説明は残る）。
+		$this->assertStringNotContainsString( 'm3-blogcard__image', $no_image );
+		$this->assertStringNotContainsString( 'thumb.jpg', $no_image );
+		$this->assertStringContainsString( 'Thumb Toggle Title', $no_image );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_hide_thumbnail_wins_over_manual_image(): void {
+		$url    = 'https://example.org/thumb-priority';
+		$filter = $this->mock_ogp_response( $url, 'Priority Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard_block(
+			array(
+				'url'       => $url,
+				'image'     => 'https://example.com/manual.jpg',
+				'showImage' => false,
+			)
+		);
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringNotContainsString( 'manual.jpg', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__image', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_shortcode_show_image_attribute_hides_thumbnail(): void {
+		$url    = 'https://example.org/shortcode-thumb';
+		$filter = $this->mock_ogp_response( $url, 'Shortcode Thumb Title', 'https://example.com/sc.jpg' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '" show_image="false"]' );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringNotContainsString( 'sc.jpg', $html );
+		$this->assertStringContainsString( 'Shortcode Thumb Title', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_blogcard_preview_route_honours_show_image(): void {
+		$url    = 'https://example.org/preview-thumb';
+		$filter = $this->mock_ogp_response( $url, 'Preview Thumb Title', 'https://example.com/pv.jpg' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$request = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
+		$request->set_param( 'url', $url );
+		$request->set_param( 'show_image', false );
+
+		$data = node_blogcard_preview_response( $request );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringNotContainsString( 'pv.jpg', $data['html'] );
+		$this->assertStringContainsString( 'Preview Thumb Title', $data['html'] );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
 	public function test_blogcard_block_is_registered_as_dynamic_block(): void {
 		$registry = WP_Block_Type_Registry::get_instance();
 
