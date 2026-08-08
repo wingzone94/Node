@@ -21,29 +21,13 @@ declare(strict_types=1);
     <link rel="apple-touch-icon" href="<?php echo esc_url( get_template_directory_uri() . '/assets/pwa/apple-touch-icon-180.png' ); ?>">
     <link rel="manifest" href="<?php echo get_template_directory_uri(); ?>/manifest.json">
     <?php
-    // iOS ホーム画面追加時のスプラッシュ（オレンジ背景＋ブランドロゴ）
-    $node_pwa_uri      = get_template_directory_uri() . '/assets/pwa';
-    $node_ios_splashes = array(
-        array( 375, 667, 2, 'splash-750x1334.png' ),
-        array( 414, 896, 2, 'splash-828x1792.png' ),
-        array( 375, 812, 3, 'splash-1125x2436.png' ),
-        array( 390, 844, 3, 'splash-1170x2532.png' ),
-        array( 393, 852, 3, 'splash-1179x2556.png' ),
-        array( 402, 874, 3, 'splash-1206x2622.png' ),
-        array( 414, 896, 3, 'splash-1242x2688.png' ),
-        array( 428, 926, 3, 'splash-1284x2778.png' ),
-        array( 430, 932, 3, 'splash-1290x2796.png' ),
-        array( 440, 956, 3, 'splash-1320x2868.png' ),
-    );
-    foreach ( $node_ios_splashes as $node_splash ) {
-        printf(
-            '<link rel="apple-touch-startup-image" media="screen and (device-width: %1$dpx) and (device-height: %2$dpx) and (-webkit-device-pixel-ratio: %3$d) and (orientation: portrait)" href="%4$s">' . "\n    ",
-            (int) $node_splash[0],
-            (int) $node_splash[1],
-            (int) $node_splash[2],
-            esc_url( $node_pwa_uri . '/' . $node_splash[3] )
-        );
-    }
+    /*
+     * iOS の起動スプラッシュ（apple-touch-startup-image・10解像度）は廃止した
+     * （2026-08-08 ユーザー指示）。ロゴを載せた全画面の起動画面は、出るたびに
+     * 一瞬挟まるだけで情報がなく、端末ごとに解像度を10枚用意する維持コストにも
+     * 見合わない。指定がなければ iOS は manifest の background_color
+     * （#1B1812 = サイトのダーク面）で塗るので、暗い無地から本体へ入る。
+     */
     ?>
     <link rel="mask-icon" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg" color="#FF9900">
     <link rel="icon" type="image/svg+xml" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg">

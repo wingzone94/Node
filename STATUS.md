@@ -271,7 +271,8 @@ Gemini APIやGoogle系仕様の検証にはGemini系エージェントが向い�
 ### 差し戻し（2026-08-08 ユーザー指示）
 
 * **LATEST / 記事一覧のセクション枠も四角に**（`.m3-surface` の40px角丸を `--latest` / `--articles` で0に）。実測: HEADLINE 0px / LATEST 0px / ARTICLES 0px、SPOTLIGHT は枠が視認できないため40pxのまま
-* **起動時のオレンジ背景を廃止**。`manifest.json` の `background_color`/`theme_color`、`<meta name="theme-color">`（ライト/ダーク出し分けへ）、iOSスプラッシュ10枚をサイトのダーク面 `#1B1812` に統一。`apple-touch-icon` はブランド識別なのでオレンジ据え置き。`scripts/generate-pwa-splash.mjs` に SPLASH_BG を分離して再生成
+* **起動時のオレンジ背景を廃止**。`manifest.json` の `background_color`/`theme_color`、`<meta name="theme-color">`（ライト/ダーク出し分けへ）をサイトのダーク面 `#1B1812` に統一
+* **iOSの起動スプラッシュを廃止**（追加指示）。`apple-touch-startup-image` 10本と `assets/pwa/splash-*.png` を削除。未指定なら iOS は manifest の `background_color` で塗るので暗い無地から入る。`apple-touch-icon` の背景もオレンジ → `#1B1812`（実測 corner=27,24,18）。スクリプトは `generate-pwa-icons.mjs` へ改名。`pwa-icon-192/512` は透過、`pwa-maskable-512` はクリームでオレンジではないため据え置き
 * **トップページの記事カードを全て四角に**（`.m3-surface--latest, .m3-surface--articles { --node-card-radius: 0 }`）。HEADLINEのカードと形をそろえる。最初は LATEST 枠のみにしたが、下の通常グリッドが角丸のままで上下に混在したため統一（ユーザー追加指示）。実測: トップのカードは全て `0px`、バッジは12pxのまま、検索結果は 28px のまま非波及
 * **HEADLINE の副題を「速報」→「ニュース」**（トップの `headline-carousel.php` と301転送先の `category-news.php`、カルーセルの aria-label も統一）。**LATEST は 9件 → 6件**（`index.php` の `$latest_limit`。3列×2段で割り切れる／7件目以降は従来どおり「すべて見る」の下へ）。実測: 見出し「HEADLINE ニュース」、LATEST枠6件・以降6件・すべて見る表示・JSエラーなし
 * **HEADLINE カードに `+N` チップを復活**。本番1.2.5のカードにはあった「入り切らないカテゴリ件数」の表示が、今回の自動制限では黙って隠すだけになっていた（本番との比較で発覚した回帰）。PHP側で切った分 + JSが隠した分の合計を出す。枠の高さを 41px → **42px**（実測19px × 2 + gap 4px）にして丸め差の1px切れも解消。長い名前 + チップが同居できない場合のみ `is-tight` で1行に落とす。実測: 全カードはみ出し0、ストレス時も `+2`〜`+6` が正しく出る

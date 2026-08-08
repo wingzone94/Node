@@ -547,5 +547,7 @@ Manrope は字幅が広く終端が丸い幾何学系で、全大文字の見出
 * **起動時のオレンジ背景を廃止**（2026-08-08 ユーザー指示）。ブランドオレンジ `#FF9900` のベタ塗りが3か所に残っていて、読み込み・起動のたびに画面がオレンジに光っていた。いずれもサイトのダーク面 `#1B1812` へ置換する。
   * `manifest.json` の `background_color` / `theme_color`（PWA起動画面とタイトルバー）
   * `header.php` の `<meta name="theme-color">`（ブラウザUI）。1本の固定値をやめ、`prefers-color-scheme` でライト `#FFF4E5` / ダーク `#1B1812` を出し分ける
-  * iOSスプラッシュ10枚（`assets/pwa/splash-*.png`）。`scripts/generate-pwa-splash.mjs` の背景色を分離して再生成
-  * **`apple-touch-icon` はオレンジのまま**。こちらは起動時の背景ではなくホーム画面のアイコン＝ブランドの識別なので対象外とした
+  * **iOSの起動スプラッシュは廃止**（2026-08-08 ユーザー指示）。`header.php` の `apple-touch-startup-image`（10解像度）と `assets/pwa/splash-*.png` を削除した。ロゴを載せた全画面の起動画面は出るたびに一瞬挟まるだけで情報がなく、端末ごとに10枚を維持するコストにも見合わない。指定がなければ iOS は manifest の `background_color`（`#1B1812`）で塗るので、暗い無地から本体へ入る
+  * **`apple-touch-icon` の背景もオレンジをやめて `#1B1812` に**（同日 追加指示）。ホーム画面で悪目立ちするため。透過のままにできないのは iOS が透過部を黒で塗るためで、無地にするなら黒よりサイトの面の色が合う
+  * スクリプトは `scripts/generate-pwa-splash.mjs` → **`scripts/generate-pwa-icons.mjs`** へ改名（スプラッシュを作らなくなったため）
+  * `pwa-icon-192/512.png` は背景が透過、`pwa-maskable-512.png` はクリーム `#FFF4E5` で、いずれもオレンジではないため今回は据え置き
