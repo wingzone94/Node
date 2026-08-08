@@ -90,6 +90,8 @@
     .m3-article__featured-gradient,
     .m3-article__accent-line,
     .m3-skip-link,
+    .node-footnotes__header,
+    .node-footnotes__tabs,
     .ai-summary-single {
         display: none !important;
     }

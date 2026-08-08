@@ -139,11 +139,48 @@ function node_get_all_articles_url() {
 }
 
 /**
- * ヘッドライン一覧ページのURLを返す。
+ * 速報（HEADLINE）カテゴリを返す。見つからなければ null。
+ */
+function node_get_news_category() {
+	$news_cat = get_term_by( 'name', 'ニュース', 'category' );
+
+	return ( $news_cat && ! is_wp_error( $news_cat ) ) ? $news_cat : null;
+}
+
+/**
+ * ヘッドライン（速報）一覧のURLを返す。
+ *
+ * 1.3 で独自URL `/headlines/` を廃止し、ニュースカテゴリのアーカイブを正とした。
+ * 単一カテゴリの別名でしかなく、title / canonical / sitemap が標準経路のほうが
+ * 正しく出るため（NODE-1.3.md §16）。
  */
 function node_get_headlines_url() {
-	return home_url( '/headlines/' );
+	$news_cat = node_get_news_category();
+	if ( $news_cat ) {
+		$link = get_category_link( $news_cat->term_id );
+		if ( $link && ! is_wp_error( $link ) ) {
+			return $link;
+		}
+	}
+
+	return home_url( '/' );
 }
+
+/**
+ * 速報カテゴリのアーカイブに category-news.php を使う。
+ *
+ * スラッグが日本語（`ニュース`）のため `category-news.php` は
+ * テンプレート階層に一致せず、汎用 archive.php にフォールバックしていた。
+ */
+function node_news_category_template_hierarchy( $templates ) {
+	$news_cat = node_get_news_category();
+	if ( $news_cat && is_category( $news_cat->term_id ) ) {
+		array_unshift( $templates, 'category-news.php' );
+	}
+
+	return $templates;
+}
+add_filter( 'category_template_hierarchy', 'node_news_category_template_hierarchy' );
 
 /**
  * SPOTLIGHT 特集一覧ページのURLを返す。
@@ -229,19 +266,6 @@ function node_register_all_articles_rewrite_rule() {
 		'top'
 	);
 
-	// ヘッドライン専用のリライトルール
-	add_rewrite_tag( '%node_headlines%', '1' );
-	add_rewrite_rule(
-		'^headlines/?$',
-		'index.php?node_headlines=1',
-		'top'
-	);
-	add_rewrite_rule(
-		'^headlines/page/([0-9]{1,})/?$',
-		'index.php?node_headlines=1&paged=$matches[1]',
-		'top'
-	);
-
 	// SPOTLIGHT 専用のリライトルール
 	add_rewrite_tag( '%node_spotlight%', '1' );
 	add_rewrite_rule(
@@ -257,7 +281,6 @@ add_action( 'init', 'node_register_all_articles_rewrite_rule' );
  */
 function node_add_all_articles_query_var( $vars ) {
 	$vars[] = 'node_all_articles';
-	$vars[] = 'node_headlines';
 	$vars[] = 'node_spotlight';
 	return $vars;
 }
@@ -269,13 +292,6 @@ add_filter( 'query_vars', 'node_add_all_articles_query_var' );
 function node_use_all_articles_template( $template ) {
 	if ( get_query_var( 'node_all_articles' ) ) {
 		$custom_template = NODE_THEME_DIR . '/template-parts/all-articles.php';
-		if ( file_exists( $custom_template ) ) {
-			return $custom_template;
-		}
-	}
-
-	if ( get_query_var( 'node_headlines' ) ) {
-		$custom_template = NODE_THEME_DIR . '/template-parts/headlines.php';
 		if ( file_exists( $custom_template ) ) {
 			return $custom_template;
 		}
@@ -296,7 +312,8 @@ add_filter( 'template_include', 'node_use_all_articles_template', 99 );
  * リライトルールを一度だけフラッシュする（本番運用向け）。
  */
 function node_maybe_flush_rewrite_rules_for_all_articles() {
-	$rewrite_version = 'node_all_articles_v5';
+	// v6: /headlines/ の独自リライトを撤去（ニュースカテゴリへ301）
+	$rewrite_version = 'node_all_articles_v6';
 	if ( get_option( 'node_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
@@ -1224,19 +1241,32 @@ add_action( 'pre_get_posts', 'node_custom_posts_per_page' );
 
 /**
  * -------------------------------------------------------
- * 13. HEADLINE専用ページのメインクエリ制御
+ * 13. 廃止した /headlines/ をニュースカテゴリへ301
  * -------------------------------------------------------
+ * 独自URLは 1.3 で廃止したが、既存リンク・クローラのために転送だけ残す。
+ * ページ送り（/headlines/page/2/）も対応する。
  */
-function node_headlines_pre_get_posts( $query ) {
-    if ( ! is_admin() && $query->is_main_query() && $query->get( 'node_headlines' ) ) {
-        $news_cat = get_term_by( 'name', 'ニュース', 'category' );
-        if ( $news_cat ) {
-            $query->set( 'cat', $news_cat->term_id );
-        }
-        $query->set( 'posts_per_page', 24 );
-    }
+function node_redirect_legacy_headlines_url() {
+	if ( ! is_404() ) {
+		return;
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	$path        = node_404_redirect_relative_path( $request_uri );
+
+	if ( ! preg_match( '#^headlines(?:/page/([0-9]{1,}))?$#', $path, $matches ) ) {
+		return;
+	}
+
+	$target = node_get_headlines_url();
+	if ( ! empty( $matches[1] ) && (int) $matches[1] > 1 ) {
+		$target = trailingslashit( $target ) . 'page/' . (int) $matches[1] . '/';
+	}
+
+	wp_safe_redirect( node_404_redirect_preserve_query( $target, $request_uri ), 301 );
+	exit;
 }
-add_action( 'pre_get_posts', 'node_headlines_pre_get_posts' );
+add_action( 'template_redirect', 'node_redirect_legacy_headlines_url', 0 );
 
 /**
  * -------------------------------------------------------

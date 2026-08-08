@@ -21,6 +21,7 @@
 
 /* Page and content surfaces */
 @import './_spotlight.css' layer(components);
+@import './_headline-carousel.css' layer(components);
 @import './_archive.css' layer(components);
 @import './_notice.css' layer(components);
 @import './_date-archive.css' layer(components);
@@ -79,4 +80,14 @@
     height: 100%;
     margin: 0 !important;
     font-size: 20px;
+}
+
+/* Node 1.2.x parity: these axes are base values shared by PC and mobile.
+ * Keep them unlayered so external Material Symbols CSS cannot override them. */
+:is(.c-card__date, .m3-card__date) .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.m3-article__reading-badge-expressive .m3-reading-badge__gauge .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
 }

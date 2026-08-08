@@ -38,6 +38,13 @@ add_action(
 		}
 
 		$handle = 'node-connect-x-editor';
+		$editor_templates = [];
+		foreach ( Node_Connect_X_Poster::get_templates() as $template_id => $template ) {
+			$editor_templates[] = [
+				'label' => $template['name'],
+				'value' => $template_id,
+			];
+		}
 		wp_enqueue_script(
 			$handle,
 			plugin_dir_url( __FILE__ ) . 'editor-x-post.js',
@@ -49,9 +56,11 @@ add_action(
 			$handle,
 			'nodeConnectXEditor',
 			[
-				'textMetaKey' => Node_Connect_X_Poster::TEXT_META,
-				'skipMetaKey' => Node_Connect_X_Poster::SKIP_META,
-				'limit'       => Node_Connect_X_Poster::X_WEIGHTED_LIMIT,
+				'textMetaKey'     => Node_Connect_X_Poster::TEXT_META,
+				'skipMetaKey'     => Node_Connect_X_Poster::SKIP_META,
+				'templateMetaKey' => Node_Connect_X_Poster::TEMPLATE_META,
+				'templates'       => $editor_templates,
+				'limit'           => Node_Connect_X_Poster::CUSTOM_TEXT_LIMIT,
 			]
 		);
 	}
@@ -64,6 +73,7 @@ function node_connect_render_x_meta_box( WP_Post $post ): void {
 	$skip      = '1' === (string) get_post_meta( $post->ID, Node_Connect_X_Poster::SKIP_META, true );
 	$posted_at = (int) get_post_meta( $post->ID, Node_Connect_X_Poster::POSTED_META, true );
 	$custom    = (string) get_post_meta( $post->ID, Node_Connect_X_Poster::TEXT_META, true );
+	$template_key = Node_Connect_X_Poster::sanitize_template_key( get_post_meta( $post->ID, Node_Connect_X_Poster::TEMPLATE_META, true ) );
 	$preview   = Node_Connect_X_Poster::get_post_text( $post );
 
 	$intent_url = 'https://twitter.com/intent/tweet?text=' . rawurlencode( $preview );
@@ -78,9 +88,16 @@ function node_connect_render_x_meta_box( WP_Post $post ): void {
 		<p style="margin-top: 0;">自動投稿は無効です（設定 → 外部連携で有効化できます）。下のボタンから手動投稿できます。</p>
 	<?php endif; ?>
 
+	<p style="margin-bottom: 4px;"><strong>投稿文言テンプレート</strong></p>
+	<select name="node_connect_x_template" style="width: 100%;">
+		<?php foreach ( Node_Connect_X_Poster::get_templates() as $key => $template ) : ?>
+			<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $template_key, $key ); ?>><?php echo esc_html( $template['name'] ); ?></option>
+		<?php endforeach; ?>
+	</select>
+
 	<p style="margin-bottom: 4px;"><strong>投稿文（この記事のみ）</strong></p>
-	<textarea name="node_connect_x_text" rows="7" style="width: 100%; font-size: 12px;" placeholder="<?php echo esc_attr( $preview ); ?>"><?php echo esc_textarea( $custom ); ?></textarea>
-	<p class="description">空欄なら「設定 → 外部連携」の全体テンプレートを使用します。</p>
+	<textarea name="node_connect_x_text" rows="7" maxlength="<?php echo (int) Node_Connect_X_Poster::CUSTOM_TEXT_LIMIT; ?>" style="width: 100%; font-size: 12px;" placeholder="<?php echo esc_attr( $preview ); ?>"><?php echo esc_textarea( $custom ); ?></textarea>
+	<p class="description">140文字以内で編集できます。空欄なら選択した投稿文言テンプレートを使用します。</p>
 
 	<p>
 		<a href="<?php echo esc_url( $intent_url ); ?>" target="_blank" rel="noopener noreferrer" class="button">Xで投稿画面を開く</a>
@@ -120,6 +137,9 @@ add_action(
 		} else {
 			delete_post_meta( $post_id, Node_Connect_X_Poster::SKIP_META );
 		}
+
+		$template_key = Node_Connect_X_Poster::sanitize_template_key( wp_unslash( $_POST['node_connect_x_template'] ?? '' ) );
+		update_post_meta( $post_id, Node_Connect_X_Poster::TEMPLATE_META, $template_key );
 
 		$custom_text = Node_Connect_X_Poster::sanitize_post_text( wp_unslash( $_POST['node_connect_x_text'] ) );
 		if ( '' !== $custom_text ) {

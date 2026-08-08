@@ -46,17 +46,17 @@ declare(strict_types=1);
 
     <!-- High Performance Font Loading Pattern -->
     <!-- 本文フォント: 非同期ロード + swap (テキストのFOUTは許容) -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
     <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
     <!-- Adobe Fonts kit: edit at fonts.adobe.com to load DIN 2014 only -->
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
 
     <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
         <style>
             body { opacity: 1 !important; visibility: visible !important; }
         </style>

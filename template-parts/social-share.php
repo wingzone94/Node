@@ -30,8 +30,21 @@ $print_button_position = function_exists( 'node_print_button_position' ) ? node_
 ?>
 
 <div class="m3-share-section">
-    <h3 class="m3-share-title">この記事をシェアする</h3>
-    <div class="m3-share-buttons">
+    <div class="m3-share-heading">
+        <h3 class="m3-share-title">この記事をシェアする</h3>
+        <button type="button"
+                class="m3-share-view-toggle"
+                data-share-view-toggle
+                role="switch"
+                aria-checked="false"
+                aria-controls="m3-share-buttons">
+            <span class="m3-share-view-toggle__text">最小表示</span>
+            <span class="m3-share-view-toggle__track" aria-hidden="true">
+                <span class="m3-share-view-toggle__thumb"></span>
+            </span>
+        </button>
+    </div>
+    <div class="m3-share-buttons" id="m3-share-buttons" data-share-buttons>
         <?php
         if ( $print_button_html && 'start' === $print_button_position ) {
             echo $print_button_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

@@ -37,8 +37,12 @@
     --md-sys-color-surface-container: #ffe8d1;
     --md-sys-color-outline-variant: #d6c2b1;
 
+    /* 見出しだけ Manrope、本文は Inter（2026-08-08 ユーザー決定）。
+       Manrope は字幅が広く丸いのでタイトルのブランド感が出る一方、
+       本文・日付・数値は Inter の締まった字面のほうが読みやすい。
+       振り分けは _reset.css の `h1〜h6, .m3-logo-text { --font-heading }` が担う。 */
     --font-main: "Inter", "Noto Sans JP", sans-serif;
-    --font-heading: "Inter", "Noto Sans JP", sans-serif;
+    --font-heading: "Manrope", "Noto Sans JP", sans-serif;
 
     /* --- Brand Colors --- */
     --brand-windows: #00BCF2;

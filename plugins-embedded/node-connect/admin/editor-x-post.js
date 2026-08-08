@@ -16,15 +16,7 @@
 	const { registerPlugin } = wp.plugins;
 	const { useSelect, useDispatch } = wp.data;
 	const { createElement } = wp.element;
-	const { TextareaControl, ToggleControl } = wp.components;
-
-	const weightedLength = ( value ) => {
-		const withoutUrls = value.replace( /https?:\/\/\S+/g, ( url ) => 'x'.repeat( 23 ) );
-		return Array.from( withoutUrls ).reduce(
-			( total, character ) => total + ( character.codePointAt( 0 ) <= 0x7f ? 1 : 2 ),
-			0
-		);
-	};
+	const { SelectControl, TextareaControl, ToggleControl } = wp.components;
 
 	function XPostPanel() {
 		const meta = useSelect(
@@ -34,7 +26,12 @@
 		const { editPost } = useDispatch( 'core/editor' );
 		const text = typeof meta[ config.textMetaKey ] === 'string' ? meta[ config.textMetaKey ] : '';
 		const skip = meta[ config.skipMetaKey ] === '1';
-		const length = weightedLength( text );
+		const templateOptions = Array.isArray( config.templates ) ? config.templates : [];
+		const defaultTemplate = templateOptions.length > 0 ? templateOptions[ 0 ].value : 'default';
+		const template = templateOptions.some( ( option ) => option.value === meta[ config.templateMetaKey ] )
+			? meta[ config.templateMetaKey ]
+			: defaultTemplate;
+		const length = Array.from( text ).length;
 		const overLimit = length > config.limit;
 
 		const updateMeta = ( key, value ) => {
@@ -53,12 +50,20 @@
 				title: 'X自動投稿',
 				className: 'node-connect-x-post-panel',
 			},
+			createElement( SelectControl, {
+				label: '投稿文言テンプレート',
+				value: template,
+				options: templateOptions,
+				onChange: ( value ) => updateMeta( config.templateMetaKey, value ),
+				help: 'このブログの外部連携設定に保存したテンプレートから選択します。',
+			} ),
 			createElement( TextareaControl, {
 				label: '投稿文（この記事のみ）',
 				value: text,
 				rows: 8,
-				onChange: ( value ) => updateMeta( config.textMetaKey, value ),
-				help: '空欄なら「設定 → 外部連携」の全体テンプレートを使用します。',
+				onChange: ( value ) =>
+					updateMeta( config.textMetaKey, Array.from( value ).slice( 0, config.limit ).join( '' ) ),
+				help: '140文字以内で編集できます。空欄なら選択した投稿文言テンプレートを使用します。',
 			} ),
 			createElement(
 				'p',
@@ -66,7 +71,7 @@
 					className: 'components-base-control__help',
 					style: overLimit ? { color: '#b32d2e' } : undefined,
 				},
-				`Xの重み付き文字数: ${ length } / ${ config.limit }${
+				`文字数: ${ length } / ${ config.limit }${
 					overLimit ? '（上限超過分は保存時に省略されます）' : ''
 				}`
 			),

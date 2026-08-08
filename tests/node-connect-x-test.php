@@ -179,12 +179,29 @@ class Node_Connect_X_Test extends WP_UnitTestCase {
 		$this->assertSame( '記事別文面テスト', Node_Connect_X_Poster::get_post_text( $post ), '空欄は全体テンプレートへ戻る' );
 	}
 
-	public function test_post_specific_text_is_sanitized_and_trimmed_to_x_limit(): void {
-		$text = Node_Connect_X_Poster::sanitize_post_text( '<script>alert(1)</script>' . str_repeat( 'あ', 200 ) );
+	public function test_post_can_select_one_of_the_blog_templates(): void {
+		$post_id = self::factory()->post->create( [ 'post_status' => 'publish', 'post_title' => 'テンプレート選択記事' ] );
+		$post    = get_post( $post_id );
+
+		update_option(
+			Node_Connect_X_Poster::OPTION_TEMPLATES,
+			[
+				'news' => [ 'id' => 'news', 'name' => 'ニュース', 'content' => '速報: {{title}}' ],
+				'long' => [ 'id' => 'long', 'name' => '紹介', 'content' => '記事紹介: {{title}}' ],
+			]
+		);
+		update_post_meta( $post_id, Node_Connect_X_Poster::TEMPLATE_META, 'long' );
+
+		$this->assertSame( '記事紹介: テンプレート選択記事', Node_Connect_X_Poster::get_post_text( $post ) );
+		$this->assertSame( 'news', Node_Connect_X_Poster::sanitize_template_key( 'invalid' ), '不正な選択値は先頭テンプレートへ戻る' );
+	}
+
+	public function test_post_specific_text_is_sanitized_and_trimmed_to_140_characters(): void {
+		$text = Node_Connect_X_Poster::sanitize_post_text( '<script>alert(1)</script>' . str_repeat( 'a', 200 ) );
 
 		$this->assertStringNotContainsString( '<script>', $text );
 		$this->assertStringEndsWith( '…', $text );
-		$this->assertLessThanOrEqual( Node_Connect_X_Poster::X_WEIGHTED_LIMIT, Node_Connect_X_Poster::weighted_length( $text ) );
+		$this->assertSame( Node_Connect_X_Poster::CUSTOM_TEXT_LIMIT, mb_strlen( $text ) );
 	}
 
 	// ---- イベントゲート ----

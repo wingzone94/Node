@@ -260,6 +260,82 @@ Gemini APIやGoogle系仕様の検証にはGemini系エージェントが向い�
 
 ---
 
+## Work Log: Node 1.3 仕上げ（X複数テンプレ / シェア最小表示 / 文書化） — Claude Code (Opus 5) / 2026-08-08
+
+### 確定させた仕掛かり
+
+* **X投稿文言テンプレートの複数化**（node-connect 1.3.6 → **1.3.7**）。サイト設定を `node_x_post_templates`（`id => {name, content}`）へ拡張し、記事メタ `_node_connect_x_template` で記事ごとに選択。旧 `node_x_post_template` は削除せず、新形式が未保存なら1件目として引き継ぐ（既存サイトは無設定で従来動作）。存在しないIDは先頭テンプレートへ丸めるので、テンプレート削除で投稿不能にならない。設定画面はテンプレート行の追加・削除（残り1件は削除不可）、編集画面はブロック/クラシック両方に選択UI
+* **個別文面の上限を「重み付き280」→「140文字」へ**（書き手に何文字書けるか分かるように）。テンプレート経由の本文は従来どおり重み付き280へ収める
+* **シェアボタンの最小表示トグル**。`role="switch"` + `aria-checked`、状態は `localStorage`（`node-share-compact`）に永続、モバイル（<600px）は非表示、`prefers-reduced-motion` 対応
+
+### 差し戻し（2026-08-08 ユーザー指示）
+
+* **見出しフォントを Manrope へ分離**（本文は Inter のまま）。`--font-heading` / `--font-main` を分け、`header.php` の Google Fonts を Manrope + Inter + Noto Sans JP の1リクエストに。振り分けは既存の `_reset.css` の `h1〜h6, .m3-logo-text` 指定がそのまま担うのでコンポーネントCSSは無変更。実測でセクション見出し・カードタイトル = Manrope、日付・body = Inter、両方 loaded。NODE-1.3.md §19
+* **カード表示のカテゴリをタイトル下へ移し、複数表示 + 2段折り返しにした**。**枠の高さは常に2段ぶん（41px）で固定**し、全カードのタイトル・日付・著者のY座標を一致させた（実測: タイトル686 / 日付664 / 著者811 が5枚とも一致、はみ出し0）。長体（scaleX）で1件を潰す方式をやめ、`limitCategoryBadges()` が2段を超えたぶんを後ろから隠して段数を固定する。リスト表示のバッジ位置・長体処理は変更なし（メタ行のバッジをそのまま残し、モードごとに片方を非表示）。NODE-1.3.md §15.3.1
+* **HEADLINE のカテゴリピルを角丸へ戻した**。8/1 の「HEADLINEは角丸全廃」でカテゴリバッジも四角にしていたが、同じバッジが記事一覧・アーカイブ・関連記事ではピルのままで**統一性が崩れていた**。カード表示の四角化リストから `.c-headline-card__category` を外し、両モードとも `border-radius: 999px`（実測で確認）。カード枠・アイキャッチ枠・アバターの四角はそのまま維持
+
+### 文書化
+
+* NODE-1.3.md に **§17（Xテンプレート複数化）** / **§18（シェア最小表示）** を追記。どちらも計画外の追加実装だったため、データ構造・後方互換・上限変更の理由を残した
+
+### 検証
+
+* `bun x vite build` 成功（`main.Bc3GK8un.js` / `footnotes-popover.BfPEjiTm.js` へ更新）
+* 変更PHP 9ファイルの `php -l` 通過、`git diff --check` 成功
+* `composer test` は **LocalWP の MySQL が停止中で実行不可**（`Error establishing a database connection`）。サイト起動後に再実行が必要
+* 実環境照合（cybernode.local）と X 初回実投稿は、**ユーザー判断でリリース後の確認へ回した**（2026-08-08）
+
+---
+
+## Work Log: HEADLINE のカルーセル化 — Claude Code (Opus 5) / 2026-08-01
+
+### 追加
+
+* `template-parts/headline-carousel.php`（新規）— 速報5件の横スクロールカルーセル。`role="region"` / `aria-roledescription="カルーセル"`、先頭アイキャッチのみ `fetchpriority="high"`
+* `src/styles/_headline-carousel.css`（新規）— `@layer components` / BEM / CSS Scroll Snap / Peek見切れ
+* `src/scripts/headline-carousel.js`（新規）— ナビボタン、端点 `disabled`+`aria-disabled`、`ArrowLeft/Right`、`ResizeObserver`
+
+### 追加指示への対応（同日）
+
+* アイキャッチ未設定のカードは空の画像枠を出さず、カード幅を自動縮小（`--no-image` 修飾子。タイトルは6行クランプ）
+* `＜` / `＞` ボタンをヘッダーからカード列の上へ移動し、左右端の縦中央にオーバーレイ配置
+* アイキャッチを `object-fit: contain` に変更（トリミングせず全体表示）
+* HEADLINE セクションのみ角丸を全廃（`.c-headline-carousel` 配下限定。カード・バッジ・ボタン・アバター・すべて見るまで）
+* 長いカテゴリ名を scaleX で長体化して収める（下限0.72、超過分のみ ellipsis）。「Nintendo Switch 2」が省略なしで収まることを実測
+* `＜` / `＞` は角丸（円形）のまま、それ以外を四角に（ユーザー指示で差し戻し）
+* 表示切替（カード ⇄ リスト）を追加。リスト行は [バッジ128px固定][タイトル][日付][サムネ右端]・全行72px・ホバーは左の色帯。`localStorage`（`m3_store_headline-view`）で永続、描画前にインラインスクリプトで反映してCLSを出さない
+* 速報の表示数を 8件 → **最大5件**。切替アイコンは `grid_view` / `reorder`
+* 枠・切替ボタン・すべて見るは両モードとも四角固定（押した瞬間の変形をやめた）。角丸はリスト表示の行16px / サムネ12px / バッジのみ
+* 日付の等幅指定を廃止し Inter + Noto Sans JP（`--font-main`）＋ `tabular-nums` に統一（アーカイブ側の `.m3-headline-card__date` も）
+* リスト表示のみ4件表示にし、長いカテゴリ名は最大3行で折り返し＋必要なら長体（0.6まで）で省略を回避（カード表示は5件・1行のまま）
+* HEADLINEセクションの「すべて見る」を削除
+* アイキャッチの枠を固定比（16:9 + contain）から画像比率に追従させ、上下左右の帯（余白）が出ないようにした
+
+### 変更
+
+* `index.php` — HEADLINE のインライン実装（2列リスト×4件）を `get_template_part('template-parts/headline-carousel')` へ置換
+* `src/styles/style.css` / `src/main.js` — 新規CSS/JSの登録（JSはCLS回避のため静的 initializer）
+
+### 検証（cybernode.local）
+
+* トップ <http://cybernode.local/> — HEADLINE の高さ 419px、LATEST 見出しが y=901px（1440×1000のファーストビュー内）。横方向のドキュメント溢れなし、JSエラーなし
+* ナビ: 初期は prev が `disabled`/`aria-disabled=true`、右端で next が disabled。ArrowLeft/Right での移動を実測
+* `verify:visual` の残 issue はタイトルの line-clamp のみ（意図的なトリミング）
+
+### `/headlines/` の廃止（同日・ユーザー判断）
+
+* 単一カテゴリのラッパーで `/category/ニュース/` と内容が重複、かつ `<title>` がサイト名のまま・canonical なし・sitemap 未掲載だったため廃止（NODE-1.3.md §16）
+* リライト/query_var/テンプレート/pre_get_posts と `template-parts/headlines.php` を撤去し、`node_redirect_legacy_headlines_url()` で301のみ残す（ページ送り・クエリ文字列も維持）
+* 併せて発覚: **`category-news.php` が未使用だった**（カテゴリのスラッグが日本語のためテンプレート階層に不一致 → `archive.php` にフォールバック）。`category_template_hierarchy` フィルタで接続
+* `.m3-headline-card__category` のはみ出し（`inline-flex` + center で両端が切れ ellipsis も効かない）と、タイトル1行クランプを修正
+* `scripts/route-check.mjs` の `/headlines/` 期待値を 200 → 301 に更新、11/11 green
+
+### 残課題
+
+* カテゴリバッジの白文字は `#FF9900` 上で 2.1:1（WCAG AA 未達）。サイト全体共通仕様のため別タスク（NODE-1.3.md §15.5）
+
+---
+
 ## Work Log: 記事チェック（ファクトチェック＋校正の統合） — Claude Code (Opus 4.8 / Opus 5) / 2026-07-26
 
 ### 追加

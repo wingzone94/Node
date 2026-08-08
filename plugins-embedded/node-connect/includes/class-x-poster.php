@@ -32,12 +32,14 @@ final class Node_Connect_X_Poster {
 	public const OPTION_ACCESS_TOKEN        = 'node_x_access_token';
 	public const OPTION_ACCESS_TOKEN_SECRET = 'node_x_access_token_secret';
 	public const OPTION_TEMPLATE            = 'node_x_post_template';
+	public const OPTION_TEMPLATES           = 'node_x_post_templates';
 
 	public const OPTION_SCREEN_NAME = 'node_connect_x_screen_name';
 
 	public const POSTED_META = '_node_x_posted';
 	public const SKIP_META   = '_node_connect_x_skip';
 	public const TEXT_META   = '_node_connect_x_text';
+	public const TEMPLATE_META = '_node_connect_x_template';
 
 	public const MAX_ATTEMPTS = 3;
 	public const TIMEOUT      = 10;
@@ -54,6 +56,7 @@ final class Node_Connect_X_Poster {
 	 * Xの投稿上限（重み付き280 = 日本語約140文字）。CJK等は1文字=重み2、ASCIIは1、URLは常に23。
 	 */
 	public const X_WEIGHTED_LIMIT = 280;
+	public const CUSTOM_TEXT_LIMIT = 140;
 	private const URL_WEIGHT      = 23;
 
 	/**
@@ -113,6 +116,19 @@ final class Node_Connect_X_Poster {
 				'auth_callback'     => $auth_callback,
 			]
 		);
+
+		register_post_meta(
+			'post',
+			self::TEMPLATE_META,
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'default'           => 'default',
+				'show_in_rest'      => true,
+				'sanitize_callback' => [ self::class, 'sanitize_template_key' ],
+				'auth_callback'     => $auth_callback,
+			]
+		);
 	}
 
 	public static function is_enabled(): bool {
@@ -132,9 +148,77 @@ final class Node_Connect_X_Poster {
 		return in_array( '', $credentials, true ) ? null : $credentials;
 	}
 
-	public static function get_template(): string {
-		$template = (string) get_option( self::OPTION_TEMPLATE, '' );
-		return '' !== trim( $template ) ? $template : self::DEFAULT_TEMPLATE;
+	public static function get_template( string $key = 'default' ): string {
+		$templates = self::get_templates();
+		if ( ! isset( $templates[ $key ] ) ) {
+			$key = (string) array_key_first( $templates );
+		}
+
+		return $templates[ $key ]['content'];
+	}
+
+	/**
+	 * このブログへ登録されたX投稿文言テンプレートを返す。
+	 * 新形式が未保存なら、従来の単一テンプレートを1件目として引き継ぐ。
+	 *
+	 * @return array<string, array{name: string, content: string}>
+	 */
+	public static function get_templates(): array {
+		$templates = self::sanitize_templates( get_option( self::OPTION_TEMPLATES, [] ) );
+		if ( ! empty( $templates ) ) {
+			return $templates;
+		}
+
+		$legacy_template = (string) get_option( self::OPTION_TEMPLATE, '' );
+
+		return [
+			'default' => [
+				'name'    => '標準テンプレート',
+				'content' => '' !== trim( $legacy_template ) ? $legacy_template : self::DEFAULT_TEMPLATE,
+			],
+		];
+	}
+
+	/**
+	 * @return array<string, array{name: string, content: string}>
+	 */
+	public static function sanitize_templates( mixed $value ): array {
+		if ( ! is_array( $value ) ) {
+			return [];
+		}
+
+		$result = [];
+		foreach ( array_values( $value ) as $index => $template ) {
+			if ( ! is_array( $template ) ) {
+				continue;
+			}
+			$content = trim( sanitize_textarea_field( (string) ( $template['content'] ?? '' ) ) );
+			if ( '' === $content ) {
+				continue;
+			}
+
+			$id = preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) ( $template['id'] ?? '' ) );
+			if ( '' === $id || isset( $result[ $id ] ) ) {
+				$id = 'template-' . ( $index + 1 );
+				while ( isset( $result[ $id ] ) ) {
+					$id .= '-copy';
+				}
+			}
+			$name = trim( sanitize_text_field( (string) ( $template['name'] ?? '' ) ) );
+			$result[ $id ] = [
+				'name'    => '' !== $name ? $name : 'テンプレート ' . ( $index + 1 ),
+				'content' => $content,
+			];
+		}
+
+		return $result;
+	}
+
+	public static function sanitize_template_key( mixed $value ): string {
+		$key       = preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $value );
+		$templates = self::get_templates();
+
+		return isset( $templates[ $key ] ) ? $key : (string) array_key_first( $templates );
 	}
 
 	/**
@@ -261,16 +345,22 @@ final class Node_Connect_X_Poster {
 			return self::sanitize_post_text( $custom_text );
 		}
 
-		return self::render_template( self::get_template(), $post );
+		$template_key = self::sanitize_template_key( get_post_meta( $post->ID, self::TEMPLATE_META, true ) );
+
+		return self::render_template( self::get_template( $template_key ), $post );
 	}
 
 	/**
-	 * 投稿別文面の改行を保ったまま無害化し、Xの重み付き上限へ収める。
+	 * 投稿別文面の改行を保ったまま無害化し、140文字以内へ収める。
 	 */
 	public static function sanitize_post_text( mixed $value ): string {
 		$text = trim( sanitize_textarea_field( (string) $value ) );
 
-		return self::trim_to_weight( $text, self::X_WEIGHTED_LIMIT );
+		if ( mb_strlen( $text ) <= self::CUSTOM_TEXT_LIMIT ) {
+			return $text;
+		}
+
+		return rtrim( mb_substr( $text, 0, self::CUSTOM_TEXT_LIMIT - 1 ) ) . '…';
 	}
 
 	/**

@@ -5,6 +5,7 @@ import './scripts/blogcard-actions';
 import { initSearchBar } from './scripts/search-bar';
 import { initArticleNavigation } from './scripts/article-navigation';
 import { initHeroInfoBubble, initSectionArchiveLinks } from './scripts/home-layout';
+import { initHeadlineCarousel } from './scripts/headline-carousel';
 import { initExpressiveFloatingTOC } from './scripts/expressive-toc';
 import { initHeroTOC } from './scripts/hero-toc';
 import { initFloatingActions } from './scripts/floating-actions';
@@ -429,6 +430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initRippleEffect,
         initReadingProgressSingleOnly,
         initSectionArchiveLinks,
+        initHeadlineCarousel,
         initArticleNavigation,
         initHeroInfoBubble,
         initScrollAnimations,

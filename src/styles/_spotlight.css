@@ -139,13 +139,16 @@
 .m3-headline-card__date {
     font-size: 0.8rem;
     font-weight: 900;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    /* サイト共通の Inter + Noto Sans JP を使う（等幅にしない） */
+    font-family: var(--font-main);
+    font-variant-numeric: tabular-nums;
 }
 
 .m3-headline-card__category {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    /* inline-flex + justify-content:center だと長いカテゴリ名がピルの左右へ
+       はみ出して両端で切れる（ellipsis も効かない）。ブロックにして中央寄せする。 */
+    display: block;
+    text-align: center;
     max-width: 86px;
     margin-top: 4px;
     padding: 2px 7px;
@@ -164,12 +167,14 @@
 
 .m3-headline-card__title {
     flex-grow: 1;
+    min-width: 0;
     font-size: 0.95rem;
     font-weight: 700;
     margin: 0;
     line-height: 1.4;
     display: -webkit-box;
-    -webkit-line-clamp: 1;
+    /* 1行だと和文タイトルがほぼ全て「…」で切れるため2行まで見せる */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

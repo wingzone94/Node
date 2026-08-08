@@ -8,7 +8,6 @@ get_header();
 
     <?php
     if ((is_home() || is_front_page()) && !is_paged()) {
-        $news_cat = get_term_by('name', 'ニュース', 'category');
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
 
         if (!empty($spotlight_cats)) : ?>
@@ -36,49 +35,8 @@ get_header();
             </section>
         <?php endif;
 
-        // HEADLINE
-        $headline_args = [
-            'posts_per_page' => 4,
-            'ignore_sticky_posts' => true,
-        ];
-        if ($news_cat) {
-            $headline_args['cat'] = $news_cat->term_id;
-        }
-        $headline_query = new WP_Query($headline_args);
-        if ($headline_query->have_posts()) : ?>
-            <section class="m3-headlines m3-surface m3-section-spacing" aria-labelledby="headline-title">
-                <div class="m3-headlines__header">
-                    <h2 id="headline-title" class="m3-headlines__title m3-section-title">
-                        <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
-                        HEADLINE <span class="m3-section-title__sub">速報</span>
-                    </h2>
-                    <?php $news_link = node_get_headlines_url(); ?>
-                    <a href="<?php echo esc_url($news_link); ?>" class="m3-headlines__more m3-button m3-button--text">
-                        すべて見る<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                    </a>
-                </div>
-                <div class="l-card-grid__items l-card-grid--list l-card-grid--two-column-list m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list" role="list">
-                    <?php $headline_priority_assigned = false; ?>
-                    <?php while ($headline_query->have_posts()) : $headline_query->the_post(); ?>
-                        <?php
-                        $prioritize_headline_image = ! $headline_priority_assigned && has_post_thumbnail();
-                        get_template_part(
-                            'template-parts/card',
-                            null,
-                            [
-                                'card_class'         => 'card-standard',
-                                'image_loading'      => $prioritize_headline_image ? 'eager' : 'lazy',
-                                'image_fetchpriority' => $prioritize_headline_image ? 'high' : '',
-                            ]
-                        );
-                        if ( $prioritize_headline_image ) {
-                            $headline_priority_assigned = true;
-                        }
-                        ?>
-                    <?php endwhile; wp_reset_postdata(); ?>
-                </div>
-            </section>
-        <?php endif;
+        // HEADLINE（速報）: 横スクロール1段に固定し、LATEST をファーストビューへ引き上げる
+        get_template_part('template-parts/headline-carousel');
     }
     ?>
 
