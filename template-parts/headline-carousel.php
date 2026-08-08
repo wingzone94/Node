@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * HEADLINE（速報）カルーセル
+ * HEADLINE（ニュース）カルーセル
  *
  * 縦積みのリストだとトップページで縦幅を大きく占有し、直下の LATEST が
  * ファーストビューから押し出されるため、横スクロール1段に固定する。
@@ -13,8 +13,8 @@ declare(strict_types=1);
 $news_cat = get_term_by( 'name', 'ニュース', 'category' );
 
 $headline_args = array(
-	// 速報は最大5件（2026-08-01 ユーザー指示）。増やすと横スクロールが長くなり、
-	// トップの回遊が速報に偏る。
+	// ニュースは最大5件（2026-08-01 ユーザー指示）。増やすと横スクロールが長くなり、
+	// トップの回遊がニュースに偏る。
 	'posts_per_page'      => 5,
 	'ignore_sticky_posts' => true,
 	'no_found_rows'       => true,
@@ -57,11 +57,11 @@ $headline_priority_assigned = false;
 	<div class="m3-headlines__header c-headline-carousel__header">
 		<h2 id="headline-title" class="m3-headlines__title m3-section-title">
 			<span class="material-symbols-outlined" aria-hidden="true">campaign</span>
-			HEADLINE <span class="m3-section-title__sub">速報</span>
+			HEADLINE <span class="m3-section-title__sub">ニュース</span>
 		</h2>
 
 		<div class="c-headline-carousel__actions">
-			<div class="c-headline-carousel__views" role="group" aria-label="速報の表示切替">
+			<div class="c-headline-carousel__views" role="group" aria-label="ニュースの表示切替">
 				<button type="button"
 					class="c-headline-carousel__view is-active"
 					data-headline-view="carousel"
@@ -85,7 +85,7 @@ $headline_priority_assigned = false;
 			<button type="button"
 				class="c-headline-carousel__button c-headline-carousel__button--prev"
 				data-headline-prev
-				aria-label="前の速報を表示"
+				aria-label="前のニュースを表示"
 				aria-disabled="true"
 				disabled>
 				<span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
@@ -93,7 +93,7 @@ $headline_priority_assigned = false;
 			<button type="button"
 				class="c-headline-carousel__button c-headline-carousel__button--next"
 				data-headline-next
-				aria-label="次の速報を表示">
+				aria-label="次のニュースを表示">
 				<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
 			</button>
 		</div>
@@ -102,7 +102,7 @@ $headline_priority_assigned = false;
 			data-headline-viewport
 			tabindex="0"
 			role="group"
-			aria-label="速報ニュース一覧（左右にスクロールできます）">
+			aria-label="ニュース一覧（左右にスクロールできます）">
 			<ul class="c-headline-carousel__track" role="list">
 			<?php
 			while ( $headline_query->have_posts() ) :

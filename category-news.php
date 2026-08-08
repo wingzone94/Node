@@ -19,7 +19,7 @@ get_header();
 		null,
 		array(
 			'title'     => 'HEADLINE',
-			'subtitle'  => '速報',
+			'subtitle'  => 'ニュース',
 			'header_id' => 'headline-archive-title',
 			'type'      => 'category',
 		)

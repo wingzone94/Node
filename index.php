@@ -44,7 +44,9 @@ get_header();
         <?php
         $is_first_page       = (is_home() && !is_paged());
         $featured_card_limit = 4;
-        $latest_limit        = 9;
+        // LATEST は6件（2026-08-08 ユーザー指示）。以降は「すべて見る」の下の
+        // 通常グリッドへ流す。
+        $latest_limit        = 6;
         ?>
         <section class="l-card-grid m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
             <?php if ($is_first_page) : ?>

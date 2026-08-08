@@ -270,6 +270,7 @@ Gemini APIやGoogle系仕様の検証にはGemini系エージェントが向い�
 
 ### 差し戻し（2026-08-08 ユーザー指示）
 
+* **HEADLINE の副題を「速報」→「ニュース」**（トップの `headline-carousel.php` と301転送先の `category-news.php`、カルーセルの aria-label も統一）。**LATEST は 9件 → 6件**（`index.php` の `$latest_limit`。3列×2段で割り切れる／7件目以降は従来どおり「すべて見る」の下へ）。実測: 見出し「HEADLINE ニュース」、LATEST枠6件・以降6件・すべて見る表示・JSエラーなし
 * **見出しフォントを Manrope へ分離**（本文は Inter のまま）。`--font-heading` / `--font-main` を分け、`header.php` の Google Fonts を Manrope + Inter + Noto Sans JP の1リクエストに。振り分けは既存の `_reset.css` の `h1〜h6, .m3-logo-text` 指定がそのまま担うのでコンポーネントCSSは無変更。実測でセクション見出し・カードタイトル = Manrope、日付・body = Inter、両方 loaded。NODE-1.3.md §19
 * **カード表示のカテゴリをタイトル下へ移し、複数表示 + 2段折り返しにした**。**枠の高さは常に2段ぶん（41px）で固定**し、全カードのタイトル・日付・著者のY座標を一致させた（実測: タイトル686 / 日付664 / 著者811 が5枚とも一致、はみ出し0）。長体（scaleX）で1件を潰す方式をやめ、`limitCategoryBadges()` が2段を超えたぶんを後ろから隠して段数を固定する。リスト表示のバッジ位置・長体処理は変更なし（メタ行のバッジをそのまま残し、モードごとに片方を非表示）。NODE-1.3.md §15.3.1
 * **HEADLINE のカテゴリピルを角丸へ戻した**。8/1 の「HEADLINEは角丸全廃」でカテゴリバッジも四角にしていたが、同じバッジが記事一覧・アーカイブ・関連記事ではピルのままで**統一性が崩れていた**。カード表示の四角化リストから `.c-headline-card__category` を外し、両モードとも `border-radius: 999px`（実測で確認）。カード枠・アイキャッチ枠・アバターの四角はそのまま維持

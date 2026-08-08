@@ -530,3 +530,10 @@ Manrope は字幅が広く終端が丸い幾何学系で、全大文字の見出
 * `_notice.css` の `var(--font-heading, "Manrope", …)` はフォールバックも見出し側なので追従済み
 * **Manrope の最大ウェイトは 800**。テーマ内の `font-weight: 900` 指定は見出し側で 800 頭打ちになるが、Inter も 700 までしか読んでいなかったため実質の変化はない
 * 実測（cybernode.local）: セクション見出し・カードタイトル = `Manrope`、日付・body = `Inter`、`document.fonts.check` で両方 loaded
+
+---
+
+## 20. トップページの表記と件数（2026-08-08 ユーザー指示）✅ 完了
+
+* **HEADLINE の副題を「速報」→「ニュース」に変更**。表示先が `/category/ニュース/`（§16 で `/headlines/` を廃止して以降、実体はニュースカテゴリ）なので、**セクション名とカテゴリ名を一致**させる。トップの `template-parts/headline-carousel.php` と、301の転送先である `category-news.php`（アーカイブ見出し）の両方を変更した。カルーセルの `aria-label`（表示切替・前後ボタン・一覧）も同じ語に揃えている
+* **LATEST の表示を 9件 → 6件**（`index.php` の `$latest_limit`）。3列 × 2段でちょうど割り切れるので、下端が欠けた行にならない。7件目以降は従来どおり「すべて見る」の下の通常グリッドへ流れるため、**トップから読める記事の総数は変わらない**（クエリも `node_custom_posts_per_page` のまま無変更）
