@@ -9,7 +9,15 @@ declare(strict_types=1);
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#FF9900">
+    <?php
+    /*
+     * ブラウザUI（アドレスバー等）の色。以前はブランドオレンジ #FF9900 のベタで、
+     * 読み込み中の画面上端がオレンジに塗られていた（2026-08-08 ユーザー指示で廃止）。
+     * サイトの面の色に合わせ、ライト/ダークで出し分ける。
+     */
+    ?>
+    <meta name="theme-color" content="#FFF4E5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1B1812" media="(prefers-color-scheme: dark)">
     <link rel="apple-touch-icon" href="<?php echo esc_url( get_template_directory_uri() . '/assets/pwa/apple-touch-icon-180.png' ); ?>">
     <link rel="manifest" href="<?php echo get_template_directory_uri(); ?>/manifest.json">
     <?php

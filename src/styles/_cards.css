@@ -25,6 +25,10 @@
 .m3-surface--latest,
 .m3-surface--articles {
     --node-card-radius: 0;
+    /* セクションの外枠（.m3-surface の 40px）も落とす。HEADLINE の枠が四角なので、
+       同じトップページで大きな角丸パネルと四角パネルが並ぶのを避ける
+       （2026-08-08 ユーザー指示）。 */
+    border-radius: 0;
 }
 
 /* LATESTセクション専用のコンテナ設定 (Ver 0.7.0) */

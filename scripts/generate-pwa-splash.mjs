@@ -1,11 +1,16 @@
 // PWA / iOS スプラッシュ画像とapple-touch-iconを生成する
-// オレンジ背景 (#FF9900) にブランドロゴ(node-logo.svg)を透過状態で中央配置する。
+// スプラッシュ（起動時に一瞬出る全画面）はサイトのダーク面 (#1B1812) を背景にする。
+// 以前はブランドオレンジ (#FF9900) のベタ塗りで、起動のたびに画面全体が
+// オレンジに光って眩しく、サイト本体の配色ともつながっていなかった
+// （2026-08-08 ユーザー指示で廃止）。
+// アイコン (apple-touch-icon) はブランドの識別なのでオレンジのまま。
 // 実行: node scripts/generate-pwa-splash.mjs
 import sharp from 'sharp';
 import { readFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
-const ORANGE = { r: 255, g: 153, b: 0, alpha: 1 }; // #FF9900
+const ORANGE = { r: 255, g: 153, b: 0, alpha: 1 }; // #FF9900（アイコン用）
+const SPLASH_BG = { r: 27, g: 24, b: 18, alpha: 1 }; // #1B1812 = サイトのダーク面
 const svg = readFileSync('node-logo.svg');
 const outDir = 'assets/pwa';
 mkdirSync(outDir, { recursive: true });
@@ -34,7 +39,7 @@ const splashes = [
 for (const [w, h] of splashes) {
 	const logoSize = Math.round(Math.min(w, h) * 0.42);
 	const logo = await logoBuffer(logoSize);
-	await sharp({ create: { width: w, height: h, channels: 4, background: ORANGE } })
+	await sharp({ create: { width: w, height: h, channels: 4, background: SPLASH_BG } })
 		.composite([{ input: logo, gravity: 'center' }])
 		.png({ compressionLevel: 9 })
 		.toFile(path.join(outDir, `splash-${w}x${h}.png`));
