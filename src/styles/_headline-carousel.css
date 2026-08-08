@@ -8,8 +8,6 @@
    ボタンの形が四角⇄角丸で変わるのが気持ち悪いため、モードで形を変えない
    （2026-08-01 ユーザー指示）。形が変わるのは中身（カード/行）だけ。 */
 .c-headline-carousel,
-.c-headline-carousel .c-headline-carousel__view,
-.c-headline-carousel .c-headline-carousel__views,
 .c-headline-carousel .c-headline-carousel__viewport:focus-visible {
     border-radius: 0;
 }
@@ -38,10 +36,17 @@
 
 /* --- 表示切替（カード ⇄ リスト） -------------------------------------- */
 
+/* 表示切替はピル（2026-08-08 ユーザー指示）。外枠を丸い受け皿にして、
+   選択中のボタンだけを塗りの丸で示す（セグメンテッドコントロール）。
+   カードやセクション枠が四角でも、操作系はサイト共通のピル形状にそろえる。 */
 .c-headline-carousel__views {
     display: flex;
     align-items: center;
+    gap: 2px;
+    padding: 3px;
     border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 999px;
+    background: var(--md-sys-color-surface-container-low, transparent);
 }
 
 .c-headline-carousel__view {
@@ -52,14 +57,11 @@
     height: 34px;
     padding: 0;
     border: 0;
+    border-radius: 999px;
     background: transparent;
     color: var(--md-sys-color-on-surface-variant);
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.c-headline-carousel__view + .c-headline-carousel__view {
-    border-inline-start: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .c-headline-carousel__view .material-symbols-outlined {
@@ -342,10 +344,11 @@
     /* カテゴリ枠の高さを【常に2段ぶんで固定】する（2026-08-08 ユーザー指示）。
        段数がカードごとに変わるとタイトル・日付のY座標がずれるため、
        1段で足りるカードにも空きを作って全カードの行位置をそろえる。
-       内訳: 1段 = 文字1行(10px × 1.25) + padding-block 3px × 2 = 18.5px。
-       2段ぶん = 18.5 × 2 + gap 4px。名前が2行に折り返したバッジは
-       この枠をちょうど使い切るので、2段の見えかたは常に同じ。 */
-    height: calc(var(--headline-category-row, 18.5px) * 2 + var(--headline-category-gap, 4px));
+       内訳: 1段 = 文字1行(10px × 1.25 → 実測19px) + padding-block 3px × 2。
+       2段ぶん = 19 × 2 + gap 4px = 42px。名前が2行に折り返したバッジは
+       この枠をちょうど使い切るので、2段の見えかたは常に同じ。
+       ※ 18.5px 計算だと実測との丸め差で1px だけ切れるので実測値を使う。 */
+    height: calc(var(--headline-category-row, 19px) * 2 + var(--headline-category-gap, 4px));
     /* JS が入り切らないバッジを隠すが、算出誤差でバッジが半分見えるのを防ぐ */
     overflow: hidden;
 }
@@ -374,6 +377,41 @@
 
 /* 2段に収まりきらないバッジは JS が付ける。 */
 .c-headline-card__category[hidden] {
+    display: none;
+}
+
+/* 入り切らなかったカテゴリ数を示す +N チップ。本番（1.2.5）のカードにあった
+   `.m3-label--category-more` と同じ役割で、黙って隠すと「まだある」ことが
+   読者に伝わらないため復活させた（2026-08-08）。見た目はカテゴリピルに合わせ、
+   カテゴリ色ではなく面の色にして本物のカテゴリと取り違えないようにする。 */
+.c-headline-card__category-more {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--md-sys-color-surface-container-highest, var(--md-sys-color-surface-variant));
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    opacity: 1;
+}
+
+.c-headline-card__category-more[hidden] {
+    display: none;
+}
+
+/* 最後の1件でも枠を超える場合（名前が2行に折り返す長いカテゴリ＋ +N チップ）だけ、
+   headline-carousel.js が is-tight を付けて折り返しをやめさせる。
+   「長い名前を2段で全部見せる」より「他にもカテゴリがあると伝える」を優先する。 */
+.c-headline-carousel[data-view="carousel"] .c-headline-card__categories.is-tight .c-headline-card__category-text {
+    -webkit-line-clamp: 1;
+}
+
+/* リスト表示はメタ行のバッジ1件だけを使うので +N は出さない。 */
+.c-headline-carousel[data-view="list"] .c-headline-card__category-more {
     display: none;
 }
 

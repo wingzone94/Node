@@ -169,10 +169,13 @@ $headline_priority_assigned = false;
 								 * PHP 側は上限4件までに絞ってから渡す。
 								 */
 								if ( ! empty( $categories ) ) :
+									$headline_cat_limit = 4;
+									// PHP 側で切った件数。JS が枠に入り切らない分を隠したら、その数を足して +N に反映する。
+									$headline_cat_extra = max( 0, count( $categories ) - $headline_cat_limit );
 									?>
 									<div class="c-headline-card__categories" data-headline-categories>
 										<?php
-										foreach ( array_slice( $categories, 0, 4 ) as $headline_category ) {
+										foreach ( array_slice( $categories, 0, $headline_cat_limit ) as $headline_category ) {
 											echo node_render_category_label(
 												$headline_category,
 												array(
@@ -183,6 +186,11 @@ $headline_priority_assigned = false;
 											);
 										}
 										?>
+										<span class="m3-label--category-more c-headline-card__category-more"
+											data-headline-more
+											data-extra="<?php echo (int) $headline_cat_extra; ?>"
+											title="さらに <?php echo (int) $headline_cat_extra; ?> 件のカテゴリがあります"
+											<?php echo $headline_cat_extra > 0 ? '' : 'hidden'; ?>>+<?php echo (int) $headline_cat_extra; ?></span>
 									</div>
 								<?php endif; ?>
 

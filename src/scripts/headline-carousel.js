@@ -117,17 +117,46 @@ function limitCategoryBadges(section) {
 
     section.querySelectorAll('[data-headline-categories]').forEach(list => {
         const badges = Array.from(list.querySelectorAll('.c-headline-card__category'));
+        const more = list.querySelector('[data-headline-more]');
+        // PHP 側で切った件数。JS が隠した分をこれに足して +N に出す。
+        const phpExtra = more ? Number(more.dataset.extra) || 0 : 0;
+        let hidden = 0;
+
+        const renderMore = () => {
+            if (!more) return;
+            const total = phpExtra + hidden;
+            more.textContent = `+${total}`;
+            more.title = `さらに ${total} 件のカテゴリがあります`;
+            more.toggleAttribute('hidden', total === 0);
+        };
+
         badges.forEach(badge => badge.removeAttribute('hidden'));
+        list.classList.remove('is-tight');
+        renderMore();
         if (badges.length < 2 || list.offsetParent === null) return;
 
-        // 隠すと残りが再配置されるので、収まるまで後ろから1つずつ落とす
-        for (let guard = badges.length; guard > 0; guard -= 1) {
-            const visible = badges.filter(badge => !badge.hasAttribute('hidden'));
-            if (visible.length < 2) return;
-            if (list.scrollHeight <= list.clientHeight + 1) return;
+        const fits = () => list.scrollHeight <= list.clientHeight;
 
-            visible[visible.length - 1].setAttribute('hidden', '');
-        }
+        // 隠すと残りが再配置されるので、収まるまで後ろから1つずつ落とす。
+        // +N チップ自身も枠を使うため、表示した結果あふれたら更にもう1つ落ちる。
+        const shrink = () => {
+            for (let guard = badges.length; guard > 0; guard -= 1) {
+                const visible = badges.filter(badge => !badge.hasAttribute('hidden'));
+                if (visible.length < 2 || fits()) return;
+
+                visible[visible.length - 1].setAttribute('hidden', '');
+                hidden += 1;
+                renderMore();
+            }
+        };
+
+        shrink();
+        if (fits()) return;
+
+        // 残り1件でも収まらない = 名前が2行に折り返す長いカテゴリと +N が同居できない。
+        // 折り返しをやめて1行に詰め、「他にもある」ことを伝えるほうを優先する。
+        list.classList.add('is-tight');
+        shrink();
     });
 }
 
