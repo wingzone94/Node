@@ -860,3 +860,72 @@ NODE-1.3.md §6 の印刷機能を実装。1カラム・白背景黒文字の印
 #### Status
 
 Node 1.3のローカル実装・回帰検証・配布ZIP作成は完了。公開X実投稿とGitHubリリース操作のみ未実行。
+
+---
+
+## Work Log: Node 1.3 — GSCインデックス未登録の原因特定と修正（Claude） / 2026-08-08
+
+### 発端
+
+GSC「ページがインデックスに登録されなかった理由」6種類・計175件についてユーザーから指摘。1.3リリース前に本番（`https://luminous-core.net/`）をスキャンして原因を特定した。
+
+### 実測
+
+* サイトマップ全271件（記事106・固定5・カテゴリ56・タグ101・著者3）のHTTPステータスを確認 → **404・500系は0件**。初回スキャンの503群は自分の並列リクエストがレート制限に当たった偽陽性で、直列再取得で全200を確認
+* タクソノミーアーカイブ157件の収録記事数を実測 → **91件が収録1件**。タグは101件中**79件が1記事**
+* `/spotlight/` `/all-articles/` は `<title>` がサイト名のみ・canonical 無し（§16.1 の `/headlines/` と同一症状）
+* `/category/spotlight/` はサイトマップに載ったまま `/spotlight/` へ301
+
+### 完了
+
+* [inc/indexing.php](inc/indexing.php) を新規追加し、[functions.php](functions.php) から読み込み
+  * 閾値未満のタグと日付アーカイブを `noindex, follow`
+  * 同じ対象をサイトマップから `exclude`（`wp_sitemaps_taxonomies_query_args`）
+  * `/category/spotlight/`（301の転送元）をサイトマップから除外。子カテゴリは残す
+  * `/spotlight/` `/all-articles/` に title と自己参照 canonical
+* [tests/node-indexing-test.php](tests/node-indexing-test.php) 新規11件
+* [CHANGELOG.md](CHANGELOG.md) 1.3.0 に「検索エンジンへの見え方」を追加、[NODE-1.3.md](NODE-1.3.md) §22 を追加
+
+### 検証
+
+* `composer test`: **303 tests / 869 assertions green**
+* `bun run verify:routes`: **11/11 green**
+* cybernode.local 実測: `/spotlight/` `/all-articles/` のtitle・canonical、薄いタグと日付アーカイブの `noindex, follow`、収録4件タグと単記事が noindex にならないこと、タグサイトマップから薄いタグが消え**空項目が0件**であること、spotlight親のみ除外され子4件が残ることを確認
+
+### 残課題（コード側では直せない）
+
+* GSCの `noindex` 4件・404 2件は本番スキャンで再現しないため、**GSCから実URLの書き出しが必要**
+* `/sample-page/`（WordPress既定のSample Page）が公開のままサイトマップに載っている。**管理画面から削除が必要**
+
+### リリース境界
+
+* 変更は未コミット・未push。`master`反映は別途リリース操作として実行する
+* 本番の再クロールはGoogle側の都合のため、反映確認はリリース後の経過観察になる
+
+#### Status
+
+コード修正・回帰検証は完了。GSCからのURL書き出しと `/sample-page/` 削除はユーザー操作待ち。
+
+### 追記（同日）: `noindex` 4件の原因特定と修正
+
+ユーザーが GSC からエクスポートした URL 4件はすべて `?s=%7Bsearch_term_string%7D` 系＝**構造化データのプレースホルダそのもの**だった。
+
+* 原因: [inc/seo.php](inc/seo.php) の `SearchAction` の `target` を素の文字列で書いていた。Google の仕様は `EntryPoint` オブジェクト + `urlTemplate`。文字列だとテンプレートが普通のURLとみなされクロールされる
+* `&m3_sort=` の3件は二次被害。[search.php](search.php) の並び替えリンクが `rel` 無しで、クロールされた検索結果1ページが3件に増殖していた
+* これらが `noindex` なのは WordPress 標準の正しい挙動。直すべきは発見経路のほう
+* 対応: `target` を `EntryPoint` 形式へ、並び替えリンクに `rel="nofollow"`
+* 検証: `composer test` **306件 green**（新規3件）。ローカルでスキーマ出力と `rel="nofollow"`、検索ページが `noindex, follow` のままであることを実測
+
+**残るユーザー操作**: GSC「見つかりませんでした（404）」2件のエクスポート、`/sample-page/` の削除。
+
+### 追記（同日）: 残り2欄の実URL確認と `/sample-page/` 削除確認
+
+Chrome 経由で GSC の該当レポートを開き（読み取りのみ）、残っていた2欄の全URLを確認した。詳細は NODE-1.3.md §24。
+
+* **404 2件**: `/category/apple-inteligence/`（カテゴリスラッグの綴りミス、正しい方は200）と `/*`。どちらもサイト内リンク0件の過去の残骸で **404が正しい**
+* **リダイレクト11件**: 9件が `?p=<ID>`、1件が末尾スラッシュ無し、1件が `/category/spotlight/`。`?p=` の発生源は現行サイトに存在せず（shortlink未出力・HTML内0件・RSSはパーマリンク・node-connectは `get_permalink()`）、開設初期のデフォルトパーマリンク時代の残骸と判断。**301が返っており修正不要**
+* コード側の問題だったのは `/category/spotlight/` の1件のみで §22 で解消済み
+
+`/sample-page/` はユーザーが削除済み。本番で 404、固定ページのサイトマップが 5件→4件になったことを実測。
+
+**GSC起因の残作業はゼロ**。リリース後に各レポートで「修正を検証」を押すだけ。

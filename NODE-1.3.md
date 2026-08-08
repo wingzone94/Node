@@ -568,3 +568,137 @@ Manrope は字幅が広く終端が丸い幾何学系で、全大文字の見出
 * ホバー色は header の `.m3-rss-button:hover` と同じ `#f26522`（テーマ内で RSS の色を二重定義しない）
 * 外部サービスではないので `target="_blank"` は付けない（X・Discord とはここだけ異なる）
 * 実測: PC・モバイル（390px）とも 44×44 が3つ同じY座標に並び、`href` は `/feed/`（HTTP 200）。ヘッダーの RSS は PC で表示・モバイルで非表示のまま変化なし
+
+---
+
+## 22. Google Search Console のインデックス未登録を潰す ✅ 完了（2026-08-08）
+
+**発端**: GSC「ページがインデックスに登録されなかった理由」に6種類（合計175件）が積み上がっている、というユーザー指摘。1.3 リリース前に原因を特定して直す。
+
+### 22.1 本番実測（2026-08-08、`https://luminous-core.net/`）
+
+サイトマップ全271件のHTTPステータスと、タクソノミーアーカイブ157件の収録記事数を実測した。
+
+| GSCの理由 | 件数 | 実測で判明した原因 |
+| --- | --- | --- |
+| 検出 - インデックス未登録 | 70 | ↓ 同上 |
+| クロール済み - インデックス未登録 | 85 | **タクソノミー157件のうち91件が収録1件**。とくにタグは101件中**79件が1記事**（2件以下なら93件）。薄いアーカイブがクロール予算を食い潰していた |
+| ページにリダイレクトがあります | 11 | **`/category/spotlight/` がサイトマップに載ったまま `/spotlight/` へ301**（`node_redirect_spotlight_category_archive()`）。サイトマップが転送元を案内していた。添付ファイルページ（`/…/askmaps/` → 画像ファイル）の301も混ざる |
+| 重複しています。ユーザーにより、正規ページとして選択されていません | 3 | **`/spotlight/` と `/all-articles/` の `<title>` がサイト名のみ・canonical 無し**。§16.1 で `/headlines/` について実測したのと同一の症状 |
+| noindex タグによって除外されました | 4 | **本番では再現せず**。サイトマップ上の5ページ・記事・アーカイブいずれも `noindex` を出していない。メンテナンスモードは 503 + noindex なのでこの欄には入らない。GSC から実URLの書き出しが必要 |
+| 見つかりませんでした（404） | 2 | 同上。サイトマップ内に404は0件のため、外部リンクか過去URLと推定 |
+
+**サイトマップ271件のうち404・500系は0件**（初回スキャンで出た503群は、こちらの並列リクエストがホスト側のレート制限に当たった偽陽性。直列で再取得して全て200を確認した）。
+
+`/spotlight/` の転送方向はキャッシュ越しに見ると逆に見えることがある。WP Super Cache が古い向きの301を保持しているためで、`?nocache=` を付けた実測では `/category/spotlight/` → `/spotlight/` が正。
+
+### 22.2 判断
+
+* **タグだけを間引く**。カテゴリはサイトの構造を表すので収録1件でも残す（本番のカテゴリは55件中12件が1記事）。閾値は定数 `NODE_THIN_ARCHIVE_THRESHOLD = 2` ＝「収録1件のタグは、その記事そのものの複製」という線。`node_thin_archive_threshold` フィルタで変更可能
+* **`/spotlight/` と `/all-articles/` は §16 の `/headlines/` と違い廃止しない**。HEADLINE は単一カテゴリの別名だったが、SPOTLIGHT は複数カテゴリを束ね、ALL ARTICLES は全記事のページ送りで、どちらも標準アーカイブに代替物が無い。**廃止ではなく title / canonical を与えて正規化する**
+* **noindex とサイトマップ除外は必ず対で行う**。noindex だけ付けてサイトマップに残すと「送信された URL に noindex タグが追加されています」に変わるだけで、問題が別の欄へ移動する
+
+### 22.3 変更（[inc/indexing.php](inc/indexing.php) 新規）
+
+* `document_title_parts` — `/spotlight/`「SPOTLIGHT 特集一覧」、`/all-articles/`「記事一覧」。ページ送りは `page` 要素も付ける
+* `wp_head`（優先度10）— 上記2つに**自己参照 canonical**。ページ送りは各ページを自己参照にする（Google は rel=next/prev を見ないため、2ページ目以降を1ページ目へ集約すると本文が正規化先に存在しない状態になる）
+* `wp_robots` — **日付アーカイブ**と**閾値未満のタグ**を `noindex, follow`（リンク先の記事は辿ってほしいので follow は残す）
+* `wp_sitemaps_taxonomies_query_args` — 閾値未満のタグと `spotlight` カテゴリを `exclude` で引く
+
+### 22.4 実装でハマった点
+
+**除外は `wp_sitemaps_taxonomies_entry` ではできない**。最初このフィルタで空配列を返して除外したつもりでいたが、実際にはサイトマップから1件も消えなかった。原因は2つあり、どちらも core の実装による（`wp-includes/sitemaps/providers/class-wp-sitemaps-taxonomies.php`）:
+
+1. 第2引数は `WP_Term` ではなく **`int $term_id`**（第4引数が `WP_Term`）。`instanceof WP_Term` で受けていたため条件が常に false だった
+2. core は戻り値を `$url_list[] = $sitemap_entry;` と**無条件に push** する。空配列を返すと「除外」ではなく「空の項目が1件入る」
+
+正しくは `wp_sitemaps_taxonomies_query_args` の `exclude` で引く。ページ番号の計算（`get_max_num_pages`）とも整合する。回帰防止として、テーマが `wp_sitemaps_taxonomies_entry` を使っていないことをテストで固定した。
+
+### 22.5 残課題（コード側では直せないもの）→ すべて解消（2026-08-08）
+
+* ~~**`noindex` 4件・404 2件の実URLが不明**~~ → `noindex` 4件は §23、404 2件は §24 で特定
+* ~~**`/sample-page/` が公開のままサイトマップに載っている**~~ → ユーザーが削除。`/sample-page/` は 404、固定ページのサイトマップは 5件→4件を実測（2026-08-08）
+* **添付ファイルページの301**は WordPress 6.4 以降の既定動作（画像ファイルへ転送）。GSC の「リダイレクトあり」に計上されるが害はないため据え置く
+
+### 22.6 回帰
+
+[tests/node-indexing-test.php](tests/node-indexing-test.php) を新規追加（11件）。薄いタグ/閾値ちょうど/カテゴリ/日付/単記事の noindex 判定、サイトマップ除外（親は除外・子は残す）、title、canonical、`entry` フィルタ不使用の固定を検証。`composer test` **303件 green**、`bun run verify:routes` **11/11 green**。
+
+---
+
+## 23. `noindex` 4件の正体 — Sitelinks Searchbox の target 記法 ✅ 完了（2026-08-08）
+
+§22.5 で「GSCから実URLの書き出しが必要」とした4件が判明した（ユーザーがエクスポート、2026-08-08）。
+
+```
+https://luminous-core.net/?s=%7Bsearch_term_string%7D
+https://luminous-core.net/?s=%7Bsearch_term_string%7D&m3_sort=newest
+https://luminous-core.net/?s=%7Bsearch_term_string%7D&m3_sort=oldest
+https://luminous-core.net/?s=%7Bsearch_term_string%7D&m3_sort=alpha
+```
+
+`%7B...%7D` は `{search_term_string}` ＝ **構造化データのプレースホルダそのもの**。Google が検索テンプレートを普通のURLと解釈してクロールしていた。
+
+### 23.1 原因
+
+[inc/seo.php](inc/seo.php) の WebSite スキーマで、`SearchAction` の `target` を**素の文字列**で書いていた。
+
+```php
+'target' => home_url( '/?s={search_term_string}' ),   // ← 文字列
+```
+
+Google の Sitelinks Searchbox は `target` を **`EntryPoint` オブジェクト**で包み、URLは `urlTemplate` に入れる仕様。文字列で渡すと単なるリンクとみなされ、プレースホルダ入りのURLがそのまま取得される。
+
+`&m3_sort=` の3件は二次被害。クロールされた検索結果ページ（`noindex, follow`）に [search.php](search.php) の並び替えリンクが `rel` 無しの `<a href>` で並んでおり、**1ページが3件に増殖**していた。GSCのグラフが 2026-07-11 に 0→2、07-25 に 2→4 と段階的に増えているのはこのため。
+
+**これらが `noindex` なのは正しい挙動**（WordPress 標準が検索結果に `noindex, follow` を付ける）。直すべきはページ側ではなく、**Googleがこれらを発見してしまう経路**のほう。
+
+### 23.2 変更
+
+* [inc/seo.php](inc/seo.php) — `target` を `EntryPoint` + `urlTemplate` へ。`urlTemplate` は `esc_url()` を通さない（`{` `}` が壊れるため）
+* [search.php](search.php) — 並び替えリンクに `rel="nofollow"`。パラメータ増殖を止める
+
+### 23.3 検証
+
+* ローカル実測: WebSite スキーマが `EntryPoint` 形式になり `{search_term_string}` が壊れずに出力されること、`/?s=node` の並び替え3リンクすべてに `rel="nofollow"` が付き、ページ自体は `noindex, follow` のままであることを確認
+* [tests/node-indexing-test.php](tests/node-indexing-test.php) に3件追加（target が EntryPoint / プレースホルダがエスケープで壊れない / 並び替えリンクが nofollow）。`composer test` **306件 green**
+
+### 23.4 残り
+
+* 反映後、GSC の該当レポートで「修正を検証」を押すと再クロールが早まる
+
+---
+
+## 24. 残り2欄（404・リダイレクト）の実URL確認 ✅ 完了（2026-08-08）
+
+GSC の該当レポートを実際に開いて全URLを確認した（Chrome 経由、読み取りのみ）。**結論としてコード修正は不要**で、どちらも既に正しい挙動だった。
+
+### 24.1 見つかりませんでした（404）2件
+
+| URL | 前回クロール | 判定 |
+| --- | --- | --- |
+| `/category/apple-inteligence/` | 2026-07-31 | カテゴリスラッグの**綴りミス**（正: `intelligence`）。修正済みで、正しい `/category/apple-intelligence/` は 200。旧URLはリポジトリにもサイト内リンクにも残っていない |
+| `/*` | 2026-07-22 | アスタリスクそのもの。robots.txt・opensearch.xml・manifest.json・sw.js・全ページのHTMLを検索して**発生源は0件** |
+
+どちらもサイト内から一切リンクされていない過去の残骸で、404 が正しい。テーマの `node_resolve_404_redirect_target()` はページ送りの行き過ぎだけを救済する設計なので、綴り違いを拾うことはない（拾わせるべきでもない）。
+
+### 24.2 ページにリダイレクトがあります 11件
+
+| 種別 | 件数 | 内容 |
+| --- | --- | --- |
+| `?p=<ID>` | 9 | `?p=1004 / 1319 / 766 / 1118 / 1368 / 1380 / 1048 / 1330 / 1298`。WordPress が正規パーマリンクへ301 |
+| 末尾スラッシュ無し | 1 | `/2026/05/post-707` → `/2026/05/post-707/` へ301 |
+| カテゴリ | 1 | `/category/spotlight/` → `/spotlight/`。**§22 で対応済み**（サイトマップから除外） |
+
+`?p=<ID>` の発生源を洗ったが、**現行サイトのどこにも存在しない**:
+
+* `rel="shortlink"` は本番で出力されていない
+* 全ページのHTMLに `?p=` リンク 0件
+* RSS の `<guid>` はパーマリンク形式（`isPermaLink="false"` だが値は正規URL）
+* node-connect の X 投稿は `get_permalink()` を使用（[class-x-poster.php](plugins-embedded/node-connect/includes/class-x-poster.php)）
+
+サイト開設が 2026-05 で、初期のデフォルトパーマリンク（`?p=<ID>`）時代にクロールされたURLを Google が再試行し続けているだけと判断した。**301 が返っている＝正規URLへ統合されている**ので、GSC のこの欄は情報提供であり異常ではない。
+
+### 24.3 結論
+
+11件中コード側の問題だったのは `/category/spotlight/` の1件のみで、§22 で解消済み。**404の2件・リダイレクトの10件は修正不要**。
