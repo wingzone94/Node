@@ -14,6 +14,14 @@
     align-items: stretch;
 }
 
+/* LATEST の記事カードは角丸を落として直線基調にする（2026-08-08 ユーザー指示）。
+   HEADLINE カルーセルのカードと形をそろえるため。カード枠のほか、
+   タイトルリンクの focus-visible の枠も同じ変数を見るので一緒に四角になる。
+   カテゴリバッジ・シリーズラベル等は独自の radius を持つのでピルのまま。 */
+.m3-surface--latest {
+    --node-card-radius: 0;
+}
+
 /* LATESTセクション専用のコンテナ設定 (Ver 0.7.0) */
 :is(.l-card-grid__items--featured, .m3-post-grid__container--featured) {
     display: grid;
