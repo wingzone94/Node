@@ -270,6 +270,7 @@ Gemini APIやGoogle系仕様の検証にはGemini系エージェントが向い�
 
 ### 差し戻し（2026-08-08 ユーザー指示）
 
+* **フッターの Official SNS に RSS を追加**。モバイル（≤600px）はヘッダーの RSS・X・Discord がまとめて非表示なのに、フッターには RSS だけ無く、**モバイルから RSS へ到達する導線が1本も無かった**。ヘッダーの非表示指定は据え置き、フッターに3件目として追加（ホバー色は header と同じ `#f26522` を流用）。実測: PC/390px とも44×44が3件同じY、`href` は `/feed/`（200）、ヘッダーRSSはPC表示・モバイル非表示のまま。NODE-1.3.md §21
 * **LATEST / 記事一覧のセクション枠も四角に**（`.m3-surface` の40px角丸を `--latest` / `--articles` で0に）。実測: HEADLINE 0px / LATEST 0px / ARTICLES 0px、SPOTLIGHT は枠が視認できないため40pxのまま
 * **起動時のオレンジ背景を廃止**。`manifest.json` の `background_color`/`theme_color`、`<meta name="theme-color">`（ライト/ダーク出し分けへ）をサイトのダーク面 `#1B1812` に統一
 * **iOSの起動スプラッシュを廃止**（追加指示）。`apple-touch-startup-image` 10本と `assets/pwa/splash-*.png` を削除。未指定なら iOS は manifest の `background_color` で塗るので暗い無地から入る。`apple-touch-icon` の背景もオレンジ → `#1B1812`（実測 corner=27,24,18）。スクリプトは `generate-pwa-icons.mjs` へ改名。`pwa-icon-192/512` は透過、`pwa-maskable-512` はクリームでオレンジではないため据え置き

@@ -117,6 +117,15 @@
     color: #FFFFFF;
 }
 
+/* RSS のホバー色は header の .m3-rss-button:hover と同じ #f26522 を使う
+   （テーマ内で RSS の色を二重定義しない） */
+.m3-footer__social-link--rss:hover,
+.m3-footer__social-link--rss:focus-visible {
+    background: #f26522;
+    border-color: #f26522;
+    color: #FFFFFF;
+}
+
 .m3-footer__social-link:focus-visible {
     outline: 2px solid var(--node-footer-accent);
     outline-offset: 2px;

@@ -551,3 +551,20 @@ Manrope は字幅が広く終端が丸い幾何学系で、全大文字の見出
   * **`apple-touch-icon` の背景もオレンジをやめて `#1B1812` に**（同日 追加指示）。ホーム画面で悪目立ちするため。透過のままにできないのは iOS が透過部を黒で塗るためで、無地にするなら黒よりサイトの面の色が合う
   * スクリプトは `scripts/generate-pwa-splash.mjs` → **`scripts/generate-pwa-icons.mjs`** へ改名（スプラッシュを作らなくなったため）
   * `pwa-icon-192/512.png` は背景が透過、`pwa-maskable-512.png` はクリーム `#FFF4E5` で、いずれもオレンジではないため今回は据え置き
+
+---
+
+## 21. モバイルから RSS へ辿れない問題（フッターへ導線を追加）✅ 完了（2026-08-08）
+
+**発覚**: 本番のモバイルでヘッダーに RSS が見当たらない、という指摘から調査。原因は [src/styles/_header.css](src/styles/_header.css) の `@media (max-width: 600px)` 内にある `.m3-social-button, .m3-rss-button { display: none !important; }` で、**RSS・X・Discord の3つがまとめて非表示**になっていた（RSS 固有の問題ではない）。狭いヘッダーからアイコンを落とす判断自体は妥当。
+
+**問題は行き先の有無**。フッターの「Official SNS」には X・Discord があるが **RSS だけ無い**ため、モバイルでは RSS へ到達する導線がサイト内に1本も残っていなかった。
+
+**対応（ユーザー決定）**: **フッターに RSS を追加するだけ**。モバイルヘッダーの非表示指定は触らない。
+
+* RSS だけをヘッダーに戻すと X・Discord と置き場所が割れる。360px 幅のヘッダー（ロゴ・検索・テーマ）をさらに詰めることにもなる
+* PC ヘッダーの RSS は従来どおり残るので、PC の導線は変わらない
+* 実装は `footer.php` の `.m3-footer__social` に3件目を追加し、`_footer-misc.css` にホバー色を1ブロック足すだけ。44px 円・枠線・`translateY(-3px)` の既存スタイルをそのまま使う
+* ホバー色は header の `.m3-rss-button:hover` と同じ `#f26522`（テーマ内で RSS の色を二重定義しない）
+* 外部サービスではないので `target="_blank"` は付けない（X・Discord とはここだけ異なる）
+* 実測: PC・モバイル（390px）とも 44×44 が3つ同じY座標に並び、`href` は `/feed/`（HTTP 200）。ヘッダーの RSS は PC で表示・モバイルで非表示のまま変化なし
