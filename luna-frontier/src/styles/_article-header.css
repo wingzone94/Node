@@ -14,19 +14,66 @@ body.lf-theme .lf-article-header {
 	overflow: clip;
 }
 
-/* アイキャッチは「読む前の情報」なので、Title より強くしない。高さを抑える。 */
+/*
+ * アイキャッチ。
+ *
+ * 「読む前の情報」なので Title より強くしない＝高さは抑える。
+ * ただし切り抜かず画像全体を見せる（2026-08-09 ユーザー指示）。
+ *
+ * --lf-media-ratio / --lf-media-max は hero.php が画像の実寸から算出して渡す。
+ *   - ratio を枠に持たせることで、読み込み前から高さが確定して CLS が出ない
+ *   - 上限を超えるときだけ object-fit: contain で自動的に縮小される（切れない）
+ * メタデータが取れない場合は変数のフォールバック値で従来どおり動く。
+ */
 body.lf-theme .lf-article-header__media {
+	position: relative;
 	margin: 0;
 	background: var(--lf-paper-sunken);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	/* 枠は必ず本文幅いっぱい。縮めない（縮めると左右に大きな余白が出る）。 */
+	inline-size: 100%;
+	aspect-ratio: var(--lf-media-ratio, 16 / 9);
+	max-block-size: var(--lf-media-max, min(78vh, 46rem));
+	overflow: clip;
+}
+
+/*
+ * 上限に当たって左右が余るとき（正方形・縦長の画像）用の背景。
+ * 同じ画像をぼかして敷き、単色の空白ではなく「額装」として見せる。
+ * 画像が枠を満たす場合は前面の img に完全に隠れるので見えない。
+ */
+body.lf-theme .lf-article-header__media::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: var(--lf-media-backdrop, none);
+	background-size: cover;
+	background-position: center;
+	filter: blur(28px) saturate(1.25);
+	transform: scale(1.2);
+	opacity: 0.55;
 }
 
 body.lf-theme .lf-article-header__image {
+	position: relative;
 	display: block;
-	inline-size: 100%;
+	inline-size: auto;
 	block-size: auto;
-	max-block-size: min(42vh, 20rem);
-	object-fit: cover;
+	max-inline-size: 100%;
+	max-block-size: 100%;
+	/* 枠に入り切らない場合だけ縮小する。cover と違い切り取らない。 */
+	object-fit: contain;
 	border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.lf-theme .lf-article-header__media::before {
+		transform: none;
+	}
 }
 
 body.lf-theme .lf-article-header__inner {
