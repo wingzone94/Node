@@ -20,6 +20,8 @@ define( 'LUNA_FRONTIER_DIR', get_stylesheet_directory() );
 define( 'LUNA_FRONTIER_URI', get_stylesheet_directory_uri() );
 define( 'LUNA_FRONTIER_CODENAME', 'SkyAlow' );
 
+require_once LUNA_FRONTIER_DIR . '/inc/reading-aside.php';
+
 /**
  * 子テーマ自身のバージョン（style.css の Version）。
  * 親のバージョンは NODE_THEME_VERSION が保持する。
