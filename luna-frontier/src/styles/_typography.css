@@ -120,13 +120,29 @@ body.lf-theme .m3-article__body h2::before {
 	background: var(--lf-brand);
 }
 
-/* H3: 中区切り。左のアクセントバーだけで H2 と差をつける。 */
+/*
+ * H3: 中区切り。
+ * ラインは見出しの上に置く横線で統一する（縦バーは使わない）。
+ * H2 との差は「全幅の罫があるか」と線の太さ・長さで付ける。
+ */
 body.lf-theme .m3-article__body h3 {
 	font-size: var(--lf-text-xl);
 	font-weight: 700;
 	margin: var(--lf-space-xl) 0 var(--lf-space-s);
-	padding-inline-start: var(--lf-space-xs);
-	border-inline-start: 3px solid var(--lf-brand);
+	padding-block-start: var(--lf-space-2xs);
+	padding-inline-start: 0;
+	border-inline-start: 0;
+	position: relative;
+}
+
+body.lf-theme .m3-article__body h3::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	inline-size: 2rem;
+	block-size: 2px;
+	background: var(--lf-brand);
 }
 
 /* H4 以下: タイポグラフィ中心。装飾を増やさない。 */
@@ -161,7 +177,7 @@ body.lf-theme .m3-article__body h5 + h6 {
 	margin-block-start: var(--lf-space-s);
 }
 
-/* h2 直後の h3 は罫の直下に来るため、アクセントバーの二重出しを避ける。 */
-body.lf-theme .m3-article__body h2 + h3 {
-	border-inline-start-color: color-mix(in srgb, var(--lf-brand) 55%, transparent);
+/* h2 直後の h3 は罫の直下に来るため、横線の二重出しを弱める。 */
+body.lf-theme .m3-article__body h2 + h3::before {
+	background: color-mix(in srgb, var(--lf-brand) 55%, transparent);
 }

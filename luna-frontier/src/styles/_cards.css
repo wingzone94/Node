@@ -77,12 +77,8 @@ body.lf-theme .c-card__title {
 
 /* ---------------------------------------------------------------------
  * Home / Archive は 1 カラム維持（§24）。
- * 親テーマのグリッドはそのまま使い、面の見え方だけ Paper に寄せる。
+ * 地色は親テーマのブランドオレンジのまま。カードの面だけ Paper に寄せる。
  * --------------------------------------------------------------------- */
-body.lf-theme :is(.home, .archive) .site-main,
-body.lf-theme .m3-archive-layout {
-	background: var(--lc-surface);
-}
 
 /* Reduced Motion ではカードの変形をやめる。 */
 @media (prefers-reduced-motion: reduce) {

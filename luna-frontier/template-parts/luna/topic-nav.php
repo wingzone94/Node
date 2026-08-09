@@ -7,7 +7,7 @@ declare( strict_types=1 );
  * ヘッダーの真下に置く、主要トピックと特集への導線。
  *
  * 構成（1 列に統合）:
- *   [おすすめ] [SPOTLIGHT 特集ピル …]  |  [アイコン＋ラベルのトピック …]
+ *   [SPOTLIGHT] [特集ピル …]  |  [おすすめ] [アイコン＋ラベルのトピック …]
  *
  * SPOTLIGHT はここへ統合したので、ホームの独立セクションは表示しない
  * （同じリンクを 1 ページに二度出さない。CSS 側で非表示にしている）。
@@ -33,7 +33,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function luna_frontier_topic_icon( string $label ): string {
 	$map = array(
-		'AI'         => 'smart_toy',
+		'AI'         => 'auto_awesome', // Gemini 風の 4 方向スパークル
 		'ゲーム'     => 'sports_esports',
 		'ガジェット' => 'devices',
 		'ニュース'   => 'newspaper',
@@ -110,12 +110,12 @@ if ( empty( $lf_topics ) && empty( $lf_spotlight ) ) {
 				<?php if ( '' !== $lf_spotlight_url ) : ?>
 					<a class="lf-topic-nav__pick" href="<?php echo esc_url( $lf_spotlight_url ); ?>">
 						<span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
-						おすすめ
+						SPOTLIGHT
 					</a>
 				<?php else : ?>
 					<span class="lf-topic-nav__pick lf-topic-nav__pick--static">
 						<span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
-						おすすめ
+						SPOTLIGHT
 					</span>
 				<?php endif; ?>
 
@@ -130,6 +130,8 @@ if ( empty( $lf_topics ) && empty( $lf_spotlight ) ) {
 		<?php endif; ?>
 
 		<?php if ( ! empty( $lf_topics ) ) : ?>
+			<div class="lf-topic-nav__group lf-topic-nav__group--topics">
+				<span class="lf-topic-nav__pick lf-topic-nav__pick--soft">おすすめ</span>
 			<ul class="lf-topic-nav__list">
 				<?php foreach ( $lf_topics as $lf_topic ) : ?>
 					<li class="lf-topic-nav__item<?php echo $lf_topic['current'] ? ' is-current' : ''; ?>">
@@ -140,6 +142,7 @@ if ( empty( $lf_topics ) && empty( $lf_spotlight ) ) {
 					</li>
 				<?php endforeach; ?>
 			</ul>
+			</div>
 		<?php endif; ?>
 	</div>
 </nav>

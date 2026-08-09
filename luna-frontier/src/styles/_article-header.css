@@ -115,6 +115,23 @@ body.lf-theme .lf-meta__chip--link:hover {
 	background: color-mix(in srgb, var(--lc-accent) 10%, transparent);
 }
 
+/*
+ * 読了バッジ（Node 1.3 の実装をそのまま使用）。
+ * 親テーマではヒーロー右カラムの中央に置かれていたため中央寄せになっている。
+ * Luna Frontier ではメタ行の続きとして左に揃える。中身の見た目は触らない。
+ */
+body.lf-theme .lf-article-header__reading {
+	display: flex;
+	justify-content: flex-start;
+	margin: 0;
+}
+
+/* flex アイテムの auto マージンは justify-content より強いので、ここで解除する。 */
+body.lf-theme .lf-article-header__reading .m3-article__reading-badge-expressive {
+	margin-inline: 0;
+	margin-block: 0;
+}
+
 /* Disclosure — メタより更に弱く。ただし隠さない。 */
 body.lf-theme .lf-article-header__disclosure:empty {
 	display: none;

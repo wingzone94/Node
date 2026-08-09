@@ -117,7 +117,24 @@ body.lf-theme .lf-topic-nav__features a:hover {
 	background: color-mix(in srgb, var(--lf-brand) 12%, transparent);
 }
 
-/* ---- 右: トピック（アイコンの下にラベル） -------------------------- */
+/* ---- 右: おすすめ + トピック（アイコンの下にラベル） ---------------- */
+body.lf-theme .lf-topic-nav__group--topics {
+	display: flex;
+	align-items: center;
+	gap: var(--lf-space-2xs);
+}
+
+/*
+ * 右側の「おすすめ」はグループの見出し。
+ * 塗りつぶしの SPOTLIGHT と強度を分けるため、こちらは輪郭だけのラベルにする
+ * （1 列に強い塗りが 2 つ並ぶと、どちらも見せ場にならない）。
+ */
+body.lf-theme .lf-topic-nav__pick--soft {
+	background: none;
+	border: 1px solid color-mix(in srgb, var(--lf-brand) 45%, transparent);
+	color: var(--lf-brand-text);
+}
+
 body.lf-theme .lf-topic-nav__list {
 	display: flex;
 	align-items: stretch;
