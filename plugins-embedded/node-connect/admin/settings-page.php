@@ -399,7 +399,7 @@ function node_connect_render_settings_page(): void {
 		.nc-toggle-list .nc-toggle { display: flex; margin-bottom: 6px; }
 	</style>
 	<div class="wrap">
-		<h1 style="margin-bottom: 30px;">外部連携設定（Node Connect）</h1>
+		<h1 style="margin-bottom: 30px;">外部連携設定（Luna Connect）</h1>
 
 		<?php if ( isset( $_GET['test_result'] ) ) : ?>
 			<?php $test_ok = 'ok' === $_GET['test_result']; ?>

@@ -46,7 +46,7 @@ final class Node_Connect_Discord_Formatter {
 			'description' => mb_substr( (string) ( $payload['excerpt'] ?? ( $payload['message'] ?? '' ) ), 0, 300 ),
 			'color'       => self::resolve_color( (string) ( $payload['series_color'] ?? '' ) ),
 			'timestamp'   => gmdate( 'c' ),
-			'footer'      => [ 'text' => get_bloginfo( 'name' ) . ' — Node Connect' ],
+			'footer'      => [ 'text' => get_bloginfo( 'name' ) . ' — Luna Connect' ],
 		];
 
 		// 削除・非公開の記事はURLを付けてもリンク切れになるため公開系イベントのみ付ける。
@@ -116,7 +116,7 @@ final class Node_Connect_Discord_Formatter {
 		}
 
 		return [
-			'username' => 'Node Connect',
+			'username' => 'Luna Connect',
 			'content'  => $heading,
 			'embeds'   => [ $embed ],
 		];
@@ -129,15 +129,15 @@ final class Node_Connect_Discord_Formatter {
 	 */
 	public static function format_test(): array {
 		return [
-			'username' => 'Node Connect',
+			'username' => 'Luna Connect',
 			'content'  => '🔧 接続テスト',
 			'embeds'   => [
 				[
 					'title'       => get_bloginfo( 'name' ),
-					'description' => 'Node Connect からのテスト通知です。この通知が届いていれば設定は正常です。',
+					'description' => 'Luna Connect からのテスト通知です。この通知が届いていれば設定は正常です。',
 					'color'       => self::BRAND_COLOR,
 					'timestamp'   => gmdate( 'c' ),
-					'footer'      => [ 'text' => get_bloginfo( 'name' ) . ' — Node Connect' ],
+					'footer'      => [ 'text' => get_bloginfo( 'name' ) . ' — Luna Connect' ],
 				],
 			],
 		];

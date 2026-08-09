@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Luminous Core Engine
+ * Plugin Name: Luna Engine
  * Plugin URI:  https://github.com/wingzone94/Node
- * Description: Luminous Core のテーマ非依存データと記事メトリクスを管理します。
+ * Description: Luminous Core のテーマ非依存データと記事メトリクスを管理します（旧称: Luminous Core Engine）。
  * Version:     0.1.0
  * Author:      Luminous Core Teams
  * License:     MIT
