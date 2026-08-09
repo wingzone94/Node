@@ -6,7 +6,13 @@
  *
  * 定義先は body.lf-theme。親テーマ Node の :root トークンは一切書き換えず、
  * その値を初期値として引き継ぐ（= Phase 2 時点では見た目が変わらない）。
- * ダークは親と同じ [data-theme="dark"]（html/body に付与される）に追従する。
+ * ダークは親と同じ [data-theme="dark"] に追従する。
+ *
+ * 重要: 親テーマの <head> 内スクリプトは documentElement と body の両方へ
+ * data-theme を付けようとするが、<head> 実行時点で document.body は null のため、
+ * 初回描画では <html> にしか付かない（body へは後から color-mode.js が付ける）。
+ * body[data-theme] だけを見ていると、その間ライトのトークンが残って
+ * 「白い紙に明るい文字」になる。html 側に付いた場合も必ず拾うこと。
  */
 
 body.lf-theme {
@@ -131,7 +137,8 @@ body.lf-theme {
  * Dark。単純な反転はせず、面と on-color のトーンを個別に選ぶ（指示書 §42）。
  * 親テーマの dark トークンを土台にする。
  */
-body.lf-theme[data-theme="dark"] {
+body.lf-theme[data-theme="dark"],
+[data-theme="dark"] body.lf-theme {
 	/* 暗い面では明るいトーンのオレンジに切り替える（単純反転はしない。§42） */
 	--lf-brand-text: #ffb85d;
 

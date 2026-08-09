@@ -347,8 +347,20 @@ function luna_frontier_print_dynamic_color(): void {
 
 	// 子テーマの静的トークン（body.lf-theme）より必ず後で勝つよう、
 	// 属性セレクタ 1 つぶん specificity を上げる。
+	/*
+	 * ダークは body だけでなく html に data-theme が付いた場合も拾う。
+	 * 親の <head> スクリプトは document.body がまだ存在しない段階で走るため、
+	 * 初回描画では <html> にしか付かない。body 限定にすると、その間だけ
+	 * ライトのトークンが残って「白い紙に明るい文字」になる。
+	 *
+	 * specificity は light: body.lf-theme[class] = (0,2,1)、
+	 * dark: body.lf-theme[data-theme] / [data-theme] body.lf-theme = 同値。
+	 * 後に出力する dark が勝つ。
+	 */
 	printf(
-		'<style id="luna-frontier-dynamic-color">body.lf-theme[class]{%s}body.lf-theme[data-theme="dark"]{%s}</style>' . "\n",
+		'<style id="luna-frontier-dynamic-color">body.lf-theme[class]{%1$s}'
+		. 'body.lf-theme[data-theme="dark"]{%2$s}'
+		. '[data-theme="dark"] body.lf-theme{%2$s}</style>' . "\n",
 		esc_html( $to_css( $roles['light'] ) ),
 		esc_html( $to_css( $roles['dark'] ) )
 	);
