@@ -1,0 +1,68 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Paper Foundation（Phase 3）
+ *
+ * 指示書 §20〜§22。
+ *   Paper は四角、Action は必要に応じて丸い。
+ * 階層は spacing / border / rule / surface / typography で表現し、
+ * 角丸と影に頼らない。ピル UI（チップ・バッジ・小アクション）は維持する。
+ */
+
+/* ---------------------------------------------------------------------
+ * 大型 Surface を四角にする。
+ * 個別に列挙するのは、チップ・ボタン・アバター等の丸を巻き添えにしないため。
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-article__header-card,
+body.lf-theme .m3-article__body,
+body.lf-theme .m3-comments-section,
+body.lf-theme .m3-article__pagination-container,
+body.lf-theme .node-footnotes,
+body.lf-theme .m3-inline-toc {
+	border-radius: var(--lf-shape-paper);
+}
+
+/* 記事本文の Paper。影ではなく面と罫で紙を表現する。 */
+body.lf-theme .m3-article__body {
+	background: var(--lf-paper);
+	box-shadow: none;
+	border: 1px solid var(--lf-rule);
+	border-inline: 0;
+}
+
+/* 画像・図版・埋め込みは本文の紙に収める。角丸は極小に留める。 */
+body.lf-theme .m3-article__body :is(img, figure, iframe, video, table) {
+	border-radius: var(--lf-shape-paper-inner);
+	max-inline-size: 100%;
+}
+
+/* ---------------------------------------------------------------------
+ * Rounded を維持するもの（§22）。
+ * 分類・状態・小アクションはピルのまま残す。ここでは形を触らない。
+ *   .m3-*-chip / .m3-article__cat-* / .m3-reading-rank-chip /
+ *   .m3-reading-badge-* / ボタン各種
+ * --------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------
+ * Focus（§49）。Paper でも focus は必ず見えること。
+ * --------------------------------------------------------------------- */
+body.lf-theme :focus-visible {
+	outline: 3px solid var(--lc-accent);
+	outline-offset: 2px;
+}
+
+@media (prefers-contrast: more) {
+	body.lf-theme {
+		--lf-rule: var(--lc-outline);
+	}
+
+	body.lf-theme :focus-visible {
+		outline-width: 4px;
+	}
+}
+
+/* ---------------------------------------------------------------------
+ * 横スクロール禁止（§65）。狭い画面で紙がはみ出さないようにする。
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-article__body :is(pre, table) {
+	overflow-x: auto;
+	max-inline-size: 100%;
+}

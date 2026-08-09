@@ -85,6 +85,16 @@ function luna_frontier_asset_version( string $relative_file ): string {
  * こちらは 20 で走らせて必ず親の後に載せる（= 低い specificity でも上書きが効く）。
  */
 function luna_frontier_enqueue_assets(): void {
+	// Manrope / Inter / Noto Sans JP は親 header.php が読み込み済み。
+	// Luna Frontier が追加で必要なのは Orbitron（短い機能ラベル専用）だけ。
+	// 用途が限られるため 600 の 1 ウェイトに絞る（§50: 必要な Font Weight だけ）。
+	wp_enqueue_style(
+		'luna-frontier-orbitron',
+		'https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap',
+		array(),
+		null
+	);
+
 	$style = luna_frontier_manifest_entry( 'src/styles/luna.css' );
 
 	if ( null !== $style ) {

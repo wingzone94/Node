@@ -18,3 +18,5 @@
  */
 
 @import "./_tokens.css";
+@import "./_typography.css";
+@import "./_paper.css";
