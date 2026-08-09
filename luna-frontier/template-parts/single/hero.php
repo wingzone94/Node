@@ -102,10 +102,13 @@ if ( ! $lf_library instanceof WP_Post || 'node_library' !== $lf_library->post_ty
 				</span>
 			<?php endif; ?>
 
-			<span class="lf-meta__item lf-meta__item--author">
-				<span class="lf-meta__label">執筆</span>
-				<?php echo esc_html( get_the_author() ); ?>
-			</span>
+			<?php $lf_author = trim( (string) get_the_author() ); ?>
+			<?php if ( '' !== $lf_author ) : ?>
+				<span class="lf-meta__item lf-meta__item--author">
+					<span class="lf-meta__label">執筆</span>
+					<?php echo esc_html( $lf_author ); ?>
+				</span>
+			<?php endif; ?>
 
 			<?php if ( $lf_library ) : ?>
 				<a class="lf-meta__chip lf-meta__chip--link" href="<?php echo esc_url( get_permalink( $lf_library ) ); ?>">

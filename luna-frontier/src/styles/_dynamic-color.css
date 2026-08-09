@@ -1,0 +1,73 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Dynamic Color の適用範囲（Phase 7）
+ *
+ * 指示書 §38。
+ *
+ * 適用する:
+ *   Article Header / Main Surface / Link / Active TOC /
+ *   Library accent / Intelligence Summary の限定部分 / CTA・現在地
+ *
+ * 適用しない:
+ *   Header / Footer（ブランドクローム。§23）
+ *   本文の文字色全体
+ *   Category 固有色（Wayfinding。§39）
+ *
+ * トークンの実値は inc/dynamic-color.php が <head> にインライン出力する。
+ * ここは「どこに流すか」だけを決める。
+ */
+
+/* ---------------------------------------------------------------------
+ * Main Surface。ヘッダーとフッターに挟まれた領域だけが色をまとう。
+ * body 背景は親が !important で固定しているため触らず、
+ * コンテンツ領域そのものに面を敷く。
+ * --------------------------------------------------------------------- */
+body.lf-theme .site-main {
+	background: var(--lc-surface);
+}
+
+/* ---------------------------------------------------------------------
+ * Link（本文の文字色全体は変えない。リンクだけ）
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-article__body a:not([class]),
+body.lf-theme .entry-content a:not([class]) {
+	color: var(--lc-accent);
+	text-decoration-color: color-mix(in srgb, var(--lc-accent) 45%, transparent);
+	text-underline-offset: 0.18em;
+}
+
+body.lf-theme .m3-article__body a:not([class]):hover,
+body.lf-theme .entry-content a:not([class]):hover {
+	text-decoration-color: currentColor;
+}
+
+/* ---------------------------------------------------------------------
+ * Active TOC / 現在地
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-toc__link[aria-current],
+body.lf-theme .lf-toc__link.is-current {
+	color: var(--lc-accent);
+	border-inline-start-color: var(--lc-accent);
+	font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------
+ * Category Color は上書きしない（§39）
+ * 親テーマがカテゴリごとに出す色をそのまま通すため、
+ * .m3-article__cat-* / カテゴリチップ系には --lc-* を当てない。
+ * --------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------
+ * Header / Footer は Dynamic Color の対象外（§23 / §38）
+ * 誤って継承が効かないよう、ブランドクロームでは --lc-* を親の
+ * ブランドトークンへ戻す。ここが 2.0 の「額縁」。
+ * --------------------------------------------------------------------- */
+body.lf-theme :is(header.m3-header, .site-header, footer.m3-footer, .site-footer) {
+	--lc-primary: var(--md-sys-color-primary, #ff9900);
+	--lc-on-primary: var(--md-sys-color-on-primary, #ffffff);
+	--lc-accent: var(--md-sys-color-accent-text, #935400);
+	--lc-surface: var(--md-sys-color-surface, #fff4e5);
+	--lc-on-surface: var(--md-sys-color-on-surface, #2b1700);
+	--lc-outline: var(--md-sys-color-outline-variant, #d6c2b1);
+	--lf-paper: var(--md-sys-color-surface-container-low, #ffffff);
+	--lf-rule: color-mix(in srgb, var(--md-sys-color-outline-variant, #d6c2b1) 60%, transparent);
+}
