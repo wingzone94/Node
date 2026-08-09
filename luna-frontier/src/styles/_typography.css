@@ -2,7 +2,7 @@
  * Luna Frontier 2.0 / SkyAlow — Typography（Phase 3）
  *
  * 指示書 §32〜§35。
- * - Latin / 数字 / UI は Manrope、日本語は Noto Sans JP。
+ * - 見出しは Manrope、本文と UI は Inter、日本語は Noto Sans JP。
  * - Orbitron は LUNA / FRONTIER / SYSTEM 等の短い機能ラベル専用。本文と日本語タイトルには使わない。
  * - Zoom 倍率を JS で検出してフォントを切り替えることは禁止（§34）。
  *   rem / clamp() / line-height / max-inline-size だけで可読性を担保する。

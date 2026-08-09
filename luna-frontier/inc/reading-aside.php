@@ -39,8 +39,19 @@ function luna_frontier_render_reading_aside( int $post_id ): void {
 	// カテゴリは Article Header の eyebrow に出しているので、Aside には置かない
 	// （同じ情報を 1 ページに二度出さない）。
 
+	/*
+	 * 脚注は the_content フィルタ（親テーマ・優先度 999）で本文末に生成されるため、
+	 * この時点ではまだ HTML が存在しない。移動先の受け皿が必要なので、
+	 * 「脚注を持つ記事か」だけを投稿データから判定して Aside を出す。
+	 * 実際の移動は src/luna.js が描画後に行う。
+	 */
+	$content     = (string) get_post_field( 'post_content', $post_id );
+	$meta        = get_post_meta( $post_id, 'footnotes', true );
+	$has_footnotes = ( false !== strpos( $content, 'data-fn=' ) )
+		|| ( is_string( $meta ) && '' !== trim( $meta ) && '[]' !== trim( $meta ) );
+
 	// 中身が何も無いなら空の紙を作らない（§31 の「空 Surface 禁止」と同じ方針）。
-	if ( empty( $toc_items ) && empty( $series['items'] ) ) {
+	if ( empty( $toc_items ) && empty( $series['items'] ) && ! $has_footnotes ) {
 		return;
 	}
 

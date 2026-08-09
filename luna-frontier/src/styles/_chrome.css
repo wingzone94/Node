@@ -125,14 +125,14 @@ body.lf-theme .lf-topic-nav__group--topics {
 }
 
 /*
- * 右側の「おすすめ」はグループの見出し。
- * 塗りつぶしの SPOTLIGHT と強度を分けるため、こちらは輪郭だけのラベルにする
- * （1 列に強い塗りが 2 つ並ぶと、どちらも見せ場にならない）。
+ * 右側の「編集部おすすめ」はグループの見出し。
+ * カテゴリチップと同じ塗りのオレンジピルにする（2026-08-09 ユーザー指示）。
+ * 塗りピルの文字は既存仕様どおり白のまま。
  */
-body.lf-theme .lf-topic-nav__pick--soft {
-	background: none;
-	border: 1px solid color-mix(in srgb, var(--lf-brand) 45%, transparent);
-	color: var(--lf-brand-text);
+body.lf-theme .lf-topic-nav__pick--editors {
+	background: var(--lf-brand);
+	border: 0;
+	color: #ffffff;
 }
 
 body.lf-theme .lf-topic-nav__list {

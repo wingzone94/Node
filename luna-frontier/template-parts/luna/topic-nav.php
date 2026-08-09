@@ -7,7 +7,7 @@ declare( strict_types=1 );
  * ヘッダーの真下に置く、主要トピックと特集への導線。
  *
  * 構成（1 列に統合）:
- *   [SPOTLIGHT] [特集ピル …]  |  [おすすめ] [アイコン＋ラベルのトピック …]
+ *   [SPOTLIGHT] [特集ピル …]  |  [編集部おすすめ] [アイコン＋ラベルのトピック …]
  *
  * SPOTLIGHT はここへ統合したので、ホームの独立セクションは表示しない
  * （同じリンクを 1 ページに二度出さない。CSS 側で非表示にしている）。
@@ -131,7 +131,7 @@ if ( empty( $lf_topics ) && empty( $lf_spotlight ) ) {
 
 		<?php if ( ! empty( $lf_topics ) ) : ?>
 			<div class="lf-topic-nav__group lf-topic-nav__group--topics">
-				<span class="lf-topic-nav__pick lf-topic-nav__pick--soft">おすすめ</span>
+				<span class="lf-topic-nav__pick lf-topic-nav__pick--editors">編集部おすすめ</span>
 			<ul class="lf-topic-nav__list">
 				<?php foreach ( $lf_topics as $lf_topic ) : ?>
 					<li class="lf-topic-nav__item<?php echo $lf_topic['current'] ? ' is-current' : ''; ?>">

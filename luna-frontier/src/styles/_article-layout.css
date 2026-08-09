@@ -173,3 +173,28 @@ body.lf-theme .lf-aside-list--inline .lf-aside-list__item a {
 		scroll-behavior: auto;
 	}
 }
+
+/* ---------------------------------------------------------------------
+ * 脚注（Reading Aside へ移動したとき）
+ * 移動は src/luna.js が行う。JS が動かない場合は本文末に残る。
+ * 副紙面では罫と余白を Aside の他ブロックに揃え、装飾を足さない。
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-aside-block--footnotes .node-footnotes {
+	margin: 0;
+	border: 0;
+	border-radius: var(--lf-shape-paper);
+	background: none;
+	box-shadow: none;
+	font-size: var(--lf-text-2xs);
+}
+
+body.lf-theme .lf-aside-block--footnotes .node-footnotes__header {
+	padding: 0 0 var(--lf-space-3xs);
+	border-block-end: 1px solid var(--lf-rule);
+	gap: var(--lf-space-3xs);
+}
+
+body.lf-theme .lf-aside-block--footnotes .node-footnotes__body,
+body.lf-theme .lf-aside-block--footnotes .node-footnotes__list {
+	padding-inline: 0;
+}
