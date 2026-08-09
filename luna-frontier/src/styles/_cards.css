@@ -1,0 +1,93 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Article Card（Phase 10）
+ *
+ * 指示書 §24 / §20〜§22 / §29 / §51。
+ * - Home / Archive / Search は 1 カラムを維持し、サイト全体を 2 カラム化しない。
+ * - カードは Paper 側なので四角。ただしカテゴリチップ・状態チップの丸は残す。
+ * - 階層は影ではなく面と罫で出す。
+ * - Container Queries を使い、カード自身の幅で変形させる（Viewport で分岐しない）。
+ *
+ * Home / Archive の「カードごとに記事の seed 色をまとう」Spectrum 化は、
+ * カード 1 枚ごとの色出力（= 一覧の全記事ぶんの seed 解決）が必要で、
+ * 一覧のクエリ・キャッシュ・パフォーマンスに影響が出る。§76 に従って 2.1 へ送り、
+ * ここでは Paper Design と Container Queries までを入れる。
+ */
+
+body.lf-theme .m3-card,
+body.lf-theme .c-card {
+	border-radius: var(--lf-shape-paper);
+	background: var(--lf-paper);
+	border: 1px solid var(--lf-rule);
+	box-shadow: none;
+	container-type: inline-size;
+	container-name: lf-card;
+	transition: border-color var(--lf-motion-base) var(--lf-easing-standard),
+		transform var(--lf-motion-base) var(--lf-easing-standard);
+}
+
+body.lf-theme .m3-card:hover,
+body.lf-theme .c-card:hover {
+	border-color: var(--lf-rule-strong);
+	box-shadow: none;
+}
+
+/* カード内のサムネイルも紙に合わせて四角にする。 */
+body.lf-theme .m3-card :is(img, .m3-card__image, .c-card__image) {
+	border-radius: var(--lf-shape-paper);
+}
+
+/* カテゴリチップ・状態チップはピルのまま（§22）。
+   カテゴリ色は Wayfinding なので触らない（§39）。 */
+body.lf-theme .m3-card :is(.m3-card__category, .m3-category-badge, .m3-chip) {
+	border-radius: var(--lf-shape-chip);
+}
+
+body.lf-theme .m3-card__title,
+body.lf-theme .c-card__title {
+	font-family: var(--font-heading), sans-serif;
+	line-height: var(--lf-leading-tight);
+	letter-spacing: -0.01em;
+	text-wrap: pretty;
+}
+
+/* ---------------------------------------------------------------------
+ * Container Queries（§29）
+ * 600〜800px 帯では「ビューポート幅」ではなくカード自身の幅で決める。
+ * 狭いコンテナに入ったカードは自動的に密度を上げる。
+ * --------------------------------------------------------------------- */
+@container lf-card (max-width: 22rem) {
+	body.lf-theme .m3-card__content,
+	body.lf-theme .c-card__content {
+		padding: var(--lf-space-2xs) var(--lf-space-xs);
+		gap: var(--lf-space-3xs);
+	}
+
+	body.lf-theme .m3-card__title,
+	body.lf-theme .c-card__title {
+		font-size: var(--lf-text-base);
+	}
+}
+
+@container lf-card (min-width: 34rem) {
+	body.lf-theme .m3-card__title,
+	body.lf-theme .c-card__title {
+		font-size: var(--lf-text-l);
+	}
+}
+
+/* ---------------------------------------------------------------------
+ * Home / Archive は 1 カラム維持（§24）。
+ * 親テーマのグリッドはそのまま使い、面の見え方だけ Paper に寄せる。
+ * --------------------------------------------------------------------- */
+body.lf-theme :is(.home, .archive) .site-main,
+body.lf-theme .m3-archive-layout {
+	background: var(--lc-surface);
+}
+
+/* Reduced Motion ではカードの変形をやめる。 */
+@media (prefers-reduced-motion: reduce) {
+	body.lf-theme .m3-card,
+	body.lf-theme .c-card {
+		transition: none;
+	}
+}
