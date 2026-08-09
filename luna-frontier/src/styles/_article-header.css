@@ -356,3 +356,29 @@ body.lf-theme .lf-article-header__reading .m3-reading-badge__gauge {
 		padding-inline: 0.9rem 0.9rem;
 	}
 }
+
+/* ---------------------------------------------------------------------
+ * 読了ゲージの線を細くする（2026-08-09 ユーザー指示: 太すぎる）
+ *
+ * 親テーマは viewBox 36 に対して bg 3.2 / progress 3.8＝直径の約 10% で、
+ * 30px 表示だとリングが重く見える。約 6% まで落として輪郭を軽くし、
+ * 中央のアイコンに視線を戻す。判定カラー自体は変えない。
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-article-header__reading .m3-reading-circle__bg {
+	stroke-width: 1.8;
+}
+
+body.lf-theme .lf-article-header__reading .m3-reading-circle__progress {
+	stroke-width: 2.2;
+}
+
+/* 進捗の先端も、細いリングに合わせて小さく・影を弱くする。 */
+body.lf-theme .lf-article-header__reading .m3-reading-circle__head {
+	r: 1.3px;
+	filter: drop-shadow(0 1px 3px color-mix(in srgb, var(--reading-accent) 36%, transparent));
+}
+
+/* リングが細くなったぶん、中央のアイコンをわずかに大きくして重心を取る。 */
+body.lf-theme .lf-article-header__reading .m3-reading-badge__gauge .material-symbols-outlined {
+	font-size: 18px;
+}
