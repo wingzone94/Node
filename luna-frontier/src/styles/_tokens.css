@@ -1,0 +1,121 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Design Tokens（Phase 2）
+ *
+ * Material 3 を既定のデザイン言語とし、Expressive は見せ場に限定する（指示書 §17〜§19）。
+ * このファイルはトークンを「定義するだけ」で、まだどこにも適用しない。
+ *
+ * 定義先は body.lf-theme。親テーマ Node の :root トークンは一切書き換えず、
+ * その値を初期値として引き継ぐ（= Phase 2 時点では見た目が変わらない）。
+ * ダークは親と同じ [data-theme="dark"]（html/body に付与される）に追従する。
+ */
+
+body.lf-theme {
+	/* ---------------------------------------------------------------
+	 * Typography tokens（指示書 §32 / §33）
+	 * Orbitron は LUNA / FRONTIER / SYSTEM 等の短い機能ラベル専用。
+	 * 本文・日本語タイトルには使わない。
+	 * --------------------------------------------------------------- */
+	--font-latin: "Manrope", "Inter", system-ui, sans-serif;
+	--font-japanese: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+	--font-body: var(--font-latin), var(--font-japanese);
+	--font-heading: var(--font-latin), var(--font-japanese);
+	--font-ui: var(--font-latin), var(--font-japanese);
+	--font-system: "Orbitron", var(--font-latin);
+	--font-code: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+	/* ---------------------------------------------------------------
+	 * Shape tokens（指示書 §20〜§22）
+	 * Paper は四角、Action は必要に応じて丸い。
+	 * --------------------------------------------------------------- */
+	--lf-shape-paper: 0;
+	--lf-shape-paper-inner: 2px;
+	--lf-shape-surface: 4px;
+	--lf-shape-dialog: 16px;
+	--lf-shape-action: 8px;
+	--lf-shape-chip: 1000px;
+	--lf-shape-pill: 1000px;
+
+	/* ---------------------------------------------------------------
+	 * Spacing scale
+	 * rem 基準。ブラウザの文字サイズ設定と 200% zoom に素直に追従させる。
+	 * --------------------------------------------------------------- */
+	--lf-space-3xs: 0.25rem;
+	--lf-space-2xs: 0.5rem;
+	--lf-space-xs: 0.75rem;
+	--lf-space-s: 1rem;
+	--lf-space-m: 1.5rem;
+	--lf-space-l: 2rem;
+	--lf-space-xl: 3rem;
+	--lf-space-2xl: 4rem;
+
+	/* ---------------------------------------------------------------
+	 * Layout tokens（指示書 §24〜§29）
+	 * Single / Page の PC 2カラムは固定値にせず可読性優先で決める。
+	 * --------------------------------------------------------------- */
+	--lf-measure: 70ch;
+	--lf-content-max: 1240px;
+	--lf-main-min: 0;
+	--lf-aside-min: 15rem;
+	--lf-aside-max: 20rem;
+	--lf-column-gap: clamp(1.5rem, 3vw, 3rem);
+	--lf-gutter: clamp(1rem, 4vw, 2rem);
+
+	/* ---------------------------------------------------------------
+	 * Dynamic Color role tokens（指示書 §36）
+	 * seed 未取得時はブランドオレンジ（＝親テーマの現行値）へフォールバックする。
+	 * Phase 7 で記事ごとの seed から上書きする。
+	 * Header / Footer には流し込まない。
+	 * --------------------------------------------------------------- */
+	--lc-seed: var(--md-sys-color-primary, #ff9900);
+
+	--lc-primary: var(--md-sys-color-primary, #ff9900);
+	--lc-on-primary: var(--md-sys-color-on-primary, #ffffff);
+	--lc-primary-container: var(--md-sys-color-primary-container, #fedcbe);
+	--lc-on-primary-container: var(--md-sys-color-on-primary-container, #2b1700);
+
+	--lc-secondary: var(--md-sys-color-secondary, #ff9900);
+	--lc-on-secondary: var(--md-sys-color-on-secondary, #ffffff);
+
+	--lc-surface: var(--md-sys-color-surface, #fff4e5);
+	--lc-surface-variant: var(--md-sys-color-surface-container, #ffe8d1);
+	--lc-on-surface: var(--md-sys-color-on-surface, #2b1700);
+
+	/* リンク・CTA・現在地に限定して使う読みやすいアクセント。 */
+	--lc-accent: var(--md-sys-color-accent-text, #935400);
+	--lc-outline: var(--md-sys-color-outline-variant, #d6c2b1);
+
+	/* ---------------------------------------------------------------
+	 * Paper 用の面と罫（階層は spacing / border / rule で表現する。§21）
+	 * --------------------------------------------------------------- */
+	--lf-paper: var(--md-sys-color-surface-container-low, #ffffff);
+	--lf-paper-sunken: var(--lc-surface);
+	--lf-rule: color-mix(in srgb, var(--lc-outline) 60%, transparent);
+	--lf-rule-strong: var(--lc-outline);
+
+	/* ---------------------------------------------------------------
+	 * Motion（指示書 §48）
+	 * --------------------------------------------------------------- */
+	--lf-motion-fast: 120ms;
+	--lf-motion-base: 200ms;
+	--lf-motion-emphasized: 320ms;
+	--lf-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+	--lf-easing-emphasized: cubic-bezier(0.3, 0, 0, 1);
+}
+
+/**
+ * Dark。単純な反転はせず、面と on-color のトーンを個別に選ぶ（指示書 §42）。
+ * 親テーマの dark トークンを土台にする。
+ */
+body.lf-theme[data-theme="dark"] {
+	--lf-paper: var(--md-sys-color-surface-container-low, #221f18);
+	--lf-paper-sunken: var(--md-sys-color-surface, #1b1812);
+	--lf-rule: color-mix(in srgb, var(--lc-outline) 70%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.lf-theme {
+		--lf-motion-fast: 1ms;
+		--lf-motion-base: 1ms;
+		--lf-motion-emphasized: 1ms;
+	}
+}
