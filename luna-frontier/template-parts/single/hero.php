@@ -168,7 +168,12 @@ if ( ! $lf_library instanceof WP_Post || 'node_library' !== $lf_library->post_ty
 		<?php // Disclosure（AI / スポンサー）はメタより更に弱い強度で置く ?>
 		<?php if ( function_exists( 'node_the_post_badges' ) ) : ?>
 			<div class="lf-article-header__disclosure">
-				<?php node_the_post_badges( $lf_post_id, 'compact', array( 'ai', 'sponsor' ) ); ?>
+				<?php
+				// 'compact' はアイコンだけの丸バッジになる。
+				// 「生成されたメディア・テキストを含む」等の文言まで見せる広いピルにするため
+				// 'full' を使う（2026-08-09 ユーザー指示）。
+				node_the_post_badges( $lf_post_id, 'full', array( 'ai', 'sponsor' ) );
+				?>
 			</div>
 		<?php endif; ?>
 

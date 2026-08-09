@@ -1,0 +1,238 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — LATEST セクション & Article Card 刷新
+ *
+ * 狙い:
+ * - 高さのばらつきで生まれていた「カード内の大きな空白」をなくす。
+ *   グリッドは行の最も高いカードに揃うため、画像なしカードが空洞になっていた。
+ *   本文（タイトル）を上に、メタを下に張り付け、余りは意味のある余白にする。
+ * - アイキャッチは比率を固定して視線の高さを揃える。
+ * - 階層は影ではなく「面・罫・余白・タイポグラフィ」で作る（Paper Design）。
+ * - 分類色（カテゴリチップ）と塗りピルの白文字は既存仕様のまま触らない。
+ */
+
+/* ---------------------------------------------------------------------
+ * セクション見出し
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-surface--latest,
+body.lf-theme .m3-surface--articles {
+	background: transparent;
+	border-radius: var(--lf-shape-paper);
+	box-shadow: none;
+}
+
+/*
+ * セクション見出し（HEADLINE / LATEST など）。
+ * 下線は引かない（2026-08-09 ユーザー指示）。区切りはカードとの余白で作る。
+ */
+body.lf-theme .m3-section-title {
+	display: flex;
+	align-items: baseline;
+	gap: var(--lf-space-2xs);
+	margin: 0 0 var(--lf-space-s);
+	padding-block-end: 0;
+	border-block-end: 0;
+	font-family: var(--font-heading), sans-serif;
+	font-size: var(--lf-text-l);
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	color: var(--lf-brand-text);
+}
+
+body.lf-theme .m3-section-title::after {
+	content: none;
+}
+
+body.lf-theme .m3-section-title .material-symbols-outlined {
+	color: var(--lf-brand);
+}
+
+body.lf-theme .m3-section-title__sub {
+	font-family: var(--font-ui), sans-serif;
+	font-size: var(--lf-text-2xs);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	color: var(--lf-on-surface-muted);
+}
+
+/* 「すべて見る」は装飾を抑えたテキストリンクにして、カードの邪魔をしない。 */
+body.lf-theme .m3-latest-see-all {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	margin-inline-start: auto;
+	margin-block-start: var(--lf-space-s);
+	padding: 0.5em 0.9em;
+	border-radius: var(--lf-shape-pill);
+	background: none;
+	font-size: var(--lf-text-s);
+	font-weight: 700;
+	color: var(--lf-brand-text);
+	transition: background-color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .m3-latest-see-all:hover {
+	background: color-mix(in srgb, var(--lf-brand) 12%, transparent);
+}
+
+/* ---------------------------------------------------------------------
+ * カード本体
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-card {
+	display: flex;
+	flex-direction: column;
+	overflow: clip;
+	block-size: 100%;
+}
+
+/* アイキャッチ: 比率を固定して、行内で視線の高さを揃える。 */
+body.lf-theme .m3-card__visual {
+	position: relative;
+	aspect-ratio: 16 / 10;
+	overflow: clip;
+	background: var(--lf-paper-sunken);
+	border-radius: 0;
+}
+
+body.lf-theme .m3-card__image-link {
+	display: block;
+	block-size: 100%;
+}
+
+body.lf-theme .m3-card__visual img {
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+	border-radius: 0;
+	transition: transform var(--lf-motion-emphasized) var(--lf-easing-emphasized);
+}
+
+body.lf-theme .m3-card:hover .m3-card__visual img {
+	transform: scale(1.04);
+}
+
+/* コンテンツ: タイトルは上、メタは下。余りはタイトル側に渡す。 */
+body.lf-theme .m3-card__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--lf-space-2xs);
+	flex: 1 1 auto;
+	padding: var(--lf-space-xs) var(--lf-space-s) 0;
+}
+
+body.lf-theme .m3-card__topline {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--lf-space-3xs);
+	margin: 0;
+}
+
+body.lf-theme .m3-card__title {
+	margin: 0;
+	font-family: var(--font-heading), sans-serif;
+	font-size: var(--lf-text-m);
+	font-weight: 700;
+	line-height: 1.4;
+	letter-spacing: -0.005em;
+	text-wrap: pretty;
+
+	/* 行数を揃えて、カードごとの高さのばらつきを抑える。 */
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	overflow: hidden;
+}
+
+body.lf-theme .m3-card__title a {
+	color: var(--lc-on-surface);
+	text-decoration: none;
+	transition: color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .m3-card:hover .m3-card__title a {
+	color: var(--lf-brand-text);
+}
+
+/*
+ * 画像なしカード。
+ *
+ * グリッドの行は最も高いカード（＝画像ありカード）に高さが揃う。
+ * フッターは content 内で auto マージンを取っているため、上詰めのままだと
+ * タイトルとフッターの間に大きな空洞が残っていた。
+ * そこで画像スロットと同じ比率の装飾面を与え、カードの構造自体を揃える。
+ * ブランドオレンジの薄いハッチで「画像の代わり」だと分かるようにする。
+ */
+body.lf-theme .m3-card--no-image::before {
+	content: "";
+	display: block;
+	flex: 0 0 auto;
+	aspect-ratio: 16 / 10;
+	border-block-end: 1px solid var(--lf-rule);
+	background:
+		repeating-linear-gradient(
+			135deg,
+			transparent 0 15px,
+			color-mix(in srgb, var(--lf-brand) 8%, transparent) 15px 16px
+		),
+		linear-gradient(
+			160deg,
+			color-mix(in srgb, var(--lf-brand) 14%, var(--lf-paper)) 0%,
+			var(--lf-paper) 72%
+		);
+}
+
+body.lf-theme .m3-card--no-image .m3-card__content {
+	padding-block-start: var(--lf-space-xs);
+}
+
+/* フッター: 下端に固定し、細い罫で区切る。 */
+body.lf-theme .m3-card__footer {
+	margin-block-start: auto;
+	padding: var(--lf-space-2xs) var(--lf-space-s);
+	border-block-start: 1px solid var(--lf-rule);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--lf-space-2xs);
+	font-size: var(--lf-text-2xs);
+	color: var(--lf-on-surface-secondary);
+}
+
+body.lf-theme .m3-card__writer-name,
+body.lf-theme .m3-card__date {
+	font-size: var(--lf-text-2xs);
+	color: var(--lf-on-surface-secondary);
+}
+
+body.lf-theme .m3-card__date {
+	font-variant-numeric: tabular-nums;
+}
+
+/* ホバーは影ではなく罫の色で示す（Paper Design）。 */
+body.lf-theme .m3-card:hover {
+	border-color: color-mix(in srgb, var(--lf-brand) 60%, transparent);
+}
+
+body.lf-theme .m3-card:focus-within {
+	border-color: var(--lf-brand);
+}
+
+/* ---------------------------------------------------------------------
+ * Featured（先頭 4 件）はタイトルを一段大きく、画像を広く。
+ * --------------------------------------------------------------------- */
+@container lf-card (min-width: 26rem) {
+	body.lf-theme .m3-card__title {
+		font-size: var(--lf-text-l);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.lf-theme .m3-card__visual img,
+	body.lf-theme .m3-card__title a {
+		transition: none;
+	}
+
+	body.lf-theme .m3-card:hover .m3-card__visual img {
+		transform: none;
+	}
+}
