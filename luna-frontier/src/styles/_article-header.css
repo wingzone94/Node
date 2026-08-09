@@ -61,16 +61,9 @@ body.lf-theme .lf-article-header__title {
 	text-wrap: balance;
 	max-inline-size: 34ch;
 
-	/*
-	 * タイトルのドロップシャドウ（2026-08-09 ユーザー指示）。
-	 * 濃い影は文字の輪郭を鈍らせて可読性を落とすので、
-	 * 「紙から少し浮いて見える」程度に抑える。ダークでは更に弱める。
-	 */
-	text-shadow: 0 2px 5px color-mix(in srgb, var(--lc-on-surface) 18%, transparent);
-}
-
-body.lf-theme[data-theme="dark"] .lf-article-header__title {
-	text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+	/* ドロップシャドウは一度試したが不採用（2026-08-09 ユーザー指示）。
+	   紙面の見出しは影ではなくサイズ・ウェイト・余白で立たせる。 */
+	text-shadow: none;
 }
 
 /* 3-4. Metadata — 弱い。読み飛ばせること。 */
