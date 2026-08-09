@@ -96,60 +96,69 @@ body.lf-theme .m3-article__body h6 {
 }
 
 /*
- * H2: 大区切り。上に十分な余白と全幅の罫、左に短いアクセント。
- * 見出しのオレンジは Node 1.x から引き継ぐブランド要素なので、
- * 記事ごとに変わる Dynamic Color ではなく固定のブランドオレンジを使う。
+ * H2 / H3 / H4 の共通則。
+ *
+ * - 文字色はブランドオレンジで統一する（2026-08-09 ユーザー指示）。
+ *   #FF9900 そのままは白地で 2.1:1 しか出ないため、同色相の暗いトーンを使う。
+ * - ラインは全て見出しテキストの「上」に置く横線。
+ *   階層は線の長さと太さで表し、H2 > H3 > H4 の順に短くしていく。
  */
-body.lf-theme .m3-article__body h2 {
+body.lf-theme .m3-article__body h2,
+body.lf-theme .m3-article__body h3,
+body.lf-theme .m3-article__body h4:not(.m3-blogcard__title) {
 	color: var(--lf-brand-text);
+	position: relative;
+}
+
+body.lf-theme .m3-article__body h2::before,
+body.lf-theme .m3-article__body h3::before,
+body.lf-theme .m3-article__body h4:not(.m3-blogcard__title)::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	inline-size: var(--lf-heading-rule-length);
+	block-size: var(--lf-heading-rule-weight, 2px);
+	background: var(--lf-brand);
+}
+
+/* H2: 大区切り。全幅の罫を重ねて「章の切れ目」を作り、アクセントは最も長い。 */
+body.lf-theme .m3-article__body h2 {
+	--lf-heading-rule-length: 4.5rem;
+	--lf-heading-rule-weight: 3px;
+
 	font-size: var(--lf-text-2xl);
 	font-weight: 800;
 	margin: var(--lf-space-2xl) 0 var(--lf-space-m);
 	padding-block-start: var(--lf-space-m);
 	border-block-start: 1px solid var(--lf-rule);
-	position: relative;
 }
 
+/* H2 だけは全幅の罫の上にアクセントを重ねるので、1px ぶん持ち上げる。 */
 body.lf-theme .m3-article__body h2::before {
-	content: "";
-	position: absolute;
 	inset-block-start: -1px;
-	inset-inline-start: 0;
-	inline-size: 3rem;
-	block-size: 3px;
-	background: var(--lf-brand);
 }
 
-/*
- * H3: 中区切り。
- * ラインは見出しの上に置く横線で統一する（縦バーは使わない）。
- * H2 との差は「全幅の罫があるか」と線の太さ・長さで付ける。
- */
+/* H3: 中区切り。全幅の罫は持たず、アクセントを一段短くする。 */
 body.lf-theme .m3-article__body h3 {
+	--lf-heading-rule-length: 2.5rem;
+
 	font-size: var(--lf-text-xl);
 	font-weight: 700;
 	margin: var(--lf-space-xl) 0 var(--lf-space-s);
 	padding-block-start: var(--lf-space-2xs);
 	padding-inline-start: 0;
 	border-inline-start: 0;
-	position: relative;
 }
 
-body.lf-theme .m3-article__body h3::before {
-	content: "";
-	position: absolute;
-	inset-block-start: 0;
-	inset-inline-start: 0;
-	inline-size: 2rem;
-	block-size: 2px;
-	background: var(--lf-brand);
-}
-
-/* H4 以下: タイポグラフィ中心。装飾を増やさない。 */
+/* H4: 最小のアクセント。ここまでが「線を持つ見出し」。 */
 body.lf-theme .m3-article__body h4:not(.m3-blogcard__title) {
+	--lf-heading-rule-length: 1.25rem;
+
 	font-size: var(--lf-text-l);
 	font-weight: 700;
 	margin: var(--lf-space-l) 0 var(--lf-space-2xs);
+	padding-block-start: var(--lf-space-3xs);
 }
 
 body.lf-theme .m3-article__body h5 {
@@ -181,3 +190,5 @@ body.lf-theme .m3-article__body h5 + h6 {
 body.lf-theme .m3-article__body h2 + h3::before {
 	background: color-mix(in srgb, var(--lf-brand) 55%, transparent);
 }
+
+/* H5 / H6 は線を持たない（§35: H4 以下は装飾を増やしすぎない）。 */
