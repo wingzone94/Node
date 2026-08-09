@@ -95,13 +95,6 @@ if ( ! $lf_library instanceof WP_Post || 'node_library' !== $lf_library->post_ty
 				</time>
 			<?php endif; ?>
 
-			<?php if ( ! empty( $lf_reading['chars'] ) && (int) $lf_reading['chars'] > 200 ) : ?>
-				<span class="lf-meta__chip" data-rank="<?php echo esc_attr( (string) ( $lf_reading['rank'] ?? '' ) ); ?>">
-					<?php echo esc_html( (string) ( $lf_reading['label'] ?? '' ) ); ?>
-					<span class="lf-meta__chip-sub"><?php echo esc_html( sprintf( '約%s文字', number_format_i18n( (int) $lf_reading['chars'] ) ) ); ?></span>
-				</span>
-			<?php endif; ?>
-
 			<?php $lf_author = trim( (string) get_the_author() ); ?>
 			<?php if ( '' !== $lf_author ) : ?>
 				<span class="lf-meta__item lf-meta__item--author">
@@ -117,6 +110,60 @@ if ( ! $lf_library instanceof WP_Post || 'node_library' !== $lf_library->post_ty
 				</a>
 			<?php endif; ?>
 		</div>
+
+		<?php
+		/*
+		 * 読了時間・文字数バッジは Node 1.3 の実装をそのまま使う。
+		 * 円ゲージ・判定カラー・判定チップは 1.2.5 で作り込まれた資産なので、
+		 * Luna Frontier 側で簡略化しない（配置だけ Article Header 内へ移す）。
+		 */
+		?>
+		<?php if ( ! empty( $lf_reading['chars'] ) && (int) $lf_reading['chars'] > 200 ) : ?>
+			<?php
+			$lf_total_seconds = isset( $lf_reading['reading_seconds'] )
+				? max( 30, (int) $lf_reading['reading_seconds'] )
+				: max( 30, (int) round( ( $lf_reading['chars'] / 550 ) * 60 ) );
+			$lf_minutes       = (int) ceil( $lf_total_seconds / 60 );
+			$lf_time_display  = $lf_total_seconds < 60
+				? '1分未満で読めます'
+				: sprintf( '約%d分で読めます', $lf_minutes );
+			$lf_progress      = isset( $lf_reading['progress'] )
+				? min( 100, max( 0, (float) $lf_reading['progress'] ) )
+				: 0;
+			$lf_angle         = round( $lf_progress * 3.6, 2 );
+			?>
+			<div class="m3-article__meta-reading lf-article-header__reading">
+				<div class="m3-article__reading-badge-expressive m3-ripple-host"
+					id="m3-hero-reading-badge"
+					style="--reading-color: <?php echo esc_attr( (string) $lf_reading['color'] ); ?>; --reading-bg: <?php echo esc_attr( (string) $lf_reading['container_color'] ); ?>; --reading-rank-color: <?php echo esc_attr( (string) $lf_reading['badge_color'] ); ?>; --reading-rank-bg: <?php echo esc_attr( (string) $lf_reading['badge_bg'] ); ?>;">
+					<div class="m3-reading-badge__gauge">
+						<svg viewBox="0 0 36 36"
+							class="m3-reading-circle__svg"
+							style="--target-progress: <?php echo esc_attr( (string) $lf_progress ); ?>; --target-angle: <?php echo esc_attr( (string) $lf_angle ); ?>deg;"
+							aria-hidden="true"
+							focusable="false">
+							<path class="m3-reading-circle__bg" pathLength="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+							<path class="m3-reading-circle__progress" pathLength="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+							<circle class="m3-reading-circle__head" cx="18" cy="2.0845" r="2.15" />
+						</svg>
+						<span class="material-symbols-outlined" aria-hidden="true">timer</span>
+					</div>
+					<div class="m3-reading-badge-content">
+						<span class="m3-reading-badge-text m3-reading-badge-text--main"><?php echo esc_html( $lf_time_display ); ?></span>
+						<span class="m3-reading-badge-label">
+							<span class="m3-badge-label-main"><?php echo esc_html( sprintf( '約%s文字', number_format_i18n( (int) $lf_reading['chars'] ) ) ); ?></span>
+						</span>
+						<span class="m3-reading-rank-chip" data-rank="<?php echo esc_attr( (string) $lf_reading['rank'] ); ?>">
+							<span class="m3-reading-rank-chip__dot" aria-hidden="true"></span>
+							<span class="m3-reading-rank-chip__label"><?php echo esc_html( (string) $lf_reading['label'] ); ?></span>
+						</span>
+						<span id="m3-reading-badge-desc" class="m3-reading-badge-text m3-reading-badge-text--desc">
+							本文の文字数から550字/分で換算した読了目安です。
+						</span>
+					</div>
+				</div>
+			</div>
+		<?php endif; ?>
 
 		<?php // Disclosure（AI / スポンサー）はメタより更に弱い強度で置く ?>
 		<?php if ( function_exists( 'node_the_post_badges' ) ) : ?>

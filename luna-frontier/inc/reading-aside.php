@@ -6,7 +6,8 @@ declare( strict_types=1 );
  *
  * 指示書 §26。
  * 通常の WordPress Sidebar ではなく「記事を読むための副紙面」。
- * 優先順位: TOC → Series → Library → Article context → Category archive。
+ * 優先順位: TOC → Series → Article context。
+ * カテゴリは Article Header に出ているため Aside では繰り返さない。
  * Sticky にするのは原則 TOC だけ。
  *
  * DOM への差し込みは親テーマの luminous_after_article_header アクションを使う
@@ -35,12 +36,11 @@ function luna_frontier_render_reading_aside( int $post_id ): void {
 		? node_series_get_toc_data( $post_id )
 		: null;
 
-	$categories = function_exists( 'node_get_post_categories_for_display' )
-		? node_get_post_categories_for_display( $post_id )
-		: array();
+	// カテゴリは Article Header の eyebrow に出しているので、Aside には置かない
+	// （同じ情報を 1 ページに二度出さない）。
 
 	// 中身が何も無いなら空の紙を作らない（§31 の「空 Surface 禁止」と同じ方針）。
-	if ( empty( $toc_items ) && empty( $series['items'] ) && empty( $categories ) ) {
+	if ( empty( $toc_items ) && empty( $series['items'] ) ) {
 		return;
 	}
 
@@ -90,18 +90,6 @@ function luna_frontier_render_reading_aside( int $post_id ): void {
 			</section>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $categories ) ) : ?>
-			<section class="lf-aside-block" aria-labelledby="lf-aside-cat-title">
-				<h2 class="lf-aside-block__title lf-system-label" id="lf-aside-cat-title">Category</h2>
-				<ul class="lf-aside-list lf-aside-list--inline">
-					<?php foreach ( $categories as $category ) : ?>
-						<li class="lf-aside-list__item">
-							<a href="<?php echo esc_url( (string) get_category_link( $category ) ); ?>"><?php echo esc_html( $category->name ); ?></a>
-						</li>
-					<?php endforeach; ?>
-				</ul>
-			</section>
-		<?php endif; ?>
 	</aside>
 	<?php
 }

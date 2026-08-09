@@ -1,0 +1,333 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Brand Chrome（Topic Nav / Footer）
+ *
+ * ヘッダーとフッターは Luminous Core の額縁。
+ * Dynamic Color は流し込まず、親のブランドトークンで固定する（§23 / §38）。
+ * Paper Design なので四角。階層は面と罫で出す。
+ */
+
+/* ---------------------------------------------------------------------
+ * ヘッダーの Discord を外す。
+ * PHP 側（子 header.php）でマークアップから取り除いているが、
+ * 置換が当たらなかった場合の保険としてここでも隠す。
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-discord-button {
+	display: none;
+}
+
+/* ---------------------------------------------------------------------
+ * Topic Nav — ヘッダーの真下。
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-topic-nav {
+	--lc-accent: var(--md-sys-color-accent-text, #935400);
+	--lc-on-surface: var(--md-sys-color-on-surface, #2b1700);
+
+	background: var(--md-sys-color-surface-container-low, #ffffff);
+	border-block-end: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #d6c2b1) 70%, transparent);
+	border-radius: var(--lf-shape-paper);
+
+	/* 親テーマのヘッダーは position: fixed。ナビは通常フローなので、
+	   ヘッダーの高さぶんだけ自分で下がる必要がある（管理バーぶんも含む）。 */
+	margin-block-start: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px));
+}
+
+/* ---------------------------------------------------------------------
+ * ヘッダー直下の余白は Topic Nav が担うようになったので、
+ * 後続コンテンツ側の clearance を通常の余白へ戻す。
+ * これをしないと「ヘッダー高さ × 2」ぶんの空白ができる。
+ * --------------------------------------------------------------------- */
+body.lf-theme:has(.lf-topic-nav) :is(.m3-home-layout, .m3-archive-layout, .m3-date-archive) {
+	padding-top: var(--lf-space-m);
+}
+
+body.lf-theme:has(.lf-topic-nav) .article-view,
+body.lf-theme:has(.lf-topic-nav) .site-main.m3-search-layout {
+	padding-top: var(--lf-space-m);
+}
+
+body.lf-theme .lf-topic-nav__inner {
+	max-inline-size: var(--lf-content-max);
+	margin-inline: auto;
+	padding-inline: var(--lf-gutter);
+	display: flex;
+	align-items: stretch;
+	gap: var(--lf-space-s);
+	/* 項目が多いときは横スクロールで逃がす。ページ全体は横に伸ばさない（§65）。 */
+	overflow-x: auto;
+	overscroll-behavior-inline: contain;
+	scrollbar-width: thin;
+}
+
+/* ---- 左: おすすめ + SPOTLIGHT 特集 -------------------------------- */
+body.lf-theme .lf-topic-nav__group--spotlight {
+	display: flex;
+	align-items: center;
+	gap: var(--lf-space-2xs);
+	padding-inline-end: var(--lf-space-s);
+	border-inline-end: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #d6c2b1) 70%, transparent);
+}
+
+/* 「おすすめ」は特集群の見出し。ここだけブランドオレンジで塗る Expressive の見せ場（§19）。 */
+body.lf-theme .lf-topic-nav__pick {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	flex: 0 0 auto;
+	padding: 0.4em 1em;
+	border-radius: var(--lf-shape-pill);
+	background: var(--lf-brand);
+	color: #ffffff;
+	font-family: var(--font-ui), sans-serif;
+	font-size: var(--lf-text-2xs);
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+body.lf-theme .lf-topic-nav__pick .material-symbols-outlined {
+	font-size: 1.15em;
+}
+
+body.lf-theme .lf-topic-nav__features {
+	display: flex;
+	align-items: center;
+	gap: var(--lf-space-3xs);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+body.lf-theme .lf-topic-nav__features a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 2.25rem;
+	padding: 0.3em 0.9em;
+	border: 1px solid color-mix(in srgb, var(--lf-brand) 45%, transparent);
+	border-radius: var(--lf-shape-pill);
+	font-size: var(--lf-text-2xs);
+	font-weight: 600;
+	color: var(--lf-brand-text);
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-topic-nav__features a:hover {
+	background: color-mix(in srgb, var(--lf-brand) 12%, transparent);
+}
+
+/* ---- 右: トピック（アイコンの下にラベル） -------------------------- */
+body.lf-theme .lf-topic-nav__list {
+	display: flex;
+	align-items: stretch;
+	gap: var(--lf-space-2xs);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	white-space: nowrap;
+}
+
+body.lf-theme .lf-topic-nav__list > li > a {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.15rem;
+	min-inline-size: 4.5rem;
+	min-block-size: 3.5rem;
+	padding: 0.35rem 0.5rem;
+	font-family: var(--font-ui), sans-serif;
+	font-size: var(--lf-text-2xs);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--lf-on-surface-secondary);
+	text-decoration: none;
+	border-block-end: 2px solid transparent;
+	transition: color var(--lf-motion-fast) var(--lf-easing-standard),
+		border-color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-topic-nav__icon {
+	font-size: 1.5rem;
+	line-height: 1;
+}
+
+body.lf-theme .lf-topic-nav__label {
+	line-height: 1.2;
+}
+
+body.lf-theme .lf-topic-nav__list > li > a:hover,
+body.lf-theme .lf-topic-nav__list > li.is-current > a {
+	color: var(--lf-brand-text);
+	border-block-end-color: var(--lf-brand);
+}
+
+/* SPOTLIGHT はこの列へ統合したので、ホームの独立セクションは出さない
+   （同じリンクの二重表示を避ける）。 */
+body.lf-theme:has(.lf-topic-nav__group--spotlight) .special-features {
+	display: none;
+}
+
+@media (max-width: 599px) {
+	body.lf-theme .lf-topic-nav__inner {
+		gap: var(--lf-space-2xs);
+	}
+
+	/*
+	 * 狭い画面では特集ピル（BLEACH特集 …）が横幅を食い切ってしまい、
+	 * 主役であるトピックがスクロールの外へ追い出される。
+	 * 「おすすめ」ピル自体が特集一覧へのリンクなので、ここへ集約する。
+	 */
+	body.lf-theme .lf-topic-nav__features {
+		display: none;
+	}
+
+	body.lf-theme .lf-topic-nav__group--spotlight {
+		padding-inline-end: var(--lf-space-2xs);
+	}
+
+	body.lf-theme .lf-topic-nav__list > li > a {
+		min-inline-size: 4rem;
+		min-block-size: 3.25rem;
+	}
+
+	body.lf-theme .lf-topic-nav__icon {
+		font-size: 1.35rem;
+	}
+}
+
+/* ---------------------------------------------------------------------
+ * Footer
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-footer {
+	--lc-accent: var(--md-sys-color-accent-text, #935400);
+	--lc-on-surface: var(--md-sys-color-on-surface, #2b1700);
+	--lf-rule: color-mix(in srgb, var(--md-sys-color-outline-variant, #d6c2b1) 60%, transparent);
+
+	border-radius: var(--lf-shape-paper);
+}
+
+body.lf-theme .lf-footer__main {
+	max-inline-size: var(--lf-content-max);
+	margin-inline: auto;
+	padding: var(--lf-space-xl) var(--lf-gutter) var(--lf-space-m);
+}
+
+body.lf-theme .lf-footer__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+	gap: var(--lf-space-l) var(--lf-space-xl);
+	align-items: start;
+}
+
+body.lf-theme .lf-footer__tagline {
+	margin: var(--lf-space-2xs) 0 var(--lf-space-m);
+	font-size: var(--lf-text-s);
+	color: var(--lf-on-surface-secondary);
+	max-inline-size: 34ch;
+}
+
+body.lf-theme .lf-footer__label {
+	margin: 0 0 var(--lf-space-2xs);
+	color: var(--lf-on-surface-muted);
+}
+
+body.lf-theme .lf-footer__social {
+	display: flex;
+	gap: var(--lf-space-2xs);
+}
+
+/* アイコンボタンなので丸を維持する（§22）。 */
+body.lf-theme .lf-footer__social-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 2.75rem;
+	block-size: 2.75rem;
+	border: 1px solid var(--lf-rule);
+	border-radius: var(--lf-shape-pill);
+	color: var(--lf-on-surface-secondary);
+	transition: color var(--lf-motion-fast) var(--lf-easing-standard),
+		border-color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-footer__social-link:hover {
+	color: var(--lc-accent);
+	border-color: var(--lc-accent);
+}
+
+body.lf-theme .lf-footer__links {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+body.lf-theme .lf-footer__links a {
+	display: block;
+	padding: 0.4rem 0;
+	font-size: var(--lf-text-s);
+	color: var(--lf-on-surface-secondary);
+	text-decoration: none;
+}
+
+body.lf-theme .lf-footer__links a:hover {
+	color: var(--lc-accent);
+	text-decoration: underline;
+}
+
+/* ---- 最下部: 著作権 + Feed ---------------------------------------- */
+body.lf-theme .lf-footer__bottom {
+	border-block-start: 1px solid var(--lf-rule);
+}
+
+body.lf-theme .lf-footer__bottom-inner {
+	max-inline-size: var(--lf-content-max);
+	margin-inline: auto;
+	padding: var(--lf-space-s) var(--lf-gutter);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--lf-space-2xs) var(--lf-space-s);
+}
+
+body.lf-theme .lf-footer__copyright {
+	margin: 0;
+	font-size: var(--lf-text-xs);
+	color: var(--lf-on-surface-secondary);
+}
+
+body.lf-theme .lf-footer__version {
+	font-family: var(--font-system), sans-serif;
+	font-size: var(--lf-text-2xs);
+	letter-spacing: 0.08em;
+	color: var(--lf-on-surface-muted);
+	margin-inline-start: var(--lf-space-2xs);
+}
+
+/* RSS は Official SNS ではなく購読手段なので、ここに独立して置く。 */
+body.lf-theme .lf-footer__feed {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45em;
+	min-block-size: 2.25rem;
+	padding: 0.35em 0.9em;
+	border: 1px solid var(--lf-rule);
+	border-radius: var(--lf-shape-chip);
+	font-size: var(--lf-text-2xs);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	color: var(--lf-on-surface-secondary);
+	text-decoration: none;
+	transition: color var(--lf-motion-fast) var(--lf-easing-standard),
+		border-color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-footer__feed:hover {
+	color: var(--lc-accent);
+	border-color: var(--lc-accent);
+}

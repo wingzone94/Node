@@ -88,15 +88,9 @@ function luna_frontier_asset_version( string $relative_file ): string {
  * こちらは 20 で走らせて必ず親の後に載せる（= 低い specificity でも上書きが効く）。
  */
 function luna_frontier_enqueue_assets(): void {
-	// Manrope / Inter / Noto Sans JP は親 header.php が読み込み済み。
-	// Luna Frontier が追加で必要なのは Orbitron（短い機能ラベル専用）だけ。
-	// 用途が限られるため 600 の 1 ウェイトに絞る（§50: 必要な Font Weight だけ）。
-	wp_enqueue_style(
-		'luna-frontier-orbitron',
-		'https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap',
-		array(),
-		null
-	);
+	// フォントは親 header.php が読み込む Manrope / Inter / Noto Sans JP だけを使う。
+	// 当初は機能ラベル用に Orbitron を追加していたが、2026-08-09 のユーザー指示で不採用。
+	// 追加ウェイトを読まないぶん、フォント読み込みは Node 1.3 と同じコストになる。
 
 	$style = luna_frontier_manifest_entry( 'src/styles/luna.css' );
 
@@ -157,3 +151,19 @@ function luna_frontier_body_class( array $classes ): array {
 	return $classes;
 }
 add_filter( 'body_class', 'luna_frontier_body_class' );
+
+/**
+ * トピックナビ用のメニュー位置を追加する。
+ *
+ * 親テーマの primary / footer には手を触れない。未設定のあいだは
+ * template-parts/luna/topic-nav.php が上位カテゴリで自動的に埋める。
+ */
+function luna_frontier_register_menus(): void {
+	register_nav_menus(
+		array(
+			'luna_topics' => __( 'トピック（Luna Frontier）', 'luna-frontier' ),
+		)
+	);
+}
+add_action( 'after_setup_theme', 'luna_frontier_register_menus', 20 );
+
