@@ -286,13 +286,13 @@ function luna_frontier_build_roles( string $seed ): array {
 		'--lc-on-primary-container' => luna_frontier_hsl_to_hex( $h, min( 0.6, $s ), 0.16 ),
 		'--lc-secondary'           => $light_second,
 		'--lc-on-secondary'        => luna_frontier_on_color( $light_second, $h, $s ),
-		'--lc-surface'             => luna_frontier_hsl_to_hex( $h, $s * 0.22, 0.975 ),
-		'--lc-surface-variant'     => luna_frontier_hsl_to_hex( $h, $s * 0.26, 0.945 ),
+		'--lc-surface'             => luna_frontier_hsl_to_hex( $h, $s * 0.26, 0.95 ),
+		'--lc-surface-variant'     => luna_frontier_hsl_to_hex( $h, $s * 0.3, 0.915 ),
 		'--lc-on-surface'          => luna_frontier_hsl_to_hex( $h, min( 0.28, $s * 0.4 ), 0.13 ),
 		'--lc-accent'              => $light_accent,
 		'--lc-outline'             => luna_frontier_hsl_to_hex( $h, $s * 0.24, 0.74 ),
-		'--lf-paper'               => luna_frontier_hsl_to_hex( $h, $s * 0.14, 0.995 ),
-		'--lf-paper-sunken'        => luna_frontier_hsl_to_hex( $h, $s * 0.22, 0.96 ),
+		'--lf-paper'               => luna_frontier_hsl_to_hex( $h, $s * 0.1, 0.995 ),
+		'--lf-paper-sunken'        => luna_frontier_hsl_to_hex( $h, $s * 0.26, 0.93 ),
 	);
 
 	$dark = array(
@@ -303,13 +303,13 @@ function luna_frontier_build_roles( string $seed ): array {
 		'--lc-on-primary-container' => luna_frontier_hsl_to_hex( $h, $s * 0.4, 0.9 ),
 		'--lc-secondary'           => $dark_second,
 		'--lc-on-secondary'        => luna_frontier_on_color( $dark_second, $h, $s ),
-		'--lc-surface'             => luna_frontier_hsl_to_hex( $h, $s * 0.16, 0.09 ),
+		'--lc-surface'             => luna_frontier_hsl_to_hex( $h, $s * 0.18, 0.075 ),
 		'--lc-surface-variant'     => luna_frontier_hsl_to_hex( $h, $s * 0.18, 0.14 ),
 		'--lc-on-surface'          => luna_frontier_hsl_to_hex( $h, $s * 0.12, 0.93 ),
 		'--lc-accent'              => $dark_accent,
 		'--lc-outline'             => luna_frontier_hsl_to_hex( $h, $s * 0.2, 0.42 ),
-		'--lf-paper'               => luna_frontier_hsl_to_hex( $h, $s * 0.16, 0.12 ),
-		'--lf-paper-sunken'        => luna_frontier_hsl_to_hex( $h, $s * 0.16, 0.08 ),
+		'--lf-paper'               => luna_frontier_hsl_to_hex( $h, $s * 0.16, 0.135 ),
+		'--lf-paper-sunken'        => luna_frontier_hsl_to_hex( $h, $s * 0.16, 0.06 ),
 	);
 
 	// on-surface が面に対して AA を割らないよう最終確認する。

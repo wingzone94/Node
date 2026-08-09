@@ -1,0 +1,232 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Search（Phase 9）
+ *
+ * 指示書 §43 / §17〜§19。
+ * 標準 Material 3 のフォームを土台にし、Expressive は「検索実行」だけに残す。
+ * Paper（四角）の面に、フィールドは M3 の Outlined text field 相当。
+ */
+
+body.lf-theme .lf-search__header {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: var(--lf-space-2xs) var(--lf-space-s);
+	max-inline-size: var(--lf-content-max);
+	margin: var(--lf-space-m) auto var(--lf-space-s);
+	padding-inline: var(--lf-gutter);
+}
+
+body.lf-theme .lf-search__title {
+	margin: 0;
+	font-family: var(--font-heading), sans-serif;
+	font-size: var(--lf-text-2xl);
+	font-weight: 800;
+	line-height: var(--lf-leading-tight);
+	color: var(--lc-on-surface);
+}
+
+body.lf-theme .lf-search__count {
+	margin: 0;
+	font-size: var(--lf-text-s);
+	color: var(--lf-on-surface-secondary);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------
+ * Form Paper
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-search-form {
+	max-inline-size: var(--lf-content-max);
+	margin: 0 auto var(--lf-space-l);
+	padding: var(--lf-space-s) var(--lf-gutter) var(--lf-space-xs);
+	background: var(--lf-paper);
+	border-block: 1px solid var(--lf-rule);
+	border-radius: var(--lf-shape-paper);
+}
+
+/* Basic: 常時表示。ここだけで検索が完結する。 */
+body.lf-theme .lf-search-form__basic {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: var(--lf-space-2xs) var(--lf-space-s);
+}
+
+body.lf-theme .lf-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-inline-size: 0;
+}
+
+body.lf-theme .lf-field--grow {
+	flex: 1 1 14rem;
+}
+
+body.lf-theme .lf-field__label {
+	font-size: var(--lf-text-2xs);
+	letter-spacing: 0.06em;
+	color: var(--lf-on-surface-muted);
+}
+
+body.lf-theme .lf-field__control {
+	font: inherit;
+	font-size: var(--lf-text-s);
+	color: var(--lc-on-surface);
+	background: var(--lf-paper);
+	border: 1px solid var(--lf-rule-strong);
+	border-radius: var(--lf-shape-action);
+	padding: 0.55em 0.75em;
+	min-block-size: 2.75rem;
+	inline-size: 100%;
+	max-inline-size: 100%;
+}
+
+body.lf-theme .lf-field__control:focus-visible {
+	border-color: var(--lc-accent);
+}
+
+/* 検索実行だけ Expressive を残す（§19）。ピル形状 + 明確な塗り。 */
+body.lf-theme .lf-search-form__submit {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+	font: inherit;
+	font-size: var(--lf-text-s);
+	font-weight: 700;
+	color: var(--lc-on-primary);
+	background: var(--lc-primary);
+	border: 0;
+	border-radius: var(--lf-shape-pill);
+	padding: 0.7em 1.6em;
+	min-block-size: 2.75rem;
+	cursor: pointer;
+	transition: filter var(--lf-motion-base) var(--lf-easing-emphasized),
+		transform var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-search-form__submit:hover {
+	filter: brightness(1.06);
+}
+
+body.lf-theme .lf-search-form__submit:active {
+	transform: scale(0.98);
+}
+
+/* ---------------------------------------------------------------------
+ * Advanced: 任意展開。<details> なので JS 無しで開閉できる。
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-search-form__advanced {
+	margin-block-start: var(--lf-space-2xs);
+	border-block-start: 1px solid var(--lf-rule);
+}
+
+body.lf-theme .lf-search-form__advanced-head {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding-block: var(--lf-space-2xs);
+	cursor: pointer;
+	color: var(--lf-on-surface-secondary);
+	list-style: none;
+	min-block-size: 2.75rem;
+}
+
+body.lf-theme .lf-search-form__advanced-head::-webkit-details-marker {
+	display: none;
+}
+
+body.lf-theme .lf-search-form__advanced-head::after {
+	content: "expand_more";
+	font-family: "Material Symbols Outlined", sans-serif;
+	margin-inline-start: auto;
+	transition: transform var(--lf-motion-base) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-search-form__advanced[open] .lf-search-form__advanced-head::after {
+	transform: rotate(180deg);
+}
+
+body.lf-theme .lf-search-form__advanced-body {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: var(--lf-space-s) var(--lf-space-m);
+	padding-block: var(--lf-space-2xs) var(--lf-space-s);
+}
+
+body.lf-theme .lf-fieldset {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-inline-size: 0;
+}
+
+body.lf-theme .lf-fieldset__legend {
+	padding: 0;
+	font-size: var(--lf-text-2xs);
+	letter-spacing: 0.06em;
+	color: var(--lf-on-surface-muted);
+}
+
+body.lf-theme .lf-field-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--lf-space-2xs) var(--lf-space-s);
+	align-items: end;
+}
+
+body.lf-theme .lf-field-row > .lf-field {
+	flex: 1 1 8rem;
+}
+
+body.lf-theme .lf-choice-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--lf-space-3xs) var(--lf-space-2xs);
+	padding-block-start: 0.35rem;
+}
+
+/* 選択チップはピルを維持（§22）。 */
+body.lf-theme .lf-choice {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45em;
+	padding: 0.45em 0.9em;
+	border: 1px solid var(--lf-rule-strong);
+	border-radius: var(--lf-shape-chip);
+	font-size: var(--lf-text-2xs);
+	color: var(--lf-on-surface-secondary);
+	cursor: pointer;
+	min-block-size: 2.25rem;
+}
+
+body.lf-theme .lf-choice:has(input:checked) {
+	border-color: var(--lc-accent);
+	color: var(--lc-accent);
+	background: color-mix(in srgb, var(--lc-accent) 10%, transparent);
+}
+
+/* ---------------------------------------------------------------------
+ * 0 件表示
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-no-results {
+	max-inline-size: var(--lf-content-max);
+	margin-inline: auto;
+	padding: var(--lf-space-xl) var(--lf-gutter);
+	text-align: start;
+}
+
+body.lf-theme .lf-no-results__title {
+	margin: 0 0 var(--lf-space-2xs);
+	font-family: var(--font-heading), sans-serif;
+	font-size: var(--lf-text-l);
+	font-weight: 700;
+	color: var(--lc-on-surface);
+}
+
+body.lf-theme .lf-no-results__text {
+	margin: 0;
+	font-size: var(--lf-text-s);
+	color: var(--lf-on-surface-secondary);
+	max-inline-size: var(--lf-measure);
+}
