@@ -132,7 +132,7 @@ body.lf-theme .m3-article__body h5 {
 	font-weight: 700;
 	margin: var(--lf-space-m) 0 var(--lf-space-2xs);
 	opacity: 1;
-	color: color-mix(in srgb, var(--lc-on-surface) 88%, transparent);
+	color: var(--lf-on-surface-secondary);
 }
 
 body.lf-theme .m3-article__body h6 {
@@ -141,7 +141,7 @@ body.lf-theme .m3-article__body h6 {
 	margin: var(--lf-space-m) 0 var(--lf-space-2xs);
 	opacity: 1;
 	letter-spacing: 0.04em;
-	color: color-mix(in srgb, var(--lc-on-surface) 76%, transparent);
+	color: var(--lf-on-surface-secondary);
 }
 
 /* 見出しが連続する場合は上余白を詰める。 */

@@ -69,7 +69,7 @@ body.lf-theme .lf-article-header__meta {
 	align-items: center;
 	gap: var(--lf-space-2xs) var(--lf-space-s);
 	font-size: var(--lf-text-xs);
-	color: color-mix(in srgb, var(--lc-on-surface) 68%, transparent);
+	color: var(--lf-on-surface-secondary);
 }
 
 body.lf-theme .lf-meta__item {
@@ -82,7 +82,7 @@ body.lf-theme .lf-meta__item {
 body.lf-theme .lf-meta__label {
 	font-size: var(--lf-text-2xs);
 	letter-spacing: 0.06em;
-	color: color-mix(in srgb, var(--lc-on-surface) 48%, transparent);
+	color: var(--lf-on-surface-muted);
 }
 
 /* チップ（分類・状態）はピルのまま維持する（§22）。 */
@@ -96,13 +96,13 @@ body.lf-theme .lf-meta__chip {
 	font-size: var(--lf-text-2xs);
 	font-weight: 600;
 	line-height: 1.6;
-	color: color-mix(in srgb, var(--lc-on-surface) 82%, transparent);
+	color: var(--lf-on-surface-secondary);
 	text-decoration: none;
 }
 
 body.lf-theme .lf-meta__chip-sub {
 	font-weight: 400;
-	color: color-mix(in srgb, var(--lc-on-surface) 56%, transparent);
+	color: var(--lf-on-surface-muted);
 }
 
 body.lf-theme .lf-meta__chip--link {
@@ -143,7 +143,7 @@ body.lf-theme .lf-intelligence-summary__head {
 	align-items: center;
 	gap: 0.5em;
 	cursor: pointer;
-	color: color-mix(in srgb, var(--lc-on-surface) 62%, transparent);
+	color: var(--lf-on-surface-muted);
 	list-style: none;
 }
 
@@ -176,14 +176,14 @@ body.lf-theme .lf-intelligence-summary__text {
 	margin: 0;
 	font-size: var(--lf-text-s);
 	line-height: var(--lf-leading-snug);
-	color: color-mix(in srgb, var(--lc-on-surface) 86%, transparent);
+	color: var(--lf-on-surface-secondary);
 	max-inline-size: var(--lf-measure);
 }
 
 body.lf-theme .lf-intelligence-summary__credit {
 	margin: var(--lf-space-3xs) 0 0;
 	font-size: var(--lf-text-2xs);
-	color: color-mix(in srgb, var(--lc-on-surface) 45%, transparent);
+	color: var(--lf-on-surface-muted);
 }
 
 /* ---------------------------------------------------------------------

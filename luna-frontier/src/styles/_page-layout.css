@@ -50,7 +50,7 @@ body.lf-theme .lf-page-header__title {
 body.lf-theme .lf-page-header__meta {
 	margin: var(--lf-space-2xs) 0 0;
 	font-size: var(--lf-text-xs);
-	color: color-mix(in srgb, var(--lc-on-surface) 60%, transparent);
+	color: var(--lf-on-surface-secondary);
 }
 
 body.lf-theme .lf-page-aside {

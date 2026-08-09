@@ -29,7 +29,7 @@ body.lf-theme .lf-aside-block {
 
 body.lf-theme .lf-aside-block__title {
 	margin: 0 0 var(--lf-space-2xs);
-	color: color-mix(in srgb, var(--lc-on-surface) 55%, transparent);
+	color: var(--lf-on-surface-muted);
 	font-size: var(--lf-text-2xs);
 }
 
@@ -60,7 +60,7 @@ body.lf-theme .lf-toc__link,
 body.lf-theme .lf-aside-list__item a {
 	display: block;
 	padding: 0.3rem 0;
-	color: color-mix(in srgb, var(--lc-on-surface) 78%, transparent);
+	color: var(--lf-on-surface-secondary);
 	text-decoration: none;
 	line-height: var(--lf-leading-snug);
 	border-inline-start: 2px solid transparent;
