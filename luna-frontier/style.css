@@ -1,0 +1,16 @@
+/*
+Theme Name: Luna Frontier
+Theme URI: https://luminous-core.net/
+Author: Luminous Core Teams
+Author URI: https://luminous-core.net/
+Description: Luna Frontier — SkyAlow Prototype for Luminous Core
+Version: 2.0.0-alpha
+Template: node
+Text Domain: luna-frontier
+*/
+
+/*
+  このファイルは WordPress のテーマメタデータ用。
+  実際のスタイルは Vite でビルドした assets/css/luna.css を functions.php から
+  親テーマのスタイルの後に読み込む。ここに CSS を直接書かないこと。
+*/

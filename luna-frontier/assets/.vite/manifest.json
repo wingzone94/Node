@@ -1,0 +1,13 @@
+{
+  "src/luna.js": {
+    "file": "js/luna.js",
+    "name": "luna",
+    "src": "src/luna.js",
+    "isEntry": true
+  },
+  "src/styles/luna.css": {
+    "file": "css/luna-style.css",
+    "src": "src/styles/luna.css",
+    "isEntry": true
+  }
+}
