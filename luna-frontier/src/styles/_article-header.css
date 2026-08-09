@@ -1,0 +1,195 @@
+/**
+ * Luna Frontier 2.0 / SkyAlow — Article Header + Intelligence Summary（Phase 4）
+ *
+ * 指示書 §30 / §31。
+ * 情報の視覚強度を Category < Title > Metadata > Summary の順に明確に落とす。
+ * Paper（四角）で、階層は spacing / rule / typography で作る。
+ */
+
+body.lf-theme .lf-article-header {
+	background: var(--lf-paper);
+	border-block: 1px solid var(--lf-rule);
+	border-radius: var(--lf-shape-paper);
+	margin-block-end: var(--lf-space-m);
+	overflow: clip;
+}
+
+/* アイキャッチは「読む前の情報」なので、Title より強くしない。高さを抑える。 */
+body.lf-theme .lf-article-header__media {
+	margin: 0;
+	background: var(--lf-paper-sunken);
+}
+
+body.lf-theme .lf-article-header__image {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+	max-block-size: min(42vh, 20rem);
+	object-fit: cover;
+	border-radius: 0;
+}
+
+body.lf-theme .lf-article-header__inner {
+	padding: var(--lf-space-m) var(--lf-gutter) var(--lf-space-s);
+	display: flex;
+	flex-direction: column;
+	gap: var(--lf-space-xs);
+}
+
+/* 1. Category — 小さく、しかし分類として読み取れる強度。 */
+body.lf-theme .lf-article-header__eyebrow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--lf-space-3xs);
+	font-size: var(--lf-text-2xs);
+}
+
+body.lf-theme .lf-article-header__eyebrow:empty {
+	display: none;
+}
+
+/* 2. Title — このページで最も強い要素。 */
+body.lf-theme .lf-article-header__title {
+	margin: 0;
+	font-family: var(--font-heading), sans-serif;
+	font-size: var(--lf-text-3xl);
+	font-weight: 800;
+	line-height: var(--lf-leading-tight);
+	letter-spacing: -0.015em;
+	font-feature-settings: "palt" 1;
+	color: var(--lc-on-surface);
+	text-wrap: balance;
+	max-inline-size: 34ch;
+}
+
+/* 3-4. Metadata — 弱い。読み飛ばせること。 */
+body.lf-theme .lf-article-header__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--lf-space-2xs) var(--lf-space-s);
+	font-size: var(--lf-text-xs);
+	color: color-mix(in srgb, var(--lc-on-surface) 68%, transparent);
+}
+
+body.lf-theme .lf-meta__item {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.4em;
+	font-variant-numeric: tabular-nums;
+}
+
+body.lf-theme .lf-meta__label {
+	font-size: var(--lf-text-2xs);
+	letter-spacing: 0.06em;
+	color: color-mix(in srgb, var(--lc-on-surface) 48%, transparent);
+}
+
+/* チップ（分類・状態）はピルのまま維持する（§22）。 */
+body.lf-theme .lf-meta__chip {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.5em;
+	padding: 0.25em 0.85em;
+	border: 1px solid var(--lf-rule-strong);
+	border-radius: var(--lf-shape-chip);
+	font-size: var(--lf-text-2xs);
+	font-weight: 600;
+	line-height: 1.6;
+	color: color-mix(in srgb, var(--lc-on-surface) 82%, transparent);
+	text-decoration: none;
+}
+
+body.lf-theme .lf-meta__chip-sub {
+	font-weight: 400;
+	color: color-mix(in srgb, var(--lc-on-surface) 56%, transparent);
+}
+
+body.lf-theme .lf-meta__chip--link {
+	border-color: color-mix(in srgb, var(--lc-accent) 45%, transparent);
+	color: var(--lc-accent);
+	transition: background-color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-meta__chip--link:hover {
+	background: color-mix(in srgb, var(--lc-accent) 10%, transparent);
+}
+
+/* Disclosure — メタより更に弱く。ただし隠さない。 */
+body.lf-theme .lf-article-header__disclosure:empty {
+	display: none;
+}
+
+body.lf-theme .lf-article-header__disclosure {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--lf-space-3xs);
+	font-size: var(--lf-text-2xs);
+}
+
+/* ---------------------------------------------------------------------
+ * 5. Intelligence Summary（統合済み）
+ * Header の Paper の中で「本文への導入」として置く。Title より目立たせない。
+ * <details> を使い、JS 無しで開閉できるようにする（§16）。
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-intelligence-summary {
+	margin-block-start: var(--lf-space-2xs);
+	padding-block-start: var(--lf-space-xs);
+	border-block-start: 1px solid var(--lf-rule);
+}
+
+body.lf-theme .lf-intelligence-summary__head {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	cursor: pointer;
+	color: color-mix(in srgb, var(--lc-on-surface) 62%, transparent);
+	list-style: none;
+}
+
+body.lf-theme .lf-intelligence-summary__head::-webkit-details-marker {
+	display: none;
+}
+
+body.lf-theme .lf-intelligence-summary__head::after {
+	content: "expand_more";
+	font-family: "Material Symbols Outlined", sans-serif;
+	font-size: 1.15em;
+	margin-inline-start: auto;
+	transition: transform var(--lf-motion-base) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-intelligence-summary[open] .lf-intelligence-summary__head::after {
+	transform: rotate(180deg);
+}
+
+body.lf-theme .lf-intelligence-summary__icon {
+	font-size: 1.15em;
+	color: var(--lc-accent);
+}
+
+body.lf-theme .lf-intelligence-summary__body {
+	padding-block-start: var(--lf-space-2xs);
+}
+
+body.lf-theme .lf-intelligence-summary__text {
+	margin: 0;
+	font-size: var(--lf-text-s);
+	line-height: var(--lf-leading-snug);
+	color: color-mix(in srgb, var(--lc-on-surface) 86%, transparent);
+	max-inline-size: var(--lf-measure);
+}
+
+body.lf-theme .lf-intelligence-summary__credit {
+	margin: var(--lf-space-3xs) 0 0;
+	font-size: var(--lf-text-2xs);
+	color: color-mix(in srgb, var(--lc-on-surface) 45%, transparent);
+}
+
+/* ---------------------------------------------------------------------
+ * 親テーマの旧ヒーロー由来の余白が残ると本文までが遠くなる（§30）。
+ * 子ヒーローに置き換えた分の距離を詰める。
+ * --------------------------------------------------------------------- */
+body.lf-theme .m3-article__body {
+	margin-block-start: 0;
+}
