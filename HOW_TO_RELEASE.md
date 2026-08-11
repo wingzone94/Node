@@ -82,7 +82,7 @@ rm -f node.zip
 repo_dir=$(pwd)
 tmpdir=$(mktemp -d)
 rsync -a \
-  --exclude='.git/' \
+  --exclude='.git' \
   --exclude='node_modules/' \
   --exclude='*.zip' \
   --exclude='.DS_Store' \
@@ -95,6 +95,7 @@ rsync -a \
   --exclude='.agents/' \
   --exclude='scratch/' \
   --exclude='production_plugins/' \
+  --exclude='luna-frontier/' \
   --exclude='src/' \
   --exclude='vendor/' \
   --exclude='tests/' \

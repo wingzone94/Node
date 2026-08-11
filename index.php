@@ -11,7 +11,7 @@ get_header();
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
 
         if (!empty($spotlight_cats)) : ?>
-            <section class="special-features m3-surface m3-section-spacing" aria-labelledby="spotlight-title">
+            <section id="spotlight" class="special-features m3-surface m3-section-spacing" aria-labelledby="spotlight-title">
                 <div class="m3-headlines__header" style="margin-bottom: 24px; padding: 0;">
                     <h2 id="spotlight-title" class="m3-section-title m3-headlines__title" style="margin-bottom: 0;">
                         <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
@@ -36,6 +36,7 @@ get_header();
         <?php endif;
 
         // HEADLINE（速報）: 横スクロール1段に固定し、LATEST をファーストビューへ引き上げる
+        echo '<span id="headline" class="screen-reader-text" aria-hidden="true"></span>';
         get_template_part('template-parts/headline-carousel');
     }
     ?>
@@ -44,11 +45,10 @@ get_header();
         <?php
         $is_first_page       = (is_home() && !is_paged());
         $featured_card_limit = 4;
-        // LATEST は6件（2026-08-08 ユーザー指示）。以降は「すべて見る」の下の
-        // 通常グリッドへ流す。
+        // ホームの LATEST は6件で表示を打ち切り、残りは「すべて見る」へ集約する。
         $latest_limit        = 6;
         ?>
-        <section class="l-card-grid m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
+        <section<?php echo $is_first_page ? ' id="latest"' : ''; ?> class="l-card-grid m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
             <?php if ($is_first_page) : ?>
                 <div class="m3-surface m3-surface--latest m3-section-spacing">
                     <h2 id="latest-title" class="m3-section-title"><span class="material-symbols-outlined" aria-hidden="true">bolt</span> LATEST <span class="m3-section-title__sub">最新記事</span></h2>
@@ -60,26 +60,15 @@ get_header();
             <?php endif; ?>
 
             <?php
-            $switched = false;
             while (have_posts()) : the_post();
-                if ($is_first_page && $wp_query->current_post === $latest_limit && !$switched) {
-                    ?>
-                    </div>
-                    <a class="m3-latest-see-all m3-button m3-button--text" href="<?php echo esc_url(node_get_all_articles_url()); ?>">
-                        <span class="m3-latest-see-all__text">すべて見る</span>
-                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                    </a>
-                    </div>
-                    <div class="m3-divider-wrapper"><hr class="m3-divider m3-divider--expressive" aria-hidden="true"></div>
-                    <div class="m3-surface m3-surface--articles m3-section-spacing"><div class="l-card-grid__items m3-post-grid__container is-articles-grid">
-                    <?php
-                    $switched = true;
+                if ($is_first_page && $wp_query->current_post >= $latest_limit) {
+                    break;
                 }
                 $card_class = ($is_first_page && $wp_query->current_post < $featured_card_limit) ? 'card-featured' : 'card-standard';
                 get_template_part('template-parts/card', null, ['card_class' => $card_class]);
             endwhile;
             ?>
-            <?php if ($is_first_page && !$switched) : ?>
+            <?php if ($is_first_page) : ?>
                 </div>
                 <a class="m3-latest-see-all m3-button m3-button--text" href="<?php echo esc_url(node_get_all_articles_url()); ?>">
                     <span class="m3-latest-see-all__text">すべて見る</span>
