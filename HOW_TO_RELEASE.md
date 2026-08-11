@@ -75,7 +75,7 @@ printf '{\n    "build_id": "%s",\n    "built_at": "%s",\n    "version": "%s"\n}\
 ### 4-b. ZIP生成
 プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
 
-配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
+配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。`--exclude='.git/'`（末尾スラッシュ付き）はディレクトリにしかマッチしないため、git worktree 運用で `.git` が**ファイル**（`gitdir:` ポインタ）になっている環境ではZIPに混入する。スラッシュ無しの `--exclude='.git'` を併記すること（1.2.5 のZIPには 78 バイトの `Node/.git` が入っていた）。本番動作に不要な `scripts/`（検証スクリプト）と `.github/`（Actions定義）も除外する。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
 
 ```bash
 rm -f node.zip
@@ -83,6 +83,9 @@ repo_dir=$(pwd)
 tmpdir=$(mktemp -d)
 rsync -a \
   --exclude='.git' \
+  --exclude='.git/' \
+  --exclude='.github/' \
+  --exclude='scripts/' \
   --exclude='node_modules/' \
   --exclude='*.zip' \
   --exclude='.DS_Store' \

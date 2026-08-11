@@ -276,6 +276,45 @@
     object-fit: contain;
 }
 
+/* ---- Store card (Nintendo / PlayStation / Xbox / Steam) ----
+   M3 tonal container: the card surface itself carries a low-chroma tint of the
+   platform color — no extra rules, bars or badges. Structure, spacing, radius and
+   elevation stay identical to the standard card; only the surface tone, outline and
+   state layer change. Colors come from the shared brand tokens in _variables.css. */
+.m3-blogcard--store {
+    --m3-store-accent: var(--md-sys-color-primary);
+    background: color-mix(in srgb, var(--m3-store-accent) 7%, var(--md-sys-color-surface-container-low));
+    border-color: color-mix(in srgb, var(--m3-store-accent) 24%, var(--md-sys-color-outline-variant));
+}
+
+.m3-blogcard--store-nintendo    { --m3-store-accent: var(--brand-nintendo); }
+.m3-blogcard--store-playstation { --m3-store-accent: var(--brand-sony); }
+.m3-blogcard--store-xbox        { --m3-store-accent: var(--brand-xbox); }
+.m3-blogcard--store-steam       { --m3-store-accent: var(--brand-windows); }
+
+/* State layer in the platform color (標準カードは on-surface) */
+.m3-blogcard--store::before {
+    background: var(--m3-store-accent);
+}
+
+.m3-blogcard--store:hover {
+    border-color: color-mix(in srgb, var(--m3-store-accent) 50%, var(--md-sys-color-outline-variant));
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--m3-store-accent) 22%, transparent);
+}
+
+.m3-blogcard--store .m3-blogcard__sitename {
+    color: var(--m3-store-accent);
+}
+
+[data-theme="dark"] .m3-blogcard--store {
+    background: color-mix(in srgb, var(--m3-store-accent) 16%, var(--md-sys-color-surface-container-high));
+    border-color: color-mix(in srgb, var(--m3-store-accent) 34%, var(--md-sys-color-outline-variant));
+}
+
+[data-theme="dark"] .m3-blogcard--store .m3-blogcard__sitename {
+    color: color-mix(in srgb, var(--m3-store-accent) 70%, #fff);
+}
+
 /* ---- Responsive: stack on narrow screens ---- */
 @media (max-width: 600px) {
     .m3-blogcard__body {
