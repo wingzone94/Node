@@ -6,7 +6,7 @@
 ![WordPress](https://img.shields.io/badge/WordPress-6.0+-21759b?style=for-the-badge&logo=wordpress)
 
 Material Design 3 (Expressive) の哲学を WordPress テーマに昇華させた、次世代のクリエイティブ・プラットフォーム。  
-README には各リリースの要点を掲載し、完全な更新履歴は `CHANGELOG.md` に収録します。
+README には `1.x.0` リリースの要点を掲載し、完全な更新履歴は `CHANGELOG.md` に収録します。
 
 ## 主な機能
 - **Material You 動的カラー:** アイキャッチ画像やカテゴリ設定からテーマカラーを自動生成。
@@ -29,12 +29,6 @@ README には各リリースの要点を掲載し、完全な更新履歴は `CH
 - **検索とプラットフォーム導線を刷新** — 詳細検索、検索結果、プラットフォームアーカイブを整理し、記事・シリーズ・Node Libraryを横断して探しやすくしました。
 - **検索エンジン向け構造を改善** — 重複URL、canonical、サイトマップ、日付・タグアーカイブ、検索ボックス構造化データを見直しました。
 - **制作・検証基盤を強化** — CSS構造、テーマ基盤、PHPUnit、ルート検査、モバイルビジュアル検査、配布ZIP検証をリリースゲートへ組み込みました。
-
-## v1.2.1 (2026.07.19)
-Node 1.3「Connect」で正式提供予定の外部連携プラグイン **node-connect（ベータ版）** を同梱するマイナーアップデートです。本番環境での動作検証を目的としています。
-
-- **node-connect ベータ版を同梱** — 記事の公開・更新・非公開化・削除を Discord へ自動通知する Webhook 基盤。設定 → 外部連携から Webhook URL（最大3件）とイベントを選んで利用します。テーマZIP内の `plugins-embedded/node-connect/` および `production_plugins/node-connect.zip`（インストール用）として同梱。
-- テーマ更新（Luminous Settings の更新インストール）成功時に `node_connect_event` を発火するフックを追加。
 
 ## v1.2.0 (2026.07.18)
 Node の記事体験を一新するメジャーアップデートです。詳細は [CHANGELOG.md](./CHANGELOG.md) を参照してください。

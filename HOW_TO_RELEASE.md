@@ -142,17 +142,21 @@ rm -rf "$tmpdir"
 
 ### 5-a. README / CHANGELOG のリリースノート確認（必須）
 
-GitHubへリリース版をpushする前に、**`README.md` と `CHANGELOG.md` の両方へ、今回のバージョン・正式リリース日・主要なパッチノートを記載します**。CHANGELOGだけを更新してREADMEを省略してはいけません。
+GitHubへリリース版をpushする前に、`CHANGELOG.md`には毎回、今回のバージョン・正式リリース日・パッチノートを記載します。
 
-- `README.md`: 利用者が最初に確認できる簡潔なパッチノート
-- `CHANGELOG.md`: 修正理由や影響範囲を含む完全な更新履歴
-- 両方のバージョンと日付が `style.css` のリリース内容と一致すること
+`README.md`へのパッチノート掲載は、**バージョンが `1.x.0` のリリース時だけ**必須です。たとえば `1.3.0` は掲載し、`1.3.1` や `1.3.2` は掲載しません。
+
+- `README.md`: `1.x.0`リリースだけ、利用者向けの簡潔なパッチノートを掲載
+- `CHANGELOG.md`: すべてのリリースについて、修正理由や影響範囲を含む完全な更新履歴を掲載
+- 掲載対象では、バージョンと日付が `style.css` のリリース内容と一致すること
 
 ```bash
 release_version="$(grep -m1 '^Version:' style.css | awk '{print $2}')"
 release_date="YYYY.MM.DD" # 今回の正式リリース日に置き換える
-rg -n -x -F "## v${release_version} (${release_date})" README.md
 rg -n -x -F "## [${release_version}] - ${release_date}" CHANGELOG.md
+if [[ "${release_version}" =~ ^1\.[0-9]+\.0$ ]]; then
+  rg -n -x -F "## v${release_version} (${release_date})" README.md
+fi
 ```
 
 上記の確認が通らない場合は、コミット・push・ZIP公開へ進みません。
