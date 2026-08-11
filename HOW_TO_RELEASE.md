@@ -140,6 +140,23 @@ rm -rf "$tmpdir"
 ## 5. Git へのコミットとプッシュ
 変更したソースコードと、生成した本番用ZIPファイルをGitHubにプッシュします。
 
+### 5-a. README / CHANGELOG のリリースノート確認（必須）
+
+GitHubへリリース版をpushする前に、**`README.md` と `CHANGELOG.md` の両方へ、今回のバージョン・正式リリース日・主要なパッチノートを記載します**。CHANGELOGだけを更新してREADMEを省略してはいけません。
+
+- `README.md`: 利用者が最初に確認できる簡潔なパッチノート
+- `CHANGELOG.md`: 修正理由や影響範囲を含む完全な更新履歴
+- 両方のバージョンと日付が `style.css` のリリース内容と一致すること
+
+```bash
+release_version="$(grep -m1 '^Version:' style.css | awk '{print $2}')"
+release_date="YYYY.MM.DD" # 今回の正式リリース日に置き換える
+rg -n -x -F "## v${release_version} (${release_date})" README.md
+rg -n -x -F "## [${release_version}] - ${release_date}" CHANGELOG.md
+```
+
+上記の確認が通らない場合は、コミット・push・ZIP公開へ進みません。
+
 ```bash
 # 変更されたファイルをステージング
 git add .
