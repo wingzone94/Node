@@ -49,3 +49,19 @@
 @import './_article-polish.css';
 @import './_toc-fab.css';
 @import './_content-flow.css';
+
+/* WordPress core keeps fixed-layout tables unlayered. Keep this mobile-only
+ * override unlayered so article tables can scroll instead of compressing. */
+@media (max-width: 600px) {
+    .m3-article__body .wp-block-table table.has-fixed-layout {
+        width: max-content;
+        min-width: 100%;
+        table-layout: auto;
+    }
+
+    .m3-article__body .wp-block-table table.has-fixed-layout :is(th, td) {
+        min-width: 7rem;
+        word-break: keep-all;
+        overflow-wrap: normal;
+    }
+}

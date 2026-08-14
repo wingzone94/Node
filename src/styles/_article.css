@@ -2661,11 +2661,21 @@
 
 /* ===== Mobile Layout Fixes ===== */
 .m3-article__body pre,
-.m3-article__body table,
 .m3-article__body .wp-block-table {
     max-width: 100% !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
+}
+
+.m3-article__body table {
+    max-width: 100%;
+}
+
+.m3-article__body .wp-block-table table {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
 }
 
 .m3-article__body img,
@@ -2691,6 +2701,12 @@
 }
 
 @media (max-width: 600px) {
+    .m3-article__body .wp-block-table :is(th, td) {
+        min-width: 7rem;
+        word-break: keep-all;
+        overflow-wrap: normal;
+    }
+
     .m3-inline-toc {
         padding: 20px 16px;
         border-radius: 20px;
