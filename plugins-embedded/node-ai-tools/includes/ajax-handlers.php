@@ -9,78 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! function_exists( 'node_ai_dispatch_connect_event' ) ) {
-    /**
-     * Node Connect へAI処理結果を通知する（プラグイン未導入時は通常のWP actionとして無害）。
-     */
-    function node_ai_dispatch_connect_event( string $event, int $post_id, string $feature, string $error = '' ): void {
-        $post = get_post( $post_id );
-        do_action(
-            'node_connect_event',
-            $event,
-            array(
-                'post_id'   => $post_id,
-                'title'     => $post instanceof WP_Post ? get_the_title( $post ) : '',
-                'permalink' => $post instanceof WP_Post ? get_permalink( $post ) : '',
-                'feature'   => sanitize_key( $feature ),
-                'error'     => sanitize_text_field( $error ),
-            )
-        );
-    }
-}
-
-if ( ! function_exists( 'node_ai_store_summary_result' ) ) {
-    /**
-     * Coreの要約結果を既存meta契約へ保存する（手動・自動生成共通）。
-     *
-     * @return array<string, mixed>|WP_Error
-     */
-    function node_ai_store_summary_result( int $post_id, $result, int $user_id = 0 ) {
-        $raw  = is_array( $result ) ? (string) ( $result['text'] ?? '' ) : (string) $result;
-        $data = node_ai_parse_json_response( $raw );
-
-        // 旧仕様と同じく、JSONでない応答も要約本文として保存できるようにする。
-        if ( null === $data || ! isset( $data['summary'] ) ) {
-            $data = array( 'summary' => $raw );
-        }
-
-        $summary = sanitize_textarea_field( (string) $data['summary'] );
-        if ( '' === trim( $summary ) ) {
-            return new WP_Error( 'summary_parse_failed', '要約結果の解析に失敗しました。' );
-        }
-
-        update_post_meta( $post_id, '_node_ai_summary', $summary );
-        update_post_meta( $post_id, '_node_ai_summary_generated_at', current_time( 'mysql' ) );
-
-        if ( function_exists( 'node_ai_core' ) ) {
-            $provider = node_ai_core()->get_provider( $user_id );
-            if ( ! is_wp_error( $provider ) ) {
-                update_post_meta( $post_id, '_node_ai_summary_provider', sanitize_text_field( $provider->get_label() ) );
-                update_post_meta( $post_id, '_node_ai_summary_model', sanitize_text_field( $provider->get_model() ) );
-            }
-        }
-
-        $attempts = (int) get_post_meta( $post_id, '_node_ai_summary_attempts', true );
-        update_post_meta( $post_id, '_node_ai_summary_attempts', $attempts + 1 );
-        update_post_meta( $post_id, '_node_ai_summary_last_attempt', current_time( 'mysql' ) );
-
-        if ( isset( $data['tone_color'] ) ) {
-            update_post_meta( $post_id, '_node_ai_tone_color', sanitize_hex_color( (string) $data['tone_color'] ) );
-        }
-        if ( isset( $data['vibe_keywords'] ) && is_array( $data['vibe_keywords'] ) ) {
-            update_post_meta( $post_id, '_node_ai_keywords', array_map( 'sanitize_text_field', $data['vibe_keywords'] ) );
-        }
-
-        node_ai_dispatch_connect_event( 'ai_summary_completed', $post_id, 'summarize' );
-
-        return array(
-            'summary'    => $summary,
-            'tone_color' => (string) ( $data['tone_color'] ?? '' ),
-            'keywords'   => (array) ( $data['vibe_keywords'] ?? array() ),
-        );
-    }
-}
-
 if ( ! function_exists( 'node_ai_ajax_generate_summary' ) ) {
     /**
      * AI 要約生成 AJAX ハンドラ
@@ -123,42 +51,55 @@ if ( ! function_exists( 'node_ai_ajax_generate_summary' ) ) {
             }
         }
 
-        if ( ! function_exists( 'node_ai_core' ) ) {
-            wp_send_json_error( array( 'message' => 'AI Core が読み込まれていません。' ) );
-            return;
-        }
-
-        $core = node_ai_core();
-        if ( ! $core->is_enabled() ) {
-            wp_send_json_error( array( 'message' => 'AI機能が無効です。設定 → Node AI から有効化してください。' ) );
-            return;
-        }
-
-        $result = $core->summarize(
-            $content,
-            array(
-                'custom_prompt' => $custom_prompt,
+        // APIクラスを使用して要約を生成 (JSONレスポンスを期待)
+        if ( class_exists( 'Node_Gemini_API' ) ) {
+            $api = new Node_Gemini_API();
+            $result = $api->generate_summary( $content, $custom_prompt, [
                 'max_lines' => $max_lines,
                 'max_chars' => $max_chars
-            ),
-            get_current_user_id(),
-            $post_id
-        );
+            ] );
+        } else {
+            wp_send_json_error( [ 'message' => 'APIクラスが見つかりません。' ] );
+            return;
+        }
 
         if ( is_wp_error( $result ) ) {
-            node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'summarize', $result->get_error_message() );
             wp_send_json_error( [ 'message' => $result->get_error_message() ] );
             return;
         }
 
-        $payload = node_ai_store_summary_result( $post_id, $result, get_current_user_id() );
-        if ( is_wp_error( $payload ) ) {
-            node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'summarize', $payload->get_error_message() );
-            wp_send_json_error( array( 'message' => $payload->get_error_message() ) );
+        // 余計なマークダウン記号（```json ... ```）が混入した場合は除去
+        $clean_result = preg_replace( '/^```(?:json)?\s*/i', '', $result );
+        $clean_result = preg_replace( '/```\s*$/', '', $clean_result );
+        $clean_result = trim( $clean_result );
+
+        $data = json_decode( $clean_result, true );
+
+        if ( json_last_error() === JSON_ERROR_NONE && isset( $data['summary'] ) ) {
+            // 保存
+            update_post_meta( $post_id, '_node_ai_summary', sanitize_textarea_field( $data['summary'] ) );
+            // カウンタ更新
+            update_post_meta( $post_id, '_node_ai_summary_attempts', $attempts + 1 );
+            update_post_meta( $post_id, '_node_ai_summary_last_attempt', current_time( 'mysql' ) );
+
+            if ( isset( $data['tone_color'] ) ) {
+                update_post_meta( $post_id, '_node_ai_tone_color', sanitize_hex_color( $data['tone_color'] ) );
+            }
+            if ( isset( $data['vibe_keywords'] ) ) {
+                update_post_meta( $post_id, '_node_ai_keywords', (array) $data['vibe_keywords'] );
+            }
+
+            wp_send_json_success( [
+                'summary'    => $data['summary'],
+                'tone_color' => $data['tone_color'] ?? '',
+                'keywords'   => $data['vibe_keywords'] ?? [],
+            ] );
             return;
         }
 
-        wp_send_json_success( $payload );
+                // JSON パース失敗時のフォールバック (生データを要約として扱う)
+        update_post_meta( $post_id, '_node_ai_summary', sanitize_textarea_field( $result ) );
+        wp_send_json_success( [ 'summary' => $result ] );
     }
 }
 
@@ -175,21 +116,7 @@ if ( ! function_exists( 'node_ai_parse_json_response' ) ) {
         $clean = trim( (string) $clean );
         $data  = json_decode( $clean, true );
 
-        if ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) {
-            return $data;
-        }
-
-        // text/plain 応答ではJSONの前後に説明文が付くことがあるため、最初の { から最後の } までを抽出して再試行
-        $start = strpos( $clean, '{' );
-        $end   = strrpos( $clean, '}' );
-        if ( false !== $start && false !== $end && $end > $start ) {
-            $data = json_decode( substr( $clean, $start, $end - $start + 1 ), true );
-            if ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) {
-                return $data;
-            }
-        }
-
-        return null;
+        return ( json_last_error() === JSON_ERROR_NONE && is_array( $data ) ) ? $data : null;
     }
 }
 
@@ -227,144 +154,56 @@ if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
             }
         }
 
-        if ( ! function_exists( 'node_ai_core' ) ) {
-            wp_send_json_error( array( 'message' => 'AI Core が読み込まれていません。' ) );
-            return;
+        if ( ! class_exists( 'Node_Gemini_API' ) ) {
+            wp_send_json_error( array( 'message' => 'APIクラスが見つかりません。' ) );
         }
 
-        $core = node_ai_core();
-        if ( ! $core->is_enabled() ) {
-            wp_send_json_error( array( 'message' => 'AI機能が無効です。設定 → Node AI から有効化してください。' ) );
-            return;
-        }
-
-        $result = $core->fact_check( $content, $post->post_title, get_current_user_id(), $post_id );
+        $api    = new Node_Gemini_API();
+        $result = $api->fact_check( $content, $post->post_title );
 
         if ( is_wp_error( $result ) ) {
-            node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'fact_check', $result->get_error_message() );
             wp_send_json_error( array( 'message' => $result->get_error_message() ) );
         }
 
-        // 整形・保存は自動実行（cron）と共通の処理を使う（includes/auto-check.php）
-        $payload = node_ai_store_fact_check_result( $post_id, $result );
-        if ( is_wp_error( $payload ) ) {
-            node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'fact_check', $payload->get_error_message() );
-            wp_send_json_error( array( 'message' => $payload->get_error_message() ) );
+        $data = node_ai_parse_json_response( (string) ( $result['text'] ?? '' ) );
+        if ( null === $data || empty( $data['claims'] ) || ! is_array( $data['claims'] ) ) {
+            wp_send_json_error( array( 'message' => 'ファクトチェック結果の解析に失敗しました。' ) );
         }
 
-        node_ai_dispatch_connect_event( 'fact_check_completed', $post_id, 'fact_check' );
-        wp_send_json_success( $payload );
-    }
-}
-
-if ( ! function_exists( 'node_ai_get_proofread_data' ) ) {
-    /**
-     * 保存済みの校正結果を返す
-     *
-     * @param int $post_id 投稿ID。
-     * @return array<string, mixed>|null
-     */
-    function node_ai_get_proofread_data( int $post_id ): ?array {
-        $stored = get_post_meta( $post_id, '_node_ai_proofread', true );
-        if ( ! is_string( $stored ) || '' === $stored ) {
-            return null;
-        }
-
-        $data = json_decode( $stored, true );
-
-        return is_array( $data ) && isset( $data['issues'] ) ? $data : null;
-    }
-}
-
-if ( ! function_exists( 'node_ai_ajax_proofread' ) ) {
-    /**
-     * 誤字脱字・校正チェック AJAX ハンドラ（AI Core 経由）
-     *
-     * 読者からの要望で 1.3 に追加。ファクトチェックと違い公開ゲートには絡めず、
-     * 執筆者向けの指摘表示のみを行う（修正の適用は人間が判断する）。
-     */
-    function node_ai_ajax_proofread(): void {
-        check_ajax_referer( 'node_ai_proofread_action', 'nonce' );
-
-        if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_send_json_error( array( 'message' => '権限がありません。' ) );
-        }
-
-        $post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
-        $post    = $post_id ? get_post( $post_id ) : null;
-        if ( ! $post ) {
-            wp_send_json_error( array( 'message' => '記事が見つかりません。' ) );
-        }
-
-        if ( ! current_user_can( 'edit_post', $post_id ) ) {
-            wp_send_json_error( array( 'message' => 'この記事を編集する権限がありません。' ) );
-        }
-
-        // エディタ上の未保存本文を優先し、無ければ保存済み本文を使う
-        $content = isset( $_POST['content'] ) && '' !== trim( (string) wp_unslash( $_POST['content'] ) )
-            ? (string) wp_unslash( $_POST['content'] )
-            : (string) $post->post_content;
-
-        $content = trim( strip_shortcodes( wp_strip_all_tags( $content ) ) );
-        if ( '' === $content ) {
-            wp_send_json_error( array( 'message' => '記事本文が空です。' ) );
-        }
-
-        if ( ! function_exists( 'node_ai_core' ) ) {
-            wp_send_json_error( array( 'message' => 'AI Core が読み込まれていません。' ) );
-        }
-
-        $core = node_ai_core();
-        if ( ! $core->is_enabled() ) {
-            wp_send_json_error( array( 'message' => 'AI機能が無効です。設定 → Node AI から有効化してください。' ) );
-        }
-
-        $result = $core->proofread( $content, get_current_user_id(), $post_id );
-        if ( is_wp_error( $result ) ) {
-            node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'proofread', $result->get_error_message() );
-            wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-        }
-
-        $raw = is_array( $result ) ? (string) ( $result['text'] ?? '' ) : (string) $result;
-
-        $data = node_ai_parse_json_response( $raw );
-        if ( null === $data || ! isset( $data['issues'] ) || ! is_array( $data['issues'] ) ) {
-            node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'proofread', '校正結果の解析に失敗しました。' );
-            wp_send_json_error( array( 'message' => '校正結果の解析に失敗しました。' ) );
-        }
+        $grounding = is_array( $result['grounding'] ?? null ) ? $result['grounding'] : array();
+        $sources   = function_exists( 'node_ai_extract_grounding_sources' )
+            ? node_ai_extract_grounding_sources( $grounding )
+            : array();
 
         $payload = array(
-            'summary'    => sanitize_text_field( (string) ( $data['summary'] ?? '' ) ),
-            'issues'     => array(),
-            'checked_at' => current_time( 'mysql' ),
+            'summary'         => sanitize_text_field( (string) ( $data['summary'] ?? '' ) ),
+            'overall_risk'    => sanitize_key( (string) ( $data['overall_risk'] ?? 'medium' ) ),
+            'claims'          => array(),
+            'sources'         => $sources,
+            'search_queries'  => array_map( 'sanitize_text_field', (array) ( $grounding['webSearchQueries'] ?? array() ) ),
+            'grounded'        => ! empty( $sources ) || ! empty( $grounding['webSearchQueries'] ),
+            'guidelines_used' => ! empty( $result['guidelines_used'] ),
+            'checked_at'      => current_time( 'mysql' ),
         );
 
-        foreach ( $data['issues'] as $issue ) {
-            if ( ! is_array( $issue ) ) {
+        foreach ( $data['claims'] as $claim ) {
+            if ( ! is_array( $claim ) ) {
                 continue;
             }
-
-            $original = sanitize_text_field( (string) ( $issue['original'] ?? '' ) );
-            if ( '' === $original ) {
-                continue;
-            }
-
-            // 種別はアイコン表示に使う。想定外の値は typo 扱いにフォールバック
-            $type = sanitize_key( (string) ( $issue['type'] ?? '' ) );
-            if ( ! in_array( $type, array( 'typo', 'grammar', 'usage', 'style', 'readability', 'meaning' ), true ) ) {
-                $type = 'typo';
-            }
-
-            $payload['issues'][] = array(
-                'type'       => $type,
-                'original'   => $original,
-                'suggestion' => sanitize_text_field( (string) ( $issue['suggestion'] ?? '' ) ),
-                'reason'     => sanitize_textarea_field( (string) ( $issue['reason'] ?? '' ) ),
-                'severity'   => sanitize_key( (string) ( $issue['severity'] ?? 'low' ) ),
+            $payload['claims'][] = array(
+                'claim'      => sanitize_text_field( (string) ( $claim['claim'] ?? '' ) ),
+                'status'     => sanitize_key( (string) ( $claim['status'] ?? 'uncertain' ) ),
+                'confidence' => sanitize_key( (string) ( $claim['confidence'] ?? 'low' ) ),
+                'note'       => sanitize_textarea_field( (string) ( $claim['note'] ?? '' ) ),
             );
         }
 
-        update_post_meta( $post_id, '_node_ai_proofread', wp_json_encode( $payload, JSON_UNESCAPED_UNICODE ) );
+        if ( empty( $payload['claims'] ) ) {
+            wp_send_json_error( array( 'message' => '検証対象の主張が見つかりませんでした。' ) );
+        }
+
+        update_post_meta( $post_id, '_node_ai_fact_check', wp_json_encode( $payload, JSON_UNESCAPED_UNICODE ) );
+        update_post_meta( $post_id, '_node_ai_fact_check_approved', '' );
 
         wp_send_json_success( $payload );
     }

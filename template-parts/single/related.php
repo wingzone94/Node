@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Template part for displaying related posts in single.php
  */
@@ -31,7 +29,7 @@ if ($related_query->have_posts()) :
 ?>
 <section class="m3-related-posts m3-related-posts--simple">
     <div class="m3-related-posts__inner">
-        <h2 class="m3-related-posts__title">RELATED POSTS</h2>
+        <h3 class="m3-related-posts__title">RELATED POSTS</h3>
         <div class="m3-related-grid">
             <?php while ($related_query->have_posts()) : $related_query->the_post(); ?>
                 <a href="<?php the_permalink(); ?>" class="m3-related-card">
@@ -41,11 +39,11 @@ if ($related_query->have_posts()) :
                         </div>
                     <?php else : ?>
                         <div class="m3-related-card__image m3-related-card__image--placeholder" style="display: flex; align-items: center; justify-content: center; background: var(--md-sys-color-surface-container-high); aspect-ratio: 4/3;">
-                            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--md-sys-color-outline-variant);" aria-hidden="true">image</span>
+                            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--md-sys-color-outline-variant);">image</span>
                         </div>
                     <?php endif; ?>
                     <div class="m3-related-card__content">
-                        <h3 class="m3-related-card__title"><?php the_title(); ?></h3>
+                        <h4 class="m3-related-card__title"><?php the_title(); ?></h4>
                     </div>
                 </a>
             <?php endwhile; wp_reset_postdata(); ?>

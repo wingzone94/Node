@@ -1,12 +1,12 @@
 # Node
 ### WordPress Theme for Luminous Core
 
-![Version](https://img.shields.io/badge/version-1.3.0-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.2.7-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0+-21759b?style=for-the-badge&logo=wordpress)
 
 Material Design 3 (Expressive) の哲学を WordPress テーマに昇華させた、次世代のクリエイティブ・プラットフォーム。  
-README には `1.x.0` リリースの要点を掲載し、完全な更新履歴は `CHANGELOG.md` に収録します。
+README は導入と運用ガイドに集中し、リリース履歴は `CHANGELOG.md` に集約します。
 
 ## 主な機能
 - **Material You 動的カラー:** アイキャッチ画像やカテゴリ設定からテーマカラーを自動生成。
@@ -16,19 +16,14 @@ README には `1.x.0` リリースの要点を掲載し、完全な更新履歴�
 - **インテリジェント詳細検索:** 読了時間、文字数、プラットフォーム、AI生成の有無などで高度な絞り込みが可能。
 - **フローティング・ナビゲーション:** 記事ページでの目次アクセス、コメント移動、トップ戻りをスムーズに。
 - **プラットフォーム・ブランド連携:** デバイスごとの公式ブランドカラーをUIに反映（Windows, iOS, Android, Nintendo, PlayStation, Xbox）。
-- **AI 連携:** Gemini・Qwen・Ollamaを共通基盤から利用し、記事要約・ファクトチェック補助・校正を支援。
+- **AI 連携:** Gemini API を活用した記事要約（保存済みデータの高速表示に対応）。
 - **PWA 対応:** オフライン閲覧やホーム画面へのインストールをサポート。
 
-## v1.3.0 (2026.08.17)
-ホーム、記事体験、検索・SEO、ブログカード、制作基盤をまとめて刷新するメジャーアップデートです。詳細は [CHANGELOG.md](./CHANGELOG.md) を参照してください。
+## v1.2.1 (2026.07.19)
+Node 1.3「Connect」で正式提供予定の外部連携プラグイン **node-connect（ベータ版）** を同梱するマイナーアップデートです。本番環境での動作検証を目的としています。
 
-- **モバイルセクションナビゲーションを追加** — 現在表示中の `HEADLINE` / `SPOTLIGHT` / `LATEST` をアイコン付きで示し、ホーム内アンカーへ再読み込みなしで移動。iPhone Safariのアドレスバー伸縮にも追従し、ページ内限定で閉じられます。
-- **トップページを再構成** — HEADLINEを横スクロール式カルーセルへ変更し、LATESTを6件に整理。カード形状、見出しフォント、セクションの余白と階層を統一しました。
-- **記事の読了情報を改善** — 読了時間・文字数・長さ判定を共通エンジンへ集約し、ブログ全体の文字数分布に基づく相対判定と、記事数が少ない場合の安全な固定基準を実装しました。
-- **ゲームストアのブログカードに対応** — Nintendo、PlayStation、Xbox、Steamの商品URLをカード化。取得失敗時のフォールバック、エディタプレビュー、手動タイトル・画像、サムネイル表示切替に対応しました。
-- **検索とプラットフォーム導線を刷新** — 詳細検索、検索結果、プラットフォームアーカイブを整理し、記事・シリーズ・Node Libraryを横断して探しやすくしました。
-- **検索エンジン向け構造を改善** — 重複URL、canonical、サイトマップ、日付・タグアーカイブ、検索ボックス構造化データを見直しました。
-- **制作・検証基盤を強化** — CSS構造、テーマ基盤、PHPUnit、ルート検査、モバイルビジュアル検査、配布ZIP検証をリリースゲートへ組み込みました。
+- **node-connect ベータ版を同梱** — 記事の公開・更新・非公開化・削除を Discord へ自動通知する Webhook 基盤。設定 → 外部連携から Webhook URL（最大3件）とイベントを選んで利用します。テーマZIP内の `plugins-embedded/node-connect/` および `production_plugins/node-connect.zip`（インストール用）として同梱。
+- テーマ更新（Luminous Settings の更新インストール）成功時に `node_connect_event` を発火するフックを追加。
 
 ## v1.2.0 (2026.07.18)
 Node の記事体験を一新するメジャーアップデートです。詳細は [CHANGELOG.md](./CHANGELOG.md) を参照してください。

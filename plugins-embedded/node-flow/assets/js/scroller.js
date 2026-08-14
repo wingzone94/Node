@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 記事コンテナと標準のページネーション要素を取得
     // テーマ (Node) の構造に依存（.m3-post-grid__container）
-    const containers = document.querySelectorAll('.m3-post-grid__container');
-    const container = containers[containers.length - 1];
+    const container = document.querySelector('.m3-post-grid__container:last-of-type');
     const pagination = document.querySelector('.m3-navigation');
     const archivePill = document.querySelector('.m3-archive-pill-wrapper');
 
@@ -36,29 +35,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // トリガー（ローディングUI）要素を作成してコンテナの後ろに配置
     const triggerEl = document.createElement('div');
     triggerEl.className = 'node-flow-loader';
-    triggerEl.innerHTML =
-        '<svg class="node-flow-spinner" viewBox="0 0 48 48" role="img" aria-label="読み込み中">' +
-        '<circle class="node-flow-spinner__path" cx="24" cy="24" r="20" fill="none"/>' +
-        '</svg>' +
-        '<span class="node-flow-loader__text">読み込み中...</span>';
+    triggerEl.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">autorenew</span> 読み込み中...';
     triggerEl.style.textAlign = 'center';
     triggerEl.style.padding = '2rem 0';
     triggerEl.style.color = 'var(--md-sys-color-outline, #857362)';
-
-    // スタイル定義（テーマの m3-spinner と同系の円形インジケーター）
+    
+    // スタイル定義 (spinアニメーション)
     if (!document.getElementById('node-flow-styles')) {
         const style = document.createElement('style');
         style.id = 'node-flow-styles';
-        style.innerHTML =
-            '.node-flow-loader { display: flex; flex-direction: column; align-items: center; gap: 12px; }' +
-            '.node-flow-spinner { width: 36px; height: 36px; animation: node-flow-rotate 1.4s linear infinite; transform-origin: center center; }' +
-            '.node-flow-spinner__path { stroke: var(--md-sys-color-primary, #FF9900); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1, 200; stroke-dashoffset: 0; animation: node-flow-dash 1.4s ease-in-out infinite; }' +
-            '@keyframes node-flow-rotate { 100% { transform: rotate(360deg); } }' +
-            '@keyframes node-flow-dash {' +
-            ' 0% { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }' +
-            ' 50% { stroke-dasharray: 100, 200; stroke-dashoffset: -15px; }' +
-            ' 100% { stroke-dasharray: 100, 200; stroke-dashoffset: -125px; }' +
-            '}';
+        style.innerHTML = '@keyframes spin { 100% { transform: rotate(360deg); } }';
         document.head.appendChild(style);
     }
 

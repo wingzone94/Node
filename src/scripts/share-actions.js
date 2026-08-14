@@ -7,48 +7,6 @@
 (function() {
     const copyResetTimers = new WeakMap();
     let copyToastTimer = 0;
-    const compactPreferenceKey = 'node-share-compact';
-
-    const readCompactPreference = () => {
-        try {
-            return window.localStorage.getItem(compactPreferenceKey) === 'true';
-        } catch (error) {
-            return false;
-        }
-    };
-
-    const writeCompactPreference = (isCompact) => {
-        try {
-            window.localStorage.setItem(compactPreferenceKey, String(isCompact));
-        } catch (error) {
-            // Storage may be unavailable in private browsing; the current page still works.
-        }
-    };
-
-    const initShareViewToggles = () => {
-        const isDesktop = window.matchMedia('(min-width: 600px)');
-
-        document.querySelectorAll('[data-share-view-toggle]').forEach((toggle) => {
-            const section = toggle.closest('.m3-share-section');
-            const buttons = section?.querySelector('[data-share-buttons]');
-            if (!buttons || toggle.dataset.shareViewReady === 'true') return;
-
-            const applyCompactState = (isCompact) => {
-                buttons.classList.toggle('is-compact', isCompact);
-                toggle.setAttribute('aria-checked', String(isCompact));
-            };
-
-            toggle.dataset.shareViewReady = 'true';
-            applyCompactState(readCompactPreference());
-            toggle.addEventListener('click', () => {
-                if (!isDesktop.matches) return;
-
-                const nextState = toggle.getAttribute('aria-checked') !== 'true';
-                applyCompactState(nextState);
-                writeCompactPreference(nextState);
-            });
-        });
-    };
 
     // システムシェアボタンはHTMLでは hidden で出力し、
     // Web Share API 対応ブラウザ（iOS/Android/macOS Safari/Windows Chrome・Edge等）でのみ表示する
@@ -57,13 +15,9 @@
         document.querySelectorAll('.m3-share-btn--system[hidden]').forEach((btn) => btn.removeAttribute('hidden'));
     };
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            revealSystemShareButtons();
-            initShareViewToggles();
-        });
+        document.addEventListener('DOMContentLoaded', revealSystemShareButtons);
     } else {
         revealSystemShareButtons();
-        initShareViewToggles();
     }
 
     const showCopyToast = () => {

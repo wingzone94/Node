@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Template part: シリーズ目次チャート（前後ナビを統合、初期は最小化）
  * 現在の投稿がどの node_series にも属さない場合は何も出力しない。

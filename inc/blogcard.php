@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Node テーマ組み込みブログカード
  *
@@ -61,13 +59,8 @@ function node_get_ogp_data( string $url ) {
 
 	$transient_key = 'node_ogp_' . md5( $url );
 	$cached        = get_transient( $transient_key );
-	if ( is_array( $cached ) ) {
+	if ( false !== $cached && is_array( $cached ) ) {
 		return $cached;
-	}
-	// 取得失敗は負のキャッシュとして記録する。これが無いと、失敗する URL では
-	// レンダーのたびに 15 秒タイムアウトの外部 HTTP が走り表示が遅延する。
-	if ( node_blogcard_fetch_failure_marker() === $cached ) {
-		return false;
 	}
 
 	$ogp = array(
@@ -98,24 +91,17 @@ function node_get_ogp_data( string $url ) {
 		array(
 			'timeout'    => 15,
 			'sslverify'  => false,
-			// ゲームストア（任天堂・PlayStation・Xbox 等）はボット防御下にあり、
-			// 「compatible; ...」型の自己申告ボット UA では 403 を返す。同梱の
-			// node-library と同じブラウザ UA に揃えて商品ページを取得できるようにする。
-			'user-agent' => node_blogcard_user_agent(),
-			'headers'    => array(
-				'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-				'Accept-Language' => 'ja,en-US;q=0.9,en;q=0.8',
-			),
+			'user-agent' => 'Mozilla/5.0 (compatible; LuminousCore/1.0; +https://luminous-core.net/)',
 		)
 	);
 
 	if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-		return node_blogcard_cache_failure( $transient_key );
+		return false;
 	}
 
 	$html = wp_remote_retrieve_body( $response );
 	if ( empty( $html ) ) {
-		return node_blogcard_cache_failure( $transient_key );
+		return false;
 	}
 
 	$content_type = (string) wp_remote_retrieve_header( $response, 'content-type' );
@@ -129,230 +115,15 @@ function node_get_ogp_data( string $url ) {
 	libxml_clear_errors();
 
 	$xpath = new DOMXPath( $dom );
-	$meta  = node_extract_page_meta( $xpath, $url );
 
-	$ogp['title']       = $meta['title'];
-	$ogp['description'] = $meta['description'];
-	$ogp['image']       = $meta['image'];
-	$ogp['site_name']   = '' !== $meta['site_name'] ? $meta['site_name'] : (string) parse_url( $url, PHP_URL_HOST );
+	$ogp['title']       = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:title"]/@content)' ) ) ?: trim( (string) $xpath->evaluate( 'string(//title)' ) );
+	$ogp['description'] = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:description"]/@content)' ) ) ?: trim( (string) $xpath->evaluate( 'string(//meta[@name="description"]/@content)' ) );
+	$ogp['image']       = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:image"]/@content)' ) );
+	$ogp['site_name']   = trim( (string) $xpath->evaluate( 'string(//meta[@property="og:site_name"]/@content)' ) ) ?: (string) parse_url( $url, PHP_URL_HOST );
 	$ogp['favicon']     = 'https://www.google.com/s2/favicons?domain=' . rawurlencode( (string) parse_url( $url, PHP_URL_HOST ) ) . '&sz=64';
-	// 転送先を記録する。要求した商品ページとは別のページ（ストアのトップ等）を掴んでいないか、
-	// 呼び出し側が検証できるようにするため。
-	$ogp['final_url']   = node_http_final_url( $response );
-
-	// 題名が取れないページはカードを組み立てられない（node_blogcard_markup() が空を返す）。
-	// 成功として1週間キャッシュせず、失敗として扱う。
-	if ( '' === $ogp['title'] ) {
-		return node_blogcard_cache_failure( $transient_key );
-	}
 
 	set_transient( $transient_key, $ogp, WEEK_IN_SECONDS );
 	return $ogp;
-}
-
-/**
- * HTTP レスポンスからリダイレクト解決後の最終 URL を取り出す。
- *
- * `pre_http_request` で短絡されたレスポンス（テスト等）には `http_response` が無いため、
- * その場合は空文字（＝転送の有無は不明）を返す。
- *
- * @param array<string, mixed>|WP_Error $response wp_remote_get の戻り値。
- * @return string 最終 URL（判定できなければ空文字）。
- */
-function node_http_final_url( $response ): string {
-	if ( ! is_array( $response ) || empty( $response['http_response'] ) ) {
-		return '';
-	}
-
-	$http_response = $response['http_response'];
-	if ( ! is_object( $http_response ) || ! method_exists( $http_response, 'get_response_object' ) ) {
-		return '';
-	}
-
-	$requests_response = $http_response->get_response_object();
-
-	return is_object( $requests_response ) && ! empty( $requests_response->url ) ? (string) $requests_response->url : '';
-}
-
-/**
- * OGP 取得に使うブラウザ UA を返す。
- *
- * @return string
- */
-function node_blogcard_user_agent(): string {
-	return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
-}
-
-/**
- * OGP 取得失敗を表すキャッシュ値。
- *
- * @return string
- */
-function node_blogcard_fetch_failure_marker(): string {
-	return 'node_ogp_fetch_failed';
-}
-
-/**
- * 取得失敗を短期間キャッシュして false を返す。
- *
- * @param string $transient_key キャッシュキー。
- * @return false
- */
-function node_blogcard_cache_failure( string $transient_key ) {
-	set_transient( $transient_key, node_blogcard_fetch_failure_marker(), 6 * HOUR_IN_SECONDS );
-	return false;
-}
-
-/**
- * HTML からカードに必要なメタ情報を抽出する。
- *
- * og:*（property）→ og:*（name 表記ゆれ）→ twitter:* → JSON-LD → <title>/description の順で
- * 補完する。ゲームストアの商品ページは og を持たず JSON-LD（Product / VideoGame）だけを
- * 出力していることがあるため、単純な og 参照では題名も画像も取れない。
- *
- * @param DOMXPath $xpath 解析済みドキュメント。
- * @param string   $url   元 URL（相対画像 URL の絶対化に使用）。
- * @return array{title: string, description: string, image: string, site_name: string}
- */
-function node_extract_page_meta( DOMXPath $xpath, string $url ): array {
-	$meta_content = static function ( string $key ) use ( $xpath ): string {
-		$value = $xpath->evaluate( sprintf( 'string(//meta[@property="%1$s"]/@content)', $key ) );
-		if ( '' === trim( (string) $value ) ) {
-			$value = $xpath->evaluate( sprintf( 'string(//meta[@name="%1$s"]/@content)', $key ) );
-		}
-		return trim( (string) $value );
-	};
-
-	$title       = $meta_content( 'og:title' );
-	$description = $meta_content( 'og:description' );
-	$image       = $meta_content( 'og:image' );
-	$site_name   = $meta_content( 'og:site_name' );
-
-	if ( '' === $title ) {
-		$title = $meta_content( 'twitter:title' );
-	}
-	if ( '' === $description ) {
-		$description = $meta_content( 'twitter:description' );
-	}
-	if ( '' === $image ) {
-		$image = $meta_content( 'twitter:image' );
-	}
-
-	if ( '' === $title || '' === $image || '' === $description ) {
-		$json_ld = node_extract_json_ld_product( $xpath );
-		$title   = '' !== $title ? $title : $json_ld['title'];
-		$image   = '' !== $image ? $image : $json_ld['image'];
-
-		$description = '' !== $description ? $description : $json_ld['description'];
-	}
-
-	if ( '' === $title ) {
-		$title = trim( (string) $xpath->evaluate( 'string(//title)' ) );
-	}
-	if ( '' === $description ) {
-		$description = trim( (string) $xpath->evaluate( 'string(//meta[@name="description"]/@content)' ) );
-	}
-
-	// og:image に相対パスを置くサイトがあるため絶対 URL へ補正する。
-	if ( '' !== $image && ! preg_match( '#^https?://#i', $image ) ) {
-		$absolute = WP_Http::make_absolute_url( $image, $url );
-		$image    = is_string( $absolute ) ? $absolute : '';
-	}
-
-	return array(
-		'title'       => $title,
-		'description' => $description,
-		'image'       => $image,
-		'site_name'   => $site_name,
-	);
-}
-
-/**
- * JSON-LD から商品情報（name / description / image）を抽出する。
- *
- * @param DOMXPath $xpath 解析済みドキュメント。
- * @return array{title: string, description: string, image: string}
- */
-function node_extract_json_ld_product( DOMXPath $xpath ): array {
-	$result = array(
-		'title'       => '',
-		'description' => '',
-		'image'       => '',
-	);
-
-	$nodes = $xpath->query( '//script[@type="application/ld+json"]' );
-	if ( ! $nodes instanceof DOMNodeList ) {
-		return $result;
-	}
-
-	$types = array( 'product', 'videogame', 'softwareapplication', 'game', 'mobileapplication' );
-
-	foreach ( $nodes as $node ) {
-		$decoded = json_decode( (string) $node->textContent, true );
-		if ( ! is_array( $decoded ) ) {
-			continue;
-		}
-
-		// トップレベルが配列・@graph 入り・単体オブジェクトのいずれの形式にも対応する。
-		$entries = array();
-		if ( isset( $decoded['@graph'] ) && is_array( $decoded['@graph'] ) ) {
-			$entries = $decoded['@graph'];
-		} elseif ( isset( $decoded[0] ) ) {
-			$entries = $decoded;
-		} else {
-			$entries = array( $decoded );
-		}
-
-		foreach ( $entries as $entry ) {
-			if ( ! is_array( $entry ) ) {
-				continue;
-			}
-
-			$entry_types = (array) ( $entry['@type'] ?? array() );
-			$matched     = false;
-			foreach ( $entry_types as $entry_type ) {
-				if ( in_array( strtolower( (string) $entry_type ), $types, true ) ) {
-					$matched = true;
-					break;
-				}
-			}
-
-			if ( ! $matched ) {
-				continue;
-			}
-
-			$result['title']       = trim( (string) ( $entry['name'] ?? '' ) );
-			$result['description'] = trim( (string) ( $entry['description'] ?? '' ) );
-			$result['image']       = node_json_ld_image_url( $entry['image'] ?? '' );
-
-			return $result;
-		}
-	}
-
-	return $result;
-}
-
-/**
- * JSON-LD の image プロパティ（文字列 / 配列 / ImageObject）から URL を取り出す。
- *
- * @param mixed $image image プロパティの値。
- * @return string
- */
-function node_json_ld_image_url( $image ): string {
-	if ( is_string( $image ) ) {
-		return trim( $image );
-	}
-
-	if ( is_array( $image ) ) {
-		if ( isset( $image['url'] ) ) {
-			return trim( (string) $image['url'] );
-		}
-		if ( isset( $image[0] ) ) {
-			return node_json_ld_image_url( $image[0] );
-		}
-	}
-
-	return '';
 }
 
 /**
@@ -399,11 +170,6 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 
 	$is_internal = ! empty( $ogp['is_internal'] );
 	$modifier    = $is_internal ? 'm3-blogcard--internal' : 'm3-blogcard--external';
-	if ( ! empty( $ogp['store'] ) ) {
-		// ゲームストアの商品ページは、カード面をプラットフォーム色のトーナルコンテナにする
-		// （構造・余白は標準カードのまま。配色は CSS 側の m3-blogcard--store-* が担当）。
-		$modifier .= ' m3-blogcard--store m3-blogcard--store-' . sanitize_html_class( (string) $ogp['store'] );
-	}
 	if ( ! empty( $ogp['is_brand'] ) ) {
 		// ブランドバナー（1200x630 のロゴ＋ワードマーク一体画像）は通常のサムネイル枠だと
 		// 中央クロップで文字が切れるため、専用の表示ルールを当てる。
@@ -484,40 +250,18 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 /**
  * ブログカード HTML を生成する。
  *
- * @param string                $url           リンク先 URL。
- * @param bool                  $brand_override luminous-core.net の場合にブランド画像（ロゴ＋ワードマーク）を
+ * @param string $url           リンク先 URL。
+ * @param bool   $brand_override luminous-core.net の場合にブランド画像（ロゴ＋ワードマーク）を
  *                                強制表示するか。`[blogcard]` ショートコードからのみ true を渡す。
- * @param array<string, string> $overrides     題名・説明・画像の手動指定（`[blogcard]` の属性）。
- *                                空でない値だけが取得結果を上書きする。
  * @return string
  */
-function node_render_blogcard( string $url, bool $brand_override = false, array $overrides = array() ): string {
+function node_render_blogcard( string $url, bool $brand_override = false ): string {
 	$url = esc_url_raw( $url );
 	if ( empty( $url ) ) {
 		return '';
 	}
 
-	$store = node_store_provider( $url );
-	$ogp   = node_get_ogp_data( $url );
-
-	if ( ! empty( $store ) ) {
-		// ストア側のボット防御でメタが取れなくても、URL から組み立てた情報でカードにする
-		// （素のリンクへ落とすと、記事内で他のカードと並んだときに見た目が崩れるため）。
-		// 商品ページではなくストアのトップへ転送された場合も、サイト共通のタイトルを
-		// そのまま載せてしまわないようフォールバックへ回す。
-		if ( ! is_array( $ogp ) || empty( $ogp['title'] )
-			|| ! node_store_response_is_product_page( $url, (string) ( $ogp['final_url'] ?? '' ) ) ) {
-			$ogp = node_store_fallback_ogp( $url, $store );
-		} else {
-			$ogp['store']     = $store['slug'];
-			$ogp['site_name'] = $store['name'];
-		}
-	}
-
-	// 手動指定は取得結果より優先する。ボット防御で題名を取れないストアページでも、
-	// 著者が `[blogcard url="..." title="..."]` と書けば正しい題名で表示できる。
-	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
-
+	$ogp = node_get_ogp_data( $url );
 	if ( ! $ogp ) {
 		return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 	}
@@ -535,68 +279,6 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 	}
 
 	return node_blogcard_markup( $ogp, $url );
-}
-
-/**
- * `[blogcard]` 属性による手動指定を OGP 情報へ反映する。
- *
- * 取得に完全に失敗していても、題名が指定されていればカードを組み立てる。
- *
- * @param array<string, mixed>|false $ogp       取得済み OGP 情報（失敗時は false）。
- * @param array<string, string>      $overrides 手動指定（title / description / image）。
- * @param string                     $url       対象 URL。
- * @return array<string, mixed>|false
- */
-function node_blogcard_apply_overrides( $ogp, array $overrides, string $url ) {
-	$title       = trim( (string) ( $overrides['title'] ?? '' ) );
-	$description = trim( (string) ( $overrides['description'] ?? '' ) );
-	$image       = trim( (string) ( $overrides['image'] ?? '' ) );
-
-	// サムネイルを出すかどうか（既定は「取得できたら出す」）。
-	$hide_image = array_key_exists( 'show_image', $overrides ) && ! $overrides['show_image'];
-
-	if ( '' === $title && '' === $description && '' === $image && ! $hide_image ) {
-		return $ogp;
-	}
-
-	if ( ! is_array( $ogp ) ) {
-		if ( '' === $title ) {
-			return $ogp;
-		}
-
-		$host = (string) parse_url( $url, PHP_URL_HOST );
-		$ogp  = array(
-			'title'       => '',
-			'description' => '',
-			'image'       => '',
-			'favicon'     => 'https://www.google.com/s2/favicons?domain=' . rawurlencode( $host ) . '&sz=64',
-			'site_name'   => $host,
-			'is_internal' => false,
-		);
-
-		$store = node_store_provider( $url );
-		if ( ! empty( $store ) ) {
-			$ogp['site_name'] = $store['name'];
-			$ogp['store']     = $store['slug'];
-		}
-	}
-
-	if ( '' !== $title ) {
-		$ogp['title'] = $title;
-	}
-	if ( '' !== $description ) {
-		$ogp['description'] = $description;
-	}
-	if ( '' !== $image ) {
-		$ogp['image'] = esc_url_raw( $image );
-	}
-
-	// 非表示指定は最後に適用する（手動指定の画像より優先）。
-	if ( $hide_image ) {
-		$ogp['image'] = '';
-	}
-
-	return $ogp;
 }
 
 /**
@@ -930,13 +612,6 @@ function node_oembed_dataparse( string $return, object $data, string $url ): str
 		$ogp['site_name'] = $host;
 	}
 
-	// oEmbed 経由でもストアカードの見た目を揃える。
-	$store = node_store_provider( $url );
-	if ( ! empty( $store ) ) {
-		$ogp['store']     = $store['slug'];
-		$ogp['site_name'] = $store['name'];
-	}
-
 	$card = node_blogcard_markup( $ogp, $url );
 	return '' !== $card ? node_blogcard_defer( $card ) : $return;
 }
@@ -966,29 +641,8 @@ function node_embed_maybe_make_link( string $output, string $url ): string {
  * @return string
  */
 function node_blogcard_shortcode( $atts ): string {
-	$atts = shortcode_atts(
-		array(
-			'url'         => '',
-			'title'       => '',
-			'description' => '',
-			'image'       => '',
-			'show_image'  => 'true',
-		),
-		$atts,
-		'blogcard'
-	);
-
-	return node_render_blogcard(
-		(string) $atts['url'],
-		true,
-		array(
-			'title'       => (string) $atts['title'],
-			'description' => (string) $atts['description'],
-			'image'       => (string) $atts['image'],
-			// `show_image="false"` / `"no"` / `"0"` でサムネイルを消す。
-			'show_image'  => ! in_array( strtolower( trim( (string) $atts['show_image'] ) ), array( 'false', 'no', '0', 'off' ), true ),
-		)
-	);
+	$atts = shortcode_atts( array( 'url' => '' ), $atts, 'blogcard' );
+	return node_render_blogcard( (string) $atts['url'], true );
 }
 
 /**
@@ -1132,165 +786,7 @@ function node_pre_oembed_internal_result( $result, $url, $args ) {
 	return node_blogcard_defer( $card );
 }
 
-/**
- * ブロックエディタ用: `node/blogcard` ブロックのフロント側レンダリング。
- *
- * @param array<string, mixed> $attributes ブロック属性。
- * @return string
- */
-function node_render_blogcard_block( array $attributes ): string {
-	$url = esc_url_raw( (string) ( $attributes['url'] ?? '' ) );
-	if ( '' === $url ) {
-		return '';
-	}
-
-	return node_render_blogcard(
-		$url,
-		false,
-		array(
-			'title'       => (string) ( $attributes['title'] ?? '' ),
-			'description' => (string) ( $attributes['description'] ?? '' ),
-			'image'       => (string) ( $attributes['image'] ?? '' ),
-			'show_image'  => ! array_key_exists( 'showImage', $attributes ) || (bool) $attributes['showImage'],
-		)
-	);
-}
-
-/**
- * `node/blogcard` ブロックを登録する。
- *
- * エディタ上でカードのプレビューを出すためのブロック。URL 単独行の自動変換
- * （oEmbed 経路）はそのまま残るため、既存記事の書き方は変わらない。
- */
-function node_register_blogcard_block(): void {
-	if ( ! function_exists( 'register_block_type' ) ) {
-		return;
-	}
-
-	register_block_type(
-		'node/blogcard',
-		array(
-			'api_version'     => 2,
-			'attributes'      => array(
-				'url'         => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'title'       => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'description' => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'image'       => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'showImage'   => array(
-					'type'    => 'boolean',
-					'default' => true,
-				),
-			),
-			'render_callback' => 'node_render_blogcard_block',
-		)
-	);
-}
-
-/**
- * エディタ用スクリプトを読み込む。
- */
-function node_enqueue_blogcard_editor_assets(): void {
-	$relative = '/assets/js/blogcard-editor.js';
-	$path     = get_template_directory() . $relative;
-
-	if ( ! file_exists( $path ) ) {
-		return;
-	}
-
-	wp_enqueue_script(
-		'node-blogcard-editor',
-		get_template_directory_uri() . $relative,
-		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-i18n', 'wp-hooks' ),
-		(string) filemtime( $path ),
-		true
-	);
-}
-
-/**
- * エディタからカードのプレビュー HTML を取得する REST ルートを登録する。
- */
-function node_register_blogcard_preview_route(): void {
-	register_rest_route(
-		'node/v1',
-		'/blogcard-preview',
-		array(
-			'methods'             => 'GET',
-			'permission_callback' => static function (): bool {
-				return current_user_can( 'edit_posts' );
-			},
-			'callback'            => 'node_blogcard_preview_response',
-			'args'                => array(
-				'url'         => array(
-					'required' => true,
-					'type'     => 'string',
-				),
-				'title'       => array( 'type' => 'string' ),
-				'description' => array( 'type' => 'string' ),
-				'image'       => array( 'type' => 'string' ),
-				'show_image'  => array(
-					'type'    => 'boolean',
-					'default' => true,
-				),
-			),
-		)
-	);
-}
-
-/**
- * カードプレビューのレスポンス。
- *
- * フロントと同じ node_render_blogcard() を通すため、エディタで見えるものが
- * そのまま公開後の表示になる（取得結果のキャッシュも共有する）。
- *
- * @param WP_REST_Request $request REST リクエスト。
- * @return array<string, mixed>|WP_Error
- */
-function node_blogcard_preview_response( WP_REST_Request $request ) {
-	$url = esc_url_raw( (string) $request->get_param( 'url' ) );
-	if ( '' === $url ) {
-		return new WP_Error( 'node_blogcard_bad_url', 'URL が空です', array( 'status' => 400 ) );
-	}
-
-	$html = node_render_blogcard(
-		$url,
-		false,
-		array(
-			'title'       => (string) $request->get_param( 'title' ),
-			'description' => (string) $request->get_param( 'description' ),
-			'image'       => (string) $request->get_param( 'image' ),
-			'show_image'  => (bool) $request->get_param( 'show_image' ),
-		)
-	);
-
-	if ( '' === $html ) {
-		return new WP_Error( 'node_blogcard_no_card', 'カードを生成できませんでした', array( 'status' => 404 ) );
-	}
-
-	$store = node_store_provider( $url );
-
-	return array(
-		'html'      => $html,
-		'store'     => (string) ( $store['slug'] ?? '' ),
-		'fallback'  => str_contains( $html, 'm3-blogcard__fallback' ),
-	);
-}
-
 add_shortcode( 'blogcard', 'node_blogcard_shortcode' );
-add_action( 'init', 'node_register_blogcard_block' );
-add_action( 'enqueue_block_editor_assets', 'node_enqueue_blogcard_editor_assets' );
-add_action( 'rest_api_init', 'node_register_blogcard_preview_route' );
 add_action( 'init', 'node_register_map_oembed_provider' );
 add_action( 'rest_api_init', 'node_register_maps_oembed_route' );
 add_filter( 'pre_oembed_result', 'node_pre_oembed_internal_result', 10, 3 );

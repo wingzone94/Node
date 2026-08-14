@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * The template for displaying comments
  * Reverted to 0.7.x logic with Material 3 styling.

@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Static 404 Copyright Helper (API usage removed for load performance)
  */

@@ -121,13 +121,8 @@ async function inspectTextLayout(page) {
         : Number.parseFloat(style.lineHeight);
       const nowrap = style.whiteSpace.includes('nowrap');
       const isControl = element.matches('a, button, input, select, textarea, [role="button"], [class*="button"], [class*="btn"]');
-      const isInsideControl = Boolean(element.closest('a, button, [role="button"], [class*="button"], [class*="btn"]'));
-      const isIcon = element.matches('.material-symbols-outlined, [aria-hidden="true"], [class*="__icon"], [class*="-icon"]');
-      const isIntentionalEllipsis = style.textOverflow === 'ellipsis';
-      const lineClamp = Number.parseInt(style.webkitLineClamp, 10);
-      const isIntentionalLineClamp = Number.isFinite(lineClamp) && lineClamp > 0 && style.webkitBoxOrient === 'vertical';
 
-      if (overflowX > 2 && (clipsX || nowrap || isControl) && !isIntentionalEllipsis) {
+      if (overflowX > 2 && (clipsX || nowrap || isControl)) {
         issues.push({
           type: 'horizontal-text-overflow',
           selector: pathFor(element),
@@ -137,7 +132,7 @@ async function inspectTextLayout(page) {
         continue;
       }
 
-      if (overflowY > 2 && (clipsY || isControl) && !isIntentionalLineClamp && !isIcon) {
+      if (overflowY > 2 && (clipsY || isControl)) {
         issues.push({
           type: 'vertical-text-clipping',
           selector: pathFor(element),
@@ -147,7 +142,7 @@ async function inspectTextLayout(page) {
         continue;
       }
 
-      if (Number.isFinite(lineHeight) && lineHeight < fontSize * 1.05 && !isInsideControl && !isIcon) {
+      if (Number.isFinite(lineHeight) && lineHeight < fontSize * 1.05) {
         issues.push({
           type: 'tight-line-height',
           selector: pathFor(element),

@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * 特集（SPOTLIGHT）カテゴリ専用アーカイブテンプレート
  *

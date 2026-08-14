@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Template part for displaying the article footer in single.php
  */

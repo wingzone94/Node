@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Social Share Buttons Template
  */
@@ -21,35 +19,11 @@ $hatebu_share_url = 'https://b.hatena.ne.jp/add?mode=confirm&url=' . $encoded_ur
 $threads_share_url = 'https://www.threads.net/intent/post?text=' . rawurlencode($share_text);
 $bluesky_share_url = 'https://bsky.app/intent/compose?text=' . rawurlencode($share_text);
 $misskey_share_url = 'https://misskey-hub.net/share/?text=' . $encoded_title . '&url=' . $encoded_url;
-
-// 印刷ボタン（Node 1.3 第5段階）。設定で位置（先頭/末尾）を選べる
-$print_button_html     = ( is_singular( 'post' ) && function_exists( 'node_print_is_enabled' ) && node_print_is_enabled() )
-    ? node_print_get_button_html()
-    : '';
-$print_button_position = function_exists( 'node_print_button_position' ) ? node_print_button_position() : 'end';
 ?>
 
 <div class="m3-share-section">
-    <div class="m3-share-heading">
-        <h3 class="m3-share-title">この記事をシェアする</h3>
-        <button type="button"
-                class="m3-share-view-toggle"
-                data-share-view-toggle
-                role="switch"
-                aria-checked="false"
-                aria-controls="m3-share-buttons">
-            <span class="m3-share-view-toggle__text">最小表示</span>
-            <span class="m3-share-view-toggle__track" aria-hidden="true">
-                <span class="m3-share-view-toggle__thumb"></span>
-            </span>
-        </button>
-    </div>
-    <div class="m3-share-buttons" id="m3-share-buttons" data-share-buttons>
-        <?php
-        if ( $print_button_html && 'start' === $print_button_position ) {
-            echo $print_button_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        }
-        ?>
+    <h3 class="m3-share-title">この記事をシェアする</h3>
+    <div class="m3-share-buttons">
         <!-- X (Twitter) -->
         <a href="<?php echo esc_url($x_share_url); ?>"
            class="m3-share-btn m3-share-btn--x" 
@@ -184,12 +158,6 @@ $print_button_position = function_exists( 'node_print_button_position' ) ? node_
             <span class="material-symbols-outlined m3-copy-icon" aria-hidden="true">content_copy</span>
             <span class="m3-share-btn__label m3-copy-label">コピー</span>
         </button>
-
-        <?php
-        if ( $print_button_html && 'end' === $print_button_position ) {
-            echo $print_button_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        }
-        ?>
     </div>
     <?php get_template_part( 'template-parts/preferred-source', null, array( 'context' => 'article' ) ); ?>
 </div>

@@ -75,17 +75,14 @@ printf '{\n    "build_id": "%s",\n    "built_at": "%s",\n    "version": "%s"\n}\
 ### 4-b. ZIP生成
 プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
 
-配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。`--exclude='.git/'`（末尾スラッシュ付き）はディレクトリにしかマッチしないため、git worktree 運用で `.git` が**ファイル**（`gitdir:` ポインタ）になっている環境ではZIPに混入する。スラッシュ無しの `--exclude='.git'` を併記すること（1.2.5 のZIPには 78 バイトの `Node/.git` が入っていた）。本番動作に不要な `scripts/`（検証スクリプト）と `.github/`（Actions定義）も除外する。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
+配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
 
 ```bash
 rm -f node.zip
 repo_dir=$(pwd)
 tmpdir=$(mktemp -d)
 rsync -a \
-  --exclude='.git' \
   --exclude='.git/' \
-  --exclude='.github/' \
-  --exclude='scripts/' \
   --exclude='node_modules/' \
   --exclude='*.zip' \
   --exclude='.DS_Store' \
@@ -98,7 +95,6 @@ rsync -a \
   --exclude='.agents/' \
   --exclude='scratch/' \
   --exclude='production_plugins/' \
-  --exclude='luna-frontier/' \
   --exclude='src/' \
   --exclude='vendor/' \
   --exclude='tests/' \
@@ -129,37 +125,13 @@ rsync -a \
   --exclude='.gitattributes' \
   --exclude='assets/css/main.css' \
   --exclude='assets/css/material3.css' \
-  --exclude='plugins-embedded/node-seo-tools/assets/share/fonts/NotoSansJP-VF.ttf' \
   ./ "$tmpdir/Node/"
 (cd "$tmpdir" && zip -qr "$repo_dir/node.zip" Node)
 rm -rf "$tmpdir"
 ```
 
-`NotoSansJP-VF.ttf` はテーマ側 `assets/ttf/` を配布ZIP内の正本とします。埋め込み版 Node SEO Tools は、そのプラグイン内にフォントがない場合にテーマ側の同一ファイルを参照してからキャッシュ/CDNへフォールバックするため、OGP画像生成を維持したまま約9.6MBの重複収録を避けられます。独立プラグイン配布物の同梱フォントは削除しません。
-
 ## 5. Git へのコミットとプッシュ
 変更したソースコードと、生成した本番用ZIPファイルをGitHubにプッシュします。
-
-### 5-a. README / CHANGELOG のリリースノート確認（必須）
-
-GitHubへリリース版をpushする前に、`CHANGELOG.md`には毎回、今回のバージョン・正式リリース日・パッチノートを記載します。
-
-`README.md`へのパッチノート掲載は、**バージョンが `1.x.0` のリリース時だけ**必須です。たとえば `1.3.0` は掲載し、`1.3.1` や `1.3.2` は掲載しません。
-
-- `README.md`: `1.x.0`リリースだけ、利用者向けの簡潔なパッチノートを掲載
-- `CHANGELOG.md`: すべてのリリースについて、修正理由や影響範囲を含む完全な更新履歴を掲載
-- 掲載対象では、バージョンと日付が `style.css` のリリース内容と一致すること
-
-```bash
-release_version="$(grep -m1 '^Version:' style.css | awk '{print $2}')"
-release_date="YYYY.MM.DD" # 今回の正式リリース日に置き換える
-rg -n -x -F "## [${release_version}] - ${release_date}" CHANGELOG.md
-if [[ "${release_version}" =~ ^1\.[0-9]+\.0$ ]]; then
-  rg -n -x -F "## v${release_version} (${release_date})" README.md
-fi
-```
-
-上記の確認が通らない場合は、コミット・push・ZIP公開へ進みません。
 
 ```bash
 # 変更されたファイルをステージング

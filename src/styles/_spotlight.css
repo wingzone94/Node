@@ -10,16 +10,6 @@
     margin-bottom: 32px;
 }
 
-/* Reserve the ligature icon box before Material Symbols finishes loading. */
-.special-features .m3-spotlight-badge > .material-symbols-outlined {
-    flex: 0 0 24px;
-    width: 24px;
-    height: 24px;
-    overflow: hidden;
-    font-size: 24px;
-    line-height: 1;
-}
-
 .special-features__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -139,16 +129,13 @@
 .m3-headline-card__date {
     font-size: 0.8rem;
     font-weight: 900;
-    /* サイト共通の Inter + Noto Sans JP を使う（等幅にしない） */
-    font-family: var(--font-main);
-    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .m3-headline-card__category {
-    /* inline-flex + justify-content:center だと長いカテゴリ名がピルの左右へ
-       はみ出して両端で切れる（ellipsis も効かない）。ブロックにして中央寄せする。 */
-    display: block;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     max-width: 86px;
     margin-top: 4px;
     padding: 2px 7px;
@@ -167,14 +154,12 @@
 
 .m3-headline-card__title {
     flex-grow: 1;
-    min-width: 0;
     font-size: 0.95rem;
     font-weight: 700;
     margin: 0;
     line-height: 1.4;
     display: -webkit-box;
-    /* 1行だと和文タイトルがほぼ全て「…」で切れるため2行まで見せる */
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

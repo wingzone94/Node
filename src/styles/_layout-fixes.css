@@ -89,14 +89,6 @@ body.admin-bar .m3-header {
 
 /* ===== Mobile Headline Header Layout Fix ===== */
 @media screen and (max-width: 600px) {
-    /* HEADLINE カルーセルはヘッダーに表示切替ボタンが増えるため、見出しを
-       一段小さくして1行に収める。この指定を components 側に置くと本ファイル
-       （utilities レイヤー）の nowrap 指定に負け、「速報」がはみ出して
-       切替ボタンに重なりタップできなくなる。 */
-    .m3-home-layout .c-headline-carousel .m3-headlines__title {
-        font-size: clamp(1rem, 4.2vw, 1.2rem);
-    }
-
     .m3-home-layout .m3-headlines__header {
         align-items: center;
         gap: 8px;

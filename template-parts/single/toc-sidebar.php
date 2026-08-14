@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Template part for the sidebar-integrated Table of Contents (PC only)
  */

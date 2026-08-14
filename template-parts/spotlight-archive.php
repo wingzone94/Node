@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * SPOTLIGHT 過去の特集一覧（/spotlight/）
  *

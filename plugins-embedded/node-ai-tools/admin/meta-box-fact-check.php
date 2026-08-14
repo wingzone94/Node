@@ -15,28 +15,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 	$data = node_ai_get_fact_check_data( $post->ID );
 	$approved = (bool) get_post_meta( $post->ID, '_node_ai_fact_check_approved', true );
-	$auto_error = (string) get_post_meta( $post->ID, '_node_ai_fact_check_error', true );
-	$has_key = function_exists( 'node_ai_author_has_api_key' ) && node_ai_author_has_api_key( (int) $post->post_author );
 
 	wp_nonce_field( 'node_ai_fact_check_action', 'node_ai_fact_check_nonce' );
 	?>
 	<div class="node-fact-check-meta-box">
 		<p class="description">
 			Gemini API + Google Search Grounding + Luminous Core ガイドライン（Google ドキュメント）によるファクトチェック補助です。
-			これは確認箇所の抽出支援であり、真偽の最終判定は必ず人間の編集者が行ってください。
 			「編集者が結果を確認済み」にチェックを入れると、記事ページ（1ページ目）に公開表示されます。
 		</p>
-		<?php if ( $has_key ) : ?>
-			<p class="description">
-				下書き保存すると自動でファクトチェックが実行されます（約1分後に結果が保存されます。再読み込みで表示）。
-				<strong>公開前の実行を推奨します（未実施でも公開はできます）。</strong>
-			</p>
-		<?php endif; ?>
-		<?php if ( '' !== $auto_error ) : ?>
-			<p class="node-fact-check__auto-error" style="color:#d63638;">
-				前回の自動実行が失敗しました: <?php echo esc_html( $auto_error ); ?>
-			</p>
-		<?php endif; ?>
 
 		<div id="node_fact_check_results">
 			<?php
@@ -59,12 +45,9 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
         // Model selection
         $user_id = get_current_user_id();
         $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
-        // 保存値は `<モデルID>@<思考量>` 形式。一覧はモデルIDのみのため分解して照合する
-        $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
         $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
         
-        $is_gemini = ! function_exists( 'node_ai_core' ) || 'gemini' === node_ai_core()->get_provider_id();
-        if ( $is_gemini && ! empty( $models ) ) {
+        if ( ! empty( $models ) ) {
             echo '<p><strong>使用モデル:</strong><br>';
             echo '<select id="node_ai_gemini_model_fact_check" style="width:100%;">';
             foreach ( $models as $id => $label ) {
@@ -97,7 +80,6 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 			border-radius: 8px;
 			background: #fff;
 		}
-		.node-fact-check-meta-box .node-fact-check__claim--correct { border-left: 4px solid #007017; }
 		.node-fact-check-meta-box .node-fact-check__claim--likely_correct { border-left: 4px solid #00a32a; }
 		.node-fact-check-meta-box .node-fact-check__claim--uncertain { border-left: 4px solid #dba617; }
 		.node-fact-check-meta-box .node-fact-check__claim--likely_incorrect { border-left: 4px solid #d63638; }

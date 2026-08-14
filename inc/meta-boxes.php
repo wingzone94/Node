@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * メタボックスの管理（テーマ側）
  */

@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * TOC Engine — Heading ID Auto-Generation
  *
