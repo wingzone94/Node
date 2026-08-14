@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 $paged            = max( 1, (int) get_query_var( 'paged' ) );
 $per_page         = max( 1, (int) NODE_ALL_ARTICLES_PER_PAGE );
 $total_limit      = max( 1, (int) NODE_ALL_ARTICLES_TOTAL_LIMIT );
@@ -53,9 +55,9 @@ $archive_base = trailingslashit( node_get_all_articles_url() );
 		</p>
 	</section>
 
-	<div class="m3-post-grid">
+	<div class="l-card-grid m3-post-grid">
 		<?php if ( $articles_query->have_posts() ) : ?>
-			<div class="m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list">
+			<div class="l-card-grid__items l-card-grid--list l-card-grid--two-column-list m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list">
 				<?php
 				while ( $articles_query->have_posts() ) :
 					$articles_query->the_post();

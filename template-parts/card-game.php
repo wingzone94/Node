@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Template part for displaying game information.
  * プラットフォームに応じたブランドカラーを適用した Material 3 形式のカード。

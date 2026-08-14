@@ -15,7 +15,7 @@
     "isEntry": true
   },
   "src/main.js": {
-    "file": "js/main.Blodsz3B.js",
+    "file": "js/main.lJDG0qE2.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
@@ -23,6 +23,7 @@
       "_vendor.CoViGN73.js"
     ],
     "dynamicImports": [
+      "src/scripts/search-platforms.js",
       "src/scripts/color-extraction.js",
       "src/scripts/comment-form.js",
       "src/scripts/header-clock.js",
@@ -60,7 +61,7 @@
     "isDynamicEntry": true
   },
   "src/scripts/footnotes-popover.js": {
-    "file": "js/footnotes-popover.C97BFjnS.js",
+    "file": "js/footnotes-popover.BZtiXn0K.js",
     "name": "footnotes-popover",
     "src": "src/scripts/footnotes-popover.js",
     "isDynamicEntry": true,
@@ -87,6 +88,12 @@
     "src": "src/scripts/reading-badge-animation.js",
     "isDynamicEntry": true
   },
+  "src/scripts/search-platforms.js": {
+    "file": "js/search-platforms.BIOnupSy.js",
+    "name": "search-platforms",
+    "src": "src/scripts/search-platforms.js",
+    "isDynamicEntry": true
+  },
   "src/scripts/series-toc.js": {
     "file": "js/series-toc.B2E_gD3L.js",
     "name": "series-toc",
@@ -98,6 +105,11 @@
     "name": "table-sorter",
     "src": "src/scripts/table-sorter.js",
     "isDynamicEntry": true
+  },
+  "src/styles/editor-blogcard.css": {
+    "file": "css/editor-blogcard.css",
+    "src": "src/styles/editor-blogcard.css",
+    "isEntry": true
   },
   "src/styles/style.css": {
     "file": "css/style.css",

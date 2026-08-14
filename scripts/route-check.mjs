@@ -61,7 +61,8 @@ async function main() {
 	const routes = [
 		{ path: '/', expect: 200 },
 		{ path: '/all-articles/', expect: 200 },
-		{ path: '/headlines/', expect: 200 },
+		// 1.3 で /headlines/ は廃止（ニュースカテゴリへ301）
+		{ path: '/headlines/', expect: 301, redirectTo: '/category/%e3%83%8b%e3%83%a5%e3%83%bc%e3%82%b9/' },
 		{ path: '/spotlight/', expect: 200 },
 		{ path: '/category/spotlight/', expect: 301, redirectTo: '/spotlight/' },
 		seriesSlug

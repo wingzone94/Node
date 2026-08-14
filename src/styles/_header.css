@@ -28,6 +28,195 @@
     transform: translateY(calc(-100% - var(--wp-admin-bar-offset, 0px)));
 }
 
+/* Mobile section rail: fixed header の直下を通常フローで一段拡張する。 */
+.m3-mobile-section-nav {
+    display: none;
+}
+
+.m3-mobile-section-nav[hidden] {
+	display: none;
+}
+
+@media (max-width: 600px) {
+    .m3-mobile-section-nav {
+		position: relative;
+        z-index: 999;
+        display: block;
+		min-block-size: 48px;
+        margin-block-start: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px));
+		background: transparent;
+		border-block: 0;
+		box-shadow: none;
+    }
+
+    .m3-mobile-section-nav__inner {
+		position: fixed;
+		inset-block-start: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px));
+		inset-inline-start: 0;
+		inline-size: fit-content;
+		max-inline-size: calc(100vw - 8px);
+		z-index: 999;
+        display: flex;
+        align-items: center;
+        min-block-size: 48px;
+		padding: 4px 6px 4px max(12px, env(safe-area-inset-left));
+		background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, transparent);
+		backdrop-filter: blur(14px);
+		border-start-end-radius: 12px;
+		border-end-end-radius: 12px;
+		transform: translate3d(0, 0, 0);
+		transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
+		will-change: transform;
+    }
+
+	/* ヘッダーと同じ距離・時間で退避し、iOS Safari のツールバー伸縮時も隙間を作らない。 */
+	.m3-header.is-hidden ~ .m3-mobile-section-nav .m3-mobile-section-nav__inner {
+		transform: translate3d(
+			0,
+			calc(-64px - var(--safe-area-top) - var(--wp-admin-bar-offset, 0px)),
+			0
+		);
+	}
+
+    .m3-mobile-section-nav__menu {
+        position: relative;
+    }
+
+    .m3-mobile-section-nav__trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+		min-block-size: 40px;
+		padding-inline: 4px 6px;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+        color: var(--md-sys-color-on-surface);
+        font-family: var(--font-ui, inherit);
+		font-size: 0.8125rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        line-height: 1;
+        list-style: none;
+        cursor: pointer;
+    }
+
+    .m3-mobile-section-nav__trigger::-webkit-details-marker {
+        display: none;
+    }
+
+    .m3-mobile-section-nav__current-icon {
+        color: var(--md-sys-color-primary);
+        font-size: 1.35rem;
+    }
+
+	.m3-mobile-section-nav__current-label {
+		min-inline-size: 5.75rem;
+	}
+
+    .m3-mobile-section-nav__arrow {
+        font-size: 1rem;
+        transition: transform var(--m3-motion-duration-medium, 200ms) var(--m3-motion-easing, ease);
+    }
+
+    .m3-mobile-section-nav__menu[open] .m3-mobile-section-nav__trigger {
+		border: 0;
+		background: transparent;
+		color: var(--md-sys-color-on-surface);
+    }
+
+    .m3-mobile-section-nav__menu[open] .m3-mobile-section-nav__arrow {
+        transform: rotate(180deg);
+    }
+
+    .m3-mobile-section-nav__list {
+        position: absolute;
+		inset-block-start: calc(100% + 2px);
+        inset-inline-start: 0;
+        z-index: 2;
+        inline-size: min(14rem, calc(100vw - 28px));
+        margin: 0;
+        padding: 4px;
+        list-style: none;
+        background: var(
+			--md-sys-color-surface-container-highest,
+			var(--md-sys-color-surface-container-high, var(--md-sys-color-surface, #fff))
+		);
+		border: 0;
+		border-radius: 8px;
+        box-shadow: var(--m3-elevation-2);
+    }
+
+    .m3-mobile-section-nav__list a {
+        display: flex;
+        align-items: center;
+		gap: 8px;
+        min-block-size: 48px;
+		padding-inline: 12px;
+		border: 0;
+        border-radius: calc(var(--m3-shape-medium, 12px) - 2px);
+        color: var(--md-sys-color-on-surface);
+        font-size: 0.875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+    }
+
+    .m3-mobile-section-nav__list a:hover,
+    .m3-mobile-section-nav__list a:focus-visible,
+	.m3-mobile-section-nav__list a.is-current {
+        background: var(--md-sys-color-secondary-container);
+        color: var(--md-sys-color-on-secondary-container);
+    }
+
+	.m3-mobile-section-nav__item-icon {
+		flex: 0 0 auto;
+		font-size: 1.25rem;
+		color: var(--md-sys-color-primary);
+	}
+
+	.m3-mobile-section-nav__dismiss {
+		display: inline-grid;
+		place-items: center;
+		flex: 0 0 36px;
+		inline-size: 36px;
+		block-size: 36px;
+		margin-inline-start: 2px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: transparent;
+		color: var(--md-sys-color-on-surface-variant, var(--md-sys-color-on-surface));
+		cursor: pointer;
+	}
+
+	.m3-mobile-section-nav__dismiss:hover,
+	.m3-mobile-section-nav__dismiss:focus-visible {
+		background: var(--md-sys-color-secondary-container);
+		color: var(--md-sys-color-on-secondary-container);
+	}
+
+	.m3-mobile-section-nav__dismiss .material-symbols-outlined {
+		font-size: 1.125rem;
+	}
+
+    body:has(.m3-mobile-section-nav) :is(.site-main, .article-view) {
+        padding-top: var(--m3-spacing-m, 24px);
+    }
+
+    :is(#headline, #spotlight, #latest) {
+		scroll-margin-top: calc(112px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px));
+    }
+}
+
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+    .m3-mobile-section-nav__inner,
+    .m3-mobile-section-nav__arrow {
+        transition: none;
+    }
+}
+
 .m3-header__inner { 
     width: 100%; 
     max-width: 1400px;
@@ -356,56 +545,45 @@
     align-items: center; 
     padding-right: 4px;
 }
-.m3-search-clear {
-    color: var(--md-sys-color-on-surface-variant) !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
+/* ID指定 — _buttons.css の `.m3-header .m3-icon-button { background: transparent !important }` より優先させる */
+#m3-search-clear {
+    /* 薄いオレンジのティントサークル × オレンジアイコン（検索バーに馴染むトーナル配色） */
+    color: var(--md-sys-color-primary, #FF9900) !important;
+    background: color-mix(in srgb, var(--md-sys-color-primary, #FF9900) 14%, transparent) !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    flex: 0 0 28px !important; /* モバイル幅の .m3-icon-button 用 flex-basis 上書きを打ち消し正円を維持 */
     margin: 0 4px;
-    opacity: 0.7;
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
-.m3-search-clear[hidden] {
+#m3-search-clear[hidden] {
     display: none !important;
 }
-.m3-search-clear:hover {
-    opacity: 1;
-    background: var(--md-sys-color-surface-variant) !important;
-    transform: scale(1.1);
+#m3-search-clear:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary, #FF9900) 26%, transparent) !important;
 }
-.m3-search-clear .material-symbols-outlined {
-    font-size: 20px !important;
+#m3-search-clear .material-symbols-outlined {
+    font-size: 16px !important;
 }
-.m3-search-clear.is-popping {
-    animation: m3-search-clear-pop 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* 検索クリア — 読了ゲージ破壊時と同じ「一瞬で弾けて消える」フェード。破片はJSが .m3-search-shard で飛ばす */
 .m3-search-bar__input.is-dissipating {
     opacity: 0 !important;
-    filter: blur(7px);
-    transform: scale(1.08) translateY(-6px);
-    letter-spacing: 0.2em;
-    transform-origin: left center;
-    transition:
-        opacity 0.18s cubic-bezier(0.4, 0, 1, 1),
-        filter 0.18s cubic-bezier(0.4, 0, 1, 1),
-        transform 0.18s cubic-bezier(0.4, 0, 1, 1),
-        letter-spacing 0.18s cubic-bezier(0.4, 0, 1, 1);
+    filter: blur(2px);
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.m3-search-bar__input.is-reappearing {
-    animation: m3-search-input-reappear 0.12s ease-out;
-}
-@keyframes m3-search-clear-pop {
-    0% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(0.78) rotate(90deg); }
-    100% { transform: scale(1) rotate(0deg); }
-}
-@keyframes m3-search-input-reappear {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* 読了ゲージの .m3-gauge-shard と同系の破片。overflowクリップを避けるため body 直下に fixed で置く */
+.m3-search-shard {
+    position: fixed;
+    width: 5px;
+    height: 5px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 3000;
 }
 .m3-search-trigger-group {
     display: flex;
@@ -497,12 +675,15 @@
 
 /* --- Search Modal (Material 3 Expressive) --- */
 .m3-modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(32, 26, 23, 0.6); backdrop-filter: blur(20px);
-    display: flex; align-items: center; justify-content: center; z-index: 3000;
+    position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none;
+    margin: 0; padding: 0; border: 0; color: inherit; background: transparent;
+    align-items: center; justify-content: center; z-index: 3000;
+    overflow: auto; overscroll-behavior: contain;
     opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease;
 }
+.m3-modal[open] { display: flex; visibility: visible; }
 .m3-modal.is-active { opacity: 1; visibility: visible; }
+.m3-modal::backdrop { background: rgba(32, 26, 23, 0.6); backdrop-filter: blur(20px); }
 
 .m3-modal__content {
     background: var(--md-sys-color-surface-container-low, #ffffff);
@@ -716,6 +897,11 @@
     display: block;
 }
 .m3-suggestion-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
     padding: 12px 24px;
     cursor: pointer;
     font-weight: 700;
@@ -725,8 +911,11 @@
     align-items: center;
     gap: 12px;
 }
-.m3-suggestion-item:hover {
+.m3-suggestion-item:hover,
+.m3-suggestion-item:focus-visible,
+.m3-suggestion-item.is-highlighted {
     background: var(--md-sys-color-surface-variant);
+    outline: none;
 }
 .m3-suggestion-item .material-symbols-outlined {
     font-size: 18px;
@@ -1017,6 +1206,102 @@
 .m3-platform-layout { display: flex; gap: 48px; align-items: stretch; }
 .m3-platform-side { flex: 1; min-width: 0; }
 .m3-platform-divider { width: 1px; background: var(--md-sys-color-outline-variant); opacity: 0.5; margin: 8px 0; }
+.m3-platform-load-state {
+    margin: auto;
+    padding: 48px 24px;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 700;
+    text-align: center;
+}
+
+.m3-search-rest-results {
+    margin: 0 20px 32px;
+    padding: 24px;
+    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 28px;
+}
+
+.m3-search-rest-results[hidden] {
+    display: none;
+}
+
+.m3-search-rest-results__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.m3-search-rest-results__title,
+.m3-search-rest-results__status {
+    margin: 0;
+}
+
+.m3-search-rest-results__title {
+    font-size: 1.25rem;
+}
+
+.m3-search-rest-results__status,
+.m3-search-rest-result__date,
+.m3-search-rest-result__excerpt {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-search-rest-results__list {
+    display: grid;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.m3-search-rest-results__item {
+    padding: 16px;
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 18px;
+}
+
+.m3-search-rest-result__title,
+.m3-search-rest-result__excerpt {
+    margin: 0;
+}
+
+.m3-search-rest-result__title {
+    font-size: 1rem;
+}
+
+.m3-search-rest-result__title a {
+    color: var(--md-sys-color-on-surface);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.m3-search-rest-result__date {
+    display: inline-block;
+    margin-block: 6px;
+    font-size: 0.8rem;
+}
+
+.m3-search-rest-result__excerpt {
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+    .m3-search-rest-results {
+        margin-inline: 16px;
+        padding: 20px 16px;
+    }
+
+    .m3-search-rest-results__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
 
 @media (max-width: 840px) {
     .m3-platform-layout { flex-direction: column; gap: 32px; }

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * 商品リンクのURLを生成（将来的にアフィリエイトIDを付与しやすいよう独立）
  */
@@ -47,25 +49,9 @@ add_action('deleted_post', 'node_delete_total_published_posts_transient');
 add_action('transition_post_status', 'node_delete_total_published_posts_transient');
 
 function node_get_relative_date($post_id = null) {
-    $post_id = $post_id ?: get_the_ID();
-    $post_time = get_the_time('U', $post_id);
-    $current_time = current_time('timestamp');
-    $diff = intval($current_time) - intval($post_time);
+	$resolved_post_id = (int) ( $post_id ?: get_the_ID() );
 
-    $full_date = get_the_date('Y年n月j日', $post_id);
-
-    // 24時間（86400秒）以内の場合のみカッコ書きを入れる
-    if ($diff > 0 && $diff < 86400) {
-        $relative = '';
-        if ($diff < 3600) {
-            $relative = ($diff < 60) ? 'たった今' : floor($diff / 60) . '分前';
-        } else {
-            $relative = floor($diff / 3600) . '時間前';
-        }
-        return $full_date . ' （' . $relative . '）';
-    }
-
-    return $full_date;
+	return \NodeTheme\Controllers\TemplateController::getRelativeDate( $resolved_post_id );
 }
 
 /**
@@ -80,35 +66,9 @@ function node_get_relative_date($post_id = null) {
  * @return array{datetime: string, display: string, display_short: string}|null 表示不要なら null
  */
 function node_get_post_modified_display($post_id = null) {
-    $post_id = $post_id ?: get_the_ID();
+	$resolved_post_id = (int) ( $post_id ?: get_the_ID() );
 
-    $manual     = get_post_meta($post_id, '_node_manual_modified_date', true);
-    $has_manual = is_string($manual) && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $manual, $m);
-
-    if ($has_manual) {
-        $short = ($m[1] === get_the_date('Y', $post_id))
-            ? sprintf('%d/%d', (int) $m[2], (int) $m[3])
-            : str_replace('-', '/', $manual);
-        return [
-            'datetime'      => $manual,
-            'display'       => str_replace('-', '/', $manual),
-            'display_short' => $short,
-        ];
-    }
-
-    if (get_the_modified_date('Y/m/d', $post_id) === get_the_date('Y/m/d', $post_id)) {
-        return null;
-    }
-
-    $short = (get_the_modified_date('Y', $post_id) === get_the_date('Y', $post_id))
-        ? get_the_modified_date('n/j', $post_id)
-        : get_the_modified_date('Y/n/j', $post_id);
-
-    return [
-        'datetime'      => get_the_modified_date('c', $post_id),
-        'display'       => get_the_modified_date('Y/m/d', $post_id),
-        'display_short' => $short,
-    ];
+	return \NodeTheme\Controllers\TemplateController::getPostModifiedDisplay( $resolved_post_id );
 }
 
 function node_get_image_seed_color($attachment_id) {
@@ -732,55 +692,33 @@ function node_the_ad_area($position) {
 
 
 /**
- * サイト全体の平均文字数を取得（キャッシュ付き）
+ * Engineが管理する公開記事の文字数分布を返す。
+ *
+ * @return array{count: int, median: int, p90: int}
  */
-function node_get_global_average_chars() {
-    $cache_key = 'node_global_average_chars';
-    $avg_chars = get_transient($cache_key);
+function node_get_article_length_distribution(): array {
+	$engine_api = 'LuminousCore\\Engine\\get_article_length_distribution';
 
-    if (false === $avg_chars) {
-        $args = array(
-            'post_type'      => 'post',
-            'post_status'    => 'publish',
-            'posts_per_page' => 50,
-            'fields'         => 'ids',
-        );
-        $post_ids = get_posts($args);
-        $total_chars = 0;
-        foreach ($post_ids as $id) {
-            $content = get_post_field('post_content', $id);
-            $total_chars += mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
-        }
+	if ( ! function_exists( $engine_api ) ) {
+		return array( 'count' => 0, 'median' => 0, 'p90' => 0 );
+	}
 
-        if (count($post_ids) > 0) {
-            $avg_chars = ceil($total_chars / count($post_ids));
-        } else {
-            $avg_chars = 2000;
-        }
-        set_transient($cache_key, $avg_chars, DAY_IN_SECONDS);
-    }
-
-    return $avg_chars;
+	return $engine_api();
 }
 
 /**
- * サイト内の最大文字数を取得（キャッシュ付き）
+ * 文字数をブログ分布上の0〜100進捗へ変換する。
+ * 中央値を60%、p90を100%に固定し、外れ値による基準の乱高下を防ぐ。
  */
-function node_get_global_max_chars() {
-    $cache_key = 'node_global_max_chars';
-    $max_chars = get_transient($cache_key);
+function node_get_relative_article_length_progress(int $chars, array $distribution): int {
+    $median = max(1, (int) ($distribution['median'] ?? 0));
+    $p90 = max($median + 1, (int) ($distribution['p90'] ?? 0));
 
-    if (false === $max_chars) {
-        global $wpdb;
-        $max_chars = $wpdb->get_var("SELECT MAX(CHAR_LENGTH(post_content)) FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'");
-
-        if (!$max_chars) {
-            $max_chars = 5000;
-        }
-        set_transient($cache_key, $max_chars, DAY_IN_SECONDS);
+    if ($chars <= $median) {
+        return max(0, min(60, (int) round(($chars / $median) * 60)));
     }
 
-    return $max_chars;
+    return max(60, min(100, (int) round(60 + (($chars - $median) / ($p90 - $median)) * 40)));
 }
 
 /**
@@ -788,14 +726,14 @@ function node_get_global_max_chars() {
  */
 function node_get_article_ranking_info($post_id = null) {
     if (!$post_id) $post_id = get_the_ID();
-    $content = get_post_field('post_content', $post_id);
-    $chars = mb_strlen(strip_tags(strip_shortcodes($content)), 'UTF-8');
-    /*
-     * 実用基準（2026-07-11改定）:
-     * - 長さ判定はサイト平均との相対比較をやめ、絶対文字数で判定する
-     *   （テスト環境や記事構成の偏りで基準が振れないように）。
-     * - 読了時間は日本語Webの標準的な読速 550字/分 の固定換算。
-     */
+    $post_id = (int) $post_id;
+    $metrics_api = 'LuminousCore\\Engine\\get_article_metrics';
+
+    $article_metrics = function_exists($metrics_api)
+        ? $metrics_api($post_id)
+        : ['chars' => 0, 'reading' => 1, 'reading_seconds' => 30];
+    $chars = (int) $article_metrics['chars'];
+    /* 母数不足時は1.2.5の絶対閾値へ退避し、少数記事で基準が振れるのを防ぐ。 */
     $rank_thresholds = [
         'short'          => 1500,   // 〜1,500字: 短い
         'somewhat_short' => 3000,   // 〜3,000字: やや短い
@@ -803,38 +741,67 @@ function node_get_article_ranking_info($post_id = null) {
         'somewhat_long'  => 10000,  // 〜10,000字: やや長い（それ以上は長い）
     ];
 
-    if ($chars < $rank_thresholds['short']) {
-        // 短い = 薄緑（ライム寄りの黄緑）。やや短いのエメラルドと明確に色相を分ける。
+    $distribution = node_get_article_length_distribution();
+    $uses_relative_baseline = $distribution['count'] >= 20
+        // 極短の検証投稿が過半数を占める等、ブログ本文の分布として不健全な場合は退避する。
+        && $distribution['median'] >= 500
+        && $distribution['p90'] > $distribution['median']
+        && $distribution['p90'] <= ($distribution['median'] * 10);
+
+    if ($uses_relative_baseline) {
+        $progress = node_get_relative_article_length_progress($chars, $distribution);
+        // 旧5段階の代表進捗（20/40/60/80/100）の中間点で区切る。
+        // 中央値=60%は「標準」となり、色・ラベル・ゲージが同じ基準を語る。
+        if ($progress < 30) {
+            $rank = 'short';
+        } elseif ($progress < 50) {
+            $rank = 'somewhat_short';
+        } elseif ($progress < 70) {
+            $rank = 'standard';
+        } elseif ($progress < 90) {
+            $rank = 'somewhat_long';
+        } else {
+            $rank = 'long';
+        }
+    } elseif ($chars < $rank_thresholds['short']) {
         $rank = 'short';
+    } elseif ($chars < $rank_thresholds['somewhat_short']) {
+        $rank = 'somewhat_short';
+    } elseif ($chars < $rank_thresholds['standard']) {
+        $rank = 'standard';
+    } elseif ($chars < $rank_thresholds['somewhat_long']) {
+        $rank = 'somewhat_long';
+    } else {
+        $rank = 'long';
+    }
+
+    if ('short' === $rank) {
+        // 短い = 薄緑（ライム寄りの黄緑）。やや短いのエメラルドと明確に色相を分ける。
         $label = '短い';
         $color = '#DCEDC8'; $on_color = '#33691E';
         $container_color = '#F3FAE4';
         $badge_color = '#7CB342';
         $badge_bg = '#EDF6D8';
-    } elseif ($chars < $rank_thresholds['somewhat_short']) {
+    } elseif ('somewhat_short' === $rank) {
         // やや短い = エメラルド（青緑）。短いの薄緑と一目で判別できるようにする。
-        $rank = 'somewhat_short';
         $label = 'やや短い';
         $color = '#C8E6C9'; $on_color = '#004D40';
         $container_color = '#E4FAF3';
         $badge_color = '#009E7F';
         $badge_bg = '#CFF3E9';
-    } elseif ($chars < $rank_thresholds['standard']) {
-        $rank = 'standard';
+    } elseif ('standard' === $rank) {
         $label = '標準';
         $color = '#E3F2FD'; $on_color = '#0D47A1';
         $container_color = '#E1F5FE';
         $badge_color = '#0067D8';
         $badge_bg = '#DCEBFF';
-    } elseif ($chars < $rank_thresholds['somewhat_long']) {
-        $rank = 'somewhat_long';
+    } elseif ('somewhat_long' === $rank) {
         $label = 'やや長い';
         $color = '#FFF9C4'; $on_color = '#F57F17';
         $container_color = '#FFFDE7';
         $badge_color = '#DE7A00';
         $badge_bg = '#FFECCF';
     } else {
-        $rank = 'long';
         $label = '長い';
         $color = '#FFDAD6'; $on_color = '#410002';
         $container_color = '#FFEBEE';
@@ -852,12 +819,12 @@ function node_get_article_ranking_info($post_id = null) {
         'somewhat_long'  => 80,
         'long'           => 100,
     ];
-    $progress = $rank_progress_map[$rank] ?? min(100, round(($chars / $rank_thresholds['somewhat_long']) * 100));
+    if (!$uses_relative_baseline) {
+        $progress = $rank_progress_map[$rank] ?? min(100, round(($chars / $rank_thresholds['somewhat_long']) * 100));
+    }
 
-    // 読了時間: 550字/分の固定換算（最低30秒）
-    $chars_per_minute = 550;
-    $reading_seconds = max(30, (int) round(($chars / $chars_per_minute) * 60));
-    $reading = max(1, (int) ceil($reading_seconds / 60));
+    $reading_seconds = (int) $article_metrics['reading_seconds'];
+    $reading = (int) $article_metrics['reading'];
 
     return [
         'chars'           => $chars,

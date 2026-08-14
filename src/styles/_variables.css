@@ -18,6 +18,7 @@
     /* --- Material 3 Palette (Light) --- */
     --md-sys-color-primary: #FF9900;
     --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-accent-text: #935400;
     --md-sys-color-primary-container: #fedcbe;
     --md-sys-color-on-primary-container: #2b1700;
     --md-sys-color-secondary: #FF9900;
@@ -36,8 +37,12 @@
     --md-sys-color-surface-container: #ffe8d1;
     --md-sys-color-outline-variant: #d6c2b1;
 
+    /* 見出しだけ Manrope、本文は Inter（2026-08-08 ユーザー決定）。
+       Manrope は字幅が広く丸いのでタイトルのブランド感が出る一方、
+       本文・日付・数値は Inter の締まった字面のほうが読みやすい。
+       振り分けは _reset.css の `h1〜h6, .m3-logo-text { --font-heading }` が担う。 */
     --font-main: "Inter", "Noto Sans JP", sans-serif;
-    --font-heading: "Inter", "Noto Sans JP", sans-serif;
+    --font-heading: "Manrope", "Noto Sans JP", sans-serif;
 
     /* --- Brand Colors --- */
     --brand-windows: #00BCF2;
@@ -87,6 +92,18 @@
     --node-hero-padding-block: clamp(32px, 5vw, 48px);
     --node-hero-card-margin-inline: clamp(8px, 3vw, 12px);
     --node-hero-card-radius: clamp(24px, 4vw, 32px);
+
+    /* --- Node Card Component Tokens (Material 3 aligned) --- */
+    --node-card-radius: var(--m3-radius-large);
+    --node-card-content-padding: calc(var(--m3-spacing-m) + var(--m3-spacing-xs));
+    --node-card-content-gap: var(--m3-spacing-m);
+    --node-card-title-size: clamp(1.05rem, calc(1.025rem + 0.125vw), 1.15rem);
+    --node-card-title-size-compact: 1.05rem;
+
+    /* --- Node Card Grid Tokens (Material 3 aligned) --- */
+    --node-card-grid-gap: var(--m3-spacing-xl);
+    --node-card-grid-featured-gap: calc(var(--m3-spacing-xl) + var(--m3-spacing-s));
+    --node-card-grid-section-gap: var(--m3-spacing-xxl);
  
     /* --- Material 3 Motion --- */
     --m3-motion-duration: 500ms;
@@ -102,6 +119,7 @@
 [data-theme="dark"] {
     --md-sys-color-primary: #ffb85d;
     --md-sys-color-on-primary: #4a2800;
+    --md-sys-color-accent-text: #ffb85d;
     --md-sys-color-primary-container: #6a3c00;
     --md-sys-color-on-primary-container: #ffdcbe;
     --md-sys-color-secondary-container: #59422c;

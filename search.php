@@ -1,4 +1,6 @@
-<?php 
+<?php
+declare(strict_types=1);
+
 /**
  * 検索結果ページ
  */
@@ -115,7 +117,10 @@ get_header(); ?>
                         $active = ($current_sort === $val) ? 'is-active' : '';
                         $url = add_query_arg('m3_sort', $val);
                     ?>
-                        <a href="<?php echo esc_url($url); ?>" class="m3-segmented-item <?php echo $active; ?> m3-tooltip-target" data-tooltip="<?php echo esc_attr($data['label']); ?>" data-tooltip-pos="bottom">
+                        <?php // 検索結果は noindex, follow なので、並び替えリンクを辿られると
+                              // 同じ結果の並び違いが3件ずつクロールされる。rel="nofollow" で
+                              // パラメータの増殖を止める（NODE-1.3.md §23）。 ?>
+                        <a href="<?php echo esc_url($url); ?>" rel="nofollow" class="m3-segmented-item <?php echo $active; ?> m3-tooltip-target" data-tooltip="<?php echo esc_attr($data['label']); ?>" data-tooltip-pos="bottom">
                             <span class="material-symbols-outlined"><?php echo esc_attr($data['icon']); ?></span>
                         </a>
                     <?php endforeach; ?>
@@ -124,9 +129,9 @@ get_header(); ?>
         </div>
     </div>
 
-    <div class="m3-post-grid m3-search-results-grid">
+    <div class="l-card-grid m3-post-grid m3-search-results-grid">
         <?php if (have_posts()) : ?>
-            <div class="m3-post-grid__container">
+            <div class="l-card-grid__items m3-post-grid__container">
                 <?php
                 while (have_posts()) : the_post();
                     get_template_part('template-parts/article-card', null, ['card_class' => 'card-standard']);

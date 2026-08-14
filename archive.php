@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Generic archive template (category, tag, author, date, taxonomy).
  *

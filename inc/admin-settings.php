@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Theme Settings Page
  *
@@ -13,13 +15,28 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Add Settings Menu
  */
 function node_add_admin_menu() {
-    $page = add_options_page(
-        'Luminous Theme Settings',
-        'Luminous Settings',
+    // 「設定」配下に埋もれていたが、AI・外部連携と並ぶ運営の入口なので
+    // ダッシュボードのトップレベルへ独立させる（1.3）
+    $page = add_menu_page(
+        'Node Settings',
+        'Node Settings',
+        'manage_options',
+        'luminous-settings',
+        'node_render_settings_page',
+        'dashicons-admin-generic',
+        58 // 「外観」の少し上（プラグインの並びと衝突しにくい位置）
+    );
+
+    // 親と同じスラッグの子を先頭に置き、サブメニュー名が「Node Settings」の重複表示になるのを避ける
+    add_submenu_page(
+        'luminous-settings',
+        'Node Settings',
+        'テーマ設定',
         'manage_options',
         'luminous-settings',
         'node_render_settings_page'
     );
+
     add_action( 'admin_print_scripts-' . $page, function() {
         wp_enqueue_media();
     } );
@@ -72,6 +89,23 @@ function node_register_settings() {
             return $url ?: NODE_PREFERRED_SOURCE_DEFAULT_URL;
         },
     ) );
+
+    // --- 印刷（Node 1.3 第5段階） ---
+    register_setting( 'node_settings_group', NODE_PRINT_OPTION_ENABLED, array(
+        'sanitize_callback' => static function ( $value ) {
+            return '1' === (string) $value ? '1' : '0';
+        },
+    ) );
+    register_setting( 'node_settings_group', NODE_PRINT_OPTION_POSITION, array(
+        'sanitize_callback' => static function ( $value ) {
+            return in_array( $value, array( 'start', 'end' ), true ) ? $value : 'end';
+        },
+    ) );
+    register_setting( 'node_settings_group', NODE_PRINT_OPTION_SHOW_META, array(
+        'sanitize_callback' => static function ( $value ) {
+            return '1' === (string) $value ? '1' : '0';
+        },
+    ) );
 }
 add_action( 'admin_init', 'node_register_settings' );
 
@@ -112,11 +146,21 @@ function node_render_settings_page() {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row">開始予定時刻</th>
+                        <td>
+                            <input type="datetime-local" name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_START ); ?>" value="<?php echo esc_attr( (string) get_option( NODE_MAINTENANCE_OPTION_START, '' ) ); ?>" />
+                            <p class="description">
+                                設定した場合、有効化済みでもこの時刻までは通常表示を維持し、到達後にメンテナンス画面へ切り替えます。
+                                サイトのタイムゾーン（<?php echo esc_html( wp_timezone_string() ); ?>）で解釈されます。
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row">復旧予定時刻</th>
                         <td>
                             <input type="datetime-local" name="<?php echo esc_attr( NODE_MAINTENANCE_OPTION_ETA ); ?>" value="<?php echo esc_attr( (string) get_option( NODE_MAINTENANCE_OPTION_ETA, '' ) ); ?>" />
                             <p class="description">
-                                設定すると、メンテナンス画面にカウントダウンと進捗ゲージが表示されます（未設定なら非表示）。
+                                設定すると、メンテナンス画面にカウントダウンと進捗ゲージが表示され、到達後は自動解除して Luminous Core のトップへ移動します（未設定なら非表示）。
                                 サイトのタイムゾーン（<?php echo esc_html( wp_timezone_string() ); ?>）で解釈されます。
                             </p>
                         </td>
@@ -272,6 +316,46 @@ function node_render_settings_page() {
                         <td>
                             <input type="url" name="node_preferred_source_url" value="<?php echo esc_attr( get_option( 'node_preferred_source_url', NODE_PREFERRED_SOURCE_DEFAULT_URL ) ); ?>" class="regular-text" />
                             <p class="description">初期値: <code><?php echo esc_html( NODE_PREFERRED_SOURCE_DEFAULT_URL ); ?></code></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 印刷 -->
+            <div class="m3-admin-card" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h2 style="margin-top: 0; color: #FF9900; display: flex; align-items: center; gap: 10px;">
+                    <span class="dashicons dashicons-printer"></span> 印刷
+                </h2>
+                <p class="description">記事を紙やPDFで残すための機能です。PDF保存はブラウザの印刷画面から行えます。</p>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">印刷機能を有効にする</th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr( NODE_PRINT_OPTION_ENABLED ); ?>" value="0" />
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr( NODE_PRINT_OPTION_ENABLED ); ?>" value="1" <?php checked( node_print_is_enabled() ); ?> />
+                                記事下部に印刷ボタンを表示する
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">ボタンの表示位置</th>
+                        <td>
+                            <select name="<?php echo esc_attr( NODE_PRINT_OPTION_POSITION ); ?>">
+                                <option value="end" <?php selected( node_print_button_position(), 'end' ); ?>>シェアボタン群の末尾</option>
+                                <option value="start" <?php selected( node_print_button_position(), 'start' ); ?>>シェアボタン群の先頭</option>
+                            </select>
+                            <p class="description">「この記事をシェアする」の並びの中での位置です。</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">記事URL・著作権表記</th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr( NODE_PRINT_OPTION_SHOW_META ); ?>" value="0" />
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr( NODE_PRINT_OPTION_SHOW_META ); ?>" value="1" <?php checked( node_print_show_meta() ); ?> />
+                                印刷したページの末尾に記事URLと著作権表記を入れる
+                            </label>
                         </td>
                     </tr>
                 </table>

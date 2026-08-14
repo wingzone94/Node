@@ -9,16 +9,42 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! function_exists( 'node_ai_is_production' ) ) {
+	/**
+	 * 本番環境か（cybernode.local などの検証環境では false）。
+	 */
+	function node_ai_is_production(): bool {
+		return (bool) apply_filters( 'node_ai_is_production', 'production' === wp_get_environment_type() );
+	}
+}
+
 if ( ! function_exists( 'node_ai_fact_check_status_labels' ) ) {
 	/**
+	 * 判定ラベル。
+	 *
+	 * 検証環境（local / staging）では、ネタ記事・二次創作の検証で
+	 * 「不正確」とだけ出ても判断材料にならないため、
+	 * 「本番に出したらどうなるか」という公開リスクの言い回しに切り替える。
+	 *
 	 * @return array<string, string>
 	 */
 	function node_ai_fact_check_status_labels(): array {
+		if ( node_ai_is_production() ) {
+			return array(
+				'correct'          => '正確',
+				'likely_correct'   => 'おそらく正確',
+				'uncertain'        => '要確認',
+				'likely_incorrect' => 'おそらく不正確',
+				'unverifiable'     => '検証困難',
+			);
+		}
+
 		return array(
-			'likely_correct'   => 'おそらく正確',
-			'uncertain'        => '要確認',
-			'likely_incorrect' => 'おそらく不正確',
-			'unverifiable'     => '検証困難',
+			'correct'          => '正確（本番OK）',
+			'likely_correct'   => 'おそらく正確（本番OK）',
+			'uncertain'        => '本番では要注意',
+			'likely_incorrect' => '本番ではアウト',
+			'unverifiable'     => '検証困難（本番では要確認）',
 		);
 	}
 }
@@ -214,7 +240,7 @@ if ( ! function_exists( 'node_ai_render_fact_check_front' ) ) {
 			</summary>
 			<div class="m3-fact-check__body">
 				<p class="m3-fact-check__disclaimer">
-					<?php esc_html_e( 'AI と Google Search による参考情報です。編集者が確認済みの内容を含みますが、最終的な正確性は原文・公式情報をご確認ください。', 'node-ai-tools' ); ?>
+					<?php esc_html_e( 'AI と Google Search による参考情報です。これは確認箇所の抽出支援であり、編集者が確認済みの内容を含みますが、最終的な正確性は原文・公式情報をご確認ください。', 'node-ai-tools' ); ?>
 				</p>
 				<?php if ( ! empty( $data['summary'] ) ) : ?>
 					<p class="m3-fact-check__overview"><?php echo esc_html( (string) $data['summary'] ); ?></p>

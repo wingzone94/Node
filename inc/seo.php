@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * SEO & Semantic HTML Functions
  *
@@ -54,9 +56,18 @@ function node_seo_json_ld() {
             '@type'    => 'WebSite',
             'name'     => get_bloginfo( 'name' ),
             'url'      => home_url( '/' ),
+            // target は文字列ではなく EntryPoint で包む。
+            // 素の文字列で書くと Google がテンプレートを普通のURLとみなして
+            // `/?s={search_term_string}` を**そのままクロール**し、GSC の
+            // 「noindex タグによって除外されました」に積み上がる（2026-08-08 実測、
+            // NODE-1.3.md §23）。urlTemplate はプレースホルダを含むため
+            // esc_url を通さない（`{` `}` が壊れる）。
             'potentialAction' => [
                 '@type' => 'SearchAction',
-                'target' => home_url( '/?s={search_term_string}' ),
+                'target' => [
+                    '@type'       => 'EntryPoint',
+                    'urlTemplate' => home_url( '/?s={search_term_string}' ),
+                ],
                 'query-input' => 'required name=search_term_string',
             ],
         ];

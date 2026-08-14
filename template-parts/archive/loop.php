@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Archive post loop.
  *
@@ -13,12 +15,21 @@ $list_class       = isset( $args['list_class'] ) ? $args['list_class'] : 'm3-pos
 $featured_first   = ! empty( $args['featured_first'] );
 $wrapper_class    = isset( $args['wrapper_class'] ) ? $args['wrapper_class'] : '';
 $grid_extra_class = isset( $args['grid_extra_class'] ) ? $args['grid_extra_class'] : '';
-$feed_label = isset( $args['feed_label'] ) ? $args['feed_label'] : __( '投稿一覧', 'node' );
+$feed_label       = isset( $args['feed_label'] ) ? $args['feed_label'] : __( '投稿一覧', 'node' );
+$grid_bem_classes = array( 'l-card-grid__items' );
+
+if ( false !== strpos( $list_class, 'm3-post-grid--list' ) ) {
+	$grid_bem_classes[] = 'l-card-grid--list';
+}
+
+if ( false !== strpos( $list_class, 'm3-post-grid--2col-list' ) ) {
+	$grid_bem_classes[] = 'l-card-grid--two-column-list';
+}
 ?>
 <section class="m3-archive-feed <?php echo esc_attr( $wrapper_class ); ?>" aria-label="<?php echo esc_attr( $feed_label ); ?>">
 	<?php if ( have_posts() ) : ?>
-		<div class="m3-post-grid m3-archive-post-grid">
-			<div class="m3-post-grid__container m3-archive-post-grid__cards <?php echo esc_attr( trim( $list_class . ' ' . $grid_extra_class ) ); ?>">
+		<div class="l-card-grid m3-post-grid m3-archive-post-grid">
+			<div class="<?php echo esc_attr( implode( ' ', $grid_bem_classes ) ); ?> m3-post-grid__container m3-archive-post-grid__cards <?php echo esc_attr( trim( $list_class . ' ' . $grid_extra_class ) ); ?>">
 				<?php
 				while ( have_posts() ) :
 					the_post();

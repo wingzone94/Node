@@ -12,9 +12,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// テーマ（優先度10）が親メニューを登録した後に走らせる。
+// プラグインは functions.php より先に読み込まれるため、同じ優先度だと親が未登録になる
 add_action(
 	'admin_menu',
 	static function (): void {
+		// Node Settings（テーマ側の add_menu_page）配下へ入れる。
+		// 親が未登録の場合（プラグイン単体利用）は従来どおり「設定」配下へ退避する
+		if ( menu_page_url( 'luminous-settings', false ) ) {
+			add_submenu_page(
+				'luminous-settings',
+				'外部連携設定',
+				'外部連携',
+				'manage_options',
+				'node-connect',
+				'node_connect_render_settings_page'
+			);
+			return;
+		}
+
 		add_options_page(
 			'外部連携設定',
 			'外部連携',
@@ -22,7 +38,8 @@ add_action(
 			'node-connect',
 			'node_connect_render_settings_page'
 		);
-	}
+	},
+	20
 );
 
 add_action(
@@ -60,9 +77,10 @@ add_action(
 		);
 		register_setting(
 			'node_connect_group',
-			Node_Connect_X_Poster::OPTION_TEMPLATE,
+			Node_Connect_X_Poster::OPTION_TEMPLATES,
 			[
-				'sanitize_callback' => static fn( $value ) => sanitize_textarea_field( (string) $value ),
+				'type'              => 'array',
+				'sanitize_callback' => [ Node_Connect_X_Poster::class, 'sanitize_templates' ],
 			]
 		);
 		foreach ( [
@@ -558,7 +576,7 @@ function node_connect_render_settings_page(): void {
 				<h2 style="<?php echo esc_attr( $h2_style ); ?>">
 					<span class="dashicons dashicons-twitter"></span> X（Twitter）自動投稿
 				</h2>
-				<p class="description">記事の新規公開時（予約公開を含む）に、テンプレートから作った投稿文を自動でXへポストします。投稿は記事1件につき1回だけで、記事編集画面の「X投稿」ボックスから記事ごとに除外できます。X Developer Platform の Free 以上のプランと、書き込み権限付きのキー・トークンが必要です。</p>
+				<p class="description">このブログの記事を新規公開した時（予約公開を含む）に、選択した投稿文言テンプレートから作った投稿文を、このブログに連携した公式Xアカウントへ自動投稿します。投稿は記事1件につき1回だけで、記事編集画面から記事ごとにテンプレート選択・文言編集・除外ができます。</p>
 				<table class="form-table">
 					<tr>
 						<th scope="row">自動投稿</th>
@@ -614,11 +632,21 @@ function node_connect_render_settings_page(): void {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">投稿テンプレート</th>
+						<th scope="row">X投稿文言テンプレート</th>
 						<td>
-							<textarea name="<?php echo esc_attr( Node_Connect_X_Poster::OPTION_TEMPLATE ); ?>" rows="6" class="large-text"><?php echo esc_textarea( Node_Connect_X_Poster::get_template() ); ?></textarea>
+							<div data-nc-x-templates>
+								<?php foreach ( Node_Connect_X_Poster::get_templates() as $x_template_id => $x_template ) : ?>
+									<div data-nc-x-template-row style="margin-bottom: 12px; padding: 12px; border: 1px solid #dcdcde; border-radius: 8px;">
+										<input type="hidden" name="<?php echo esc_attr( Node_Connect_X_Poster::OPTION_TEMPLATES ); ?>[<?php echo esc_attr( $x_template_id ); ?>][id]" value="<?php echo esc_attr( $x_template_id ); ?>" />
+										<p style="margin-top: 0;"><input type="text" name="<?php echo esc_attr( Node_Connect_X_Poster::OPTION_TEMPLATES ); ?>[<?php echo esc_attr( $x_template_id ); ?>][name]" value="<?php echo esc_attr( $x_template['name'] ); ?>" class="regular-text" aria-label="テンプレート名" placeholder="テンプレート名" /></p>
+										<textarea name="<?php echo esc_attr( Node_Connect_X_Poster::OPTION_TEMPLATES ); ?>[<?php echo esc_attr( $x_template_id ); ?>][content]" rows="5" class="large-text" aria-label="X投稿文言"><?php echo esc_textarea( $x_template['content'] ); ?></textarea>
+										<p style="margin-bottom: 0;"><button type="button" class="button-link-delete" data-nc-remove-x-template>このテンプレートを削除</button></p>
+									</div>
+								<?php endforeach; ?>
+							</div>
+							<p><button type="button" class="button" data-nc-add-x-template>テンプレートを追加</button></p>
 							<p class="description">
-								使用可能な変数: <code>{{title}}</code>（タイトル）, <code>{{url}}</code>（URL）, <code>{{summary}}</code>（AI要約があれば要約、なければ抜粋）, <code>{{category}}</code>（カテゴリ名）, <code>{{tags}}</code>（記事タグのハッシュタグ列）<br>
+								このブログで使用するテンプレートを複数件登録できます。使用可能な変数: <code>{{title}}</code>, <code>{{url}}</code>, <code>{{summary}}</code>, <code>{{category}}</code>, <code>{{tags}}</code><br>
 								投稿全体がXの上限（日本語約140文字・URLは23文字換算）に収まるよう、要約は自動で切り詰め、タグは入り切る分だけ付きます。
 							</p>
 						</td>
@@ -682,6 +710,8 @@ function node_connect_render_settings_page(): void {
 	<script>
 	( function () {
 		var masterInput = document.querySelector( 'input[data-nc-role="master"]' );
+		var templateList = document.querySelector( '[data-nc-x-templates]' );
+		var addTemplateButton = document.querySelector( '[data-nc-add-x-template]' );
 
 		function all( selector ) {
 			return Array.prototype.slice.call( document.querySelectorAll( selector ) );
@@ -716,6 +746,38 @@ function node_connect_render_settings_page(): void {
 			// X自動投稿はWebhook通知から独立した機能のためロック連動しない。
 		}
 
+		function refreshTemplateRemoveButtons() {
+			var rows = all( '[data-nc-x-template-row]' );
+			rows.forEach( function ( row ) {
+				var button = row.querySelector( '[data-nc-remove-x-template]' );
+				if ( button ) {
+					button.disabled = rows.length <= 1;
+				}
+			} );
+		}
+
+		if ( templateList && addTemplateButton ) {
+			addTemplateButton.addEventListener( 'click', function () {
+				var id = 'template-' + Date.now();
+				var row = document.createElement( 'div' );
+				row.setAttribute( 'data-nc-x-template-row', '' );
+				row.setAttribute( 'style', 'margin-bottom: 12px; padding: 12px; border: 1px solid #dcdcde; border-radius: 8px;' );
+				row.innerHTML =
+					'<input type="hidden" name="<?php echo esc_js( Node_Connect_X_Poster::OPTION_TEMPLATES ); ?>[' + id + '][id]" value="' + id + '" />' +
+					'<p style="margin-top: 0;"><input type="text" name="<?php echo esc_js( Node_Connect_X_Poster::OPTION_TEMPLATES ); ?>[' + id + '][name]" class="regular-text" aria-label="テンプレート名" placeholder="テンプレート名" /></p>' +
+					'<textarea name="<?php echo esc_js( Node_Connect_X_Poster::OPTION_TEMPLATES ); ?>[' + id + '][content]" rows="5" class="large-text" aria-label="X投稿文言"></textarea>' +
+					'<p style="margin-bottom: 0;"><button type="button" class="button-link-delete" data-nc-remove-x-template>このテンプレートを削除</button></p>';
+				templateList.appendChild( row );
+				refreshTemplateRemoveButtons();
+			} );
+			templateList.addEventListener( 'click', function ( event ) {
+				if ( event.target && event.target.matches( '[data-nc-remove-x-template]' ) ) {
+					event.target.closest( '[data-nc-x-template-row]' ).remove();
+					refreshTemplateRemoveButtons();
+				}
+			} );
+		}
+
 		document.addEventListener( 'change', function ( event ) {
 			if ( event.target && event.target.matches && event.target.matches( 'input[data-nc-role]' ) ) {
 				refresh();
@@ -723,6 +785,7 @@ function node_connect_render_settings_page(): void {
 		} );
 
 		refresh();
+		refreshTemplateRemoveButtons();
 	} )();
 	</script>
 	<?php

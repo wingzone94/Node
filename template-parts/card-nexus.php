@@ -1,4 +1,6 @@
-<?php 
+<?php
+declare(strict_types=1);
+
 $ai_summary = get_post_meta(get_the_ID(), '_node_ai_summary', true);
 if (!empty($ai_summary)) : ?>
     <details class="m3-nexus-abstract ai-summary-accordion" style="--ai-vibe-color: #FF9800;">

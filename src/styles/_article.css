@@ -834,7 +834,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Icon-only badge style for cards */
+/* 本番と同じカスケード: カードを含むアイコンバッジを34pxへ統一する。 */
 .m3-label--icon-only {
     width: 34px;
     height: 34px;
@@ -2701,12 +2701,6 @@
 }
 
 @media (max-width: 600px) {
-    .m3-article__body .wp-block-table :is(th, td) {
-        min-width: 7rem;
-        word-break: keep-all;
-        overflow-wrap: normal;
-    }
-
     .m3-inline-toc {
         padding: 20px 16px;
         border-radius: 20px;
@@ -2721,6 +2715,12 @@
 
     .m3-inline-toc__content a {
         overflow-wrap: anywhere;
+    }
+
+    .m3-article__body .wp-block-table :is(th, td) {
+        min-width: 7rem;
+        word-break: keep-all;
+        overflow-wrap: normal;
     }
 }
 

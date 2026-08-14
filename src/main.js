@@ -4,8 +4,8 @@ import './scripts/share-actions';
 import './scripts/blogcard-actions';
 import { initSearchBar } from './scripts/search-bar';
 import { initArticleNavigation } from './scripts/article-navigation';
-import { initHeroInfoBubble, initLatestGridExpansion, initSectionArchiveLinks } from './scripts/home-layout';
-import { initKeyboardSnackbar } from './scripts/keyboard-snackbar';
+import { initHeroInfoBubble, initSectionArchiveLinks } from './scripts/home-layout';
+import { initHeadlineCarousel } from './scripts/headline-carousel';
 import { initExpressiveFloatingTOC } from './scripts/expressive-toc';
 import { initHeroTOC } from './scripts/hero-toc';
 import { initFloatingActions } from './scripts/floating-actions';
@@ -420,7 +420,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         initNodeLibraryFilterNavigation,
         initNodeLibraryNintendoWarnings,
         initNodeLibrarySteamEmbedToggles,
-        initKeyboardSnackbar,
         initExpressiveFloatingTOC,
         initHeroTOC,
         initFloatingActions,
@@ -431,7 +430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initRippleEffect,
         initReadingProgressSingleOnly,
         initSectionArchiveLinks,
-        initLatestGridExpansion,
+        initHeadlineCarousel,
         initArticleNavigation,
         initHeroInfoBubble,
         initScrollAnimations,

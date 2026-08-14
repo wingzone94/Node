@@ -1,3 +1,6 @@
+<?php
+declare(strict_types=1);
+?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -6,33 +9,25 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#FF9900">
+    <?php
+    /*
+     * ブラウザUI（アドレスバー等）の色。以前はブランドオレンジ #FF9900 のベタで、
+     * 読み込み中の画面上端がオレンジに塗られていた（2026-08-08 ユーザー指示で廃止）。
+     * サイトの面の色に合わせ、ライト/ダークで出し分ける。
+     */
+    ?>
+    <meta name="theme-color" content="#FFF4E5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1B1812" media="(prefers-color-scheme: dark)">
     <link rel="apple-touch-icon" href="<?php echo esc_url( get_template_directory_uri() . '/assets/pwa/apple-touch-icon-180.png' ); ?>">
     <link rel="manifest" href="<?php echo get_template_directory_uri(); ?>/manifest.json">
     <?php
-    // iOS ホーム画面追加時のスプラッシュ（オレンジ背景＋ブランドロゴ）
-    $node_pwa_uri      = get_template_directory_uri() . '/assets/pwa';
-    $node_ios_splashes = array(
-        array( 375, 667, 2, 'splash-750x1334.png' ),
-        array( 414, 896, 2, 'splash-828x1792.png' ),
-        array( 375, 812, 3, 'splash-1125x2436.png' ),
-        array( 390, 844, 3, 'splash-1170x2532.png' ),
-        array( 393, 852, 3, 'splash-1179x2556.png' ),
-        array( 402, 874, 3, 'splash-1206x2622.png' ),
-        array( 414, 896, 3, 'splash-1242x2688.png' ),
-        array( 428, 926, 3, 'splash-1284x2778.png' ),
-        array( 430, 932, 3, 'splash-1290x2796.png' ),
-        array( 440, 956, 3, 'splash-1320x2868.png' ),
-    );
-    foreach ( $node_ios_splashes as $node_splash ) {
-        printf(
-            '<link rel="apple-touch-startup-image" media="screen and (device-width: %1$dpx) and (device-height: %2$dpx) and (-webkit-device-pixel-ratio: %3$d) and (orientation: portrait)" href="%4$s">' . "\n    ",
-            (int) $node_splash[0],
-            (int) $node_splash[1],
-            (int) $node_splash[2],
-            esc_url( $node_pwa_uri . '/' . $node_splash[3] )
-        );
-    }
+    /*
+     * iOS の起動スプラッシュ（apple-touch-startup-image・10解像度）は廃止した
+     * （2026-08-08 ユーザー指示）。ロゴを載せた全画面の起動画面は、出るたびに
+     * 一瞬挟まるだけで情報がなく、端末ごとに解像度を10枚用意する維持コストにも
+     * 見合わない。指定がなければ iOS は manifest の background_color
+     * （#1B1812 = サイトのダーク面）で塗るので、暗い無地から本体へ入る。
+     */
     ?>
     <link rel="mask-icon" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg" color="#FF9900">
     <link rel="icon" type="image/svg+xml" href="<?php echo get_template_directory_uri(); ?>/node-logo.svg">
@@ -40,20 +35,20 @@
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+
     <!-- High Performance Font Loading Pattern -->
     <!-- 本文フォント: 非同期ロード + swap (テキストのFOUTは許容) -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
     <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
     <!-- Adobe Fonts kit: edit at fonts.adobe.com to load DIN 2014 only -->
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-    
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+
     <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
         <style>
             body { opacity: 1 !important; visibility: visible !important; }
         </style>
@@ -146,8 +141,8 @@
                             <button type="submit" class="m3-icon-button m3-search-submit" id="m3-search-submit" aria-label="検索を実行">
                                 <span class="material-symbols-outlined" aria-hidden="true">search</span>
                             </button>
-                            <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索">
-                                <span class="material-symbols-outlined">tune</span>
+                            <button type="button" class="m3-icon-button m3-search-advanced-trigger" id="m3-advanced-search-trigger" aria-label="詳細検索" aria-haspopup="dialog" aria-expanded="false" aria-controls="m3-advanced-search-modal">
+                                <span class="material-symbols-outlined" aria-hidden="true">tune</span>
                             </button>
                         </div>
                     </div>
@@ -162,8 +157,8 @@
                     var clearBtn = document.getElementById('m3-search-clear');
                     if (!form || !input || !clearBtn) return;
 
-                    var DISSIPATE_MS = 180;
-                    var REAPPEAR_MS = 120;
+                    var clearing = false;
+                    var DISSIPATE_MS = 200;
 
                     function updateClearBtn() {
                         var hasValue = Boolean(input.value && input.value.trim());
@@ -171,28 +166,60 @@
                         clearBtn.setAttribute('aria-hidden', hasValue ? 'false' : 'true');
                     }
 
-                    function resetInputVisual() {
-                        input.classList.remove('is-dissipating', 'is-reappearing');
+                    // 読了ゲージ破壊時（playBarShatterAnimation）と同じ破片演出
+                    function spawnShards() {
+                        var text = input.value;
+                        if (!text || !input.animate) return;
+                        var cs = window.getComputedStyle(input);
+                        var probe = document.createElement('span');
+                        probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;';
+                        probe.style.font = cs.font;
+                        probe.style.letterSpacing = cs.letterSpacing;
+                        probe.textContent = text;
+                        document.body.appendChild(probe);
+                        var inputRect = input.getBoundingClientRect();
+                        var textW = Math.min(probe.getBoundingClientRect().width, inputRect.width);
+                        probe.remove();
+                        // ダークモードは純白の光の粒、ライトモードは文字色（白だと明るい背景に溶けて見えないため）
+                        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                        var color = isDark ? '#ffffff' : cs.color;
+                        var baseX = inputRect.left + (parseFloat(cs.paddingLeft) || 0);
+                        var midY = inputRect.top + inputRect.height / 2;
+                        var count = Math.max(8, Math.min(20, Math.round(textW / 8)));
+                        for (var i = 0; i < count; i++) {
+                            var shard = document.createElement('span');
+                            shard.className = 'm3-search-shard';
+                            shard.style.backgroundColor = color;
+                            shard.style.left = (baseX + Math.random() * Math.max(textW, 1)) + 'px';
+                            shard.style.top = midY + 'px';
+                            document.body.appendChild(shard);
+                            var angle = Math.random() * Math.PI + Math.PI; // 上半円へ飛ばす
+                            var dist = 30 + Math.random() * 90;
+                            var anim = shard.animate([
+                                { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
+                                { transform: 'translate(' + (Math.cos(angle) * dist).toFixed(1) + 'px,' + (Math.sin(angle) * dist).toFixed(1) + 'px) rotate(' + Math.round(Math.random() * 720 - 360) + 'deg) scale(0)', opacity: 0 }
+                            ], { duration: 800 + Math.random() * 400, easing: 'cubic-bezier(0.165, 0.84, 0.44, 1)', fill: 'forwards' });
+                            anim.onfinish = (function (el) { return function () { el.remove(); }; })(shard);
+                        }
                     }
 
+                    // 破片バースト + 文字の高速フェードで消す
                     function animateClear(done) {
+                        if (clearing) return;
                         if (!input.value || !input.value.trim()) {
                             if (done) done();
                             return;
                         }
+                        clearing = true;
 
-                        clearBtn.classList.add('is-popping');
+                        spawnShards();
                         input.classList.add('is-dissipating');
 
                         window.setTimeout(function () {
                             input.value = '';
-                            resetInputVisual();
-                            clearBtn.classList.remove('is-popping');
+                            input.classList.remove('is-dissipating');
+                            clearing = false;
                             updateClearBtn();
-                            input.classList.add('is-reappearing');
-                            window.setTimeout(function () {
-                                input.classList.remove('is-reappearing');
-                            }, REAPPEAR_MS);
                             if (done) done();
                         }, DISSIPATE_MS);
                     }
@@ -259,19 +286,145 @@
     </div>
 </header>
 
+<nav class="m3-mobile-section-nav" aria-label="ホームの主要セクション">
+    <div class="m3-mobile-section-nav__inner">
+        <details class="m3-mobile-section-nav__menu">
+            <summary class="m3-mobile-section-nav__trigger">
+                <span class="material-symbols-outlined m3-mobile-section-nav__current-icon" aria-hidden="true">campaign</span>
+                <span class="m3-mobile-section-nav__current-label">HEADLINE</span>
+                <span class="material-symbols-outlined m3-mobile-section-nav__arrow" aria-hidden="true">expand_more</span>
+            </summary>
+            <ul class="m3-mobile-section-nav__list">
+                <li>
+                    <a href="<?php echo esc_url( home_url( '/#headline' ) ); ?>" data-node-section="headline" data-node-section-icon="campaign">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">campaign</span>
+                        <span class="m3-mobile-section-nav__item-label">HEADLINE</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo esc_url( home_url( '/#spotlight' ) ); ?>" data-node-section="spotlight" data-node-section-icon="local_fire_department">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">local_fire_department</span>
+                        <span class="m3-mobile-section-nav__item-label">SPOTLIGHT</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo esc_url( home_url( '/#latest' ) ); ?>" data-node-section="latest" data-node-section-icon="bolt">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">bolt</span>
+                        <span class="m3-mobile-section-nav__item-label">LATEST</span>
+                    </a>
+                </li>
+            </ul>
+        </details>
+        <button type="button" class="m3-mobile-section-nav__dismiss" aria-label="セクションナビゲーションを閉じる">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+    </div>
+</nav>
+
+<script>
+(() => {
+    const initMobileSectionNav = () => {
+        const nav = document.querySelector('.m3-mobile-section-nav');
+        if (!nav) return;
+
+        const menu = nav.querySelector('.m3-mobile-section-nav__menu');
+        const rail = nav.querySelector('.m3-mobile-section-nav__inner') || nav;
+        const currentIcon = nav.querySelector('.m3-mobile-section-nav__current-icon');
+        const currentLabel = nav.querySelector('.m3-mobile-section-nav__current-label');
+        const dismissButton = nav.querySelector('.m3-mobile-section-nav__dismiss');
+        const links = [...nav.querySelectorAll('[data-node-section]')];
+        if (!menu || !currentIcon || !currentLabel || !links.length) return;
+
+        dismissButton?.addEventListener('click', () => {
+            menu.removeAttribute('open');
+            nav.hidden = true;
+        });
+
+        const setCurrent = (link) => {
+            if (!link) return;
+            currentIcon.textContent = link.dataset.nodeSectionIcon || 'label';
+            currentLabel.textContent = link.querySelector('.m3-mobile-section-nav__item-label')?.textContent || '';
+            links.forEach((item) => {
+                item.classList.toggle('is-current', item === link);
+                if (item === link) item.setAttribute('aria-current', 'location');
+                else item.removeAttribute('aria-current');
+            });
+        };
+
+        const currentPath = location.pathname.replace(/\/+$/, '') || '/';
+        const samePageSections = links.map((link) => {
+            const url = new URL(link.href, location.href);
+            const path = url.pathname.replace(/\/+$/, '') || '/';
+            if (path !== currentPath || !url.hash) return null;
+
+            const anchor = document.querySelector(url.hash);
+            if (!anchor) return null;
+            const section = anchor.matches('section') ? anchor : anchor.nextElementSibling;
+            return section ? { link, anchor, section } : null;
+        }).filter(Boolean);
+
+        const pathMatch = links.find((link) => {
+            const url = new URL(link.href, location.href);
+            return !url.hash && (url.pathname.replace(/\/+$/, '') || '/') === currentPath;
+        });
+        setCurrent(pathMatch || samePageSections[0]?.link || links[0]);
+
+        let frame = 0;
+        const updateCurrentSection = () => {
+            frame = 0;
+            if (!samePageSections.length) return;
+
+            const anchorOffset = Math.max(...samePageSections.map((candidate) => (
+                parseFloat(getComputedStyle(candidate.anchor).scrollMarginTop) || 0
+            )));
+            const marker = Math.max(rail.getBoundingClientRect().bottom + 16, anchorOffset + 1);
+            const positionedSections = samePageSections.map((candidate) => ({
+                ...candidate,
+                top: candidate.anchor.getBoundingClientRect().top,
+            }));
+            const passedSections = positionedSections.filter((candidate) => candidate.top <= marker);
+            const active = (passedSections.length ? passedSections : positionedSections).reduce((closest, candidate) => {
+                if (passedSections.length) return candidate.top > closest.top ? candidate : closest;
+                return candidate.top < closest.top ? candidate : closest;
+            });
+            setCurrent(active.link);
+        };
+
+        const scheduleUpdate = () => {
+            if (!frame) frame = requestAnimationFrame(updateCurrentSection);
+        };
+
+        links.forEach((link) => link.addEventListener('click', () => {
+            setCurrent(link);
+            menu.removeAttribute('open');
+        }));
+
+        addEventListener('scroll', scheduleUpdate, { passive: true });
+        addEventListener('resize', scheduleUpdate, { passive: true });
+        scheduleUpdate();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobileSectionNav, { once: true });
+    } else {
+        initMobileSectionNav();
+    }
+})();
+</script>
+
 <!-- 3. Portal Components (Fixed/Overlay Elements) -->
 
 <!-- Advanced Search Modal (Material 3 Expressive) -->
-<div id="m3-advanced-search-modal" class="m3-modal m3-modal--wide">
+<dialog id="m3-advanced-search-modal" class="m3-modal m3-modal--wide" aria-labelledby="m3-advanced-search-title">
     <div class="m3-modal__content m3-advanced-search-card">
         
         <div class="m3-modal__header">
             <div class="m3-modal__title-group">
-                <span class="material-symbols-outlined">filter_alt</span>
-                <h2 class="m3-modal__title">詳細検索</h2>
+                <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+                <h2 class="m3-modal__title" id="m3-advanced-search-title">詳細検索</h2>
             </div>
-            <button type="button" class="m3-icon-button m3-modal__close" id="m3-advanced-search-close">
-                <span class="material-symbols-outlined">close</span>
+            <button type="button" class="m3-icon-button m3-modal__close" id="m3-advanced-search-close" aria-label="詳細検索を閉じる">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
             </button>
         </div>
 
@@ -314,8 +467,8 @@
                             <div class="m3-search-section">
                                 <label class="m3-search-section-label"><span class="material-symbols-outlined">sell</span> タグ</label>
                                 <div class="m3-textfield-wrapper">
-                                    <input type="text" name="m3_tag" id="m3-tag-input" class="m3-text-input" placeholder="タグ名を入力..." autocomplete="off">
-                                    <div id="m3-tag-suggestions" class="m3-suggestions-list"></div>
+                                    <input type="text" name="m3_tag" id="m3-tag-input" class="m3-text-input" placeholder="タグ名を入力..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="m3-tag-suggestions">
+                                    <div id="m3-tag-suggestions" class="m3-suggestions-list" role="listbox" aria-label="タグ候補"></div>
                                 </div>
                             </div>
                             <!-- Mobile Exclusive: Sort Order -->
@@ -391,60 +544,18 @@
 
                 <!-- Page 3: Platforms -->
                 <div class="m3-modal__page" data-page="3">
-                    <div class="m3-platform-layout">
-                        <!-- Mobile & Web -->
-                        <div class="m3-platform-side">
-                            <div class="m3-platform-group">
-                                <label class="m3-platform-group-label"><span class="material-symbols-outlined">smartphone</span> Mobile & Web</label>
-                                <div class="m3-platform-list">
-                                    <label class="m3-platform-chip m3-platform-chip--ios"><input type="checkbox" name="m3_platform[]" value="iOS"><span>iOS</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--android"><input type="checkbox" name="m3_platform[]" value="Android"><span>Android</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--webapp"><input type="checkbox" name="m3_platform[]" value="Web"><span>Web App</span></label>
-                                </div>
-                            </div>
-                            <div class="m3-platform-divider"></div>
-                            <div class="m3-platform-group">
-                                <label class="m3-platform-group-label"><span class="material-symbols-outlined">desktop_windows</span> PC Platforms</label>
-                                <div class="m3-platform-list">
-                                    <label class="m3-platform-chip m3-platform-chip--windows"><input type="checkbox" name="m3_platform[]" value="Windows"><span>Windows</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--mac"><input type="checkbox" name="m3_platform[]" value="Mac"><span>Mac</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--linux"><input type="checkbox" name="m3_platform[]" value="Linux"><span>Linux</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--steam"><input type="checkbox" name="m3_platform[]" value="Steam"><span>Steam</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--epic"><input type="checkbox" name="m3_platform[]" value="Epic"><span>Epic</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--geforce"><input type="checkbox" name="m3_platform[]" value="GeForce"><span>GFN</span></label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="m3-platform-divider m3-platform-divider--vertical"></div>
-
-                        <!-- Consoles -->
-                        <div class="m3-platform-side">
-                            <div class="m3-platform-group m3-platform-subgroup">
-                                <label class="m3-platform-group-label"><span class="material-symbols-outlined">sports_esports</span> Consoles</label>
-                                <span class="m3-platform-subgroup-title">Nintendo</span>
-                                <div class="m3-platform-list">
-                                    <label class="m3-platform-chip m3-platform-chip--nintendo"><input type="checkbox" name="m3_platform[]" value="Switch"><span>Switch</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--nintendo"><input type="checkbox" name="m3_platform[]" value="3DS"><span>3DS</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--nintendo"><input type="checkbox" name="m3_platform[]" value="WiiU"><span>Wii U</span></label>
-                                </div>
-                                <span class="m3-platform-subgroup-title">PlayStation</span>
-                                <div class="m3-platform-list">
-                                    <label class="m3-platform-chip m3-platform-chip--sony"><input type="checkbox" name="m3_platform[]" value="PS5"><span>PS5</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--sony"><input type="checkbox" name="m3_platform[]" value="PS4"><span>PS4</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--sony"><input type="checkbox" name="m3_platform[]" value="PS3"><span>PS3</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--sony"><input type="checkbox" name="m3_platform[]" value="PSVita"><span>PS Vita</span></label>
-                                </div>
-                                <span class="m3-platform-subgroup-title">Xbox</span>
-                                <div class="m3-platform-list">
-                                    <label class="m3-platform-chip m3-platform-chip--xbox"><input type="checkbox" name="m3_platform[]" value="XboxX"><span>Xbox X|S</span></label>
-                                    <label class="m3-platform-chip m3-platform-chip--xbox"><input type="checkbox" name="m3_platform[]" value="XboxOne"><span>Xbox One</span></label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="m3-platform-layout" id="m3-platform-options" data-state="idle"></div>
                 </div>
             </div>
+
+            <section id="m3-search-rest-results" class="m3-search-rest-results" aria-labelledby="m3-search-rest-results-title" hidden>
+                <div class="m3-search-rest-results__header">
+                    <h3 id="m3-search-rest-results-title" class="m3-search-rest-results__title">検索結果</h3>
+                    <p id="m3-search-rest-results-status" class="m3-search-rest-results__status" role="status" aria-live="polite"></p>
+                </div>
+                <ol id="m3-search-rest-results-list" class="m3-search-rest-results__list"></ol>
+                <a id="m3-search-rest-results-all" class="m3-button m3-button--text" href="<?php echo esc_url( home_url( '/' ) ); ?>">すべての検索結果を見る</a>
+            </section>
         </div>
 
         <div class="m3-modal__footer">
@@ -471,17 +582,4 @@
             <div class="m3-loading-spinner"></div>
         </div>
     </div>
-</div>
-
-<!-- Snackbar (Notifications) -->
-<div id="m3-snackbar" class="m3-snackbar" aria-live="polite">
-    <div class="m3-snackbar__content">
-        <span class="m3-snackbar__text">物理キーボードを検出しました。PCビューに切り替えますか？</span>
-        <div class="m3-snackbar__actions">
-            <button class="m3-button m3-button--text" id="m3-snackbar-action">切り替える</button>
-            <button class="m3-icon-button" id="m3-snackbar-close" aria-label="閉じる">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-    </div>
-</div>
+</dialog>

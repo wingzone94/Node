@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Template part for displaying the article hero section in single.php
  *
@@ -96,14 +98,14 @@
                                 <a href="<?php echo esc_url( get_day_link( get_the_date( 'Y' ), get_the_date( 'n' ), get_the_date( 'j' ) ) ); ?>"
                                    class="m3-article__meta-item m3-article__date"
                                    aria-label="<?php echo esc_attr( get_the_date( 'Y年n月j日' ) . 'の記事一覧へ' ); ?>">
-                                    <span class="material-symbols-outlined">calendar_today</span>
-                                    <time datetime="<?php echo get_the_date('c'); ?>">
+                                    <span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>
+                                    <time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>">
                                         <?php echo esc_html(get_the_date('Y/m/d')); ?>
                                     </time>
                                 </a>
                                 <?php if ( $show_modified_date ) : ?>
                                 <div class="m3-article__meta-item m3-article__modified">
-                                    <span class="material-symbols-outlined">update</span>
+                                    <span class="material-symbols-outlined" aria-hidden="true">update</span>
                                     <time datetime="<?php echo esc_attr( $modified_datetime ); ?>">
                                         <?php echo esc_html( sprintf( '追記 %s', $modified_display_date ) ); ?>
                                     </time>
@@ -111,9 +113,10 @@
                                 <?php endif; ?>
                                 <?php // コメント0件のカウンター表示はノイズになるため、1件以上のときだけ出す ?>
                                 <?php if (get_comments_number() > 0) : ?>
-                                <a href="#comments" class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger">
-                                    <span class="material-symbols-outlined">chat_bubble</span>
-                                    <span><?php echo get_comments_number(); ?></span>
+                                <a href="#comments" class="m3-article__meta-item m3-article__comments" id="m3-hero-comment-trigger"
+                                   aria-label="<?php echo esc_attr( sprintf( 'コメント %d件へ移動', get_comments_number() ) ); ?>">
+                                    <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
+                                    <span><?php echo esc_html( get_comments_number() ); ?></span>
                                 </a>
                                 <?php endif; ?>
                             </div>
@@ -134,7 +137,7 @@
 
                 <!-- ===== 右カラム: 補足（読了 → 著者 → 開示バッジ → 目次） =====
                      読者の意思決定に効く順（所要時間が先、開示情報は控えめに後ろ）に積む -->
-                <div class="m3-hero-col m3-hero-col--aside">
+                <aside class="m3-hero-col m3-hero-col--aside" aria-label="記事の補足情報">
 
                     <!-- Expressive Reading Badge (0.9.1 Style) -->
                     <?php
@@ -160,11 +163,7 @@
                         ?>
                         <div class="m3-article__reading-badge-expressive m3-ripple-host"
                              id="m3-hero-reading-badge"
-                             style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>; --reading-rank-color: <?php echo esc_attr($reading_info['badge_color']); ?>; --reading-rank-bg: <?php echo esc_attr($reading_info['badge_bg']); ?>;"
-                             role="button"
-                             tabindex="0"
-                             aria-expanded="false"
-                             aria-controls="m3-reading-badge-desc">
+                             style="--reading-color: <?php echo esc_attr($reading_info['color']); ?>; --reading-bg: <?php echo esc_attr($reading_info['container_color']); ?>; --reading-rank-color: <?php echo esc_attr($reading_info['badge_color']); ?>; --reading-rank-bg: <?php echo esc_attr($reading_info['badge_bg']); ?>;">
                             <div class="m3-reading-badge__gauge">
                                 <svg viewBox="0 0 36 36"
                                      class="m3-reading-circle__svg"
@@ -311,7 +310,7 @@
                         </div>
                     <?php endif; ?>
 
-                </div>
+                </aside>
 
             </div>
 

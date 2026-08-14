@@ -1,3 +1,6 @@
+<?php
+declare(strict_types=1);
+?>
 <div class="m3-ad-area m3-ad-area--infeed">
     <div class="m3-ad-placeholder">
         <!-- 

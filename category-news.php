@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ニュース（HEADLINE）カテゴリ専用アーカイブテンプレート
  *
@@ -17,7 +19,7 @@ get_header();
 		null,
 		array(
 			'title'     => 'HEADLINE',
-			'subtitle'  => '速報',
+			'subtitle'  => 'ニュース',
 			'header_id' => 'headline-archive-title',
 			'type'      => 'category',
 		)

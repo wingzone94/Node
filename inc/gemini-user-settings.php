@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Gemini API 設定 — ライター個別（user_meta）
  *
@@ -134,10 +136,19 @@ function node_render_gemini_user_fields( WP_User $user, bool $is_settings_page =
 		<tr>
 			<th scope="row"><label for="node_gemini_model"><?php esc_html_e( 'Gemini Model', 'node' ); ?></label></th>
 			<td>
+				<?php $current_selection = node_split_gemini_model( $current_model ); ?>
 				<select name="node_gemini_model" id="node_gemini_model">
 					<?php foreach ( $model_options as $value => $label ) : ?>
-						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $current_model, $value ); ?>>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $current_selection['model'], $value ); ?>>
 							<?php echo esc_html( $label ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<label for="node_gemini_thinking" class="screen-reader-text"><?php esc_html_e( '思考量', 'node' ); ?></label>
+				<select name="node_gemini_thinking" id="node_gemini_thinking">
+					<?php foreach ( node_gemini_thinking_levels() as $level => $level_label ) : ?>
+						<option value="<?php echo esc_attr( $level ); ?>" <?php selected( $current_selection['thinking'], $level ); ?>>
+							<?php echo esc_html( $level_label ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -296,8 +307,21 @@ function node_save_gemini_user_meta( int $user_id ): void {
 	if ( isset( $_POST['node_gemini_model'] ) ) {
 		$model   = sanitize_text_field( wp_unslash( (string) $_POST['node_gemini_model'] ) );
 		$options = node_get_gemini_model_options_for_user( $user_id );
-		if ( isset( $options[ $model ] ) || node_is_valid_gemini_model_id( $model ) ) {
-			update_user_meta( $user_id, 'node_gemini_model', $model );
+
+		// 思考量は別プルダウンだが、保存は `<モデルID>@<思考量>` の1値にまとめる（1.2 系と互換）。
+		// 思考量に非対応のモデルには付けない
+		$thinking = isset( $_POST['node_gemini_thinking'] )
+			? sanitize_text_field( wp_unslash( (string) $_POST['node_gemini_thinking'] ) )
+			: '';
+
+		if ( ! node_gemini_model_supports_thinking( $model, $user_id ) ) {
+			$thinking = '';
+		}
+
+		$stored = node_join_gemini_model( $model, $thinking );
+
+		if ( isset( $options[ $model ] ) || node_is_valid_gemini_model_id( $stored ) ) {
+			update_user_meta( $user_id, 'node_gemini_model', $stored );
 		}
 	}
 }
