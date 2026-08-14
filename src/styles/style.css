@@ -91,3 +91,19 @@
 .m3-article__reading-badge-expressive .m3-reading-badge__gauge .material-symbols-outlined {
     font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
 }
+
+/* WordPress core keeps fixed-layout tables unlayered. Keep this mobile-only
+ * override unlayered so article tables can scroll instead of compressing. */
+@media (max-width: 600px) {
+    .m3-article__body .wp-block-table table.has-fixed-layout {
+        width: max-content;
+        min-width: 100%;
+        table-layout: auto;
+    }
+
+    .m3-article__body .wp-block-table table.has-fixed-layout :is(th, td) {
+        min-width: 7rem;
+        word-break: keep-all;
+        overflow-wrap: normal;
+    }
+}
