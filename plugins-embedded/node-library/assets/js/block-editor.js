@@ -271,6 +271,12 @@
                 setAttributes({ url: nextUrl });
             };
 
+            if (attributes.url) {
+                return el('div', { className: 'node-library-block-editor node-library-block-editor--blog-card' },
+                    el(BlogCardPreview, { url: attributes.url })
+                );
+            }
+
             return el('div', { className: 'node-library-block-editor' },
                 el(Placeholder, {
                     icon: 'admin-links',
@@ -300,8 +306,7 @@
                     ),
                     el('p', { style: { fontSize: '12px', color: '#646970', margin: '8px 0 0' } },
                         'ヒント: URL だけの行を本文に書くと、保存後に自動でブログカード化されます（ショートコード不要）。'
-                    ),
-                    attributes.url ? el(BlogCardPreview, { url: attributes.url }) : null
+                    )
                 )
             );
         },

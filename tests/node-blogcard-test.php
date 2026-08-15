@@ -717,7 +717,7 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', $callback, 10 );
 	}
 
-	public function test_non_store_url_still_falls_back_to_plain_link_when_blocked(): void {
+	public function test_non_store_url_renders_blogcard_when_blocked(): void {
 		$url      = 'https://example.com/blocked-article';
 		$calls    = 0;
 		$callback = $this->mock_blocked_response( $calls );
@@ -727,7 +727,10 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 
 		remove_filter( 'pre_http_request', $callback, 10 );
 
-		$this->assertStringContainsString( 'm3-blogcard__fallback', $html );
+		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
+		$this->assertStringContainsString( 'example.com', $html );
+		$this->assertStringContainsString( 'https://example.com/blocked-article', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
 	}
 
 	public function test_failed_fetch_is_negatively_cached(): void {

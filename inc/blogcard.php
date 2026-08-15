@@ -482,6 +482,27 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 }
 
 /**
+ * OGP を取得できない一般 URL でも、本文上はブログカードとして表示するための最小情報。
+ *
+ * @param string $url リンク先 URL。
+ * @return array<string, mixed>
+ */
+function node_blogcard_generic_fallback_ogp( string $url ): array {
+	$host = strtolower( (string) parse_url( $url, PHP_URL_HOST ) );
+	$site = '' !== $host ? preg_replace( '/^www\./', '', $host ) : __( 'リンク先', 'node' );
+
+	return array(
+		'title'       => (string) $site,
+		'description' => $url,
+		'image'       => '',
+		'favicon'     => '' !== $host ? 'https://www.google.com/s2/favicons?domain=' . rawurlencode( $host ) . '&sz=64' : '',
+		'site_name'   => (string) $site,
+		'is_internal' => false,
+		'fetch_failed' => true,
+	);
+}
+
+/**
  * ブログカード HTML を生成する。
  *
  * @param string                $url           リンク先 URL。
@@ -519,7 +540,7 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
 
 	if ( ! $ogp ) {
-		return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
+		$ogp = node_blogcard_generic_fallback_ogp( $url );
 	}
 
 	// Amazon アフィリエイト ID
