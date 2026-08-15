@@ -75,6 +75,8 @@ printf '{\n    "build_id": "%s",\n    "built_at": "%s",\n    "version": "%s"\n}\
 ### 4-b. ZIP生成
 プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
 
+**`src/` を丸ごと除外しないこと。** 1.3.0 から `src/Setup` `src/Hooks` `src/Controllers` に テーマ本体の PHP クラス（`NodeTheme\` 名前空間）が置かれ、`functions.php` のオートローダーがこれを読む。除外すると有効化時に `Class "NodeTheme\Setup\ThemeSupport" not found` で全面ダウンする。除外してよいのは Vite のソース（`src/styles` `src/scripts` `src/fonts` `src/*.js`）のみ。
+
 配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。`--exclude='.git/'`（末尾スラッシュ付き）はディレクトリにしかマッチしないため、git worktree 運用で `.git` が**ファイル**（`gitdir:` ポインタ）になっている環境ではZIPに混入する。スラッシュ無しの `--exclude='.git'` を併記すること（1.2.5 のZIPには 78 バイトの `Node/.git` が入っていた）。本番動作に不要な `scripts/`（検証スクリプト）と `.github/`（Actions定義）も除外する。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
 
 ```bash
@@ -99,7 +101,10 @@ rsync -a \
   --exclude='scratch/' \
   --exclude='production_plugins/' \
   --exclude='luna-frontier/' \
-  --exclude='src/' \
+  --exclude='src/styles/' \
+  --exclude='src/scripts/' \
+  --exclude='src/fonts/' \
+  --exclude='src/*.js' \
   --exclude='vendor/' \
   --exclude='tests/' \
   --exclude='test-results/' \
