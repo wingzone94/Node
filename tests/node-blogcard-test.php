@@ -334,4 +334,580 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'Scraped OGP Description', $html );
 		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
 	}
+
+	/**
+	 * ストアのボット防御を模して 403 を返すモック。
+	 *
+	 * @param int $calls 呼び出し回数（参照渡し）。
+	 * @return callable
+	 */
+	private function mock_blocked_response( int &$calls ): callable {
+		$callback = static function ( $preempt, $args, $request_url ) use ( &$calls ) {
+			++$calls;
+			return array(
+				'headers'  => array( 'content-type' => 'text/html; charset=UTF-8' ),
+				'body'     => '<html><head><title>Access Denied</title></head><body></body></html>',
+				'response' => array(
+					'code'    => 403,
+					'message' => 'Forbidden',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		return $callback;
+	}
+
+	public function test_store_provider_matches_game_stores_only(): void {
+		$expected = array(
+			'https://store-jp.nintendo.com/item/software/D70010000073404'                                => 'nintendo',
+			'https://www.nintendo.com/jp/store/products/the-legend-of-zelda-tears-of-the-kingdom-switch/' => 'nintendo',
+			'https://ec.nintendo.com/JP/ja/titles/70010000012332'                                        => 'nintendo',
+			'https://www.nintendo.co.jp/software/switch/aaaaa/index.html'                                => 'nintendo',
+			'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01'           => 'playstation',
+			'https://www.xbox.com/ja-JP/games/store/forza-horizon-5/9NKX70BBCDRN'                        => 'xbox',
+			'https://apps.microsoft.com/detail/9NKX70BBCDRN'                                             => 'xbox',
+			'https://store.steampowered.com/app/570/Dota_2/'                                             => 'steam',
+		);
+
+		foreach ( $expected as $url => $slug ) {
+			$this->assertSame( $slug, node_store_provider( $url )['slug'] ?? '', $url );
+		}
+
+		// ストア以外のページ・別ドメインの偽装は対象外。
+		$not_store = array(
+			'https://www.nintendo.com/jp/topics/article/abc',
+			'https://www.playstation.com/ja-jp/games/astro-bot/',
+			'https://www.xbox.com/ja-JP/games/forza-horizon-5',
+			'https://steamcommunity.com/app/570',
+			'https://nintendo.com.evil.example.net/store/products/x',
+			'https://example.com/article',
+		);
+
+		foreach ( $not_store as $url ) {
+			$this->assertSame( array(), node_store_provider( $url ), $url );
+		}
+	}
+
+	public function test_store_title_from_url_humanizes_slug_and_skips_product_ids(): void {
+		$this->assertSame( 'Forza Horizon 5', node_store_title_from_url( 'https://www.xbox.com/ja-JP/games/store/forza-horizon-5/9NKX70BBCDRN', 'xbox' ) );
+		$this->assertSame( 'Dota 2', node_store_title_from_url( 'https://store.steampowered.com/app/570/Dota_2/', 'steam' ) );
+
+		// 商品 ID しか含まない URL からは題名を作らない。
+		$this->assertSame( '', node_store_title_from_url( 'https://store-jp.nintendo.com/item/software/D70010000073404', 'nintendo' ) );
+		$this->assertSame( '', node_store_title_from_url( 'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01', 'playstation' ) );
+	}
+
+	/**
+	 * 任天堂のソフト検索応答をモックする。
+	 *
+	 * @param array<mixed> $payload 応答ボディ（json_encode 前）。
+	 * @param int          $calls   呼び出し回数（参照渡し）。
+	 * @return callable
+	 */
+	private function mock_nintendo_search( array $payload, int &$calls ): callable {
+		$callback = static function ( $preempt, $args, $request_url ) use ( $payload, &$calls ) {
+			if ( ! str_contains( (string) $request_url, 'search.nintendo.jp' ) ) {
+				// 商品ページ側の取得はボット防御を模して 403。
+				return array(
+					'headers'  => array( 'content-type' => 'text/html' ),
+					'body'     => '<html><head><title>Access Denied</title></head></html>',
+					'response' => array(
+						'code'    => 403,
+						'message' => 'Forbidden',
+					),
+					'cookies'  => array(),
+					'filename' => null,
+				);
+			}
+
+			++$calls;
+			return array(
+				'headers'  => array( 'content-type' => 'application/json' ),
+				'body'     => (string) wp_json_encode( $payload ),
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		return $callback;
+	}
+
+	public function test_nintendo_title_id_is_extracted_from_store_urls(): void {
+		$this->assertSame( 'D70010000000964', node_nintendo_title_id( 'https://store-jp.nintendo.com/item/software/D70010000000964' ) );
+		$this->assertSame( '70010000012332', node_nintendo_title_id( 'https://ec.nintendo.com/JP/ja/titles/70010000012332' ) );
+		$this->assertSame( '', node_nintendo_title_id( 'https://www.nintendo.com/jp/store/products/minecraft-switch/' ) );
+	}
+
+	public function test_nintendo_product_id_url_uses_search_lookup_for_title(): void {
+		$url     = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls   = 0;
+		$payload = array(
+			'result' => array(
+				'total' => 1,
+				'items' => array(
+					array(
+						'id'            => 'D70010000000964',
+						'title'         => 'Minecraft',
+						'sales_img_url' => 'https://img-eshop.cdn.nintendo.net/i/minecraft.jpg',
+					),
+				),
+			),
+		);
+
+		$callback = $this->mock_nintendo_search( $payload, $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard( $url );
+
+		// 2回目はキャッシュから返し、検索を再度叩かないこと。
+		node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'minecraft.jpg', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+		$this->assertSame( 1, $calls );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_nintendo_lookup_ignores_items_with_different_id(): void {
+		// 誤った題名を載せるくらいなら、ストア名のままにする。
+		$url     = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls   = 0;
+		$payload = array(
+			'result' => array(
+				'items' => array(
+					array(
+						'id'    => 'D70010000099999',
+						'title' => '全然違うゲーム',
+					),
+				),
+			),
+		);
+
+		$callback = $this->mock_nintendo_search( $payload, $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringNotContainsString( '全然違うゲーム', $html );
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_nintendo_lookup_survives_unexpected_payload(): void {
+		$url      = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls    = 0;
+		$callback = $this->mock_nintendo_search( array( 'unexpected' => 'shape' ), $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		// 応答が想定外でもカードは出す（題名はストア名）。
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
+	}
+
+	public function test_nintendo_lookup_is_skipped_when_title_comes_from_url(): void {
+		// スラッグから題名を作れる URL では検索を叩かない。
+		$url      = 'https://www.nintendo.com/jp/store/products/minecraft-switch/';
+		$calls    = 0;
+		$callback = $this->mock_nintendo_search( array(), $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertSame( 0, $calls );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_store_title_from_url_strips_nintendo_hardware_suffix(): void {
+		// nintendo.com の商品スラッグは機種名で終わるため、題名としては落とす。
+		$this->assertSame( 'Minecraft', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/minecraft-switch/', 'nintendo' ) );
+		$this->assertSame( 'Minecraft', node_store_title_from_url( 'https://www.nintendo.com/us/store/products/minecraft-for-nintendo-switch/', 'nintendo' ) );
+		$this->assertSame( 'Mario Kart World', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/mario-kart-world-switch-2/', 'nintendo' ) );
+		$this->assertSame( 'The Legend Of Zelda Tears Of The Kingdom', node_store_title_from_url( 'https://www.nintendo.com/jp/store/products/the-legend-of-zelda-tears-of-the-kingdom-switch/', 'nintendo' ) );
+	}
+
+	public function test_shortcode_title_attribute_overrides_blocked_store_fetch(): void {
+		// 商品 ID だけの URL は題名を復元できないため、著者が title 属性で指定できる。
+		$url      = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '" title="Minecraft" description="ブロックで遊ぶ" image="https://example.com/minecraft.jpg"]' );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'ブロックで遊ぶ', $html );
+		$this->assertStringContainsString( 'https://example.com/minecraft.jpg', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_shortcode_title_attribute_overrides_scraped_title(): void {
+		$url    = 'https://example.org/some-article';
+		$filter = $this->mock_ogp_response( $url, 'Scraped Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '" title="手動タイトル"]' );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( '手動タイトル', $html );
+		$this->assertStringNotContainsString( 'Scraped Title', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_shortcode_without_overrides_keeps_existing_behaviour(): void {
+		$url    = 'https://example.org/plain-article';
+		$filter = $this->mock_ogp_response( $url, 'Plain Scraped Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '"]' );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( 'Plain Scraped Title', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_store_response_is_product_page_detects_redirect_to_store_top(): void {
+		$xbox = 'https://www.xbox.com/ja-JP/games/store/minecraft/9NBLGGH537BL';
+
+		// 最終 URL 不明（pre_http_request 短絡時など）は検証しない。
+		$this->assertTrue( node_store_response_is_product_page( $xbox, '' ) );
+		// 地域だけ変わる転送は商品ページのまま。
+		$this->assertTrue( node_store_response_is_product_page( $xbox, 'https://www.xbox.com/en-US/games/store/minecraft/9NBLGGH537BL' ) );
+		// 商品ページからストアのトップへ飛ばされた場合は別ページ扱い。
+		$this->assertFalse( node_store_response_is_product_page( $xbox, 'https://www.xbox.com/ja-JP/' ) );
+		// 同じストア配下でも商品 ID が消えていれば別ページ。
+		$this->assertFalse( node_store_response_is_product_page( $xbox, 'https://www.xbox.com/ja-JP/games/store/' ) );
+
+		$nintendo = 'https://store-jp.nintendo.com/item/software/D70010000000964';
+		$this->assertTrue( node_store_response_is_product_page( $nintendo, 'https://store-jp.nintendo.com/item/software/D70010000000964?utm=1' ) );
+		$this->assertFalse( node_store_response_is_product_page( $nintendo, 'https://store-jp.nintendo.com/' ) );
+
+		// スラッグ型（ID ではない）の商品パスは、転送で末尾が落ちても許容する。
+		$steam = 'https://store.steampowered.com/app/570/Dota_2/';
+		$this->assertTrue( node_store_response_is_product_page( $steam, 'https://store.steampowered.com/app/570/' ) );
+	}
+
+	public function test_store_card_falls_back_when_response_redirected_to_store_top(): void {
+		// Xbox は商品ページを取得できないとき 403 ではなくトップへ転送し、
+		// 「Xbox 公式サイト...」というサイト共通のタイトルを 200 で返す。
+		$url = 'https://www.xbox.com/ja-JP/games/store/minecraft/9NBLGGH537BL';
+
+		set_transient(
+			'node_ogp_' . md5( $url ),
+			array(
+				'title'       => 'Xbox 公式サイト: 本体、ゲーム、コミュニティ |Xbox',
+				'description' => 'Xbox のトップページ',
+				'image'       => 'https://www.xbox.com/top.jpg',
+				'favicon'     => '',
+				'site_name'   => 'Xbox',
+				'is_internal' => false,
+				'final_url'   => 'https://www.xbox.com/ja-JP/',
+			),
+			HOUR_IN_SECONDS
+		);
+
+		$html = node_render_blogcard( $url );
+
+		$this->assertStringNotContainsString( 'Xbox 公式サイト', $html );
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-xbox', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_store_card_keeps_scraped_title_when_redirect_stays_on_product_page(): void {
+		$url = 'https://store.playstation.com/ja-jp/product/JP0177-PPSA04466_00-MINECRAFTBEDROCK';
+
+		set_transient(
+			'node_ogp_' . md5( $url ),
+			array(
+				'title'       => 'Minecraft',
+				'description' => 'Minecraft の説明',
+				'image'       => 'https://image.api.playstation.com/cover.png',
+				'favicon'     => '',
+				'site_name'   => 'PlayStation',
+				'is_internal' => false,
+				// 地域リダイレクト後も商品 ID は保たれる。
+				'final_url'   => 'https://store.playstation.com/ja-jp/concept/JP0177-PPSA04466_00-MINECRAFTBEDROCK/',
+			),
+			HOUR_IN_SECONDS
+		);
+
+		$html = node_render_blogcard( $url );
+
+		$this->assertStringContainsString( 'Minecraft', $html );
+		$this->assertStringContainsString( 'cover.png', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-playstation', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_store_urls_render_card_even_when_fetch_is_blocked(): void {
+		$cases = array(
+			'https://store-jp.nintendo.com/item/software/D70010000073404'                      => array( 'nintendo', 'ニンテンドーストア' ),
+			'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01' => array( 'playstation', 'PlayStation Store' ),
+			'https://www.xbox.com/ja-JP/games/store/forza-horizon-5/9NKX70BBCDRN'              => array( 'xbox', 'Microsoft ストア' ),
+			'https://store.steampowered.com/app/570/Dota_2/'                                   => array( 'steam', 'Steam' ),
+		);
+
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+
+		foreach ( $cases as $url => list( $slug, $store_name ) ) {
+			delete_transient( 'node_ogp_' . md5( $url ) );
+
+			$html = node_blogcard_hydrate( node_embed_maybe_make_link( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $url ) );
+
+			$this->assertStringContainsString( 'm3-blogcard--store-' . $slug, $html, $url );
+			$this->assertStringContainsString( $store_name, $html, $url );
+			$this->assertStringContainsString( 'm3-blogcard__overlay', $html, $url );
+			$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html, $url );
+		}
+
+		// 題名を復元できる URL ではスラッグ由来の題名を使う。
+		$this->assertStringContainsString(
+			'Forza Horizon 5',
+			node_blogcard_hydrate( node_embed_maybe_make_link( '<a>x</a>', 'https://www.xbox.com/ja-JP/games/store/forza-horizon-5/9NKX70BBCDRN' ) )
+		);
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+	}
+
+	public function test_non_store_url_still_falls_back_to_plain_link_when_blocked(): void {
+		$url      = 'https://example.com/blocked-article';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'm3-blogcard__fallback', $html );
+	}
+
+	public function test_failed_fetch_is_negatively_cached(): void {
+		$url      = 'https://store.steampowered.com/app/999999/Blocked_Game/';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		node_render_blogcard( $url );
+		node_render_blogcard( $url );
+		node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		// 失敗レスポンスをキャッシュしないと、レンダーのたびに外部 HTTP が走り表示が遅延する。
+		$this->assertSame( 1, $calls );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_ogp_request_uses_browser_user_agent(): void {
+		$url        = 'https://store.playstation.com/ja-jp/product/UA-CHECK';
+		$user_agent = '';
+		$callback   = static function ( $preempt, $args, $request_url ) use ( &$user_agent ) {
+			$user_agent = (string) ( $args['user-agent'] ?? '' );
+			return new WP_Error( 'http_request_failed', 'stub' );
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		node_get_ogp_data( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		// ボット UA だとゲームストアの防御に 403 で弾かれる。
+		$this->assertStringContainsString( 'Chrome/', $user_agent );
+		$this->assertStringNotContainsString( 'LuminousCore', $user_agent );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_ogp_data_falls_back_to_json_ld_when_og_tags_are_missing(): void {
+		$url      = 'https://store.steampowered.com/app/570/Dota_2/';
+		$json_ld  = wp_json_encode(
+			array(
+				'@context'    => 'https://schema.org',
+				'@graph'      => array(
+					array( '@type' => 'BreadcrumbList' ),
+					array(
+						'@type'       => 'VideoGame',
+						'name'        => 'JSON-LD Game Title',
+						'description' => 'JSON-LD Game Description',
+						'image'       => array( 'url' => 'https://cdn.example.com/header.jpg' ),
+					),
+				),
+			)
+		);
+		$callback = static function ( $preempt, $args, $request_url ) use ( $url, $json_ld ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array( 'content-type' => 'text/html; charset=UTF-8' ),
+				'body'     => '<html><head><title>Steam</title><script type="application/ld+json">' . $json_ld . '</script></head><body></body></html>',
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$ogp  = node_get_ogp_data( $url );
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertIsArray( $ogp );
+		$this->assertSame( 'JSON-LD Game Title', $ogp['title'] );
+		$this->assertSame( 'https://cdn.example.com/header.jpg', $ogp['image'] );
+		$this->assertStringContainsString( 'JSON-LD Game Title', $html );
+		$this->assertStringContainsString( 'JSON-LD Game Description', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-steam', $html );
+		// サイト名はストアの正式名へ正規化する。
+		$this->assertStringContainsString( 'Steam', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_ogp_data_reads_twitter_card_when_og_is_absent(): void {
+		$url      = 'https://example.org/twitter-card-only';
+		$callback = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array( 'content-type' => 'text/html; charset=UTF-8' ),
+				'body'     => '<html><head><meta name="twitter:title" content="Twitter Card Title"><meta name="twitter:description" content="Twitter Card Description"><meta name="twitter:image" content="/relative/card.jpg"></head><body></body></html>',
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$ogp = node_get_ogp_data( $url );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertIsArray( $ogp );
+		$this->assertSame( 'Twitter Card Title', $ogp['title'] );
+		$this->assertSame( 'Twitter Card Description', $ogp['description'] );
+		// 相対 URL の画像は絶対 URL へ補正する。
+		$this->assertSame( 'https://example.org/relative/card.jpg', $ogp['image'] );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_store_card_uses_scraped_title_when_fetch_succeeds(): void {
+		$url    = 'https://store-jp.nintendo.com/item/software/D70010000073404';
+		$filter = $this->mock_ogp_response( $url, 'ゼルダの伝説', 'https://store-jp.nintendo.com/thumb.jpg' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( 'ゼルダの伝説', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		// og:site_name（モックは Example Site）ではなくストア正式名を表示する。
+		$this->assertStringNotContainsString( 'Example Site', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_oembed_dataparse_marks_store_urls(): void {
+		$html = node_blogcard_hydrate(
+			node_oembed_dataparse(
+				'<div>Original embed</div>',
+				(object) array(
+					'title'         => 'Store oEmbed Title',
+					'provider_name' => 'Sony Interactive Entertainment',
+				),
+				'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01'
+			)
+		);
+
+		$this->assertStringContainsString( 'm3-blogcard--store-playstation', $html );
+		$this->assertStringContainsString( 'PlayStation Store', $html );
+		$this->assertStringContainsString( 'Store oEmbed Title', $html );
+	}
+
+	public function test_store_card_keeps_single_line_markup_through_wpautop(): void {
+		$url      = 'https://store.steampowered.com/app/570/Dota_2/';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$placeholder = node_embed_maybe_make_link( '<a>x</a>', $url );
+		$final       = node_blogcard_hydrate( wpautop( "<h2>foo</h2>\n\n{$placeholder}\n\n<h2>bar</h2>" ) );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'm3-blogcard--store-steam', $final );
+		$this->assertStringNotContainsString( '<br', $final );
+		$this->assertStringNotContainsString( 'node-blogcard-slot', $final );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
 }
