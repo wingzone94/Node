@@ -409,7 +409,9 @@ function node_store_fallback_ogp( string $url, array $provider ): array {
 	}
 
 	return array(
-		'title'       => $title,
+		// 商品名を復元できない商品 ID だけの URL（store-jp.nintendo.com/item/software/<ID> 等）でも
+		// 店名を題名にしてカードを出す。1.2.6 の表示に合わせる。
+		'title'       => '' !== $title ? $title : $provider['name'],
 		'description' => '',
 		'image'       => $image,
 		'favicon'     => 'https://www.google.com/s2/favicons?domain=' . rawurlencode( (string) parse_url( $url, PHP_URL_HOST ) ) . '&sz=64',

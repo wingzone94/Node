@@ -507,7 +507,9 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', $callback, 10 );
 
 		$this->assertStringNotContainsString( '全然違うゲーム', $html );
-		$this->assertSame( '', $html );
+		// 商品名を復元できなくても、店名を題名にしたストアカードを出す（1.2.6 の表示）。
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
 
 		delete_transient( 'node_ogp_' . md5( $url ) );
 		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
@@ -524,8 +526,10 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 
 		remove_filter( 'pre_http_request', $callback, 10 );
 
-		// 応答が想定外なら、題名なしカードではなく通常リンク側へ戻す。
-		$this->assertSame( '', $html );
+		// 応答が想定外でもカードは出す（題名はストア名）。1.2.6 の表示に合わせる。
+		$this->assertStringContainsString( 'ニンテンドーストア', $html );
+		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
 
 		delete_transient( 'node_ogp_' . md5( $url ) );
 		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
