@@ -737,13 +737,8 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 			return node_internal_url_to_postid( $url ) ? '' : node_blogcard_fallback_markup( $url );
 		}
 
-		if ( ! empty( $store ) ) {
-			// ストア商品ページの題名復元は node_store_fallback_ogp() の規則に任せる。
-			// 商品名を復元できないときに店名や分類名を題名にすると別の商品と誤解されるため、
-			// ここでは URL 由来の題名を当てずカードを作らない。
-			return '';
-		}
-
+		// ストア商品ページは node_store_fallback_ogp() が店名を題名に入れるため、
+		// ここへは到達しない（1.2.6 と同じくストアカードとして表示される）。
 		// 外部 URL は Cloudflare 等のボット防御で取得できないだけなので、URL から
 		// 組み立てた情報でカードにする（素のリンクや空出力へ落とさない）。
 		$ogp = node_blogcard_generic_fallback_ogp( $url );
