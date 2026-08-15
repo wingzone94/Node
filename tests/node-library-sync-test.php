@@ -197,7 +197,7 @@ class Node_Library_Sync_Test extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
 	}
 
-	public function test_blog_card_block_render_returns_plain_link_without_title_when_fetch_fails(): void {
+	public function test_blog_card_block_render_falls_back_to_url_derived_card_when_fetch_fails(): void {
 		$url      = 'https://example.org/no-title-render';
 		$callback = static function ( $preempt, $args, $request_url ) use ( $url ) {
 			if ( $request_url !== $url ) {
@@ -223,8 +223,13 @@ class Node_Library_Sync_Test extends WP_UnitTestCase {
 
 		remove_filter( 'pre_http_request', $callback, 10 );
 
-		$this->assertSame( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $html );
-		$this->assertStringNotContainsString( 'm3-blogcard__overlay', $html );
+		// 取得に失敗しても素のリンクへ落とさず、URL から組み立てたカードを返す。
+		$this->assertStringContainsString( 'm3-blogcard--fallback', $html );
+		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
+		$this->assertStringContainsString( 'No Title Render', $html );
+		$this->assertStringContainsString( 'example.org', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
 	}
 
 	public function test_create_update_and_card_removal_replace_the_index_immediately(): void {

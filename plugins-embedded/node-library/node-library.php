@@ -544,11 +544,20 @@ final class Node_Library {
 			return new WP_Error( 'node_library_blog_card_no_card', 'カードを生成できませんでした', [ 'status' => 404 ] );
 		}
 
+		// URL から組み立てたカード（m3-blogcard--fallback）も「取得できていない」印として返す。
+		// エディタ側はこれを見て、著者に題名の手入力を促す。
+		$is_fallback = str_contains( $html, 'm3-blogcard--fallback' ) || str_contains( $html, 'm3-blogcard__fallback' );
+
+		$title = '' !== $overrides['title'] ? $overrides['title'] : ( is_array( $ogp ) ? (string) ( $ogp['title'] ?? '' ) : '' );
+		if ( '' === $title && $is_fallback && function_exists( 'node_blogcard_title_from_url' ) ) {
+			$title = node_blogcard_title_from_url( $url );
+		}
+
 		return rest_ensure_response(
 			[
 				'html'     => $html,
-				'title'    => '' !== $overrides['title'] ? $overrides['title'] : ( is_array( $ogp ) ? (string) ( $ogp['title'] ?? '' ) : '' ),
-				'fallback' => str_contains( $html, 'm3-blogcard__fallback' ),
+				'title'    => $title,
+				'fallback' => $is_fallback,
 			]
 		);
 	}
