@@ -69,6 +69,11 @@
             '.node-library-blog-card-preview .m3-blogcard__body{position:relative;z-index:1;display:flex;gap:16px;align-items:stretch;}',
             '.node-library-blog-card-preview .m3-blogcard__image{flex-shrink:0;width:128px;align-self:stretch;min-height:96px;overflow:hidden;border-radius:16px;background:var(--md-sys-color-surface-container);}',
             '.node-library-blog-card-preview .m3-blogcard__image img{width:100%!important;height:100%!important;max-width:100%!important;margin:0!important;display:block;object-fit:cover;border-radius:inherit!important;}',
+            // OGP を取得できず URL から組み立てたカード。アイキャッチの代わりにサイトアイコンを
+            // 置くため、枠いっぱいに引き伸ばさず中央へ 40px で収める（フロント側と同じ規則）。
+            '.node-library-blog-card-preview .m3-blogcard__image--placeholder{display:flex;align-items:center;justify-content:center;background:var(--md-sys-color-surface-container);}',
+            '.node-library-blog-card-preview .m3-blogcard__image--placeholder img{width:40px!important;height:40px!important;object-fit:contain;border-radius:12px!important;}',
+            '.node-library-blog-card-preview .m3-blogcard--fallback .m3-blogcard__description{color:rgba(43,23,0,.68);font-size:.75rem;}',
             '.node-library-blog-card-preview .m3-blogcard__text{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:4px 8px 4px 4px;}',
             '.node-library-blog-card-preview .m3-blogcard__overlay{display:inline-flex;align-items:flex-start;gap:4px;color:inherit;text-decoration:none;}',
             '.node-library-blog-card-preview .m3-blogcard__overlay::after{content:"";position:absolute;inset:-8px;z-index:2;}',
@@ -87,7 +92,7 @@
             '.node-library-blog-card-preview .m3-blogcard__action-icon{font-size:20px;font-variation-settings:"FILL" 0,"wght" 500,"GRAD" 0,"opsz" 20;}',
             '.node-library-blog-card-preview .m3-blogcard__action--share{display:none;}',
             '.node-library-blog-card-preview .m3-blogcard__fallback{display:inline-block;padding:8px 16px;border-radius:12px;background:var(--md-sys-color-surface-container);color:var(--md-sys-color-primary);font-weight:700;word-break:break-all;text-decoration:underline;text-underline-offset:3px;}',
-            '@media (max-width:600px){.node-library-blog-card-preview .m3-blogcard__body{flex-direction:column;gap:8px;}.node-library-blog-card-preview .m3-blogcard__image{width:100%;height:150px;align-self:auto;}.node-library-blog-card-preview .m3-blogcard--brand .m3-blogcard__image{width:100%;height:auto;aspect-ratio:1200/630;}.node-library-blog-card-preview .m3-blogcard__text{padding:0 4px 4px;}}'
+            '@media (max-width:600px){.node-library-blog-card-preview .m3-blogcard__body{flex-direction:column;gap:8px;}.node-library-blog-card-preview .m3-blogcard__image{width:100%;height:150px;align-self:auto;}.node-library-blog-card-preview .m3-blogcard__image--placeholder{display:none;}.node-library-blog-card-preview .m3-blogcard--brand .m3-blogcard__image{width:100%;height:auto;aspect-ratio:1200/630;}.node-library-blog-card-preview .m3-blogcard__text{padding:0 4px 4px;}}'
         ].join('');
     }
 
