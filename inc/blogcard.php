@@ -503,6 +503,21 @@ function node_blogcard_generic_fallback_ogp( string $url ): array {
 }
 
 /**
+ * ブログカード化できない URL を通常リンクとして表示する。
+ *
+ * @param string $url リンク先 URL。
+ * @return string
+ */
+function node_blogcard_plain_link( string $url ): string {
+	$url = esc_url_raw( $url );
+	if ( '' === $url ) {
+		return '';
+	}
+
+	return '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
+}
+
+/**
  * ブログカード HTML を生成する。
  *
  * @param string                $url           リンク先 URL。
@@ -540,7 +555,7 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
 
 	if ( ! $ogp ) {
-		$ogp = node_blogcard_generic_fallback_ogp( $url );
+		return '';
 	}
 
 	// Amazon アフィリエイト ID

@@ -484,7 +484,7 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 	}
 
 	public function test_nintendo_lookup_ignores_items_with_different_id(): void {
-		// 誤った題名を載せるくらいなら、ストア名のままにする。
+		// 誤った題名を載せるくらいなら、カード化しない。
 		$url     = 'https://store-jp.nintendo.com/item/software/D70010000000964';
 		$calls   = 0;
 		$payload = array(
@@ -507,8 +507,7 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', $callback, 10 );
 
 		$this->assertStringNotContainsString( '全然違うゲーム', $html );
-		$this->assertStringContainsString( 'ニンテンドーストア', $html );
-		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
+		$this->assertSame( '', $html );
 
 		delete_transient( 'node_ogp_' . md5( $url ) );
 		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
@@ -525,10 +524,8 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 
 		remove_filter( 'pre_http_request', $callback, 10 );
 
-		// 応答が想定外でもカードは出す（題名はストア名）。
-		$this->assertStringContainsString( 'ニンテンドーストア', $html );
-		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
-		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+		// 応答が想定外なら、題名なしカードではなく通常リンク側へ戻す。
+		$this->assertSame( '', $html );
 
 		delete_transient( 'node_ogp_' . md5( $url ) );
 		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
@@ -686,10 +683,8 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		delete_transient( 'node_ogp_' . md5( $url ) );
 	}
 
-	public function test_store_urls_render_card_even_when_fetch_is_blocked(): void {
+	public function test_store_urls_render_card_when_fallback_title_is_available(): void {
 		$cases = array(
-			'https://store-jp.nintendo.com/item/software/D70010000073404'                      => array( 'nintendo', 'ニンテンドーストア' ),
-			'https://store.playstation.com/ja-jp/product/JP0082-PPSA01284_00-ASTROSBGDELUXE01' => array( 'playstation', 'PlayStation Store' ),
 			'https://www.xbox.com/ja-JP/games/store/forza-horizon-5/9NKX70BBCDRN'              => array( 'xbox', 'Microsoft ストア' ),
 			'https://store.steampowered.com/app/570/Dota_2/'                                   => array( 'steam', 'Steam' ),
 		);
@@ -717,20 +712,34 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', $callback, 10 );
 	}
 
-	public function test_non_store_url_renders_blogcard_when_blocked(): void {
+	public function test_non_store_url_remains_plain_link_when_title_fetch_is_blocked(): void {
 		$url      = 'https://example.com/blocked-article';
 		$calls    = 0;
 		$callback = $this->mock_blocked_response( $calls );
 		delete_transient( 'node_ogp_' . md5( $url ) );
 
-		$html = node_render_blogcard( $url );
+		$html = node_blogcard_hydrate( node_embed_maybe_make_link( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $url ) );
 
 		remove_filter( 'pre_http_request', $callback, 10 );
 
-		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
-		$this->assertStringContainsString( 'example.com', $html );
-		$this->assertStringContainsString( 'https://example.com/blocked-article', $html );
+		$this->assertSame( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__overlay', $html );
 		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
+	}
+
+	public function test_epic_games_url_remains_plain_link_when_cloudflare_blocks_title_fetch(): void {
+		$url      = 'https://www.epicgames.com/help/fortnite-battle-royale-c-202300000001636/billing-and-payment-c-202300000001723/v-bucks-a202300000011516';
+		$calls    = 0;
+		$callback = $this->mock_blocked_response( $calls );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_blogcard_hydrate( node_embed_maybe_make_link( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $url ) );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertSame( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__overlay', $html );
+		$this->assertStringNotContainsString( 'epicgames.com</span>', $html );
 	}
 
 	public function test_failed_fetch_is_negatively_cached(): void {

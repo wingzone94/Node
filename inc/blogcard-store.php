@@ -409,7 +409,7 @@ function node_store_fallback_ogp( string $url, array $provider ): array {
 	}
 
 	return array(
-		'title'       => '' !== $title ? $title : $provider['name'],
+		'title'       => $title,
 		'description' => '',
 		'image'       => $image,
 		'favicon'     => 'https://www.google.com/s2/favicons?domain=' . rawurlencode( (string) parse_url( $url, PHP_URL_HOST ) ) . '&sz=64',

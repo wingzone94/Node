@@ -197,6 +197,36 @@ class Node_Library_Sync_Test extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'm3-blogcard__fallback', $html );
 	}
 
+	public function test_blog_card_block_render_returns_plain_link_without_title_when_fetch_fails(): void {
+		$url      = 'https://example.org/no-title-render';
+		$callback = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(),
+				'body'     => '',
+				'response' => array(
+					'code'    => 403,
+					'message' => 'Forbidden',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = $this->library->render_blog_card_block( [ 'url' => $url ] );
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertSame( '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>', $html );
+		$this->assertStringNotContainsString( 'm3-blogcard__overlay', $html );
+	}
+
 	public function test_create_update_and_card_removal_replace_the_index_immediately(): void {
 		$first_library_id  = $this->create_library_item( 'First Library Item' );
 		$second_library_id = $this->create_library_item( 'Second Library Item' );

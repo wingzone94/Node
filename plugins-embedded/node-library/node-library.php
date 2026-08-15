@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.9
+ * Version:      1.3.10
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.9' );
+define( 'NODE_LIBRARY_VERSION', '1.3.10' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_LIBRARY_BADGE_BASE_URL', 'https://luminous-core.net/wp-content/themes/Node/plugins-embedded/node-library/assets/images/' );
 
@@ -712,14 +712,22 @@ final class Node_Library {
 		];
 
 		if ( function_exists( 'node_render_blogcard' ) ) {
-			return node_render_blogcard( $url, false, $overrides );
+			$html = node_render_blogcard( $url, false, $overrides );
+			if ( '' !== $html ) {
+				return $html;
+			}
 		}
 
 		if ( function_exists( 'luminous_nexus_blogcard_shortcode' ) ) {
-			return luminous_nexus_blogcard_shortcode( [ 'url' => $url ] );
+			$html = luminous_nexus_blogcard_shortcode( [ 'url' => $url ] );
+			if ( '' !== $html ) {
+				return $html;
+			}
 		}
 
-		return '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
+		return function_exists( 'node_blogcard_plain_link' )
+			? node_blogcard_plain_link( $url )
+			: '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 	}
 
 	/**
