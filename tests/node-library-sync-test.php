@@ -68,6 +68,25 @@ class Node_Library_Sync_Test extends WP_UnitTestCase {
 		$this->assertSame( NODE_LIBRARY_VERSION, $plugin_data['Version'] );
 	}
 
+	public function test_blog_card_preview_uses_theme_blogcard_renderer(): void {
+		$post_id = self::factory()->post->create(
+			array(
+				'post_status' => 'publish',
+				'post_title'  => 'Preview Target',
+			)
+		);
+
+		$request = new WP_REST_Request( 'GET', '/node-library/v1/blog-card-preview' );
+		$request->set_param( 'url', get_permalink( $post_id ) );
+
+		$response = $this->library->handle_blog_card_preview( $request );
+		$data     = $response->get_data();
+
+		$this->assertStringContainsString( 'm3-blogcard', $data['html'] );
+		$this->assertStringContainsString( 'Preview Target', $data['html'] );
+		$this->assertFalse( $data['fallback'] );
+	}
+
 	public function test_create_update_and_card_removal_replace_the_index_immediately(): void {
 		$first_library_id  = $this->create_library_item( 'First Library Item' );
 		$second_library_id = $this->create_library_item( 'Second Library Item' );

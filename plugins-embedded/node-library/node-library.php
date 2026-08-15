@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.5
+ * Version:      1.3.6
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.5' );
+define( 'NODE_LIBRARY_VERSION', '1.3.6' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_LIBRARY_BADGE_BASE_URL', 'https://luminous-core.net/wp-content/themes/Node/plugins-embedded/node-library/assets/images/' );
 
@@ -207,6 +207,15 @@ final class Node_Library {
 		register_rest_route( 'node-library/v1', '/fetch-ogp', [
 			'methods'             => 'GET',
 			'callback'            => [ $this, 'handle_fetch_ogp' ],
+			'permission_callback' => function() { return current_user_can( 'edit_posts' ); },
+			'args'                => [
+				'url' => [ 'required' => true, 'sanitize_callback' => 'esc_url_raw' ],
+			],
+		] );
+
+		register_rest_route( 'node-library/v1', '/blog-card-preview', [
+			'methods'             => 'GET',
+			'callback'            => [ $this, 'handle_blog_card_preview' ],
 			'permission_callback' => function() { return current_user_can( 'edit_posts' ); },
 			'args'                => [
 				'url' => [ 'required' => true, 'sanitize_callback' => 'esc_url_raw' ],
@@ -496,6 +505,28 @@ final class Node_Library {
 		}
 
 		return rest_ensure_response( $data );
+	}
+
+	/**
+	 * ブログカードのエディタ用プレビューHTML。
+	 */
+	public function handle_blog_card_preview( $request ) {
+		$url = esc_url_raw( (string) $request->get_param( 'url' ) );
+		if ( '' === $url ) {
+			return new WP_Error( 'node_library_blog_card_bad_url', 'URL が空です', [ 'status' => 400 ] );
+		}
+
+		$html = $this->render_blog_card_block( [ 'url' => $url ] );
+		if ( '' === $html ) {
+			return new WP_Error( 'node_library_blog_card_no_card', 'カードを生成できませんでした', [ 'status' => 404 ] );
+		}
+
+		return rest_ensure_response(
+			[
+				'html'     => $html,
+				'fallback' => str_contains( $html, 'm3-blogcard__fallback' ),
+			]
+		);
 	}
 
 	/**
