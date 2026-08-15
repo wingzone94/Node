@@ -87,6 +87,27 @@
     border-radius: inherit !important;
 }
 
+/* ---- Placeholder tile: shown when the page blocks fetching (Cloudflare etc.) so
+   the card keeps the same two-column M3 composition as a normal card. ---- */
+.m3-blogcard__image--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--md-sys-color-surface-container);
+}
+
+.m3-blogcard__image--placeholder img {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: contain;
+    border-radius: var(--m3-radius-small) !important;
+}
+
+.m3-blogcard--fallback .m3-blogcard__description {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.75rem;
+}
+
 .m3-blogcard__text {
     flex: 1;
     min-width: 0;
@@ -331,6 +352,12 @@
         width: 100%;
         height: 150px;
         align-self: auto;
+    }
+
+    /* A 40px favicon inside a full-width 150px band reads as an empty box.
+       The same icon is already shown next to the site name in the footer. */
+    .m3-blogcard__image--placeholder {
+        display: none;
     }
 
     .m3-blogcard--brand .m3-blogcard__image {

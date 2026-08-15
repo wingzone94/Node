@@ -118,14 +118,13 @@ function node_get_ogp_data( string $url ) {
 		return node_blogcard_cache_failure( $transient_key );
 	}
 
-	$content_type = (string) wp_remote_retrieve_header( $response, 'content-type' );
-	if ( str_contains( $content_type, 'shift_jis' ) || str_contains( $content_type, 'sjis' ) ) {
-		$html = mb_convert_encoding( $html, 'UTF-8', 'SJIS' );
-	}
+	$html = node_blogcard_to_utf8( $html, (string) wp_remote_retrieve_header( $response, 'content-type' ) );
 
 	$dom = new DOMDocument();
 	libxml_use_internal_errors( true );
-	@$dom->loadHTML( mb_convert_encoding( $html, 'HTML-ENTITIES', 'UTF-8' ) );
+	// UTF-8 の明示は meta ではなく XML 宣言で行う。`mb_convert_encoding( …, 'HTML-ENTITIES' )` は
+	// PHP 8.2 で非推奨（8.2 環境では本文中に Deprecated が漏れうる）ため使わない。
+	@$dom->loadHTML( '<?xml encoding="UTF-8">' . $html );
 	libxml_clear_errors();
 
 	$xpath = new DOMXPath( $dom );
@@ -181,6 +180,56 @@ function node_http_final_url( $response ): string {
  */
 function node_blogcard_user_agent(): string {
 	return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
+}
+
+/**
+ * 取得した HTML を UTF-8 へ揃える。
+ *
+ * Content-Type ヘッダに charset を書かず `<meta charset>` だけで宣言するサイトが多いため、
+ * ヘッダ→HTML の順に文字コードを探す。UTF-8 以外のまま DOMDocument に渡すと題名が
+ * 文字化けし、結果としてカードが崩れる。
+ *
+ * @param string $html         取得した本文。
+ * @param string $content_type Content-Type ヘッダ。
+ * @return string UTF-8 の HTML。
+ */
+function node_blogcard_to_utf8( string $html, string $content_type ): string {
+	$charset = '';
+
+	if ( preg_match( '/charset\s*=\s*["\']?([\w-]+)/i', $content_type, $m ) ) {
+		$charset = $m[1];
+	}
+
+	if ( '' === $charset ) {
+		// <head> 相当の先頭だけを見る（本文中の文字列を誤検出しないため）。
+		$head = substr( $html, 0, 4096 );
+		if ( preg_match( '/<meta[^>]+charset\s*=\s*["\']?([\w-]+)/i', $head, $m ) ) {
+			$charset = $m[1];
+		}
+	}
+
+	$charset = strtoupper( str_replace( '_', '-', trim( $charset ) ) );
+	$aliases = array(
+		'SHIFT-JIS'   => 'SJIS',
+		'SHIFTJIS'    => 'SJIS',
+		'SJIS'        => 'SJIS',
+		'X-SJIS'      => 'SJIS',
+		'WINDOWS-31J' => 'SJIS-win',
+		'CP932'       => 'SJIS-win',
+		'MS932'       => 'SJIS-win',
+		'EUC-JP'      => 'EUC-JP',
+		'EUCJP'       => 'EUC-JP',
+		'X-EUC-JP'    => 'EUC-JP',
+		'ISO-2022-JP' => 'ISO-2022-JP',
+	);
+
+	if ( ! isset( $aliases[ $charset ] ) ) {
+		return $html;
+	}
+
+	$converted = mb_convert_encoding( $html, 'UTF-8', $aliases[ $charset ] );
+
+	return is_string( $converted ) ? $converted : $html;
 }
 
 /**
@@ -409,6 +458,12 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 		// 中央クロップで文字が切れるため、専用の表示ルールを当てる。
 		$modifier .= ' m3-blogcard--brand';
 	}
+	// OGP を取得できず URL から組み立てたカード。見た目は通常カードと同じで、
+	// 呼び出し側が「本物のメタではない」と判別できるようにするための印。
+	$is_fallback = ! empty( $ogp['fetch_failed'] );
+	if ( $is_fallback ) {
+		$modifier .= ' m3-blogcard--fallback';
+	}
 	$title       = (string) $ogp['title'];
 	$share_title = wp_strip_all_tags( $title );
 	$aria_label  = sprintf(
@@ -433,6 +488,11 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 				<?php if ( ! empty( $ogp['image'] ) ) : ?>
 					<div class="m3-blogcard__image">
 						<img src="<?php echo esc_url( $ogp['image'] ); ?>" alt="" loading="lazy" decoding="async">
+					</div>
+				<?php elseif ( $is_fallback && ! empty( $ogp['favicon'] ) ) : ?>
+					<?php // アイキャッチを取得できない場合はサイトアイコンを置き、通常カードと同じ2カラム構成を保つ。 ?>
+					<div class="m3-blogcard__image m3-blogcard__image--placeholder">
+						<img src="<?php echo esc_url( $ogp['favicon'] ); ?>" alt="" loading="lazy" decoding="async" width="40" height="40">
 					</div>
 				<?php endif; ?>
 				<div class="m3-blogcard__text">
@@ -479,6 +539,140 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 	$html = (string) preg_replace( '/>\s+</', '><', $html );
 
 	return trim( $html );
+}
+
+/**
+ * URL のパスセグメントを読める語句へ整形する。
+ *
+ * `v-bucks-a202300000011516` → `V Bucks` のように、末尾の ID／ハッシュを落として
+ * 区切り文字を空白へ置き換える。日本語スラッグ（percent-encoded）は語形を壊さないよう
+ * 大文字化せずそのまま返す。
+ *
+ * @param string $segment パスセグメント（デコード済み）。
+ * @return string 整形結果（使えなければ空文字）。
+ */
+function node_blogcard_humanize_slug( string $segment ): string {
+	$segment = rawurldecode( $segment );
+	$segment = (string) preg_replace( '/\.(html?|php|aspx?|jsp)$/i', '', $segment );
+
+	// 末尾の ID サフィックスを落とす。Epic の `-a202300000011516` / `-c-202300000001636`、
+	// 一般的な `-123456`、CMS が付ける 16 進ハッシュが対象。ストア URL の商品 ID は
+	// node_store_humanize_slug() 側の判定に任せるため、ここでは末尾の付属 ID だけを扱う。
+	$segment = (string) preg_replace( '/[-_](?:[a-z][-_]?)?\d{6,}$/i', '', $segment );
+	$segment = (string) preg_replace( '/[-_][0-9a-f]{8,}$/i', '', $segment );
+
+	if ( '' === $segment || mb_strlen( $segment ) < 2 ) {
+		return '';
+	}
+
+	// 語に分解できないハッシュ（`a1b2c3d4e5f6` 等）は題名にならない。
+	// 呼び出し側はホスト名へ落ちる。
+	if ( preg_match( '/^(?:[0-9a-f]{8,}|[a-z]*\d{6,}[a-z0-9]*)$/i', $segment ) ) {
+		return '';
+	}
+
+	// 区切り文字の置換・ID 判定・大文字化はストアカードと同じ規則を使う
+	// （inc/blogcard-store.php）。同梱ファイルが読み込まれていない構成でも
+	// 動くよう、無い場合は同等の処理を行う。
+	if ( function_exists( 'node_store_humanize_slug' ) ) {
+		return node_store_humanize_slug( $segment );
+	}
+
+	$words = trim( (string) preg_replace( '/\s+/', ' ', (string) preg_replace( '/[-_+]+/', ' ', $segment ) ) );
+	if ( '' === $words || preg_match( '/^[0-9]+$/', $words ) ) {
+		return '';
+	}
+
+	// 日本語を含む場合はそのまま（ucwords がマルチバイトを壊すため）。
+	return preg_match( '/[^\x20-\x7E]/', $words ) ? $words : ucwords( $words );
+}
+
+/**
+ * URL のパスから題名に使えるセグメントを抜き出す。
+ *
+ * @param string $url リンク先 URL。
+ * @return list<string> 整形済みセグメント（前から順）。
+ */
+function node_blogcard_path_segments( string $url ): array {
+	$path = (string) parse_url( $url, PHP_URL_PATH );
+	if ( '' === $path ) {
+		return array();
+	}
+
+	$segments = array();
+	foreach ( explode( '/', trim( rawurldecode( $path ), '/' ) ) as $raw ) {
+		$raw = trim( $raw );
+		// `index.html` はページ名を持たないので、その手前を末尾セグメントとして扱う。
+		if ( '' === $raw || preg_match( '/^index\.(html?|php)$/i', $raw ) ) {
+			continue;
+		}
+
+		$segments[] = node_blogcard_humanize_slug( $raw );
+	}
+
+	return $segments;
+}
+
+/**
+ * URL のスラッグから題名を組み立てる。
+ *
+ * Cloudflare 等のボット防御で本文を取得できない URL でも、素のリンクへ落とさず
+ * カードとして体裁を保つために使う。
+ *
+ * @param string $url リンク先 URL。
+ * @return string 題名（組み立てられなければ空文字）。
+ */
+function node_blogcard_title_from_url( string $url ): string {
+	$segments = node_blogcard_path_segments( $url );
+
+	// 末尾セグメントだけを見る。ここが ID やハッシュなら、手前へ遡らず空文字を返す。
+	// 遡ると `/item/software/D70010000000964` が「Software」のような分類名になり、
+	// ページの題名として誤解を招くため。
+	return empty( $segments ) ? '' : (string) end( $segments );
+}
+
+/**
+ * URL の中間パスをパンくずとして組み立てる。
+ *
+ * @param string $url リンク先 URL。
+ * @return string 例: `Fortnite Battle Royale › Billing And Payment`（無ければ空文字）。
+ */
+function node_blogcard_breadcrumb_from_url( string $url ): string {
+	$segments = node_blogcard_path_segments( $url );
+	array_pop( $segments );
+
+	$segments = array_values( array_filter( $segments, static fn( string $s ): bool => '' !== $s ) );
+
+	return empty( $segments ) ? '' : implode( ' › ', $segments );
+}
+
+/**
+ * OGP を取得できない一般 URL でも、本文上はブログカードとして表示するための情報。
+ *
+ * 題名は URL のスラッグから組み立てる。生の URL は説明欄に入れない（長い URL が
+ * そのまま流し込まれると、他のカードと並んだときに見た目が崩れるため）。
+ *
+ * @param string $url リンク先 URL。
+ * @return array<string, mixed>
+ */
+function node_blogcard_generic_fallback_ogp( string $url ): array {
+	$host = strtolower( (string) parse_url( $url, PHP_URL_HOST ) );
+	$site = '' !== $host ? (string) preg_replace( '/^www\./', '', $host ) : __( 'リンク先', 'node' );
+
+	$title = node_blogcard_title_from_url( $url );
+	if ( '' === $title ) {
+		$title = $site;
+	}
+
+	return array(
+		'title'        => $title,
+		'description'  => node_blogcard_breadcrumb_from_url( $url ),
+		'image'        => '',
+		'favicon'      => '' !== $host ? 'https://www.google.com/s2/favicons?domain=' . rawurlencode( $host ) . '&sz=64' : '',
+		'site_name'    => $site,
+		'is_internal'  => false,
+		'fetch_failed' => true,
+	);
 }
 
 /**
@@ -534,8 +728,25 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 	// 著者が `[blogcard url="..." title="..."]` と書けば正しい題名で表示できる。
 	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
 
-	if ( ! $ogp ) {
-		return node_blogcard_fallback_markup( $url );
+	// 題名が無いカードは node_blogcard_markup() が空文字を返すため、取得失敗（false）と
+	// 「配列は返ったが題名が空」（ストアのフォールバック等）を同じ経路で救う。
+	if ( ! is_array( $ogp ) || '' === trim( (string) ( $ogp['title'] ?? '' ) ) ) {
+		if ( node_is_internal_url( $url ) ) {
+			// 記事が実在しないならカードを捏造せず「見つかりません」表示に落とす。
+			// 実在するのに題名が空（無題の記事）の場合は WordPress 標準の埋め込みに任せる。
+			return node_internal_url_to_postid( $url ) ? '' : node_blogcard_fallback_markup( $url );
+		}
+
+		if ( ! empty( $store ) ) {
+			// ストア商品ページの題名復元は node_store_fallback_ogp() の規則に任せる。
+			// 商品名を復元できないときに店名や分類名を題名にすると別の商品と誤解されるため、
+			// ここでは URL 由来の題名を当てずカードを作らない。
+			return '';
+		}
+
+		// 外部 URL は Cloudflare 等のボット防御で取得できないだけなので、URL から
+		// 組み立てた情報でカードにする（素のリンクや空出力へ落とさない）。
+		$ogp = node_blogcard_generic_fallback_ogp( $url );
 	}
 
 	// Amazon アフィリエイト ID
@@ -1299,7 +1510,9 @@ function node_blogcard_preview_response( WP_REST_Request $request ) {
 	return array(
 		'html'      => $html,
 		'store'     => (string) ( $store['slug'] ?? '' ),
-		'fallback'  => str_contains( $html, 'm3-blogcard__fallback' ),
+		// URL から組み立てたカード（m3-blogcard--fallback）も「取得できていない」印として返す。
+		// エディタ側はこれを見て、著者に題名の手入力を促す。
+		'fallback'  => str_contains( $html, 'm3-blogcard--fallback' ) || str_contains( $html, 'm3-blogcard__fallback' ),
 	);
 }
 
