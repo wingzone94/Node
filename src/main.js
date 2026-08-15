@@ -14,6 +14,7 @@ import { initScrollAnimations } from './scripts/scroll-animations';
 import { initSmartHeader } from './scripts/smart-header';
 import { initKeyboardShortcuts, initOverdriveScroll, initRippleEffect, initTooltips } from './scripts/ui-effects';
 import { initViewSwitcher } from './scripts/view-switcher';
+import { initTitleAutoFit } from './scripts/title-autofit';
 
 const optionalInitializers = [
     {
@@ -435,6 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initHeroInfoBubble,
         initScrollAnimations,
         initCategoryOverflowToggle,
+        initTitleAutoFit,
     ];
 
     initializers.forEach(init => {

@@ -1,0 +1,41 @@
+/**
+ * 記事タイトルの自動フィット
+ *
+ * -webkit-line-clamp は Chromium が display: -webkit-box を flow-root へ
+ * blockify するため効かず、overflow: hidden だけが残って文字が行の途中で
+ * 横に切られていた。
+ *
+ * ここでは JS 無しの受け皿として「行数ぶんちょうどの高さで切る」だけを行う。
+ * lh 単位は 1 行分の高さなので、切れ目が必ず行の境目に来て文字の途中で切れない。
+ * 各クラスの行数は、元の -webkit-line-clamp の指定に合わせる。
+ *
+ * 実際の詰め・省略は src/scripts/title-autofit.js が担当する。
+ */
+
+.c-headline-card__title {
+    overflow: hidden;
+    max-block-size: 3lh;
+}
+
+:is(
+    .m3-headline-card__title,
+    .m3-related-card__title,
+    .m3-elevated-nav-card__title
+) {
+    overflow: hidden;
+    max-block-size: 2lh;
+}
+
+/* JS が段階的に詰めるときの縮尺。1em は親の文字サイズ基準。 */
+.is-title-fit {
+    font-size: calc(1em * var(--node-title-fit, 1));
+    letter-spacing: var(--node-title-tracking, inherit);
+}
+
+/*
+ * 狭い画面でカードの高さが詰まると、タイトルが flex の縮小で数 px まで
+ * 潰れて読めなくなることがある。タイトルは縮めず、カード側を伸ばす。
+ */
+:is(.m3-card__title, .c-card__title) {
+    flex: 0 0 auto;
+}

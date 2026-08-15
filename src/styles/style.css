@@ -60,6 +60,7 @@
 
 /* Print (must be last: overrides everything under @media print) */
 @import './_print.css' layer(utilities);
+@import './_title-autofit.css' layer(utilities);
 
 /* Production parity: external Material Symbols CSS is unlayered, so keep this
  * narrow badge override unlayered as well. Values mirror luminous-core.net. */
