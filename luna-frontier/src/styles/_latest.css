@@ -129,6 +129,11 @@ body.lf-theme .m3-card__topline {
 
 body.lf-theme .m3-card__title {
 	margin: 0;
+	/*
+	 * 狭い画面でカードの高さが詰まると、タイトルが flex の縮小で 7px 程度まで
+	 * 潰れて本文が読めなくなっていた。タイトルは縮めず、カード側を伸ばす。
+	 */
+	flex: 0 0 auto;
 	font-family: var(--font-heading), sans-serif;
 	font-size: var(--lf-text-m);
 	font-weight: 700;
@@ -265,4 +270,25 @@ body.lf-theme .c-headline-card__title.lf-title-fit {
 body.lf-theme .lf-title-fit {
 	font-size: calc(1em * var(--lf-title-fit, 1));
 	letter-spacing: var(--lf-title-tracking, -0.005em);
+}
+
+/*
+ * カードタイトルの受け皿を、一覧に並ぶカード全般へ広げる。
+ * HEADLINE と同じく、Chromium の blockify で clamp が効かない箇所があるため、
+ * JS 無しでも文字が真横に切られないようフェードで受ける。
+ * 実際の詰め・省略は src/luna.js が担当する。
+ */
+body.lf-theme :is(
+	.m3-related-card__title,
+	.m3-headline-card__title,
+	.m3-game-card__title,
+	.m3-elevated-nav-card__title
+) {
+	overflow: hidden;
+	mask-image: linear-gradient(to bottom, #000 calc(100% - 0.8em), #000 calc(100% - 0.8em), transparent 100%);
+}
+
+body.lf-theme .lf-title-truncated,
+body.lf-theme .lf-title-fit {
+	mask-image: none;
 }

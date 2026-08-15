@@ -72,7 +72,21 @@ function setupFootnoteRelocation() {
  * JS が動かない場合は CSS 側の max-height + 下端のぼかしが受け止めるので、
  * 文字が中途半端に切れた見た目にはならない。
  */
-const TITLE_SELECTOR = '.c-headline-card__title, .m3-card__title, .c-card__title';
+/*
+ * 対象は「一覧に並ぶ記事タイトル」。ページ種別を問わず同じ処理を当てる
+ * （index / archive のリスト・グリッド / 検索結果 / 関連記事 / HEADLINE）。
+ * 実際に溢れている要素にしか手を入れないので、対象を広めに取っても副作用はない。
+ * 見出し・目次・アーカイブヘッダーなど「一覧のカードではないもの」は含めない。
+ */
+const TITLE_SELECTOR = [
+  '.m3-card__title',
+  '.c-card__title',
+  '.c-headline-card__title',
+  '.m3-headline-card__title',
+  '.m3-related-card__title',
+  '.m3-game-card__title',
+  '.m3-elevated-nav-card__title',
+].join(', ');
 
 // [font-size 倍率, letter-spacing]
 const FIT_STEPS = [
@@ -127,6 +141,17 @@ function truncate(el) {
   el.title = full;
 }
 
+/*
+ * タイトルの箱が 2 行ぶんも無いときは、レイアウト側の都合で潰れている
+ * （flex の縮小など）。ここで切り詰めても読めるものにはならず、
+ * 元の文字列を壊すだけなので何もしない。
+ */
+function isCollapsed(el) {
+  const lh = parseFloat(getComputedStyle(el).lineHeight);
+  if (!Number.isFinite(lh) || lh <= 0) return false;
+  return el.clientHeight < lh * 1.5;
+}
+
 function fitTitle(el) {
   const host = textHostOf(el);
   if (!el.dataset.lfTitle) el.dataset.lfTitle = host.textContent.trim();
@@ -137,7 +162,7 @@ function fitTitle(el) {
   el.removeAttribute('title');
   applyStep(el, 0);
 
-  if (!overflows(el)) return;
+  if (!overflows(el) || isCollapsed(el)) return;
 
   for (let step = 1; step < FIT_STEPS.length; step += 1) {
     applyStep(el, step);
