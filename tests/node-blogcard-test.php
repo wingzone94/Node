@@ -165,6 +165,161 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'oEmbed Title', $html );
 	}
 
+	public function test_internal_ogp_failure_renders_non_clickable_fallback(): void {
+		$url    = home_url( '/missing-internal-blogcard/' );
+		$filter = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(),
+				'body'     => '',
+				'response' => array(
+					'code'    => 404,
+					'message' => 'Not Found',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+		add_filter( 'pre_http_request', $filter, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( 'm3-blogcard__fallback--missing', $html );
+		$this->assertStringContainsString( esc_html( $url ), $html );
+		$this->assertStringNotContainsString( '<a ', $html );
+		$this->assertStringNotContainsString( 'href=', $html );
+	}
+
+	public function test_external_ogp_failure_keeps_clickable_fallback(): void {
+		$url = 'https://example.com/missing-external-blogcard/';
+
+		$this->assertStringContainsString(
+			'<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">',
+			node_blogcard_fallback_markup( $url )
+		);
+	}
+
+	public function test_external_ogp_failure_renders_url_derived_card(): void {
+		$url    = 'https://example.com/guides/getting-started-with-node-987654';
+		$filter = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(),
+				'body'     => '',
+				'response' => array(
+					'code'    => 403,
+					'message' => 'Forbidden',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+		add_filter( 'pre_http_request', $filter, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		// 素のリンクへ落とさず、URL から組み立てたカードにする。
+		$this->assertStringContainsString( 'm3-blogcard--fallback', $html );
+		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
+		$this->assertStringContainsString( 'Getting Started With Node', $html );
+		$this->assertStringContainsString( 'm3-blogcard__image--placeholder', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_shortcode_title_attribute_overrides_url_derived_fallback(): void {
+		$url    = 'https://example.com/guides/getting-started-with-node-987654';
+		$filter = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(),
+				'body'     => '',
+				'response' => array(
+					'code'    => 403,
+					'message' => 'Forbidden',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+		add_filter( 'pre_http_request', $filter, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = do_shortcode( '[blogcard url="' . $url . '" title="Node をはじめる"]' );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		// 手動指定は URL 由来の題名より優先する。
+		$this->assertStringContainsString( 'Node をはじめる', $html );
+		$this->assertStringNotContainsString( '>Getting Started With Node<', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_block_attributes_override_fetched_metadata(): void {
+		$url = 'https://example.com/override-target/';
+		$this->mock_ogp_response( $url, 'Fetched Title' );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url, false, array( 'title' => 'ブロック属性のタイトル' ) );
+
+		$this->assertStringContainsString( 'ブロック属性のタイトル', $html );
+		$this->assertStringNotContainsString( '>Fetched Title<', $html );
+
+		delete_transient( 'node_ogp_' . md5( $url ) );
+	}
+
+	public function test_blogcard_title_from_url_humanizes_slug_and_rejects_ids(): void {
+		$cases = array(
+			'https://www.epicgames.com/help/fortnite-battle-royale-c-202300000001636/billing-and-payment-c-202300000001723/v-bucks-a202300000011516' => 'V Bucks',
+			'https://example.com/news/2024/05/my-great-post-123456.html' => 'My Great Post',
+			'https://example.com/blog/index.html'                        => 'Blog',
+			'https://ja.example.com/%E8%A8%98%E4%BA%8B%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB/' => '記事タイトル',
+			'https://example.com/'                                       => '',
+			'https://example.com/2024/05/12/'                            => '',
+			'https://example.com/p/a1b2c3d4e5f6'                         => '',
+		);
+
+		foreach ( $cases as $url => $expected ) {
+			$this->assertSame( $expected, node_blogcard_title_from_url( $url ), $url );
+		}
+
+		$this->assertSame(
+			'Help › Fortnite Battle Royale › Billing And Payment',
+			node_blogcard_breadcrumb_from_url( 'https://www.epicgames.com/help/fortnite-battle-royale-c-202300000001636/billing-and-payment-c-202300000001723/v-bucks-a202300000011516' )
+		);
+	}
+
+	public function test_html_meta_charset_is_converted_to_utf8(): void {
+		$sjis = '<meta charset="Shift_JIS">' . mb_convert_encoding( 'こんにちは', 'SJIS', 'UTF-8' );
+		$this->assertSame( '<meta charset="Shift_JIS">こんにちは', node_blogcard_to_utf8( $sjis, 'text/html' ) );
+
+		$euc = '<meta charset="EUC-JP">' . mb_convert_encoding( '日本語', 'EUC-JP', 'UTF-8' );
+		$this->assertSame( '<meta charset="EUC-JP">日本語', node_blogcard_to_utf8( $euc, 'text/html' ) );
+
+		$this->assertSame(
+			'日本語',
+			node_blogcard_to_utf8( mb_convert_encoding( '日本語', 'SJIS', 'UTF-8' ), 'text/html; charset=Shift_JIS' )
+		);
+
+		$this->assertSame( '<html>日本語</html>', node_blogcard_to_utf8( '<html>日本語</html>', 'text/html; charset=UTF-8' ) );
+	}
+
 	public function test_oembed_dataparse_builds_external_card_from_data(): void {
 		$html = node_blogcard_hydrate(
 			node_oembed_dataparse(
