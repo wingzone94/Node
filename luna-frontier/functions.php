@@ -34,6 +34,13 @@ function luna_frontier_version(): string {
 }
 
 /**
+ * フッターなど利用者向けに見せるメジャーバージョン。
+ */
+function luna_frontier_display_version(): string {
+	return '2.0';
+}
+
+/**
  * ビルド成果物のパスを Vite manifest から解決する。
  *
  * @param string $entry manifest のキー（例: 'src/styles/luna.css'）。
@@ -166,4 +173,3 @@ function luna_frontier_register_menus(): void {
 	);
 }
 add_action( 'after_setup_theme', 'luna_frontier_register_menus', 20 );
-

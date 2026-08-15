@@ -8,7 +8,7 @@ declare( strict_types=1 );
  * - Paper Design（四角・面と罫で階層をつくる）へ
  * - Official SNS は公式アカウントだけにする
  *   （RSS は 2026-08-09 のユーザー指示でフッターから削除。ヘッダーには残っている）
- * - バージョン表記を Luna Frontier 自身のもの（2.0.0-alpha）にする。
+ * - バージョン表記を Luna Frontier 2.0 の表示用バージョンにする。
  *   親の node_get_theme_version() は Node（親）のバージョンを返すため使わない
  * - ブランドクロームなので Dynamic Color は流し込まない（§23 / §38）
  *
@@ -65,7 +65,7 @@ get_template_part( 'template-parts/ad', 'article' );
 			<div class="lf-footer__bottom-inner">
 				<p class="lf-footer__copyright">
 					&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> Luminous Core Team.
-					<span class="lf-footer__version">Luna Frontier v<?php echo esc_html( luna_frontier_version() ); ?></span>
+					<span class="lf-footer__version">Luna Frontier v<?php echo esc_html( luna_frontier_display_version() ); ?></span>
 				</p>
 
 			</div>
