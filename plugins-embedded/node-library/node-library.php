@@ -516,6 +516,7 @@ final class Node_Library {
 			return new WP_Error( 'node_library_blog_card_bad_url', 'URL が空です', [ 'status' => 400 ] );
 		}
 
+		$ogp = function_exists( 'node_get_ogp_data' ) ? node_get_ogp_data( $url ) : false;
 		$html = $this->render_blog_card_block( [ 'url' => $url ] );
 		if ( '' === $html ) {
 			return new WP_Error( 'node_library_blog_card_no_card', 'カードを生成できませんでした', [ 'status' => 404 ] );
@@ -524,6 +525,7 @@ final class Node_Library {
 		return rest_ensure_response(
 			[
 				'html'     => $html,
+				'title'    => is_array( $ogp ) ? (string) ( $ogp['title'] ?? '' ) : '',
 				'fallback' => str_contains( $html, 'm3-blogcard__fallback' ),
 			]
 		);

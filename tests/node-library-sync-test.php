@@ -87,6 +87,43 @@ class Node_Library_Sync_Test extends WP_UnitTestCase {
 		$this->assertFalse( $data['fallback'] );
 	}
 
+	public function test_blog_card_preview_fetches_page_title_from_url(): void {
+		$url      = 'https://example.org/page-title-source';
+		$callback = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(
+					'content-type' => 'text/html; charset=UTF-8',
+				),
+				'body'     => '<!doctype html><html><head><title>Fetched Page Title</title><meta property="og:title" content="Fetched OGP Title"><meta property="og:site_name" content="Example Site"></head><body></body></html>',
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$request = new WP_REST_Request( 'GET', '/node-library/v1/blog-card-preview' );
+		$request->set_param( 'url', $url );
+
+		$response = $this->library->handle_blog_card_preview( $request );
+		$data     = $response->get_data();
+
+		remove_filter( 'pre_http_request', $callback, 10 );
+
+		$this->assertStringContainsString( 'Fetched OGP Title', $data['html'] );
+		$this->assertStringContainsString( 'Example Site', $data['html'] );
+		$this->assertFalse( $data['fallback'] );
+	}
+
 	public function test_create_update_and_card_removal_replace_the_index_immediately(): void {
 		$first_library_id  = $this->create_library_item( 'First Library Item' );
 		$second_library_id = $this->create_library_item( 'Second Library Item' );
