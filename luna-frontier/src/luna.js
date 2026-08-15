@@ -57,8 +57,124 @@ function setupFootnoteRelocation() {
   }
 }
 
+/**
+ * 記事タイトルが枠に収まらないカードを自動で詰める。
+ *
+ * 背景: HEADLINE カードのタイトルは親テーマが -webkit-line-clamp で 3 行に
+ * 制限しているが、Chromium が display: -webkit-box を blockify するため
+ * clamp が効かず、overflow: hidden だけが残って文字の途中で切れていた。
+ *
+ * ここでは「少し詰めれば収まるものは詰める」を段階的に試し、
+ * それでも収まらないものだけ末尾を省略する。
+ *   1. 字送りと文字サイズをわずかに詰める（3 段階）
+ *   2. それでも溢れるなら二分探索で切り詰めて … を付ける
+ *
+ * JS が動かない場合は CSS 側の max-height + 下端のぼかしが受け止めるので、
+ * 文字が中途半端に切れた見た目にはならない。
+ */
+const TITLE_SELECTOR = '.c-headline-card__title, .m3-card__title, .c-card__title';
+
+// [font-size 倍率, letter-spacing]
+const FIT_STEPS = [
+  [1, null],
+  [0.96, '-0.015em'],
+  [0.92, '-0.025em'],
+  [0.88, '-0.035em'],
+];
+
+function overflows(el) {
+  return el.scrollHeight - el.clientHeight > 1;
+}
+
+function applyStep(el, step) {
+  const [scale, tracking] = FIT_STEPS[step];
+  if (step === 0) {
+    el.style.removeProperty('--lf-title-fit');
+    el.style.removeProperty('--lf-title-tracking');
+    el.classList.remove('lf-title-fit');
+    return;
+  }
+  el.classList.add('lf-title-fit');
+  el.style.setProperty('--lf-title-fit', String(scale));
+  if (tracking) el.style.setProperty('--lf-title-tracking', tracking);
+}
+
+/*
+ * タイトルの文字を持つ要素。カードによっては <h3><a>タイトル</a></h3> の形なので、
+ * h3 の textContent を書き換えるとリンクごと壊れる。必ず内側の要素を触る。
+ * 溢れているかどうかの判定は、高さを持つ外側（h3）で行う。
+ */
+function textHostOf(el) {
+  return el.querySelector('a') || el;
+}
+
+function truncate(el) {
+  const host = textHostOf(el);
+  const full = el.dataset.lfTitle;
+  let lo = 0;
+  let hi = full.length;
+
+  // 収まる最大の文字数を二分探索する
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    host.textContent = full.slice(0, mid) + '…';
+    if (overflows(el)) hi = mid - 1;
+    else lo = mid;
+  }
+
+  host.textContent = lo > 0 ? full.slice(0, lo) + '…' : full;
+  el.classList.add('lf-title-truncated');
+  el.title = full;
+}
+
+function fitTitle(el) {
+  const host = textHostOf(el);
+  if (!el.dataset.lfTitle) el.dataset.lfTitle = host.textContent.trim();
+
+  // 毎回まっさらな状態から測り直す（リサイズで枠が広がった場合に戻せるように）
+  host.textContent = el.dataset.lfTitle;
+  el.classList.remove('lf-title-truncated');
+  el.removeAttribute('title');
+  applyStep(el, 0);
+
+  if (!overflows(el)) return;
+
+  for (let step = 1; step < FIT_STEPS.length; step += 1) {
+    applyStep(el, step);
+    if (!overflows(el)) return;
+  }
+
+  /*
+   * 詰めても収まらなかった場合。
+   * どのみち省略するなら、縮めたままだとカード間で文字サイズが不揃いになるだけなので
+   * 通常サイズへ戻してから切る。詰めるのは「詰めれば切らずに済む」ときだけにする。
+   */
+  applyStep(el, 0);
+  truncate(el);
+}
+
+function setupTitleAutoFit() {
+  const titles = document.querySelectorAll(TITLE_SELECTOR);
+  if (!titles.length) return;
+
+  const run = () => titles.forEach(fitTitle);
+
+  // Web フォント適用前に測ると行数がずれるので、読み込み完了後にもう一度測る。
+  run();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(run).catch(() => {});
+  }
+
+  let timer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(run, 150);
+  });
+}
+
 function init() {
   setupFootnoteRelocation();
+  setupTitleAutoFit();
 }
 
 if (document.readyState === 'loading') {

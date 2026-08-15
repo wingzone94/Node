@@ -6,8 +6,8 @@ declare( strict_types=1 );
  *
  * 親 footer.php からの変更点:
  * - Paper Design（四角・面と罫で階層をつくる）へ
- * - Official SNS は公式アカウントだけにする。RSS は購読手段であって SNS ではないので、
- *   最下部の著作権行の横（Feed 領域）へ移す
+ * - Official SNS は公式アカウントだけにする
+ *   （RSS は 2026-08-09 のユーザー指示でフッターから削除。ヘッダーには残っている）
  * - バージョン表記を Luna Frontier 自身のもの（2.0.0-alpha）にする。
  *   親の node_get_theme_version() は Node（親）のバージョンを返すため使わない
  * - ブランドクロームなので Dynamic Color は流し込まない（§23 / §38）
@@ -68,19 +68,6 @@ get_template_part( 'template-parts/ad', 'article' );
 					<span class="lf-footer__version">Luna Frontier v<?php echo esc_html( luna_frontier_version() ); ?></span>
 				</p>
 
-				<?php
-				/*
-				 * RSS は「公式アカウント」ではなく購読手段なので Official SNS から分離した。
-				 * モバイルでもヘッダーの RSS が隠れるため、ここが唯一の導線になる。
-				 * 外部サービスではないので target="_blank" は付けない。
-				 */
-				?>
-				<a class="lf-footer__feed" href="<?php echo esc_url( (string) get_bloginfo( 'rss2_url' ) ); ?>">
-					<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="currentColor">
-						<path d="M6.18 17.82a2.18 2.18 0 1 1-4.36 0 2.18 2.18 0 0 1 4.36 0ZM2 10.87v3.02c2.36 0 4.62.94 6.29 2.6A8.9 8.9 0 0 1 10.89 22h3.03c0-6.58-5.35-11.13-11.92-11.13ZM2 4v3.02c8.26 0 14.98 6.72 14.98 14.98H20C20 12.07 11.93 4 2 4Z"/>
-					</svg>
-					<span>RSS</span>
-				</a>
 			</div>
 		</div>
 	</footer>

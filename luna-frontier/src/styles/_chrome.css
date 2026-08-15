@@ -187,6 +187,10 @@ body.lf-theme:has(.lf-topic-nav__group--spotlight) .special-features {
 }
 
 @media (max-width: 599px) {
+	body.lf-theme .lf-topic-nav {
+		display: none;
+	}
+
 	body.lf-theme .lf-topic-nav__inner {
 		gap: var(--lf-space-2xs);
 	}
@@ -308,7 +312,6 @@ body.lf-theme .lf-footer__bottom-inner {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	justify-content: space-between;
 	gap: var(--lf-space-2xs) var(--lf-space-s);
 }
 
@@ -324,27 +327,4 @@ body.lf-theme .lf-footer__version {
 	letter-spacing: 0.08em;
 	color: var(--lf-on-surface-muted);
 	margin-inline-start: var(--lf-space-2xs);
-}
-
-/* RSS は Official SNS ではなく購読手段なので、ここに独立して置く。 */
-body.lf-theme .lf-footer__feed {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.45em;
-	min-block-size: 2.25rem;
-	padding: 0.35em 0.9em;
-	border: 1px solid var(--lf-rule);
-	border-radius: var(--lf-shape-chip);
-	font-size: var(--lf-text-2xs);
-	font-weight: 600;
-	letter-spacing: 0.06em;
-	color: var(--lf-on-surface-secondary);
-	text-decoration: none;
-	transition: color var(--lf-motion-fast) var(--lf-easing-standard),
-		border-color var(--lf-motion-fast) var(--lf-easing-standard);
-}
-
-body.lf-theme .lf-footer__feed:hover {
-	color: var(--lc-accent);
-	border-color: var(--lc-accent);
 }

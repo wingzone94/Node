@@ -236,3 +236,33 @@ body.lf-theme .m3-card:focus-within {
 		transform: none;
 	}
 }
+
+/* ---------------------------------------------------------------------
+ * カードタイトルの収まり
+ *
+ * Chromium は display: -webkit-box を blockify するため、HEADLINE カードでは
+ * 親テーマの -webkit-line-clamp が効かず、overflow: hidden だけが残って
+ * 文字の途中で切れていた。
+ *
+ * ここでは JS 無しの受け皿として「3 行ぶんの高さ + 下端のぼかし」を用意する。
+ * 実際の詰め・省略は src/luna.js が担当する（少し詰めれば収まるものは詰め、
+ * それでも溢れるものだけ … で省略する）。
+ * --------------------------------------------------------------------- */
+body.lf-theme .c-headline-card__title {
+	max-block-size: calc(1.45em * 3);
+	overflow: hidden;
+	/* 文字が真横に切られた見た目にしないためのフェード。JS が処理したら外す。 */
+	mask-image: linear-gradient(to bottom, #000 calc(100% - 0.9em), #000 calc(100% - 0.9em), transparent 100%);
+}
+
+/* JS が詰めた／省略した後はぼかし不要（… が薄くなってしまう）。 */
+body.lf-theme .c-headline-card__title.lf-title-truncated,
+body.lf-theme .c-headline-card__title.lf-title-fit {
+	mask-image: none;
+}
+
+/* JS が段階的に詰めるときの縮尺。1em は親の文字サイズ基準。 */
+body.lf-theme .lf-title-fit {
+	font-size: calc(1em * var(--lf-title-fit, 1));
+	letter-spacing: var(--lf-title-tracking, -0.005em);
+}
