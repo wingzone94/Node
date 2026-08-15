@@ -253,17 +253,14 @@ body.lf-theme .m3-card:focus-within {
  * 実際の詰め・省略は src/luna.js が担当する（少し詰めれば収まるものは詰め、
  * それでも溢れるものだけ … で省略する）。
  * --------------------------------------------------------------------- */
+/*
+ * 行数ぶんちょうどの高さで切る。lh 単位は 1 行分の高さなので、
+ * 切れ目が必ず行の境目に来て文字の途中で切られない。
+ * 行数は親テーマ側の -webkit-line-clamp の指定に合わせる。
+ */
 body.lf-theme .c-headline-card__title {
-	max-block-size: calc(1.45em * 3);
 	overflow: hidden;
-	/* 文字が真横に切られた見た目にしないためのフェード。JS が処理したら外す。 */
-	mask-image: linear-gradient(to bottom, #000 calc(100% - 0.9em), #000 calc(100% - 0.9em), transparent 100%);
-}
-
-/* JS が詰めた／省略した後はぼかし不要（… が薄くなってしまう）。 */
-body.lf-theme .c-headline-card__title.lf-title-truncated,
-body.lf-theme .c-headline-card__title.lf-title-fit {
-	mask-image: none;
+	max-block-size: 3lh;
 }
 
 /* JS が段階的に詰めるときの縮尺。1em は親の文字サイズ基準。 */
@@ -281,14 +278,14 @@ body.lf-theme .lf-title-fit {
 body.lf-theme :is(
 	.m3-related-card__title,
 	.m3-headline-card__title,
-	.m3-game-card__title,
 	.m3-elevated-nav-card__title
 ) {
 	overflow: hidden;
-	mask-image: linear-gradient(to bottom, #000 calc(100% - 0.8em), #000 calc(100% - 0.8em), transparent 100%);
+	max-block-size: 2lh;
 }
 
-body.lf-theme .lf-title-truncated,
-body.lf-theme .lf-title-fit {
-	mask-image: none;
-}
+/*
+ * .m3-game-card__title は 1 行想定でクランプ指定が無い。
+ * ここに高さ上限やフェードを掛けると、1 行のタイトルが途中から薄くなる
+ * （実測でテキストの下 2/3 が消えていた）。何も掛けない。
+ */
