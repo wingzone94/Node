@@ -12,10 +12,6 @@ export function initSearchBar() {
     const modalClose = document.getElementById('m3-advanced-search-close');
     const modalReset = document.getElementById('m3-advanced-search-reset');
     const modalApply = document.getElementById('m3-advanced-search-apply');
-    const searchResultsRegion = document.getElementById('m3-search-rest-results');
-    const searchResultsStatus = document.getElementById('m3-search-rest-results-status');
-    const searchResultsList = document.getElementById('m3-search-rest-results-list');
-    const searchResultsAll = document.getElementById('m3-search-rest-results-all');
     const header = document.querySelector('.m3-header');
 
     if (!searchToggle || !searchBar || !searchInput) return;
@@ -82,27 +78,13 @@ export function initSearchBar() {
 
     if (!modal) return;
 
-    const modalTriggers = document.querySelectorAll('.m3-search-advanced-trigger, #m3-advanced-search-trigger');
-    let lastModalTrigger = null;
-    let previousBodyOverflow = '';
-
-    const setModalExpanded = (expanded) => {
-        modalTriggers.forEach(trigger => trigger.setAttribute('aria-expanded', String(expanded)));
-    };
-
-    const openModal = (trigger) => {
+    const openModal = () => {
         if (NODE_DEBUG) console.log('Search Bar: Opening Modal...');
-        if (modal.open) return;
-
-        lastModalTrigger = trigger || document.activeElement;
-        previousBodyOverflow = document.body.style.overflow;
-        modal.showModal();
-        setModalExpanded(true);
+        modal.classList.add('is-active');
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        modal.style.visibility = 'visible';
         document.body.style.overflow = 'hidden';
-        requestAnimationFrame(() => {
-            modal.classList.add('is-active');
-            modalClose?.focus({ preventScroll: true });
-        });
 
         // --- Restore saved search settings ---
         const saved = storage.get('m3-saved-search');
@@ -132,23 +114,15 @@ export function initSearchBar() {
             updateHitCount();
             updateTabStatus();
         }, 150);
-
     };
 
     const closeModal = () => {
-        if (!modal.open) return;
         modal.classList.remove('is-active');
-        modal.close();
+        modal.style.opacity = '0';
+        modal.style.visibility = 'hidden';
+        setTimeout(() => { modal.style.display = 'none'; }, 400);
+        document.body.style.overflow = '';
     };
-
-    modal.addEventListener('cancel', () => modal.classList.remove('is-active'));
-    modal.addEventListener('close', () => {
-        modal.classList.remove('is-active');
-        setModalExpanded(false);
-        document.body.style.overflow = previousBodyOverflow;
-        lastModalTrigger?.focus({ preventScroll: true });
-        lastModalTrigger = null;
-    });
 
     // --- Global Event Delegation for Advanced Search Trigger ---
     document.addEventListener('click', (e) => {
@@ -156,79 +130,16 @@ export function initSearchBar() {
         if (trigger) {
             e.preventDefault();
             e.stopPropagation();
-            openModal(trigger);
+            openModal();
         }
     });
 
     modalClose?.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-    let platformOptionsPromise;
-
-    function restoreSavedPlatformSettings(container) {
-        const saved = storage.get('m3-saved-search');
-        if (!saved) return;
-
-        container.querySelectorAll('input[name="m3_platform[]"]').forEach(input => {
-            const savedValues = saved[input.name];
-            input.checked = Array.isArray(savedValues) && savedValues.includes(input.value);
-        });
-    }
-
-    function ensurePlatformOptions() {
-        const container = document.getElementById('m3-platform-options');
-        if (!container || container.dataset.state === 'ready') return Promise.resolve();
-        if (platformOptionsPromise) return platformOptionsPromise;
-
-        container.dataset.state = 'loading';
-        container.setAttribute('aria-busy', 'true');
-        const status = document.createElement('p');
-        status.className = 'm3-platform-load-state';
-        status.setAttribute('role', 'status');
-        status.textContent = 'プラットフォームを読み込んでいます…';
-        container.replaceChildren(status);
-
-        const platformUrl = m3_ajax?.platform_search_url;
-        if (!platformUrl) {
-            platformOptionsPromise = Promise.reject(new Error('Platform API is unavailable'));
-        } else {
-            platformOptionsPromise = Promise.all([
-                import('./search-platforms.js'),
-                fetch(platformUrl, { headers: { Accept: 'application/json' } }).then(response => {
-                    if (!response.ok) throw new Error(`Platform search failed: ${response.status}`);
-                    return response.json();
-                })
-            ]);
-        }
-
-        platformOptionsPromise
-            .then(([{ initSearchPlatforms }, payload]) => {
-                initSearchPlatforms(container, payload?.groups);
-                restoreSavedPlatformSettings(container);
-                bindSearchControlListeners(container);
-                container.dataset.state = 'ready';
-                container.removeAttribute('aria-busy');
-                updateHitCount();
-                updateTabStatus();
-            })
-            .catch(() => {
-                platformOptionsPromise = null;
-                container.dataset.state = 'error';
-                container.removeAttribute('aria-busy');
-                const retry = document.createElement('button');
-                retry.type = 'button';
-                retry.className = 'm3-button m3-button--text m3-platform-load-state';
-                retry.textContent = '読み込みに失敗しました。再試行';
-                retry.addEventListener('click', ensurePlatformOptions);
-                container.replaceChildren(retry);
-            });
-
-        return platformOptionsPromise;
-    }
-
-    // --- Search Tab Switching ---
+    // --- PC Tab Switching ---
     const switchPage = (pageNum) => {
-        if (pageNum === 3) ensurePlatformOptions();
+        if (window.innerWidth <= 600) return;
 
         const pagesContainer = modal.querySelector('.m3-modal__pages-container');
         const allPages = Array.from(modal.querySelectorAll('.m3-modal__page'));
@@ -257,123 +168,6 @@ export function initSearchBar() {
     modal.querySelectorAll('.m3-modal__tab').forEach(el => {
         el.addEventListener('click', () => switchPage(parseInt(el.dataset.page)));
     });
-
-    // --- On-demand Tag Suggestions ---
-    const tagInput = document.getElementById('m3-tag-input');
-    const tagSuggestions = document.getElementById('m3-tag-suggestions');
-    let tagSuggestionTimer;
-    let tagRequestController;
-    let activeTagSuggestion = -1;
-
-    const closeTagSuggestions = () => {
-        tagSuggestions?.replaceChildren();
-        tagSuggestions?.classList.remove('is-active');
-        tagInput?.setAttribute('aria-expanded', 'false');
-        tagInput?.removeAttribute('aria-activedescendant');
-        activeTagSuggestion = -1;
-    };
-
-    const setActiveTagSuggestion = (index) => {
-        const options = Array.from(tagSuggestions?.querySelectorAll('[role="option"]') || []);
-        if (!options.length) return;
-
-        activeTagSuggestion = (index + options.length) % options.length;
-        options.forEach((option, optionIndex) => {
-            const isActive = optionIndex === activeTagSuggestion;
-            option.classList.toggle('is-highlighted', isActive);
-            option.setAttribute('aria-selected', String(isActive));
-        });
-        tagInput?.setAttribute('aria-activedescendant', options[activeTagSuggestion].id);
-        options[activeTagSuggestion].scrollIntoView({ block: 'nearest' });
-    };
-
-    const selectTagSuggestion = (name) => {
-        if (!tagInput) return;
-        tagInput.value = name;
-        closeTagSuggestions();
-        updateHitCount();
-        updateTabStatus();
-        tagInput.focus({ preventScroll: true });
-    };
-
-    const renderTagSuggestions = (terms) => {
-        if (!tagSuggestions || !tagInput) return;
-        tagSuggestions.replaceChildren();
-        activeTagSuggestion = -1;
-
-        terms.forEach((term, index) => {
-            const option = document.createElement('button');
-            const icon = document.createElement('span');
-            const label = document.createElement('span');
-
-            option.type = 'button';
-            option.id = `m3-tag-suggestion-${index}`;
-            option.className = 'm3-suggestion-item';
-            option.setAttribute('role', 'option');
-            option.setAttribute('aria-selected', 'false');
-            icon.className = 'material-symbols-outlined';
-            icon.setAttribute('aria-hidden', 'true');
-            icon.textContent = 'sell';
-            label.textContent = term.name;
-            option.append(icon, label);
-            option.addEventListener('click', (event) => {
-                event.stopPropagation();
-                selectTagSuggestion(term.name);
-            });
-            tagSuggestions.append(option);
-        });
-
-        const hasSuggestions = terms.length > 0;
-        tagSuggestions.classList.toggle('is-active', hasSuggestions);
-        tagInput.setAttribute('aria-expanded', String(hasSuggestions));
-    };
-
-    const requestTagSuggestions = () => {
-        const query = tagInput?.value.trim() || '';
-        if (!query || !m3_ajax?.tag_search_url) {
-            closeTagSuggestions();
-            return;
-        }
-
-        tagRequestController?.abort();
-        tagRequestController = new AbortController();
-        const url = new URL(m3_ajax.tag_search_url, window.location.origin);
-        url.searchParams.set('q', query);
-
-        fetch(url, { signal: tagRequestController.signal })
-            .then(response => {
-                if (!response.ok) throw new Error(`Tag search failed: ${response.status}`);
-                return response.json();
-            })
-            .then(terms => {
-                if (query === tagInput?.value.trim()) renderTagSuggestions(Array.isArray(terms) ? terms : []);
-            })
-            .catch(error => {
-                if (error.name !== 'AbortError') closeTagSuggestions();
-            });
-    };
-
-    tagInput?.addEventListener('input', () => {
-        clearTimeout(tagSuggestionTimer);
-        tagSuggestionTimer = setTimeout(requestTagSuggestions, 250);
-    });
-    tagInput?.addEventListener('keydown', (event) => {
-        const optionCount = tagSuggestions?.querySelectorAll('[role="option"]').length || 0;
-        if (event.key === 'ArrowDown' && optionCount) {
-            event.preventDefault();
-            setActiveTagSuggestion(activeTagSuggestion + 1);
-        } else if (event.key === 'ArrowUp' && optionCount) {
-            event.preventDefault();
-            setActiveTagSuggestion(activeTagSuggestion - 1);
-        } else if (event.key === 'Enter' && activeTagSuggestion >= 0) {
-            event.preventDefault();
-            const activeOption = tagSuggestions.querySelectorAll('[role="option"]')[activeTagSuggestion];
-            activeOption?.click();
-        } else if (event.key === 'Escape') {
-            closeTagSuggestions();
-        }
-    });
-    tagInput?.addEventListener('blur', () => setTimeout(closeTagSuggestions, 150));
 
     const updateTabStatus = () => {
         const tabs = modal.querySelectorAll('.m3-modal__tab');
@@ -495,7 +289,6 @@ export function initSearchBar() {
             const data = new FormData();
             data.append('s', searchInput.value.trim());
             modal.querySelectorAll('input, select').forEach(input => {
-                if (!input.name) return;
                 if (input.type === 'checkbox' || input.type === 'radio') {
                     if (input.checked) data.append(input.name, input.value);
                 } else {
@@ -548,101 +341,17 @@ export function initSearchBar() {
         }, 300);
     }
 
-    function bindSearchControlListeners(container) {
-        container.querySelectorAll('input, select').forEach(input => {
-            if (input.dataset.nodeSearchBound === 'true') return;
-            input.dataset.nodeSearchBound = 'true';
-            input.addEventListener('change', () => { updateHitCount(); updateTabStatus(); });
-            if (input.type === 'text' || input.type === 'number') {
-                input.addEventListener('input', () => { updateHitCount(); updateTabStatus(); });
-            }
-        });
-    }
-
-    bindSearchControlListeners(modal);
+    modal.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('change', () => { updateHitCount(); updateTabStatus(); });
+        if (input.type === 'text' || input.type === 'number') input.addEventListener('input', () => { updateHitCount(); updateTabStatus(); });
+    });
     searchInput.addEventListener('input', () => {
         if (modal.classList.contains('is-active')) updateHitCount();
     });
 
-    let resultRequestController;
-
-    function renderSearchResults(payload, destinationUrl) {
-        if (!searchResultsRegion || !searchResultsStatus || !searchResultsList) return;
-
-        const results = Array.isArray(payload?.results) ? payload.results : [];
-        const total = Number.isFinite(Number(payload?.total)) ? Number(payload.total) : results.length;
-        const fragment = document.createDocumentFragment();
-
-        results.forEach(result => {
-            const item = document.createElement('li');
-            const article = document.createElement('article');
-            const title = document.createElement('h4');
-            const link = document.createElement('a');
-            const meta = document.createElement('time');
-            const excerpt = document.createElement('p');
-
-            item.className = 'm3-search-rest-results__item';
-            article.className = 'm3-search-rest-result';
-            title.className = 'm3-search-rest-result__title';
-            link.href = result.url;
-            link.textContent = result.title;
-            meta.className = 'm3-search-rest-result__date';
-            meta.dateTime = result.date;
-            meta.textContent = result.date_display;
-            excerpt.className = 'm3-search-rest-result__excerpt';
-            excerpt.textContent = result.excerpt;
-
-            title.append(link);
-            article.append(title, meta, excerpt);
-            item.append(article);
-            fragment.append(item);
-        });
-
-        searchResultsList.replaceChildren(fragment);
-        searchResultsStatus.textContent = total > 0
-            ? `${total.toLocaleString()}件中、先頭${results.length}件を表示しています。`
-            : '条件に一致する記事はありませんでした。';
-        searchResultsAll?.setAttribute('href', destinationUrl);
-        searchResultsAll?.toggleAttribute('hidden', total === 0);
-        searchResultsRegion.hidden = false;
-        searchResultsRegion.removeAttribute('aria-busy');
-        searchResultsRegion.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function requestSearchResults(params, destinationUrl) {
-        if (!m3_ajax?.result_search_url || !searchResultsRegion || !searchResultsStatus) {
-            window.location.href = destinationUrl;
-            return;
-        }
-
-        resultRequestController?.abort();
-        resultRequestController = new AbortController();
-        const url = new URL(m3_ajax.result_search_url, window.location.origin);
-        params.forEach((value, key) => url.searchParams.append(key, value));
-
-        searchResultsRegion.hidden = false;
-        searchResultsRegion.setAttribute('aria-busy', 'true');
-        searchResultsStatus.textContent = '検索結果を読み込んでいます…';
-        searchResultsList?.replaceChildren();
-        document.getElementById('m3-search-loading')?.classList.add('is-active');
-
-        fetch(url, {
-            headers: { Accept: 'application/json' },
-            signal: resultRequestController.signal
-        })
-            .then(response => {
-                if (!response.ok) throw new Error(`Search failed: ${response.status}`);
-                return response.json();
-            })
-            .then(payload => renderSearchResults(payload, destinationUrl))
-            .catch(error => {
-                if (error.name !== 'AbortError') window.location.href = destinationUrl;
-            })
-            .finally(() => document.getElementById('m3-search-loading')?.classList.remove('is-active'));
-    }
-
     // --- Apply Search ---
     modalApply?.addEventListener('click', () => {
+        document.getElementById('m3-search-loading')?.classList.add('is-active');
         const params = new URLSearchParams();
         params.append('s', searchInput.value.trim());
 
@@ -650,7 +359,6 @@ export function initSearchBar() {
         const saveToggle = document.getElementById('m3-save-search-settings');
 
         modal.querySelectorAll('input, select').forEach(input => {
-            if (!input.name) return;
             if ((input.type === 'checkbox' || input.type === 'radio')) {
                 if (input.checked) {
                     params.append(input.name, input.value);
@@ -677,8 +385,7 @@ export function initSearchBar() {
             storage.remove('m3-saved-search');
         }
 
-        const destinationUrl = `${m3_ajax.home_url}?${params.toString()}`;
-        requestSearchResults(params, destinationUrl);
+        setTimeout(() => { window.location.href = `${m3_ajax.home_url}?${params.toString()}`; }, 600);
     });
 
     // --- Reset ---
@@ -696,16 +403,6 @@ export function initSearchBar() {
         storage.remove('m3-saved-search');
         const saveToggle = document.getElementById('m3-save-search-settings');
         if (saveToggle) saveToggle.checked = false;
-
-        closeTagSuggestions();
-
-        resultRequestController?.abort();
-        searchResultsList?.replaceChildren();
-        if (searchResultsStatus) searchResultsStatus.textContent = '';
-        if (searchResultsRegion) {
-            searchResultsRegion.hidden = true;
-            searchResultsRegion.removeAttribute('aria-busy');
-        }
 
         initRangeSlider();
         updateHitCount();

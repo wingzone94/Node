@@ -24,7 +24,7 @@ class Node_Advanced_Search_Test extends WP_UnitTestCase {
 	}
 
 	public function test_supported_filters_share_one_args_schema(): void {
-		$args = \LuminousCore\Engine\get_advanced_search_args(
+		$args = node_get_advanced_search_args(
 			array(
 				's'             => 'Node',
 				'm3_cat'        => '12',
@@ -56,7 +56,7 @@ class Node_Advanced_Search_Test extends WP_UnitTestCase {
 		);
 
 		foreach ( $expected as $sort => $contract ) {
-			$args = \LuminousCore\Engine\get_advanced_search_args( array( 'm3_sort' => $sort ) );
+			$args = node_get_advanced_search_args( array( 'm3_sort' => $sort ) );
 			$this->assertSame( $contract[0], $args['orderby'], $sort );
 			$this->assertSame( $contract[1], $args['order'], $sort );
 			$this->assertSame( $contract[2], $args['meta_key'] ?? null, $sort );
@@ -76,10 +76,10 @@ class Node_Advanced_Search_Test extends WP_UnitTestCase {
 		$_GET  = array( 'm3_cat' => '999999' );
 		$_POST = array( 'action' => 'node_get_search_count', 'm3_cat' => (string) $category_id );
 
-		$params = wp_unslash( $_POST );
+		$params = node_get_search_count_request_params();
 
 		$this->assertSame( (string) $category_id, $params['m3_cat'] );
-		$this->assertSame( 1, \LuminousCore\Engine\get_search_count_for_params( $params ) );
+		$this->assertSame( 1, node_get_search_count_for_params( $params ) );
 	}
 
 	public function test_main_search_count_matches_ajax_count_when_pages_match_keyword(): void {
@@ -104,7 +104,7 @@ class Node_Advanced_Search_Test extends WP_UnitTestCase {
 		$this->assertTrue( $main_query->is_search() );
 		$this->assertSame( 1, (int) $main_query->found_posts, 'メイン検索は記事のみを返すこと' );
 		$this->assertSame(
-			\LuminousCore\Engine\get_search_count_for_params( array( 's' => 'ゲート検証キーワード' ) ),
+			node_get_search_count_for_params( array( 's' => 'ゲート検証キーワード' ) ),
 			(int) $main_query->found_posts,
 			'モーダル件数とメイン検索の件数が一致すること'
 		);
@@ -127,7 +127,7 @@ class Node_Advanced_Search_Test extends WP_UnitTestCase {
 		$_GET = array( 'm3_media_type' => array( 'youtube' ) );
 		$args = array( 'm3_media_type' => array( 'image' ) );
 
-		$this->assertSame( 1, \LuminousCore\Engine\get_search_count_for_params( $args ) );
+		$this->assertSame( 1, node_get_search_count_for_params( $args ) );
 	}
 
 	public function test_multiple_media_types_match_any_selected_type(): void {
@@ -152,12 +152,12 @@ class Node_Advanced_Search_Test extends WP_UnitTestCase {
 
 		$this->assertSame(
 			2,
-			\LuminousCore\Engine\get_search_count_for_params( array( 'm3_media_type' => array( 'image', 'video' ) ) )
+			node_get_search_count_for_params( array( 'm3_media_type' => array( 'image', 'video' ) ) )
 		);
 	}
 
 	public function test_unknown_media_type_is_ignored(): void {
-		$args = \LuminousCore\Engine\get_advanced_search_args( array( 'm3_media_type' => array( 'invalid' ) ) );
+		$args = node_get_advanced_search_args( array( 'm3_media_type' => array( 'invalid' ) ) );
 
 		$this->assertArrayNotHasKey( 'node_media_types', $args );
 	}

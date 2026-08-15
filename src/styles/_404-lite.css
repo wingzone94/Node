@@ -96,18 +96,9 @@
 
 .m3-404-lite__links {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
   margin-top: 32px;
-}
-
-.m3-404-lite__links .m3-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
 }
 
 @media (max-width: 600px) {
@@ -127,14 +118,6 @@
     width: 44px;
     height: 44px;
     font-size: 20px;
-  }
-
-  .m3-404-lite__links {
-    width: 100%;
-  }
-
-  .m3-404-lite__links .m3-button {
-    flex: 1 1 150px;
   }
 
   .m3-404-lite__links .m3-button.m3-button--filled {

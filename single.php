@@ -1,8 +1,4 @@
-<?php
-declare(strict_types=1);
-
-get_header();
-?>
+<?php get_header(); ?>
 
 <main id="primary" class="site-main article-view m3-reveal m3-page-enter">
     <?php 
@@ -15,7 +11,6 @@ get_header();
     ?>
 
         <article id="post-<?php the_ID(); ?>" <?php post_class('m3-article'); ?> data-m3-multipage="<?php echo esc_attr( $current_multipage ); ?>">
-<?php node_print_the_header(); ?>
 <?php get_template_part('template-parts/single/hero'); ?>
             
             
@@ -41,9 +36,9 @@ get_header();
                 <!-- 記事内目次コンテナ (JSでここに目次が挿入されます) -->
                 <div id="m3-inline-toc" class="m3-inline-toc" style="display: none;">
                     <div class="m3-inline-toc__header">
-                        <span class="material-symbols-outlined" aria-hidden="true">toc</span> 目次
+                        <span class="material-symbols-outlined">toc</span> 目次
                     </div>
-                    <nav id="m3-inline-toc-content" class="m3-inline-toc__content" aria-label="記事内目次"></nav>
+                    <nav id="m3-inline-toc-content" class="m3-inline-toc__content"></nav>
                 </div>
 
                 <?php the_content(); ?>
@@ -69,9 +64,9 @@ get_header();
                 <div class="m3-article__pagination-container m3-reveal">
                     <div class="m3-article__pagination-main-row">
                         <div class="m3-article__pagination-row">
-                                <nav class="m3-article-pagination m3-pagination--split" aria-label="記事のページ">
+                                <nav class="m3-article-pagination m3-pagination--split">
                                     <span class="m3-pagination__label">
-                                        <span class="material-symbols-outlined m3-pagination__label-icon" aria-hidden="true">auto_stories</span>
+                                        <span class="material-symbols-outlined m3-pagination__label-icon">auto_stories</span>
                                         PAGES
                                     </span>
                                     <div class="m3-pagination__controls">
@@ -83,7 +78,7 @@ get_header();
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>
-                                            <span class="material-symbols-outlined m3-select-chevron" aria-hidden="true">expand_more</span>
+                                            <span class="material-symbols-outlined m3-select-chevron">expand_more</span>
                                         </div>
                                         <div class="m3-pagination__numbers">
                                             <?php
@@ -103,7 +98,7 @@ get_header();
                                             $last_rendered_page = 0;
 
                                             if ( $current_multipage > 1 ) {
-                                                echo '<a href="' . esc_url( $first_url ) . '" class="m3-pagination__number m3-pagination__number--icon" aria-label="最初のページへ"><span class="material-symbols-outlined" aria-hidden="true">first_page</span></a>';
+                                                echo '<a href="' . esc_url( $first_url ) . '" class="m3-pagination__number m3-pagination__number--icon" aria-label="最初のページへ"><span class="material-symbols-outlined">first_page</span></a>';
                                             } else {
                                                 echo '<span class="m3-pagination__number m3-pagination__number--icon is-disabled" aria-hidden="true"><span class="material-symbols-outlined">first_page</span></span>';
                                             }
@@ -136,7 +131,7 @@ get_header();
                                             $last_url = $get_multipage_url( $numpages );
 
                                             if ( $current_multipage < $numpages ) {
-                                                echo '<a href="' . esc_url( $last_url ) . '" class="m3-pagination__number m3-pagination__number--icon" aria-label="最後のページへ"><span class="material-symbols-outlined" aria-hidden="true">last_page</span></a>';
+                                                echo '<a href="' . esc_url( $last_url ) . '" class="m3-pagination__number m3-pagination__number--icon" aria-label="最後のページへ"><span class="material-symbols-outlined">last_page</span></a>';
                                             } else {
                                                 echo '<span class="m3-pagination__number m3-pagination__number--icon is-disabled" aria-hidden="true"><span class="material-symbols-outlined">last_page</span></span>';
                                             }
@@ -149,19 +144,16 @@ get_header();
                 </div>
             <?php endif; ?>
             <?php get_template_part('template-parts/single/footer'); ?>
-            <?php node_print_the_footer(); ?>
-
+            
         </article>
 
         <?php get_template_part('template-parts/single/related'); ?>
 
-        <?php if (comments_open() || get_comments_number()) : ?>
-        <section id="comments-section" class="m3-comments-section m3-reveal" aria-label="コメント">
-            <?php
+        <section id="comments-section" class="m3-comments-section m3-reveal">
+            <?php if (comments_open() || get_comments_number()) :
                 comments_template();
-            ?>
+            endif; ?>
         </section>
-        <?php endif; ?>
 
         <?php get_template_part('template-parts/single/toc'); ?>
 

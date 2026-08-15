@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * メンテナンスモード。
  *
@@ -21,9 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 const NODE_MAINTENANCE_OPTION_ENABLED = 'node_maintenance_enabled';
 const NODE_MAINTENANCE_OPTION_MESSAGE = 'node_maintenance_message';
 const NODE_MAINTENANCE_OPTION_STARTED = 'node_maintenance_started_at';
-const NODE_MAINTENANCE_OPTION_START   = 'node_maintenance_scheduled_start';
 const NODE_MAINTENANCE_OPTION_ETA     = 'node_maintenance_eta';
-const NODE_MAINTENANCE_REDIRECT_URL   = 'https://luminous-core.net/';
 const NODE_MAINTENANCE_DEFAULT_MESSAGE = 'ただいまサイトのメンテナンスを行っています。ご不便をおかけしますが、しばらくお待ちください。';
 
 /**
@@ -73,37 +69,11 @@ function node_maintenance_get_started_at(): ?int {
 }
 
 /**
- * メンテナンス開始予定時刻のUNIXタイムスタンプ。未設定なら null。
- */
-function node_maintenance_get_scheduled_start(): ?int {
-	$raw = trim( (string) get_option( NODE_MAINTENANCE_OPTION_START, '' ) );
-
-	if ( '' === $raw ) {
-		return null;
-	}
-
-	try {
-		$start = new DateTimeImmutable( $raw, wp_timezone() );
-	} catch ( Exception $e ) {
-		return null;
-	}
-
-	return $start->getTimestamp();
-}
-
-/**
- * 進捗表示に使う開始時刻。予定時刻があれば優先する。
- */
-function node_maintenance_get_effective_start(): ?int {
-	return node_maintenance_get_scheduled_start() ?? node_maintenance_get_started_at();
-}
-
-/**
  * 復旧予定までの進捗（0〜100）。開始時刻か復旧予定が無い場合、
  * および予定時刻を過ぎている場合は null（＝ゲージを出さない）。
  */
 function node_maintenance_get_progress(): ?int {
-	$started = node_maintenance_get_effective_start();
+	$started = node_maintenance_get_started_at();
 	$eta     = node_maintenance_get_eta();
 	$now     = time();
 
@@ -132,11 +102,6 @@ function node_maintenance_register_settings(): void {
 	);
 	register_setting(
 		'node_settings_group',
-		NODE_MAINTENANCE_OPTION_START,
-		[ 'sanitize_callback' => 'node_maintenance_sanitize_start' ]
-	);
-	register_setting(
-		'node_settings_group',
 		NODE_MAINTENANCE_OPTION_ETA,
 		[ 'sanitize_callback' => 'node_maintenance_sanitize_eta' ]
 	);
@@ -158,15 +123,6 @@ function node_maintenance_sanitize_eta( $value ): string {
 	$parsed = DateTimeImmutable::createFromFormat( 'Y-m-d\TH:i', $value, wp_timezone() );
 
 	return ( false !== $parsed && $parsed->format( 'Y-m-d\TH:i' ) === $value ) ? $value : '';
-}
-
-/**
- * 開始予定時刻の検証。
- *
- * @param mixed $value
- */
-function node_maintenance_sanitize_start( $value ): string {
-	return node_maintenance_sanitize_eta( $value );
 }
 
 /**
@@ -262,22 +218,6 @@ add_action(
  */
 function node_maintenance_should_display(): bool {
 	if ( ! node_maintenance_is_enabled() ) {
-		return false;
-	}
-
-	$eta = node_maintenance_get_eta();
-
-	// 復旧予定時刻に達したら自動解除し、次の表示を通常サイトに戻す。
-	if ( null !== $eta && time() >= $eta ) {
-		update_option( NODE_MAINTENANCE_OPTION_ENABLED, '' );
-
-		return false;
-	}
-
-	$scheduled_start = node_maintenance_get_scheduled_start();
-
-	// 有効化済みでも、開始予定時刻までは通常サイトを表示する。
-	if ( null !== $scheduled_start && time() < $scheduled_start ) {
 		return false;
 	}
 

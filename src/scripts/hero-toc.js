@@ -116,7 +116,6 @@ export function initHeroTOC() {
             readingBadge.removeAttribute('role');
             readingBadge.removeAttribute('tabindex');
             readingBadge.removeAttribute('aria-expanded');
-            readingBadge.removeAttribute('aria-controls');
             readingBadge.removeAttribute('aria-label');
         };
 
@@ -126,7 +125,6 @@ export function initHeroTOC() {
                 readingBadge.setAttribute('role', 'button');
                 readingBadge.setAttribute('tabindex', '0');
                 readingBadge.setAttribute('aria-expanded', String(readingBadge.classList.contains('is-badge-open')));
-                readingBadge.setAttribute('aria-controls', 'm3-reading-badge-desc');
                 readingBadge.setAttribute('aria-label', '読了時間・文字数を表示');
                 scheduleAutoOpen();
             } else {
@@ -138,7 +136,6 @@ export function initHeroTOC() {
                 readingBadge.removeAttribute('role');
                 readingBadge.removeAttribute('tabindex');
                 readingBadge.removeAttribute('aria-expanded');
-                readingBadge.removeAttribute('aria-controls');
             }
         };
 

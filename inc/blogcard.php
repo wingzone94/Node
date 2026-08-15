@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Node テーマ組み込みブログカード
  *
@@ -400,8 +398,7 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 	$is_internal = ! empty( $ogp['is_internal'] );
 	$modifier    = $is_internal ? 'm3-blogcard--internal' : 'm3-blogcard--external';
 	if ( ! empty( $ogp['store'] ) ) {
-		// ゲームストアの商品ページは、カード面をプラットフォーム色のトーナルコンテナにする
-		// （構造・余白は標準カードのまま。配色は CSS 側の m3-blogcard--store-* が担当）。
+		// ゲームストアの商品ページは、プラットフォーム色のアクセントとストア名バッジを付ける。
 		$modifier .= ' m3-blogcard--store m3-blogcard--store-' . sanitize_html_class( (string) $ogp['store'] );
 	}
 	if ( ! empty( $ogp['is_brand'] ) ) {
@@ -453,6 +450,9 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 								<img src="<?php echo esc_url( $ogp['favicon'] ); ?>" class="m3-blogcard__favicon" alt="" loading="lazy" decoding="async" width="16" height="16">
 							<?php endif; ?>
 							<span class="m3-blogcard__sitename"><?php echo esc_html( $ogp['site_name'] ); ?></span>
+							<?php if ( ! empty( $ogp['store'] ) ) : ?>
+								<span class="m3-blogcard__store-badge"><?php esc_html_e( 'ストア', 'node' ); ?></span>
+							<?php endif; ?>
 						</span>
 						<span class="m3-blogcard__actions">
 							<button type="button" class="m3-blogcard__action m3-blogcard__action--copy" data-url="<?php echo esc_url( $url ); ?>" data-share-title="<?php echo esc_attr( $share_title ); ?>" title="<?php esc_attr_e( 'リンクをコピー', 'node' ); ?>" aria-label="<?php esc_attr_e( 'リンクをコピー', 'node' ); ?>">
@@ -479,22 +479,6 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 	$html = (string) preg_replace( '/>\s+</', '><', $html );
 
 	return trim( $html );
-}
-
-/**
- * OGP 取得に失敗した URL のフォールバックを生成する。
- */
-function node_blogcard_fallback_markup( string $url ): string {
-	$url = esc_url_raw( $url );
-	if ( empty( $url ) ) {
-		return '';
-	}
-
-	if ( node_is_internal_url( $url ) ) {
-		return '<span class="m3-blogcard__fallback m3-blogcard__fallback--missing">' . esc_html( $url ) . '</span>';
-	}
-
-	return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 }
 
 /**
@@ -535,7 +519,7 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
 
 	if ( ! $ogp ) {
-		return node_blogcard_fallback_markup( $url );
+		return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 	}
 
 	// Amazon アフィリエイト ID
@@ -568,10 +552,7 @@ function node_blogcard_apply_overrides( $ogp, array $overrides, string $url ) {
 	$description = trim( (string) ( $overrides['description'] ?? '' ) );
 	$image       = trim( (string) ( $overrides['image'] ?? '' ) );
 
-	// サムネイルを出すかどうか（既定は「取得できたら出す」）。
-	$hide_image = array_key_exists( 'show_image', $overrides ) && ! $overrides['show_image'];
-
-	if ( '' === $title && '' === $description && '' === $image && ! $hide_image ) {
+	if ( '' === $title && '' === $description && '' === $image ) {
 		return $ogp;
 	}
 
@@ -605,11 +586,6 @@ function node_blogcard_apply_overrides( $ogp, array $overrides, string $url ) {
 	}
 	if ( '' !== $image ) {
 		$ogp['image'] = esc_url_raw( $image );
-	}
-
-	// 非表示指定は最後に適用する（手動指定の画像より優先）。
-	if ( $hide_image ) {
-		$ogp['image'] = '';
 	}
 
 	return $ogp;
@@ -988,7 +964,6 @@ function node_blogcard_shortcode( $atts ): string {
 			'title'       => '',
 			'description' => '',
 			'image'       => '',
-			'show_image'  => 'true',
 		),
 		$atts,
 		'blogcard'
@@ -1001,8 +976,6 @@ function node_blogcard_shortcode( $atts ): string {
 			'title'       => (string) $atts['title'],
 			'description' => (string) $atts['description'],
 			'image'       => (string) $atts['image'],
-			// `show_image="false"` / `"no"` / `"0"` でサムネイルを消す。
-			'show_image'  => ! in_array( strtolower( trim( (string) $atts['show_image'] ) ), array( 'false', 'no', '0', 'off' ), true ),
 		)
 	);
 }
@@ -1148,165 +1121,7 @@ function node_pre_oembed_internal_result( $result, $url, $args ) {
 	return node_blogcard_defer( $card );
 }
 
-/**
- * ブロックエディタ用: `node/blogcard` ブロックのフロント側レンダリング。
- *
- * @param array<string, mixed> $attributes ブロック属性。
- * @return string
- */
-function node_render_blogcard_block( array $attributes ): string {
-	$url = esc_url_raw( (string) ( $attributes['url'] ?? '' ) );
-	if ( '' === $url ) {
-		return '';
-	}
-
-	return node_render_blogcard(
-		$url,
-		false,
-		array(
-			'title'       => (string) ( $attributes['title'] ?? '' ),
-			'description' => (string) ( $attributes['description'] ?? '' ),
-			'image'       => (string) ( $attributes['image'] ?? '' ),
-			'show_image'  => ! array_key_exists( 'showImage', $attributes ) || (bool) $attributes['showImage'],
-		)
-	);
-}
-
-/**
- * `node/blogcard` ブロックを登録する。
- *
- * エディタ上でカードのプレビューを出すためのブロック。URL 単独行の自動変換
- * （oEmbed 経路）はそのまま残るため、既存記事の書き方は変わらない。
- */
-function node_register_blogcard_block(): void {
-	if ( ! function_exists( 'register_block_type' ) ) {
-		return;
-	}
-
-	register_block_type(
-		'node/blogcard',
-		array(
-			'api_version'     => 2,
-			'attributes'      => array(
-				'url'         => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'title'       => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'description' => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'image'       => array(
-					'type'    => 'string',
-					'default' => '',
-				),
-				'showImage'   => array(
-					'type'    => 'boolean',
-					'default' => true,
-				),
-			),
-			'render_callback' => 'node_render_blogcard_block',
-		)
-	);
-}
-
-/**
- * エディタ用スクリプトを読み込む。
- */
-function node_enqueue_blogcard_editor_assets(): void {
-	$relative = '/assets/js/blogcard-editor.js';
-	$path     = get_template_directory() . $relative;
-
-	if ( ! file_exists( $path ) ) {
-		return;
-	}
-
-	wp_enqueue_script(
-		'node-blogcard-editor',
-		get_template_directory_uri() . $relative,
-		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-data', 'wp-api-fetch', 'wp-i18n', 'wp-hooks' ),
-		(string) filemtime( $path ),
-		true
-	);
-}
-
-/**
- * エディタからカードのプレビュー HTML を取得する REST ルートを登録する。
- */
-function node_register_blogcard_preview_route(): void {
-	register_rest_route(
-		'node/v1',
-		'/blogcard-preview',
-		array(
-			'methods'             => 'GET',
-			'permission_callback' => static function (): bool {
-				return current_user_can( 'edit_posts' );
-			},
-			'callback'            => 'node_blogcard_preview_response',
-			'args'                => array(
-				'url'         => array(
-					'required' => true,
-					'type'     => 'string',
-				),
-				'title'       => array( 'type' => 'string' ),
-				'description' => array( 'type' => 'string' ),
-				'image'       => array( 'type' => 'string' ),
-				'show_image'  => array(
-					'type'    => 'boolean',
-					'default' => true,
-				),
-			),
-		)
-	);
-}
-
-/**
- * カードプレビューのレスポンス。
- *
- * フロントと同じ node_render_blogcard() を通すため、エディタで見えるものが
- * そのまま公開後の表示になる（取得結果のキャッシュも共有する）。
- *
- * @param WP_REST_Request $request REST リクエスト。
- * @return array<string, mixed>|WP_Error
- */
-function node_blogcard_preview_response( WP_REST_Request $request ) {
-	$url = esc_url_raw( (string) $request->get_param( 'url' ) );
-	if ( '' === $url ) {
-		return new WP_Error( 'node_blogcard_bad_url', 'URL が空です', array( 'status' => 400 ) );
-	}
-
-	$html = node_render_blogcard(
-		$url,
-		false,
-		array(
-			'title'       => (string) $request->get_param( 'title' ),
-			'description' => (string) $request->get_param( 'description' ),
-			'image'       => (string) $request->get_param( 'image' ),
-			'show_image'  => (bool) $request->get_param( 'show_image' ),
-		)
-	);
-
-	if ( '' === $html ) {
-		return new WP_Error( 'node_blogcard_no_card', 'カードを生成できませんでした', array( 'status' => 404 ) );
-	}
-
-	$store = node_store_provider( $url );
-
-	return array(
-		'html'      => $html,
-		'store'     => (string) ( $store['slug'] ?? '' ),
-		'fallback'  => str_contains( $html, 'm3-blogcard__fallback' ),
-	);
-}
-
 add_shortcode( 'blogcard', 'node_blogcard_shortcode' );
-add_action( 'init', 'node_register_blogcard_block' );
-add_action( 'enqueue_block_editor_assets', 'node_enqueue_blogcard_editor_assets' );
-add_action( 'rest_api_init', 'node_register_blogcard_preview_route' );
 add_action( 'init', 'node_register_map_oembed_provider' );
 add_action( 'rest_api_init', 'node_register_maps_oembed_route' );
 add_filter( 'pre_oembed_result', 'node_pre_oembed_internal_result', 10, 3 );

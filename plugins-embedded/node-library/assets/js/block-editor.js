@@ -131,30 +131,13 @@
         save: function () { return null; }
     });
 
-    // --- ブログカード（旧ブロック・非推奨） ---
-    //
-    // テーマ側の node/blogcard に統合済み。フロントの出力は同じ node_render_blogcard()
-    // なので既存記事の表示は変わらないが、インサーターからは隠して新規挿入をなくす
-    // （同名ブロックが2つ並ぶのを解消するため）。既存ブロックは「ブロックの変換」から
-    // node/blogcard へ移行できる。
+    // --- ブログカード ---
     registerBlockType('node-library/blog-card', {
-        title: 'ブログカード（旧）',
-        description: 'テーマの「ブログカード」ブロックに統合されました。既存の記事はそのまま表示されます。新規挿入には「ブログカード」を使ってください。',
+        title: 'ブログカード',
+        description: 'URL から OGP を取得して記事カードを表示します。',
         icon: 'admin-links',
         category: 'node',
-        keywords: [],
-        supports: { inserter: false, html: false },
-        transforms: {
-            to: [
-                {
-                    type: 'block',
-                    blocks: ['node/blogcard'],
-                    transform: function (attrs) {
-                        return blocks.createBlock('node/blogcard', { url: String(attrs.url || '') });
-                    }
-                }
-            ]
-        },
+        keywords: ['blog', 'card', 'url', 'ogp', 'ブログカード', 'リンク'],
         attributes: { url: { type: 'string', default: '' } },
         edit: function (props) {
             var attributes = props.attributes;
@@ -163,8 +146,8 @@
             return el('div', { className: 'node-library-block-editor' },
                 el(Placeholder, {
                     icon: 'admin-links',
-                    label: 'ブログカード（旧ブロック）',
-                    instructions: 'テーマの「ブログカード」ブロックに統合されました。ツールバーの「ブロックの変換」から新しいブロックへ移行できます（表示は変わりません）。'
+                    label: 'ブログカード',
+                    instructions: '表示したい記事やページの URL を入力してください。'
                 },
                     el(TextControl, {
                         label: '記事 URL',

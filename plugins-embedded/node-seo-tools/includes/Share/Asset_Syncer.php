@@ -3,8 +3,8 @@
  * Resolve and cache OGP base assets.
  *
  * Background/logo: synced from Luminous Core canonical URLs.
- * Font: plugin bundle first, then the theme's verified font asset and cache/CDN.
- *       Never uses the legacy theme ogp-font.ttf (known broken HTML on prod/test).
+ * Font: plugin-bundled DIN 2014 (latin) + Noto Sans JP VF first, then fallback.
+ *       Never uses theme ogp-font.ttf (known broken HTML on prod/test).
  *
  * @package Node_SEO_Tools
  */
@@ -68,9 +68,8 @@ final class Asset_Syncer {
 	 *
 	 * Priority:
 	 * 1. Plugin bundle (works offline, identical on test/prod)
-	 * 2. Theme bundle (keeps the theme ZIP from duplicating the large JP font)
-	 * 3. Uploads cache (previous CDN sync)
-	 * 4. CDN download into cache
+	 * 2. Uploads cache (previous CDN sync)
+	 * 3. CDN download into cache
 	 */
 	public static function resolve_font_paths(): array {
 		$bundled_dir = NODE_SEO_TOOLS_DIR . 'assets/share/fonts/';
@@ -79,13 +78,8 @@ final class Asset_Syncer {
 			wp_mkdir_p( $cache_dir );
 		}
 
-		$font_jp_bundled = $bundled_dir . self::FONT_JP_FILENAME;
-		if ( ! self::is_valid_font( $font_jp_bundled ) ) {
-			$font_jp_bundled = trailingslashit( get_template_directory() ) . 'assets/ttf/' . self::FONT_JP_FILENAME;
-		}
-
 		$font_jp = self::resolve_single_font(
-			$font_jp_bundled,
+			$bundled_dir . self::FONT_JP_FILENAME,
 			$cache_dir . '/' . self::FONT_JP_FILENAME,
 			self::FONT_JP_CDN_URL
 		);

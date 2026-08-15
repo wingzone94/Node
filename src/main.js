@@ -4,8 +4,8 @@ import './scripts/share-actions';
 import './scripts/blogcard-actions';
 import { initSearchBar } from './scripts/search-bar';
 import { initArticleNavigation } from './scripts/article-navigation';
-import { initHeroInfoBubble, initSectionArchiveLinks } from './scripts/home-layout';
-import { initHeadlineCarousel } from './scripts/headline-carousel';
+import { initHeroInfoBubble, initLatestGridExpansion, initSectionArchiveLinks } from './scripts/home-layout';
+import { initKeyboardSnackbar } from './scripts/keyboard-snackbar';
 import { initExpressiveFloatingTOC } from './scripts/expressive-toc';
 import { initHeroTOC } from './scripts/hero-toc';
 import { initFloatingActions } from './scripts/floating-actions';
@@ -14,7 +14,6 @@ import { initScrollAnimations } from './scripts/scroll-animations';
 import { initSmartHeader } from './scripts/smart-header';
 import { initKeyboardShortcuts, initOverdriveScroll, initRippleEffect, initTooltips } from './scripts/ui-effects';
 import { initViewSwitcher } from './scripts/view-switcher';
-import { initTitleAutoFit } from './scripts/title-autofit';
 
 const optionalInitializers = [
     {
@@ -421,6 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initNodeLibraryFilterNavigation,
         initNodeLibraryNintendoWarnings,
         initNodeLibrarySteamEmbedToggles,
+        initKeyboardSnackbar,
         initExpressiveFloatingTOC,
         initHeroTOC,
         initFloatingActions,
@@ -431,12 +431,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         initRippleEffect,
         initReadingProgressSingleOnly,
         initSectionArchiveLinks,
-        initHeadlineCarousel,
+        initLatestGridExpansion,
         initArticleNavigation,
         initHeroInfoBubble,
         initScrollAnimations,
         initCategoryOverflowToggle,
-        initTitleAutoFit,
     ];
 
     initializers.forEach(init => {

@@ -165,46 +165,6 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'oEmbed Title', $html );
 	}
 
-	public function test_internal_ogp_failure_renders_non_clickable_fallback(): void {
-		$url    = home_url( '/missing-internal-blogcard/' );
-		$filter = static function ( $preempt, $args, $request_url ) use ( $url ) {
-			if ( $request_url !== $url ) {
-				return $preempt;
-			}
-
-			return array(
-				'headers'  => array(),
-				'body'     => '',
-				'response' => array(
-					'code'    => 404,
-					'message' => 'Not Found',
-				),
-				'cookies'  => array(),
-				'filename' => null,
-			);
-		};
-		add_filter( 'pre_http_request', $filter, 10, 3 );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$html = node_render_blogcard( $url );
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertStringContainsString( 'm3-blogcard__fallback--missing', $html );
-		$this->assertStringContainsString( esc_html( $url ), $html );
-		$this->assertStringNotContainsString( '<a ', $html );
-		$this->assertStringNotContainsString( 'href=', $html );
-	}
-
-	public function test_external_ogp_failure_keeps_clickable_fallback(): void {
-		$url = 'https://example.com/missing-external-blogcard/';
-
-		$this->assertStringContainsString(
-			'<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">',
-			node_blogcard_fallback_markup( $url )
-		);
-	}
-
 	public function test_oembed_dataparse_builds_external_card_from_data(): void {
 		$html = node_blogcard_hydrate(
 			node_oembed_dataparse(
@@ -478,214 +438,6 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 
 		add_filter( 'pre_http_request', $callback, 10, 3 );
 		return $callback;
-	}
-
-	public function test_blogcard_block_renders_same_card_as_front_end(): void {
-		$url    = 'https://example.org/block-article';
-		$filter = $this->mock_ogp_response( $url, 'Block Card Title' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$html = node_render_blogcard_block( array( 'url' => $url ) );
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertStringContainsString( 'Block Card Title', $html );
-		$this->assertStringContainsString( 'm3-blogcard__overlay', $html );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_blogcard_block_applies_manual_attributes(): void {
-		$url      = 'https://store-jp.nintendo.com/item/software/D70010000000964';
-		$calls    = 0;
-		$callback = $this->mock_blocked_response( $calls );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
-
-		$html = node_render_blogcard_block(
-			array(
-				'url'   => $url,
-				'title' => 'Minecraft',
-				'image' => 'https://example.com/mc.jpg',
-			)
-		);
-
-		remove_filter( 'pre_http_request', $callback, 10 );
-
-		$this->assertStringContainsString( 'Minecraft', $html );
-		$this->assertStringContainsString( 'mc.jpg', $html );
-		$this->assertStringContainsString( 'm3-blogcard--store-nintendo', $html );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-		delete_transient( 'node_nintendo_soft_' . md5( 'D70010000000964' ) );
-	}
-
-	public function test_legacy_node_library_block_renders_identically(): void {
-		// 旧ブロック（node-library/blog-card）は node/blogcard へ統合したが、
-		// 既存記事のために登録・レンダリングは残す。両者の出力が一致すること。
-		if ( ! class_exists( 'Node_Library' ) ) {
-			$this->markTestSkipped( 'node-library が読み込まれていない環境' );
-		}
-
-		$url    = 'https://example.org/legacy-block-article';
-		$filter = $this->mock_ogp_response( $url, 'Legacy Block Title' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$new    = node_render_blogcard_block( array( 'url' => $url ) );
-		$legacy = Node_Library::instance()->render_blog_card_block( array( 'url' => $url ) );
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertSame( $new, $legacy );
-		$this->assertStringContainsString( 'Legacy Block Title', $legacy );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_blogcard_block_can_hide_thumbnail(): void {
-		$url    = 'https://example.org/thumb-toggle';
-		$filter = $this->mock_ogp_response( $url, 'Thumb Toggle Title', 'https://example.com/thumb.jpg' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$with_image = node_render_blogcard_block( array( 'url' => $url ) );
-		$no_image   = node_render_blogcard_block(
-			array(
-				'url'       => $url,
-				'showImage' => false,
-			)
-		);
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		// 既定は取得できた画像を表示する。
-		$this->assertStringContainsString( 'm3-blogcard__image', $with_image );
-		$this->assertStringContainsString( 'thumb.jpg', $with_image );
-
-		// showImage=false ではサムネイル枠ごと出さない（題名・説明は残る）。
-		$this->assertStringNotContainsString( 'm3-blogcard__image', $no_image );
-		$this->assertStringNotContainsString( 'thumb.jpg', $no_image );
-		$this->assertStringContainsString( 'Thumb Toggle Title', $no_image );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_hide_thumbnail_wins_over_manual_image(): void {
-		$url    = 'https://example.org/thumb-priority';
-		$filter = $this->mock_ogp_response( $url, 'Priority Title' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$html = node_render_blogcard_block(
-			array(
-				'url'       => $url,
-				'image'     => 'https://example.com/manual.jpg',
-				'showImage' => false,
-			)
-		);
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertStringNotContainsString( 'manual.jpg', $html );
-		$this->assertStringNotContainsString( 'm3-blogcard__image', $html );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_shortcode_show_image_attribute_hides_thumbnail(): void {
-		$url    = 'https://example.org/shortcode-thumb';
-		$filter = $this->mock_ogp_response( $url, 'Shortcode Thumb Title', 'https://example.com/sc.jpg' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$html = do_shortcode( '[blogcard url="' . esc_url( $url ) . '" show_image="false"]' );
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertStringNotContainsString( 'sc.jpg', $html );
-		$this->assertStringContainsString( 'Shortcode Thumb Title', $html );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_blogcard_preview_route_honours_show_image(): void {
-		$url    = 'https://example.org/preview-thumb';
-		$filter = $this->mock_ogp_response( $url, 'Preview Thumb Title', 'https://example.com/pv.jpg' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$request = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
-		$request->set_param( 'url', $url );
-		$request->set_param( 'show_image', false );
-
-		$data = node_blogcard_preview_response( $request );
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertStringNotContainsString( 'pv.jpg', $data['html'] );
-		$this->assertStringContainsString( 'Preview Thumb Title', $data['html'] );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_blogcard_block_is_registered_as_dynamic_block(): void {
-		$registry = WP_Block_Type_Registry::get_instance();
-
-		$this->assertTrue( $registry->is_registered( 'node/blogcard' ) );
-		$this->assertSame( 'node_render_blogcard_block', $registry->get_registered( 'node/blogcard' )->render_callback );
-	}
-
-	public function test_blogcard_preview_route_returns_card_html(): void {
-		$url    = 'https://example.org/preview-article';
-		$filter = $this->mock_ogp_response( $url, 'Preview Card Title' );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$request = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
-		$request->set_param( 'url', $url );
-
-		$data = node_blogcard_preview_response( $request );
-
-		remove_filter( 'pre_http_request', $filter, 10 );
-
-		$this->assertIsArray( $data );
-		$this->assertStringContainsString( 'Preview Card Title', $data['html'] );
-		$this->assertSame( '', $data['store'] );
-		$this->assertFalse( $data['fallback'] );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_blogcard_preview_route_reports_store_and_rejects_empty_url(): void {
-		$url      = 'https://store.steampowered.com/app/570/Dota_2/';
-		$calls    = 0;
-		$callback = $this->mock_blocked_response( $calls );
-		delete_transient( 'node_ogp_' . md5( $url ) );
-
-		$request = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
-		$request->set_param( 'url', $url );
-		$data = node_blogcard_preview_response( $request );
-
-		remove_filter( 'pre_http_request', $callback, 10 );
-
-		$this->assertSame( 'steam', $data['store'] );
-		$this->assertStringContainsString( 'm3-blogcard--store-steam', $data['html'] );
-
-		$empty = new WP_REST_Request( 'GET', '/node/v1/blogcard-preview' );
-		$empty->set_param( 'url', '' );
-		$this->assertInstanceOf( WP_Error::class, node_blogcard_preview_response( $empty ) );
-
-		delete_transient( 'node_ogp_' . md5( $url ) );
-	}
-
-	public function test_blogcard_preview_route_requires_edit_posts_capability(): void {
-		$routes = rest_get_server()->get_routes();
-		$this->assertArrayHasKey( '/node/v1/blogcard-preview', $routes );
-
-		$permission_callback = $routes['/node/v1/blogcard-preview'][0]['permission_callback'];
-
-		wp_set_current_user( 0 );
-		$this->assertFalse( (bool) call_user_func( $permission_callback ) );
-
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
-		$this->assertTrue( (bool) call_user_func( $permission_callback ) );
-
-		wp_set_current_user( 0 );
 	}
 
 	public function test_nintendo_title_id_is_extracted_from_store_urls(): void {
@@ -979,7 +731,7 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 	}
 
 	public function test_failed_fetch_is_negatively_cached(): void {
-		$url      = 'https://store-jp.nintendo.com/item/software/D70010000099999';
+		$url      = 'https://store.steampowered.com/app/999999/Blocked_Game/';
 		$calls    = 0;
 		$callback = $this->mock_blocked_response( $calls );
 		delete_transient( 'node_ogp_' . md5( $url ) );
@@ -990,9 +742,8 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 
 		remove_filter( 'pre_http_request', $callback, 10 );
 
-		// 商品ページ OGP と任天堂検索を初回に各1回試す。双方の失敗をキャッシュするため、
-		// 2回目以降のレンダーでは外部 HTTP が増えない。
-		$this->assertSame( 2, $calls );
+		// 失敗レスポンスをキャッシュしないと、レンダーのたびに外部 HTTP が走り表示が遅延する。
+		$this->assertSame( 1, $calls );
 
 		delete_transient( 'node_ogp_' . md5( $url ) );
 	}

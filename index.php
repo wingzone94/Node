@@ -1,17 +1,14 @@
-<?php
-declare(strict_types=1);
-
-get_header();
-?>
+<?php get_header(); ?>
 <main id="primary" class="site-main m3-home-layout">
     <?php node_the_breadcrumbs(); ?>
 
     <?php
     if ((is_home() || is_front_page()) && !is_paged()) {
+        $news_cat = get_term_by('name', 'ニュース', 'category');
         $spotlight_cats = function_exists('node_get_spotlight_categories') ? node_get_spotlight_categories() : [];
 
         if (!empty($spotlight_cats)) : ?>
-            <section id="spotlight" class="special-features m3-surface m3-section-spacing" aria-labelledby="spotlight-title">
+            <section class="special-features m3-surface m3-section-spacing" aria-labelledby="spotlight-title">
                 <div class="m3-headlines__header" style="margin-bottom: 24px; padding: 0;">
                     <h2 id="spotlight-title" class="m3-section-title m3-headlines__title" style="margin-bottom: 0;">
                         <span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span>
@@ -35,48 +32,64 @@ get_header();
             </section>
         <?php endif;
 
-        // HEADLINE（速報）: 横スクロール1段に固定し、LATEST をファーストビューへ引き上げる
-        echo '<span id="headline" class="screen-reader-text" aria-hidden="true"></span>';
-        get_template_part('template-parts/headline-carousel');
+        // HEADLINE
+        $headline_args = [
+            'posts_per_page' => 4,
+            'ignore_sticky_posts' => true,
+        ];
+        if ($news_cat) {
+            $headline_args['cat'] = $news_cat->term_id;
+        }
+        $headline_query = new WP_Query($headline_args);
+        if ($headline_query->have_posts()) : ?>
+            <section class="m3-headlines m3-surface m3-section-spacing" aria-labelledby="headline-title">
+                <div class="m3-headlines__header">
+                    <h2 id="headline-title" class="m3-headlines__title m3-section-title">
+                        <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
+                        HEADLINE <span class="m3-section-title__sub">速報</span>
+                    </h2>
+                    <?php $news_link = node_get_headlines_url(); ?>
+                    <a href="<?php echo esc_url($news_link); ?>" class="m3-headlines__more m3-button m3-button--text">
+                        すべて見る<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </a>
+                </div>
+                <div class="m3-post-grid__container m3-post-grid--list m3-post-grid--2col-list" role="list">
+                    <?php while ($headline_query->have_posts()) : $headline_query->the_post(); ?>
+                        <?php get_template_part('template-parts/card', null, ['card_class' => 'card-standard']); ?>
+                    <?php endwhile; wp_reset_postdata(); ?>
+                </div>
+            </section>
+        <?php endif;
     }
     ?>
 
     <?php if (have_posts()) : ?>
-        <?php
-        $is_first_page       = (is_home() && !is_paged());
-        $featured_card_limit = 4;
-        // ホームの LATEST は6件で表示を打ち切り、残りは「すべて見る」へ集約する。
-        $latest_limit        = 6;
-        ?>
-        <section<?php echo $is_first_page ? ' id="latest"' : ''; ?> class="l-card-grid m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
+        <?php $is_first_page = (is_home() && !is_paged()); ?>
+        <section class="m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
             <?php if ($is_first_page) : ?>
                 <div class="m3-surface m3-surface--latest m3-section-spacing">
                     <h2 id="latest-title" class="m3-section-title"><span class="material-symbols-outlined" aria-hidden="true">bolt</span> LATEST <span class="m3-section-title__sub">最新記事</span></h2>
-                    <div class="l-card-grid__items l-card-grid__items--featured m3-post-grid__container m3-post-grid__container--featured">
+                    <div class="m3-post-grid__container m3-post-grid__container--featured">
             <?php else : ?>
                 <div class="m3-surface m3-surface--articles m3-section-spacing">
                     
-                    <div class="l-card-grid__items m3-post-grid__container is-articles-grid">
+                    <div class="m3-post-grid__container is-articles-grid">
             <?php endif; ?>
 
             <?php
+            $switched = false;
             while (have_posts()) : the_post();
-                if ($is_first_page && $wp_query->current_post >= $latest_limit) {
-                    break;
+                if ($is_first_page && $wp_query->current_post === 4 && !$switched) {
+                    echo '</div></div>'; // close featured container & surface
+                    echo '<div class="m3-divider-wrapper"><hr class="m3-divider m3-divider--expressive" aria-hidden="true"></div>';
+                    echo '<div class="m3-surface m3-surface--articles m3-section-spacing"><div class="m3-post-grid__container is-articles-grid">';
+                    $switched = true;
                 }
-                $card_class = ($is_first_page && $wp_query->current_post < $featured_card_limit) ? 'card-featured' : 'card-standard';
+                $card_class = ($is_first_page && $wp_query->current_post < 4) ? 'card-featured' : 'card-standard';
                 get_template_part('template-parts/card', null, ['card_class' => $card_class]);
             endwhile;
             ?>
-            <?php if ($is_first_page) : ?>
                 </div>
-                <a class="m3-latest-see-all m3-button m3-button--text" href="<?php echo esc_url(node_get_all_articles_url()); ?>">
-                    <span class="m3-latest-see-all__text">すべて見る</span>
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                </a>
-            <?php else : ?>
-                </div>
-            <?php endif; ?>
             </div>
             <?php if (get_next_posts_link()) : ?>
                 <div class="m3-archive-pill-wrapper m3-section-spacing">

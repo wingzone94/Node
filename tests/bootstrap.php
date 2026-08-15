@@ -15,9 +15,6 @@ tests_add_filter(
 	'muplugins_loaded',
 	function () {
 		$theme_dir = dirname( __DIR__ );
-		if ( ! function_exists( 'LuminousCore\\Engine\\get_article_metrics' ) ) {
-			require_once $theme_dir . '/plugins-embedded/luminous-core-engine/luminous-core-engine.php';
-		}
 
 		add_filter( 'template_directory', static fn() => $theme_dir );
 		add_filter( 'stylesheet_directory', static fn() => $theme_dir );

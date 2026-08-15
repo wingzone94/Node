@@ -1,6 +1,4 @@
 <?php
-
-declare(strict_types=1);
 /**
  * Archive page hero header (Material 3 Expressive).
  *
