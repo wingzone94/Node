@@ -5,10 +5,12 @@ const root = process.cwd();
 const includedExtensions = new Set(['.css', '.js', '.php']);
 const excludedDirs = new Set([
   '.cursor',
+  '.claude',
   '.git',
   'assets',
   'node_modules',
   'scratch',
+  'vendor',
 ]);
 
 const m3FabPattern = /(^|[^A-Za-z0-9_-])(m3-fab)(?=[^A-Za-z0-9_-]|$)/g;

@@ -846,30 +846,43 @@ function node_fix_footer_menu_placeholder_urls( $items, $args ) {
         return $items;
     }
 
-    foreach ( $items as $item ) {
+    $privacy_url = function_exists( 'node_get_existing_page_url' ) ? node_get_existing_page_url( '/privacy-policy/' ) : '';
+    $contact_url = function_exists( 'node_get_existing_page_url' ) ? node_get_existing_page_url( '/contact/' ) : '';
+
+    foreach ( $items as $item_index => $item ) {
         if ( ! isset( $item->url ) ) {
             continue;
         }
 
         $item_title = isset( $item->title ) ? wp_strip_all_tags( (string) $item->title ) : '';
+        $is_privacy_placeholder = false !== strpos( $item->url, '/sample-page/' )
+            || false !== strpos( $item->url, '/sample-page-2/' );
+        $is_contact_placeholder = false !== strpos( $item->url, '/post-0-2/' )
+            || false !== strpos( $item->url, '/%e3%81%8a%e5%95%8f%e3%81%84%e5%90%88%e3%82%8f%e3%81%9b/' );
 
-        if ( false !== strpos( $item->url, '/sample-page/' )
-            || false !== strpos( $item->url, '/sample-page-2/' )
+        if ( $is_privacy_placeholder
             || false !== strpos( $item_title, 'プライバシーポリシー' )
         ) {
-            $item->url = home_url( '/privacy-policy/' );
+            if ( '' !== $privacy_url ) {
+                $item->url = $privacy_url;
+            } elseif ( $is_privacy_placeholder ) {
+                unset( $items[ $item_index ] );
+            }
             continue;
         }
 
-        if ( false !== strpos( $item->url, '/post-0-2/' )
-            || false !== strpos( $item->url, '/%e3%81%8a%e5%95%8f%e3%81%84%e5%90%88%e3%82%8f%e3%81%9b/' )
+        if ( $is_contact_placeholder
             || false !== strpos( $item_title, 'お問い合わせ' )
         ) {
-            $item->url = home_url( '/contact/' );
+            if ( '' !== $contact_url ) {
+                $item->url = $contact_url;
+            } elseif ( $is_contact_placeholder ) {
+                unset( $items[ $item_index ] );
+            }
         }
     }
 
-    return $items;
+    return array_values( $items );
 }
 add_filter( 'wp_nav_menu_objects', 'node_fix_footer_menu_placeholder_urls', 10, 2 );
 

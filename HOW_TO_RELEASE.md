@@ -95,6 +95,7 @@ rsync -a \
   --exclude='.agents/' \
   --exclude='scratch/' \
   --exclude='production_plugins/' \
+  --exclude='luna-frontier/' \
   --exclude='src/' \
   --exclude='vendor/' \
   --exclude='tests/' \

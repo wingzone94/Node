@@ -286,6 +286,132 @@ declare(strict_types=1);
     </div>
 </header>
 
+<nav class="m3-mobile-section-nav" aria-label="ホームの主要セクション">
+    <div class="m3-mobile-section-nav__inner">
+        <details class="m3-mobile-section-nav__menu">
+            <summary class="m3-mobile-section-nav__trigger">
+                <span class="material-symbols-outlined m3-mobile-section-nav__current-icon" aria-hidden="true">campaign</span>
+                <span class="m3-mobile-section-nav__current-label">HEADLINE</span>
+                <span class="material-symbols-outlined m3-mobile-section-nav__arrow" aria-hidden="true">expand_more</span>
+            </summary>
+            <ul class="m3-mobile-section-nav__list">
+                <li>
+                    <a href="<?php echo esc_url( home_url( '/#headline' ) ); ?>" data-node-section="headline" data-node-section-icon="campaign">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">campaign</span>
+                        <span class="m3-mobile-section-nav__item-label">HEADLINE</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo esc_url( home_url( '/#spotlight' ) ); ?>" data-node-section="spotlight" data-node-section-icon="local_fire_department">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">local_fire_department</span>
+                        <span class="m3-mobile-section-nav__item-label">SPOTLIGHT</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo esc_url( home_url( '/#latest' ) ); ?>" data-node-section="latest" data-node-section-icon="bolt">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">bolt</span>
+                        <span class="m3-mobile-section-nav__item-label">LATEST</span>
+                    </a>
+                </li>
+            </ul>
+        </details>
+        <button type="button" class="m3-mobile-section-nav__dismiss" aria-label="セクションナビゲーションを閉じる">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+    </div>
+</nav>
+
+<script>
+(() => {
+    const initMobileSectionNav = () => {
+        const nav = document.querySelector('.m3-mobile-section-nav');
+        if (!nav) return;
+
+        const menu = nav.querySelector('.m3-mobile-section-nav__menu');
+        const rail = nav.querySelector('.m3-mobile-section-nav__inner') || nav;
+        const currentIcon = nav.querySelector('.m3-mobile-section-nav__current-icon');
+        const currentLabel = nav.querySelector('.m3-mobile-section-nav__current-label');
+        const dismissButton = nav.querySelector('.m3-mobile-section-nav__dismiss');
+        const links = [...nav.querySelectorAll('[data-node-section]')];
+        if (!menu || !currentIcon || !currentLabel || !links.length) return;
+
+        dismissButton?.addEventListener('click', () => {
+            menu.removeAttribute('open');
+            nav.hidden = true;
+        });
+
+        const setCurrent = (link) => {
+            if (!link) return;
+            currentIcon.textContent = link.dataset.nodeSectionIcon || 'label';
+            currentLabel.textContent = link.querySelector('.m3-mobile-section-nav__item-label')?.textContent || '';
+            links.forEach((item) => {
+                item.classList.toggle('is-current', item === link);
+                if (item === link) item.setAttribute('aria-current', 'location');
+                else item.removeAttribute('aria-current');
+            });
+        };
+
+        const currentPath = location.pathname.replace(/\/+$/, '') || '/';
+        const samePageSections = links.map((link) => {
+            const url = new URL(link.href, location.href);
+            const path = url.pathname.replace(/\/+$/, '') || '/';
+            if (path !== currentPath || !url.hash) return null;
+
+            const anchor = document.querySelector(url.hash);
+            if (!anchor) return null;
+            const section = anchor.matches('section') ? anchor : anchor.nextElementSibling;
+            return section ? { link, anchor, section } : null;
+        }).filter(Boolean);
+
+        const pathMatch = links.find((link) => {
+            const url = new URL(link.href, location.href);
+            return !url.hash && (url.pathname.replace(/\/+$/, '') || '/') === currentPath;
+        });
+        setCurrent(pathMatch || samePageSections[0]?.link || links[0]);
+
+        let frame = 0;
+        const updateCurrentSection = () => {
+            frame = 0;
+            if (!samePageSections.length) return;
+
+            const anchorOffset = Math.max(...samePageSections.map((candidate) => (
+                parseFloat(getComputedStyle(candidate.anchor).scrollMarginTop) || 0
+            )));
+            const marker = Math.max(rail.getBoundingClientRect().bottom + 16, anchorOffset + 1);
+            const positionedSections = samePageSections.map((candidate) => ({
+                ...candidate,
+                top: candidate.anchor.getBoundingClientRect().top,
+            }));
+            const passedSections = positionedSections.filter((candidate) => candidate.top <= marker);
+            const active = (passedSections.length ? passedSections : positionedSections).reduce((closest, candidate) => {
+                if (passedSections.length) return candidate.top > closest.top ? candidate : closest;
+                return candidate.top < closest.top ? candidate : closest;
+            });
+            setCurrent(active.link);
+        };
+
+        const scheduleUpdate = () => {
+            if (!frame) frame = requestAnimationFrame(updateCurrentSection);
+        };
+
+        links.forEach((link) => link.addEventListener('click', () => {
+            setCurrent(link);
+            menu.removeAttribute('open');
+        }));
+
+        addEventListener('scroll', scheduleUpdate, { passive: true });
+        addEventListener('resize', scheduleUpdate, { passive: true });
+        scheduleUpdate();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobileSectionNav, { once: true });
+    } else {
+        initMobileSectionNav();
+    }
+})();
+</script>
+
 <!-- 3. Portal Components (Fixed/Overlay Elements) -->
 
 <!-- Advanced Search Modal (Material 3 Expressive) -->
