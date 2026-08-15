@@ -482,6 +482,22 @@ function node_blogcard_markup( array $ogp, string $url ): string {
 }
 
 /**
+ * OGP 取得に失敗した URL のフォールバックを生成する。
+ */
+function node_blogcard_fallback_markup( string $url ): string {
+	$url = esc_url_raw( $url );
+	if ( empty( $url ) ) {
+		return '';
+	}
+
+	if ( node_is_internal_url( $url ) ) {
+		return '<span class="m3-blogcard__fallback m3-blogcard__fallback--missing">' . esc_html( $url ) . '</span>';
+	}
+
+	return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
+}
+
+/**
  * ブログカード HTML を生成する。
  *
  * @param string                $url           リンク先 URL。
@@ -519,7 +535,7 @@ function node_render_blogcard( string $url, bool $brand_override = false, array 
 	$ogp = node_blogcard_apply_overrides( $ogp, $overrides, $url );
 
 	if ( ! $ogp ) {
-		return '<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
+		return node_blogcard_fallback_markup( $url );
 	}
 
 	// Amazon アフィリエイト ID

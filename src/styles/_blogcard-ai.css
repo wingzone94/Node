@@ -265,6 +265,11 @@
     text-underline-offset: 3px;
 }
 
+.m3-blogcard__fallback--missing {
+    color: var(--md-sys-color-on-surface-variant);
+    text-decoration: none;
+}
+
 /* ---- Brand card (Luminous Core): pre-composed 1200x630 banner on #FF9900.
    Widen the slot and `contain` the whole banner so the wordmark isn't cropped. ---- */
 .m3-blogcard--brand .m3-blogcard__image {
@@ -435,4 +440,3 @@
     display: block;
     overflow: hidden;
 }
-

@@ -52,6 +52,10 @@ class Node_404_Template_Test extends WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'role="search"', $html );
 		$this->assertStringContainsString( esc_url( home_url( '/' ) ), $html );
+		$this->assertStringContainsString( esc_url( node_get_all_articles_url() ), $html );
+		$this->assertStringContainsString( esc_url( node_get_headlines_url() ), $html );
+		$this->assertStringContainsString( '記事一覧', $html );
+		$this->assertStringContainsString( 'ニュース', $html );
 		$this->assertStringContainsString( 'ページが見つかりませんでした', $html );
 	}
 

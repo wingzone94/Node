@@ -8,6 +8,27 @@ declare(strict_types=1);
  */
 
 get_header();
+
+$node_404_links = array(
+	array(
+		'url'   => home_url( '/' ),
+		'icon'  => 'home',
+		'label' => 'ホームに戻る',
+		'class' => 'm3-button--filled',
+	),
+	array(
+		'url'   => node_get_all_articles_url(),
+		'icon'  => 'article',
+		'label' => '記事一覧',
+		'class' => 'm3-button--text',
+	),
+	array(
+		'url'   => node_get_headlines_url(),
+		'icon'  => 'newspaper',
+		'label' => 'ニュース',
+		'class' => 'm3-button--text',
+	),
+);
 ?>
 <main id="primary" class="site-main m3-home-layout">
 	<?php node_the_breadcrumbs(); ?>
@@ -27,10 +48,12 @@ get_header();
 		</div>
 
 		<nav class="m3-404-lite__links" aria-label="主要ページ">
-			<a class="m3-button m3-button--filled" href="<?php echo esc_url( home_url( '/' ) ); ?>">
-				<span class="material-symbols-outlined" aria-hidden="true">home</span>
-				ホームに戻る
-			</a>
+			<?php foreach ( $node_404_links as $node_404_link ) : ?>
+				<a class="m3-button <?php echo esc_attr( $node_404_link['class'] ); ?>" href="<?php echo esc_url( $node_404_link['url'] ); ?>">
+					<span class="material-symbols-outlined" aria-hidden="true"><?php echo esc_html( $node_404_link['icon'] ); ?></span>
+					<?php echo esc_html( $node_404_link['label'] ); ?>
+				</a>
+			<?php endforeach; ?>
 		</nav>
 	</section>
 </main>

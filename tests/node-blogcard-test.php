@@ -165,6 +165,46 @@ class Node_Blogcard_Test extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'oEmbed Title', $html );
 	}
 
+	public function test_internal_ogp_failure_renders_non_clickable_fallback(): void {
+		$url    = home_url( '/missing-internal-blogcard/' );
+		$filter = static function ( $preempt, $args, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(),
+				'body'     => '',
+				'response' => array(
+					'code'    => 404,
+					'message' => 'Not Found',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+		add_filter( 'pre_http_request', $filter, 10, 3 );
+		delete_transient( 'node_ogp_' . md5( $url ) );
+
+		$html = node_render_blogcard( $url );
+
+		remove_filter( 'pre_http_request', $filter, 10 );
+
+		$this->assertStringContainsString( 'm3-blogcard__fallback--missing', $html );
+		$this->assertStringContainsString( esc_html( $url ), $html );
+		$this->assertStringNotContainsString( '<a ', $html );
+		$this->assertStringNotContainsString( 'href=', $html );
+	}
+
+	public function test_external_ogp_failure_keeps_clickable_fallback(): void {
+		$url = 'https://example.com/missing-external-blogcard/';
+
+		$this->assertStringContainsString(
+			'<a class="m3-blogcard__fallback" href="' . esc_url( $url ) . '">',
+			node_blogcard_fallback_markup( $url )
+		);
+	}
+
 	public function test_oembed_dataparse_builds_external_card_from_data(): void {
 		$html = node_blogcard_hydrate(
 			node_oembed_dataparse(

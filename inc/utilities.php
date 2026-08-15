@@ -871,12 +871,36 @@ function node_get_build_info() {
 }
 
 /**
+ * 公開済み固定ページが存在する場合だけ、その正本URLを返す。
+ */
+function node_get_existing_page_url( string $path ): string {
+    $slug = trim( $path, '/' );
+    if ( '' === $slug ) {
+        return '';
+    }
+
+    $page = get_page_by_path( $slug, OBJECT, 'page' );
+    if ( ! $page instanceof WP_Post || 'publish' !== get_post_status( $page ) ) {
+        return '';
+    }
+
+    return home_url( '/' . $slug . '/' );
+}
+
+/**
  * フッターメニューのフォールバック
  */
 function node_footer_menu_fallback() {
+    $privacy_url = node_get_existing_page_url( '/privacy-policy/' );
+    $contact_url = node_get_existing_page_url( '/contact/' );
+
     echo '<ul class="m3-footer__links">';
     echo '<li><a href="' . esc_url( home_url( '/' ) ) . '">ホーム</a></li>';
-    echo '<li><a href="' . esc_url( home_url( '/privacy-policy/' ) ) . '">プライバシーポリシー</a></li>';
-    echo '<li><a href="' . esc_url( home_url( '/contact/' ) ) . '">お問い合わせ</a></li>';
+    if ( '' !== $privacy_url ) {
+        echo '<li><a href="' . esc_url( $privacy_url ) . '">プライバシーポリシー</a></li>';
+    }
+    if ( '' !== $contact_url ) {
+        echo '<li><a href="' . esc_url( $contact_url ) . '">お問い合わせ</a></li>';
+    }
     echo '</ul>';
 }
