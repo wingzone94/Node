@@ -75,6 +75,8 @@ printf '{\n    "build_id": "%s",\n    "built_at": "%s",\n    "version": "%s"\n}\
 ### 4-b. ZIP生成
 プロジェクトルートディレクトリから、必要なファイルのみを含めたZIPファイルを作成します。以下のコマンドで `node.zip` を出力します。
 
+**`src/` を丸ごと除外しないこと。** `src/Setup` `src/Hooks` `src/Controllers` に テーマ本体の PHP クラス（`NodeTheme\` 名前空間）が置かれ、`functions.php` のオートローダーがこれを読む。除外すると有効化時に `Class "NodeTheme\Setup\ThemeSupport" not found` で全面ダウンする（1.3.0 で実際に発生。コミット済みだった zip にも当該 PHP が入っていなかった）。除外してよいのは Vite のソース（`src/styles` `src/scripts` `src/fonts` `src/*.js`）のみ。
+
 配布ZIPに開発用の成果物（`vendor/`・`tests/`・`.claude/` 等）を混入させないこと。1.2 のリリース準備時、除外リストがこれらの追加に追いついておらず、ZIPが 8.3MB → 46MB に膨張していました。生成後は必ず**サイズ**（目安 10MB 未満）と `zipinfo -1 node.zip | awk -F/ 'NF>2{print $2}' | sort -u` の**トップレベル構成**を確認してください。
 
 ```bash
@@ -96,7 +98,10 @@ rsync -a \
   --exclude='scratch/' \
   --exclude='production_plugins/' \
   --exclude='luna-frontier/' \
-  --exclude='src/' \
+  --exclude='src/styles/' \
+  --exclude='src/scripts/' \
+  --exclude='src/fonts/' \
+  --exclude='src/*.js' \
   --exclude='vendor/' \
   --exclude='tests/' \
   --exclude='test-results/' \
