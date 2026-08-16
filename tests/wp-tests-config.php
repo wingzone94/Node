@@ -2,22 +2,35 @@
 /**
  * WPテストスイート用のDB設定。
  *
- * このプロジェクトはLocalWP（cybernode.local）を開発用WP環境として使っているため、
- * テスト用DBもLocalWPが起動するMySQLソケットに対して作成する想定。
+ * 既定は開発用の LocalWP（cybernode.local）が起動する MySQL ソケット。
  * ソケットパスは環境変数 NODE_TEST_DB_SOCKET で上書きできる。
+ *
+ * CI（GitHub Actions）のようにサービスコンテナへ TCP で接続する環境では
+ * NODE_TEST_DB_HOST に `127.0.0.1:3306` 形式を渡す。こちらが指定された場合は
+ * ソケット探索を行わない。Linux では DB_HOST が `localhost` だと mysqli が
+ * UNIX ソケットへ接続しにいき、サービスコンテナに繋がらないため。
  */
 
-$node_test_db_socket = getenv( 'NODE_TEST_DB_SOCKET' );
+$node_test_db_host   = getenv( 'NODE_TEST_DB_HOST' );
+$node_test_db_socket = '';
 
-if ( ! $node_test_db_socket ) {
-	$matches = glob( getenv( 'HOME' ) . '/Library/Application Support/Local/run/*/mysql/mysqld.sock' );
-	$node_test_db_socket = $matches[0] ?? '';
+if ( ! $node_test_db_host ) {
+	$node_test_db_socket = getenv( 'NODE_TEST_DB_SOCKET' );
+
+	if ( ! $node_test_db_socket ) {
+		$matches             = glob( getenv( 'HOME' ) . '/Library/Application Support/Local/run/*/mysql/mysqld.sock' );
+		$node_test_db_socket = $matches[0] ?? '';
+	}
 }
 
 define( 'DB_NAME', getenv( 'NODE_TEST_DB_NAME' ) ?: 'wordpress_test' );
 define( 'DB_USER', getenv( 'NODE_TEST_DB_USER' ) ?: 'root' );
 define( 'DB_PASSWORD', getenv( 'NODE_TEST_DB_PASSWORD' ) ?: 'root' );
-define( 'DB_HOST', $node_test_db_socket ? ( 'localhost:' . $node_test_db_socket ) : 'localhost' );
+if ( $node_test_db_host ) {
+	define( 'DB_HOST', $node_test_db_host );
+} else {
+	define( 'DB_HOST', $node_test_db_socket ? ( 'localhost:' . $node_test_db_socket ) : 'localhost' );
+}
 define( 'DB_CHARSET', 'utf8mb4' );
 define( 'DB_COLLATE', '' );
 
