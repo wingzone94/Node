@@ -1,0 +1,122 @@
+name: Tests
+
+# 配布 ZIP の中身検証（Node_Release_Package_Test）を含む PHPUnit を CI で回す。
+# ローカルでは LocalWP の MySQL ソケットに繋ぐが、CI ではサービスコンテナへ
+# TCP 接続するため NODE_TEST_DB_HOST を渡す（tests/wp-tests-config.php 参照）。
+
+on:
+  push:
+    branches:
+      - master
+      - 'release/**'
+      - 'luna-frontier-**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # zip は Node_Release_Package_Test が node.zip を開くのに必要。
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, zip, mbstring, dom, libxml, json
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      # wp-phpunit（テストスイート）と WordPress 本体は別物なので、コアを別途取得する。
+      # バージョンがずれるとテストスイートがコアの内部変更に追随できないため、
+      # composer.lock の wp-phpunit のバージョン系列に合わせる。
+      - name: Resolve WordPress core version
+        id: wp
+        run: |
+          series="$(php -r '
+            $lock = json_decode(file_get_contents("composer.lock"), true);
+            $packages = array_merge($lock["packages"] ?? [], $lock["packages-dev"] ?? []);
+            foreach ($packages as $p) {
+              if ("wp-phpunit/wp-phpunit" === $p["name"]) {
+                $parts = explode(".", ltrim($p["version"], "v"));
+                echo $parts[0] . "." . ($parts[1] ?? "0");
+                exit;
+              }
+            }
+          ')"
+          if [ -z "$series" ]; then
+            echo "wp-phpunit のバージョンを composer.lock から解決できませんでした"
+            exit 1
+          fi
+          echo "series=$series" >> "$GITHUB_OUTPUT"
+          echo "WordPress core series: $series"
+
+      - name: Download WordPress core
+        run: |
+          series="${{ steps.wp.outputs.series }}"
+          url="https://wordpress.org/wordpress-${series}.tar.gz"
+
+          if ! curl -fsSL -o /tmp/wp.tar.gz "$url"; then
+            echo "$url を取得できないため latest へフォールバックします"
+            curl -fsSL -o /tmp/wp.tar.gz "https://wordpress.org/latest.tar.gz"
+          fi
+
+          mkdir -p /tmp/wp-core
+          tar xzf /tmp/wp.tar.gz -C /tmp/wp-core --strip-components=1
+          test -f /tmp/wp-core/wp-settings.php
+          php -r 'require "/tmp/wp-core/wp-includes/version.php"; echo "WordPress " . $wp_version . PHP_EOL;'
+
+      - name: Wait for MySQL
+        run: |
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -proot --silent; then
+              echo "MySQL ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "MySQL が起動しませんでした"
+          exit 1
+
+      - name: Run PHPUnit
+        env:
+          NODE_TEST_DB_HOST: 127.0.0.1:3306
+          NODE_TEST_DB_NAME: wordpress_test
+          NODE_TEST_DB_USER: root
+          NODE_TEST_DB_PASSWORD: root
+          NODE_TEST_WP_CORE_DIR: /tmp/wp-core
+        run: vendor/bin/phpunit
