@@ -3,7 +3,7 @@
  * Plugin Name:  Node Library
  * Plugin URI:   https://github.com/wingzone94/Node
  * Description:  ゲーム・アプリ情報の管理と表示。カスタム投稿タイプによるリスト管理と、記事への紐付け機能を提供。
- * Version:      1.3.6
+ * Version:      1.3.11
  * Author:       Luminous Core Teams
  * License:      MIT
  * Text Domain:  node-library
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'NODE_LIBRARY_VERSION', '1.3.6' );
+define( 'NODE_LIBRARY_VERSION', '1.3.11' );
 define( 'NODE_LIBRARY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NODE_LIBRARY_BADGE_BASE_URL', 'https://luminous-core.net/wp-content/themes/Node/plugins-embedded/node-library/assets/images/' );
 
@@ -255,49 +255,6 @@ final class Node_Library {
 				],
 			],
 		] );
-	}
-
-	/**
-	 * ブログカードのエディタ用プレビューHTML。
-	 *
-	 * 公開後とまったく同じテーマ側レンダラーを通すため、エディタとフロントで
-	 * 見た目がずれない。取得に失敗する URL でも URL 由来のカードが返るので、
-	 * 404 ではなく 200 と `fallback: true` を返し、著者へ題名の手入力を促す。
-	 */
-	public function handle_blog_card_preview( $request ) {
-		$url = esc_url_raw( (string) $request->get_param( 'url' ) );
-		if ( '' === $url ) {
-			return new WP_Error( 'node_library_blog_card_bad_url', 'URL が空です', [ 'status' => 400 ] );
-		}
-
-		$overrides = [
-			'title'       => sanitize_text_field( (string) $request->get_param( 'title' ) ),
-			'description' => sanitize_text_field( (string) $request->get_param( 'description' ) ),
-			'image'       => esc_url_raw( (string) $request->get_param( 'image' ) ),
-		];
-		$ogp       = function_exists( 'node_get_ogp_data' ) ? node_get_ogp_data( $url ) : false;
-		$html      = $this->render_blog_card_block(
-			array_merge( [ 'url' => $url ], array_filter( $overrides ) )
-		);
-		if ( '' === $html ) {
-			return new WP_Error( 'node_library_blog_card_no_card', 'カードを生成できませんでした', [ 'status' => 404 ] );
-		}
-
-		// URL から組み立てたカード（m3-blogcard--fallback）も「取得できていない」印として返す。
-		$is_fallback = str_contains( $html, 'm3-blogcard--fallback' ) || str_contains( $html, 'm3-blogcard__fallback' );
-
-		$title = '' !== $overrides['title'] ? $overrides['title'] : ( is_array( $ogp ) ? (string) ( $ogp['title'] ?? '' ) : '' );
-		if ( '' === $title && $is_fallback && function_exists( 'node_blogcard_title_from_url' ) ) {
-			$title = node_blogcard_title_from_url( $url );
-		}
-
-		return rest_ensure_response(
-			[
-				'html'     => $html,
-				'title'    => $title,
-				'fallback' => $is_fallback,
-			]
-		);
 	}
 
 	/**
@@ -563,6 +520,49 @@ final class Node_Library {
 	}
 
 	/**
+	 * ブログカードのエディタ用プレビューHTML。
+	 */
+	public function handle_blog_card_preview( $request ) {
+		$url = esc_url_raw( (string) $request->get_param( 'url' ) );
+		if ( '' === $url ) {
+			return new WP_Error( 'node_library_blog_card_bad_url', 'URL が空です', [ 'status' => 400 ] );
+		}
+
+		$overrides = [
+			'title'       => sanitize_text_field( (string) $request->get_param( 'title' ) ),
+			'description' => sanitize_text_field( (string) $request->get_param( 'description' ) ),
+			'image'       => esc_url_raw( (string) $request->get_param( 'image' ) ),
+		];
+		$ogp       = function_exists( 'node_get_ogp_data' ) ? node_get_ogp_data( $url ) : false;
+		$html      = $this->render_blog_card_block(
+			array_merge(
+				[ 'url' => $url ],
+				array_filter( $overrides )
+			)
+		);
+		if ( '' === $html ) {
+			return new WP_Error( 'node_library_blog_card_no_card', 'カードを生成できませんでした', [ 'status' => 404 ] );
+		}
+
+		// URL から組み立てたカード（m3-blogcard--fallback）も「取得できていない」印として返す。
+		// エディタ側はこれを見て、著者に題名の手入力を促す。
+		$is_fallback = str_contains( $html, 'm3-blogcard--fallback' ) || str_contains( $html, 'm3-blogcard__fallback' );
+
+		$title = '' !== $overrides['title'] ? $overrides['title'] : ( is_array( $ogp ) ? (string) ( $ogp['title'] ?? '' ) : '' );
+		if ( '' === $title && $is_fallback && function_exists( 'node_blogcard_title_from_url' ) ) {
+			$title = node_blogcard_title_from_url( $url );
+		}
+
+		return rest_ensure_response(
+			[
+				'html'     => $html,
+				'title'    => $title,
+				'fallback' => $is_fallback,
+			]
+		);
+	}
+
+	/**
 	 * Gutenberg ブロックの登録
 	 */
 	public function register_gutenberg_block(): void {
@@ -734,7 +734,9 @@ final class Node_Library {
 			}
 		}
 
-		return '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
+		return function_exists( 'node_blogcard_plain_link' )
+			? node_blogcard_plain_link( $url )
+			: '<a href="' . esc_url( $url ) . '">' . esc_html( $url ) . '</a>';
 	}
 
 	/**

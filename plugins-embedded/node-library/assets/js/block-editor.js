@@ -305,8 +305,9 @@
         title: 'ブログカード',
         description: 'URL から OGP を取得して記事カードを表示します。',
         icon: 'admin-links',
-        category: 'node',
+        category: 'embed',
         keywords: ['blog', 'card', 'url', 'ogp', 'ブログカード', 'リンク'],
+        supports: { inserter: true, html: false },
         attributes: {
             url: { type: 'string', default: '' },
             title: { type: 'string', default: '' },

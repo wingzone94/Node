@@ -286,11 +286,6 @@
     text-underline-offset: 3px;
 }
 
-.m3-blogcard__fallback--missing {
-    color: var(--md-sys-color-on-surface-variant);
-    text-decoration: none;
-}
-
 /* ---- Brand card (Luminous Core): pre-composed 1200x630 banner on #FF9900.
    Widen the slot and `contain` the whole banner so the wordmark isn't cropped. ---- */
 .m3-blogcard--brand .m3-blogcard__image {
@@ -300,6 +295,56 @@
 
 .m3-blogcard--brand .m3-blogcard__image img {
     object-fit: contain;
+}
+
+/* ---- Store card (Nintendo / PlayStation / Xbox / Steam) ----
+   Platform accent on the left edge + a "ストア" badge next to the site name.
+   Colors come from the shared brand tokens in _variables.css — no new palette. */
+.m3-blogcard--store {
+    border-left: 3px solid var(--m3-store-accent, var(--md-sys-color-primary));
+}
+
+.m3-blogcard--store-nintendo   { --m3-store-accent: var(--brand-nintendo); }
+.m3-blogcard--store-playstation { --m3-store-accent: var(--brand-sony); }
+.m3-blogcard--store-xbox       { --m3-store-accent: var(--brand-xbox); }
+.m3-blogcard--store-steam      { --m3-store-accent: var(--brand-windows); }
+
+.m3-blogcard--store:hover {
+    border-color: color-mix(in srgb, var(--m3-store-accent) 45%, var(--md-sys-color-outline-variant));
+    border-left-color: var(--m3-store-accent);
+}
+
+.m3-blogcard--store .m3-blogcard__sitename {
+    color: var(--m3-store-accent);
+}
+
+.m3-blogcard__store-badge {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    border-radius: var(--m3-radius-small);
+    background: color-mix(in srgb, var(--m3-store-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--m3-store-accent) 32%, transparent);
+    color: var(--m3-store-accent);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .m3-blogcard__store-badge {
+    background: color-mix(in srgb, var(--m3-store-accent) 20%, transparent);
+    border-color: color-mix(in srgb, var(--m3-store-accent) 45%, transparent);
+    color: color-mix(in srgb, var(--m3-store-accent) 75%, #fff);
+}
+
+[data-theme="dark"] .m3-blogcard--store .m3-blogcard__sitename {
+    color: color-mix(in srgb, var(--m3-store-accent) 75%, #fff);
+}
+
+/* Store pages often have no OGP image; keep the text block full-width there. */
+.m3-blogcard--store .m3-blogcard__text {
+    padding-left: var(--m3-spacing-xs);
 }
 
 /* ---- Responsive: stack on narrow screens ---- */
@@ -428,3 +473,4 @@
     display: block;
     overflow: hidden;
 }
+

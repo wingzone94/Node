@@ -88,6 +88,7 @@ require_once NODE_THEME_DIR . '/inc/indexing.php';
 require_once NODE_THEME_DIR . '/inc/scheduler.php';
 require_once NODE_THEME_DIR . '/inc/ogp-generator.php';
 require_once NODE_THEME_DIR . '/inc/toc-engine.php';
+require_once NODE_THEME_DIR . '/inc/blogcard-store.php';
 require_once NODE_THEME_DIR . '/inc/blogcard.php';
 require_once NODE_THEME_DIR . '/inc/maintenance.php';
 require_once NODE_THEME_DIR . '/inc/print.php';
