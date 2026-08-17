@@ -274,7 +274,7 @@
     padding: 6px 14px;
     border-radius: 12px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     text-decoration: none;
     line-height: 1.2;
     border: none !important;
@@ -321,7 +321,7 @@
     padding: 6px 16px;
     border-radius: 100px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.02em;
     display: inline-flex;
     align-items: center;
@@ -378,7 +378,7 @@
     padding: 6px 12px;
     border-radius: 100px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.2;
     box-shadow: 0 4px 12px color-mix(in srgb, var(--node-series-color, #FF9900) 30%, transparent);
 }
@@ -422,7 +422,7 @@
 :is(.c-card__title, .m3-card__title) {
     margin: 0;
     font-size: var(--node-card-title-size);
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.35;
     color: var(--md-sys-color-on-surface);
 }
@@ -545,7 +545,7 @@
 
 .m3-no-posts__title {
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     margin-bottom: 16px;
     color: var(--md-sys-color-on-surface);
 }

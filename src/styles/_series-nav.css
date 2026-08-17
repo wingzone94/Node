@@ -50,7 +50,7 @@
     min-width: 0;
     gap: 8px;
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface-variant);
     transition: opacity 0.15s var(--m3-motion-easing);
 }
@@ -96,7 +96,7 @@
     background: var(--node-series-color, #FF9900);
     color: #FFFFFF;
     font-size: 0.78rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.5;
 }
 

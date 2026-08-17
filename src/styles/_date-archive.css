@@ -34,7 +34,7 @@
 .m3-date-bar__title {
     margin: 0;
     font-size: 0.95rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: -0.01em;
     color: var(--md-sys-color-on-surface);
     white-space: nowrap;
@@ -219,7 +219,7 @@
 .m3-date-group__title {
     margin: 0;
     font-size: 1.02rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: -0.01em;
     color: var(--md-sys-color-on-surface);
 }

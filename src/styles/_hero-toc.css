@@ -23,8 +23,11 @@
 }
 
 .m3-article__title {
-    font-family: var(--m3-font-expressive, inherit);
-    font-weight: 900;
+    /* 見出し扱いなので _reset.css の h1〜h6 と同じ Manrope に揃える。
+       以前は未定義の --m3-font-expressive を参照していて inherit（= body の Inter）に
+       落ちており、記事タイトルだけ本文書体で出ていた。 */
+    font-family: var(--font-heading);
+    font-weight: 800;
     line-height: 1.25;
     color: var(--md-sys-color-on-surface);
     letter-spacing: -0.02em;
@@ -194,7 +197,7 @@
     align-items: center;
     gap: 6px;
     font-size: 0.78rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.02em;
     color: var(--md-sys-color-on-surface-variant);
 }
@@ -688,7 +691,7 @@
 
     .m3-hero-author__name {
         font-size: 0.92rem;
-        font-weight: 900;
+        font-weight: 700;
         color: var(--md-sys-color-on-surface);
         text-decoration: none;
         overflow-wrap: anywhere;
@@ -711,7 +714,7 @@
         border: 1px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 30%, transparent);
         color: color-mix(in srgb, var(--node-article-accent, #FF9900) 72%, var(--md-sys-color-on-surface));
         font-size: 0.78rem;
-        font-weight: 900;
+        font-weight: 700;
         line-height: 1;
     }
 

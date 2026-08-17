@@ -49,7 +49,7 @@
 
 .m3-footer__title {
     font-size: 0.8rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.1em;
     color: var(--node-footer-foreground);
     opacity: 0.7;
@@ -239,7 +239,7 @@ figure.aligncenter iframe {
 
 .m3-section-title {
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     margin: 32px 0 24px;
     display: flex;
     align-items: center;
@@ -307,7 +307,7 @@ figure.aligncenter iframe {
     gap: 16px;
     flex-wrap: wrap;
     font-size: 2.2rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface);
     margin-bottom: 16px;
 }
@@ -345,7 +345,7 @@ figure.aligncenter iframe {
 
 .m3-empty-title {
     font-size: 1.8rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface);
 }
 
@@ -363,7 +363,7 @@ figure.aligncenter iframe {
 
 .m3-404-number {
     font-size: 120px;
-    font-weight: 900;
+    font-weight: 700;
     opacity: 0.1;
     line-height: 1;
 }

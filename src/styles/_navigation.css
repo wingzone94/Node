@@ -180,7 +180,7 @@
 
 .m3-pager__indicator {
     font-size: 0.9rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface-variant);
     letter-spacing: 0.05em;
     min-width: 48px;
@@ -295,7 +295,7 @@
 .m3-elevated-nav-card__title {
     margin: 0;
     font-size: 1.2rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.3;
     color: #ffffff; /* Always white for readability over background */
     display: -webkit-box;
@@ -311,7 +311,7 @@
 
 .m3-elevated-nav-card__label {
     font-size: 11px;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.1em;
     color: rgba(255, 255, 255, 0.8);
     display: flex;
@@ -377,7 +377,7 @@
 
 .m3-archive-pill-button__text {
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.02em;
 }
 

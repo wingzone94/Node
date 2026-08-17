@@ -114,7 +114,7 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
 }
 
 .m3-sticky-toc__title {
-    font-weight: 900;
+    font-weight: 700;
     font-size: 0.95rem;
     flex-grow: 1;
     color: var(--md-sys-color-on-surface);
@@ -167,7 +167,7 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
     color: var(--md-sys-color-primary);
     padding-left: 4px;
 }
-.m3-toc-item--h1 { font-weight: 900; border-bottom: 1px solid var(--md-sys-color-outline-variant); margin-bottom: 16px; padding-bottom: 8px; font-size: 1.05rem; }
+.m3-toc-item--h1 { font-weight: 700; border-bottom: 1px solid var(--md-sys-color-outline-variant); margin-bottom: 16px; padding-bottom: 8px; font-size: 1.05rem; }
 .m3-toc-item--h2 { padding-left: 0; font-weight: 700; margin-bottom: 8px; }
 .m3-toc-item--h3 { padding-left: 20px; font-size: 0.95rem; opacity: 0.95; position: relative; }
 .m3-toc-item--h4 { padding-left: 36px; font-size: 0.9rem; opacity: 0.85; position: relative; }
@@ -197,7 +197,7 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
 
 .m3-toc-link.is-active {
     color: var(--md-sys-color-primary) !important;
-    font-weight: 900;
+    font-weight: 700;
 }
 
 /* --- Action Stack (Global Right-Side Fix) --- */
@@ -311,7 +311,7 @@ body.is-active-toc .m3-fab:not(#m3-toc-trigger) {
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
