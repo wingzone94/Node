@@ -36,7 +36,7 @@
 .m3-game-card__header h3 {
     margin: 0;
     font-size: 0.85rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.1em;
     color: var(--md-sys-color-on-surface-variant);
     text-transform: uppercase;
@@ -51,7 +51,7 @@
 .m3-game-card__title {
     margin: 0;
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.2;
     color: var(--md-sys-color-on-surface);
 }
@@ -853,13 +853,33 @@
         font-size: 0.7rem;
     }
 
-    .m3-game-card__tab .material-symbols-outlined,
+    /* Google Fonts が配信する .material-symbols-outlined{display:inline-block} は
+       @layer の外から来るので、components レイヤーに置いたこの指定では勝てず
+       アイコンが残っていた。狭いタブではアイコンとラベルが両方入らないため
+       important でレイヤー差を打ち消して確実に隠す。 */
+    .m3-game-card__tab .material-symbols-outlined {
+        display: none !important;
+    }
+
     .m3-game-card__tab-label--full {
         display: none;
     }
 
     .m3-game-card__tab-label--compact {
         display: inline;
+    }
+
+    /* 3等分の固定幅には「スマホ・タブレット」が収まらず、はみ出した分が
+       隣のタブに重なっていた。内容幅にして既存の横スクロール
+       （--overflow と「次へ」ボタン）に載せる。 */
+    .m3-game-card__tabs--overflow .m3-game-card__tab {
+        flex: 0 0 auto;
+    }
+
+    /* 「すべて」表示中はタブが1枚だけ残り幅に余裕があるので、
+       上の important 指定を打ち消してアイコンを戻す。 */
+    .m3-game-card__stores.is-all-view .m3-game-card__tab[data-node-library-tab="all"] .material-symbols-outlined {
+        display: inline-flex !important;
     }
 
     .m3-game-card__stores.is-all-view .m3-game-card__tab[data-node-library-tab="all"] .m3-game-card__tab-label--full {

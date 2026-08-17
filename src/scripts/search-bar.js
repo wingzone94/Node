@@ -123,11 +123,14 @@ export function initSearchBar() {
             if (saveToggle) saveToggle.checked = true;
         }
 
-        if (window.innerWidth > 600) {
-            switchPage(1);
-        }
-
+        // switchPage はタブ下のインジケータ（アクティブタブの背景）も配置する。
+        // 以前はモバイルを除外していたため、開いた直後はインジケータが幅 0 のままで、
+        // アクティブタブの白文字（.is-active の color:#FFF）が背景に溶けて消えていた。
+        // タブは等分幅になり位置計算が合うので、幅に関係なく初期化する。
+        // ただし showModal 直後は offsetWidth が確定しておらず（Safari で実測 105px →
+        // 確定後 111px）インジケータがタブより狭くなるため、他の初期化と同じタイミングまで待つ。
         setTimeout(() => {
+            switchPage(1);
             initRangeSlider();
             updateHitCount();
             updateTabStatus();
@@ -257,6 +260,22 @@ export function initSearchBar() {
     modal.querySelectorAll('.m3-modal__tab').forEach(el => {
         el.addEventListener('click', () => switchPage(parseInt(el.dataset.page)));
     });
+
+    // タブ幅はモーダルを開くときの再レイアウトや画面回転で変わる。開いた直後に一度
+    // 測るだけだと確定前の値（Safari 実測で 105px、確定後 111px）が残りインジケータが
+    // タブより狭くなるので、幅の変化そのものに追従させる。
+    if (typeof ResizeObserver !== 'undefined') {
+        const tabsContainer = document.getElementById('m3-search-tabs');
+        if (tabsContainer) {
+            new ResizeObserver(() => {
+                const indicator = tabsContainer.querySelector('.m3-modal__tab-indicator');
+                const activeTab = tabsContainer.querySelector('.m3-modal__tab.is-active');
+                if (!indicator || !activeTab || !activeTab.offsetWidth) return;
+                indicator.style.width = `${activeTab.offsetWidth}px`;
+                indicator.style.left = `${activeTab.offsetLeft}px`;
+            }).observe(tabsContainer);
+        }
+    }
 
     // --- On-demand Tag Suggestions ---
     const tagInput = document.getElementById('m3-tag-input');
