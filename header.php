@@ -286,6 +286,12 @@ declare(strict_types=1);
     </div>
 </header>
 
+<?php
+// 各リンク先の #headline / #spotlight / #latest は index.php が
+// 「ホームの1ページ目」でしか出力しない。単一記事やアーカイブでは
+// 飛び先が無いうえレールの分だけ本文が押し下がるので、同じ条件で出す。
+if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
+?>
 <nav class="m3-mobile-section-nav" aria-label="ホームの主要セクション">
     <div class="m3-mobile-section-nav__inner">
         <details class="m3-mobile-section-nav__menu">
@@ -411,6 +417,7 @@ declare(strict_types=1);
     }
 })();
 </script>
+<?php endif; ?>
 
 <!-- 3. Portal Components (Fixed/Overlay Elements) -->
 
@@ -430,17 +437,21 @@ declare(strict_types=1);
 
         <div class="m3-modal__tabs" id="m3-search-tabs">
             <div class="m3-modal__tab-indicator"></div>
-            <button type="button" class="m3-modal__tab is-active" data-page="1">
+            <?php // 狭い画面では 3 タブを等分に並べるため、短いラベルへ差し替える（CSS で切替） ?>
+            <button type="button" class="m3-modal__tab is-active" data-page="1" aria-label="絞り込み">
                 <span class="material-symbols-outlined">filter_alt</span>
-                <span>絞り込み</span>
+                <span class="m3-modal__tab-label m3-modal__tab-label--full">絞り込み</span>
+                <span class="m3-modal__tab-label m3-modal__tab-label--compact">条件</span>
             </button>
-            <button type="button" class="m3-modal__tab" data-page="2">
+            <button type="button" class="m3-modal__tab" data-page="2" aria-label="ボリューム">
                 <span class="material-symbols-outlined">schedule</span>
-                <span>ボリューム</span>
+                <span class="m3-modal__tab-label m3-modal__tab-label--full">ボリューム</span>
+                <span class="m3-modal__tab-label m3-modal__tab-label--compact">分量</span>
             </button>
-            <button type="button" class="m3-modal__tab" data-page="3">
+            <button type="button" class="m3-modal__tab" data-page="3" aria-label="プラットフォーム">
                 <span class="material-symbols-outlined">devices</span>
-                <span>プラットフォーム</span>
+                <span class="m3-modal__tab-label m3-modal__tab-label--full">プラットフォーム</span>
+                <span class="m3-modal__tab-label m3-modal__tab-label--compact">機種</span>
             </button>
         </div>
         

@@ -735,7 +735,7 @@
 }
 .m3-modal__title-group { display: flex; align-items: center; gap: 16px; }
 .m3-modal__title-group .material-symbols-outlined { font-size: 32px; color: var(--md-sys-color-primary, #FF9900); transition: color 0.3s ease; }
-.m3-modal__title { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.04em; margin: 0; color: var(--md-sys-color-on-surface, #1a1c1e); line-height: 1.1; }
+.m3-modal__title { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; margin: 0; color: var(--md-sys-color-on-surface, #1a1c1e); line-height: 1.1; }
 
 .m3-modal__tabs { 
     display: flex; padding: 12px 56px; gap: 16px; 
@@ -804,7 +804,7 @@
     background: transparent; 
     color: var(--md-sys-color-on-surface-variant); 
     font-size: 0.9rem; 
-    font-weight: 900; 
+    font-weight: 700; 
     transition: all 0.3s var(--m3-motion-easing); 
     border: none;
     position: relative;
@@ -825,9 +825,13 @@
     pointer-events: none;
     transition: color 0.3s ease;
 }
+/* 短縮ラベルは狭い画面専用。既定（PC）では長いラベルだけを見せる。 */
+.m3-modal__tab-label--compact {
+    display: none;
+}
 @media (max-width: 600px) {
     .m3-modal__tab span:not(.material-symbols-outlined) {
-        display: none; 
+        display: none;
     }
     .m3-modal__tabs {
         display: flex !important; /* Show tabs on mobile too */
@@ -843,13 +847,21 @@
         -webkit-overflow-scrolling: touch;
         gap: 8px;
     }
+    /* 3タブを等分に並べて 1 画面へ収める。
+       以前は flex:0 0 auto で内容幅にしていたため、iPhone 幅（390〜430px）では
+       3つ目が画面外へ出たまま、スクロールバーも非表示で気づけなかった。 */
     .m3-modal__tab {
-        flex: 0 0 auto; /* Prevent shrinking */
-        padding: 8px 16px;
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 8px 10px;
     }
     .m3-modal__tab span:not(.material-symbols-outlined) {
         display: inline-block !important; /* Restore text on mobile */
         font-size: 0.85rem;
+    }
+    /* 長いラベルは等分幅に入らないので、短縮ラベルへ差し替える */
+    .m3-modal__tabs .m3-modal__tab span.m3-modal__tab-label--full {
+        display: none !important;
     }
     .m3-modal__pages-container {
         width: 300% !important; /* Restore horizontal layout */
@@ -986,14 +998,11 @@
         padding-inline: 12px;
     }
 
+    /* 600px 以下で既に等分なので、ここは余白だけ詰める。
+       以前はラベルを全部消してアイコンだけにしていたが、短縮ラベルなら
+       320px でも 3 つ収まるので残す。 */
     .m3-modal__tab {
-        flex: 1 1 0;
-        max-width: 72px;
-        padding-inline: 10px;
-    }
-
-    .m3-modal__tab span:not(.material-symbols-outlined) {
-        display: none !important;
+        padding-inline: 6px;
     }
 
     .m3-search-section {
@@ -1025,7 +1034,7 @@
     align-items: center; 
     gap: 16px; 
     font-size: 1.1rem; 
-    font-weight: 900; 
+    font-weight: 700; 
     color: var(--md-sys-color-primary); 
     margin-bottom: 24px; 
 }
@@ -1072,7 +1081,7 @@
     gap: 12px; 
 }
 .m3-date-range-sep {
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-primary);
 }
 @media (max-width: 600px) {
@@ -1140,7 +1149,7 @@
     padding: 6px 12px !important; 
     border-radius: 8px !important; 
     font-size: 11px !important; 
-    font-weight: 900 !important; 
+    font-weight: 700 !important; 
     white-space: nowrap !important; 
     pointer-events: none !important; 
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -1310,11 +1319,11 @@
 
 .m3-platform-group { display: flex; flex-direction: column; gap: 20px; }
 .m3-platform-group-label { 
-    font-size: 1.2rem; font-weight: 900; color: var(--md-sys-color-on-surface); 
+    font-size: 1.2rem; font-weight: 700; color: var(--md-sys-color-on-surface); 
     letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px;
 }
 .m3-platform-group-label .material-symbols-outlined { color: #FF9900; font-size: 24px; }
-.m3-platform-subgroup-title { font-size: 0.75rem; color: #FF9900; font-weight: 900; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.m3-platform-subgroup-title { font-size: 0.75rem; color: #FF9900; font-weight: 700; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
 .m3-platform-chip { 
     cursor: pointer; position: relative; display: inline-block;
 }
@@ -1351,7 +1360,7 @@
 .m3-char-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
 .m3-char-input-field { display: flex; flex-direction: column; gap: 8px; }
 .m3-char-input-label { font-size: 0.75rem; font-weight: 800; color: var(--md-sys-color-on-surface-variant); margin-left: 8px; }
-.m3-char-input { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 900; background: var(--md-sys-color-surface-container-low) !important; }
+.m3-char-input { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; background: var(--md-sys-color-surface-container-low) !important; }
 .m3-platform-chip:hover span { background: var(--md-sys-color-surface-container-highest); transform: translateY(-2px); }
 
 .m3-button--filled.is-error-shake {
@@ -1486,7 +1495,7 @@
 }
 .m3-search-hits-icon { font-size: 24px !important; color: var(--md-sys-color-primary); }
 .m3-search-hits-text { font-size: 1.1rem; font-weight: 700; color: var(--md-sys-color-on-surface); }
-.m3-search-hits-text strong { font-size: 1.4rem; font-weight: 900; color: var(--md-sys-color-primary); margin-right: 4px; }
+.m3-search-hits-text strong { font-size: 1.4rem; font-weight: 700; color: var(--md-sys-color-primary); margin-right: 4px; }
 /* --- Reading Progress Bar --- */
 .m3-header__progress-container {
     position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; 
@@ -1649,7 +1658,7 @@
 
 .m3-header__greeting {
     color: var(--md-sys-color-primary);
-    font-weight: 900;
+    font-weight: 700;
 }
 
 .m3-header__datetime {
