@@ -1,7 +1,7 @@
 /* --- Special Features Section (Abstract Panels) --- */
 .special-features { padding: 3rem 2rem 1.5rem; background: var(--md-sys-color-surface); margin-top: clamp(24px, 5vh, 40px); }
 .special-features__header { margin-bottom: 2rem; }
-.special-features__title { font-size: 1rem; font-weight: 900; letter-spacing: 0.15em; color: var(--md-sys-color-outline); margin: 0; text-transform: uppercase; }
+.special-features__title { font-size: 1rem; font-weight: 700; letter-spacing: 0.15em; color: var(--md-sys-color-outline); margin: 0; text-transform: uppercase; }
 
 .special-features__pills {
     display: flex;
@@ -77,7 +77,7 @@
 
 .m3-headlines__title {
     font-size: 0.9rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.1em;
     color: var(--md-sys-color-primary);
     margin: 0;
@@ -138,7 +138,7 @@
 
 .m3-headline-card__date {
     font-size: 0.8rem;
-    font-weight: 900;
+    font-weight: 700;
     /* サイト共通の Inter + Noto Sans JP を使う（等幅にしない） */
     font-family: var(--font-main);
     font-variant-numeric: tabular-nums;
@@ -239,7 +239,7 @@
 .m3-spotlight-archive-pills__title {
     margin: 0 0 12px;
     font-size: 0.82rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--md-sys-color-outline);

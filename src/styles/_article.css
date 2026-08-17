@@ -36,7 +36,7 @@
     border: 0;
     border-radius: 999px;
     margin: 10px auto 18px;
-    font-weight: 900;
+    font-weight: 700;
     font-size: 1rem;
     letter-spacing: 0;
     background: var(--reading-expressive-surface);
@@ -294,7 +294,7 @@
 .m3-article__reading-badge-expressive .m3-reading-badge-text--main {
     color: var(--reading-rank-text);
     font-size: clamp(0.82rem, 1.25vw, 0.98rem);
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: -0.01em;
     font-kerning: normal;
     font-feature-settings: "palt" 1, "kern" 1, "pnum" 1;
@@ -305,7 +305,7 @@
 .m3-article__reading-badge-expressive .m3-reading-chars {
     color: var(--reading-rank-text);
     font-size: 0.9em;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: -0.01em;
     font-kerning: normal;
     font-feature-settings: "palt" 1, "kern" 1, "pnum" 1;
@@ -330,7 +330,7 @@
 .m3-article__reading-badge-expressive .m3-badge-label-main {
     color: var(--reading-rank-text);
     font-size: clamp(0.68rem, 1vw, 0.78rem);
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: -0.01em;
     font-kerning: normal;
     font-feature-settings: "palt" 1, "kern" 1, "pnum" 1;
@@ -366,7 +366,7 @@
 .m3-article__reading-badge-expressive .m3-reading-rank-chip__label {
     color: var(--reading-rank-text);
     font-size: clamp(0.66rem, 1vw, 0.76rem);
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: -0.01em;
     font-feature-settings: "palt" 1, "kern" 1, "pnum" 1;
     line-height: 1;
@@ -614,7 +614,7 @@
 
 .m3-ai-summary__title {
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 700;
     margin: 0;
     display: flex;
     align-items: center;
@@ -635,7 +635,7 @@
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
     font-size: 0.72rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.12em;
     line-height: 1;
     text-transform: uppercase;
@@ -662,7 +662,7 @@
     color: var(--md-sys-color-on-surface);
     border: 1.5px solid var(--md-sys-color-outline-variant);
     font-size: 0.85rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1;
     text-decoration: none;
     transition: all 0.3s var(--m3-motion-easing);
@@ -702,7 +702,7 @@
 
 .m3-ai-summary__footer span {
     font-size: 0.7rem;
-    font-weight: 900;
+    font-weight: 700;
     color: #FF9900;
     background: rgba(255, 153, 0, 0.1);
     padding: 4px 12px;
@@ -799,7 +799,7 @@
     padding: 10px 20px;
     border-radius: var(--m3-radius-extra-large);
     font-size: 1.15rem;
-    font-weight: 900;
+    font-weight: 700;
     text-decoration: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
@@ -914,7 +914,7 @@
     border: none !important;
     padding: 6px 20px;
     border-radius: 100px;
-    font-weight: 900;
+    font-weight: 700;
     box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
 }
 
@@ -1021,7 +1021,7 @@
 
 .m3-article__title {
     font-size: clamp(2.2rem, 6vw, 3.8rem);
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.2;
     margin: 0 auto;
     color: #000000;
@@ -1164,7 +1164,7 @@
 .m3-article__body h5,
 .m3-article__body h6 {
     font-family: var(--font-heading);
-    font-weight: 900;
+    font-weight: 800;
     margin: var(--m3-spacing-xxxl) 0 var(--m3-spacing-m);
     /* 動的カラーの primary-container は画像シードによって背景と同化するため、
        記事アクセント直系の色で下線の視認性を常に担保する */
@@ -1313,7 +1313,7 @@
 
 .node-footnotes__title {
     font-size: 1rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.25;
     color: var(--md-sys-color-on-surface);
 }
@@ -1334,7 +1334,7 @@
     background: color-mix(in srgb, var(--node-article-accent, #FF9900) 12%, transparent);
     color: color-mix(in srgb, var(--node-article-accent, #FF9900) 78%, var(--md-sys-color-on-surface) 22%);
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.25;
     text-align: right;
     white-space: nowrap;
@@ -1367,7 +1367,7 @@
     color: var(--md-sys-color-on-surface-variant);
     font: inherit;
     font-size: 0.82rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1;
     white-space: nowrap;
     cursor: pointer;
@@ -1464,7 +1464,7 @@
 
 .node-footnotes .wp-block-footnotes li::marker {
     color: var(--node-article-accent, #FF9900);
-    font-weight: 900;
+    font-weight: 700;
 }
 
 .m3-article__body .wp-block-footnotes a[href*="-link"] {
@@ -1659,7 +1659,7 @@
     margin: -2px 0 12px;
     color: var(--node-article-on-accent, #ffffff);
     font-size: 0.76rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.08em;
 }
 
@@ -1781,7 +1781,7 @@
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.05em;
     color: var(--md-sys-color-on-surface-variant);
     opacity: 0.8;
@@ -1935,7 +1935,7 @@
     border: none !important;
     border-radius: 100px;
     color: #FFFFFF !important;
-    font-weight: 900;
+    font-weight: 700;
     font-size: 0.9rem;
     letter-spacing: 0.03em;
     overflow: hidden;
@@ -2117,7 +2117,7 @@
 
 .m3-pagination-toc__label {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface);
     letter-spacing: 0.1em;
     z-index: 1;
@@ -2187,7 +2187,7 @@
 
 .pswp__counter {
     font-family: var(--font-main) !important;
-    font-weight: 900 !important;
+    font-weight: 700 !important;
     color: var(--md-sys-color-primary) !important;
 }
 
@@ -2257,7 +2257,7 @@
     align-items: center;
     gap: 8px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.1em;
     color: var(--md-sys-color-on-primary-container);
     background: var(--md-sys-color-primary-container);
@@ -2280,7 +2280,7 @@
     min-width: 48px;
     height: 48px;
     border-radius: 50%;
-    font-weight: 900;
+    font-weight: 700;
     font-size: 1rem;
     text-decoration: none;
     background: var(--md-sys-color-surface-container-high);
@@ -2386,7 +2386,7 @@
     justify-content: center;
     width: 24px;
     color: var(--md-sys-color-on-surface-variant);
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.08em;
 }
 
@@ -2451,7 +2451,7 @@
     color: #ffffff;
     border: none;
     border-radius: 24px;
-    font-weight: 900;
+    font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
@@ -2615,7 +2615,7 @@
     align-items: center;
     gap: 8px;
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-on-surface);
     margin-bottom: 16px;
     border-bottom: 2px solid var(--md-sys-color-outline-variant);

@@ -50,7 +50,7 @@
 
 .m3-floating-toc-card__title {
     font-size: 1rem;
-    font-weight: 900;
+    font-weight: 700;
     flex-grow: 1;
 }
 
@@ -81,7 +81,7 @@
     align-items: center;
     gap: 12px;
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 800;
     margin: 0 0 16px 0;
     color: var(--md-sys-color-on-surface-variant);
 }
@@ -113,7 +113,7 @@
 
 .m3-toc-link.is-active {
     color: var(--md-sys-color-primary);
-    font-weight: 900;
+    font-weight: 700;
 }
 
 /* --- Related Posts (2x2 Grid) --- */
@@ -130,7 +130,7 @@
 
 .m3-related-posts__title {
     font-size: 0.8rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--md-sys-color-outline);
     letter-spacing: 0.12em;
     margin-bottom: 24px;

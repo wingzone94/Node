@@ -46,7 +46,7 @@ body.front-page:not(.paged) .m3-surface--latest .m3-post-grid__container--featur
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-weight: 900;
+    font-weight: 700;
 }
 
 .m3-surface--articles.is-empty {

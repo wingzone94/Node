@@ -127,7 +127,7 @@
     padding: 6px 14px;
     border-radius: var(--m3-radius-full);
     font-size: 0.72rem;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--category-color, var(--m3-archive-accent));
@@ -296,7 +296,7 @@
     gap: 8px;
     margin: 0 0 var(--m3-spacing-m);
     font-size: 1.05rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.02em;
     color: var(--md-sys-color-on-surface);
 }

@@ -196,7 +196,7 @@
 .m3-404--fortnite .m3-fortnite-rank {
     font-family: var(--font-heading);
     font-size: 6rem;
-    font-weight: 900;
+    font-weight: 800;
     color: #fff;
     font-style: italic;
     letter-spacing: -2px;
@@ -356,7 +356,7 @@
 
 .m3-expressive-shape {
     font-size: 5rem;
-    font-weight: 900;
+    font-weight: 700;
     opacity: 0.1;
     font-family: var(--m3-font-display);
     transform: rotate(-5deg);

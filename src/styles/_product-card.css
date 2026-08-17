@@ -58,7 +58,7 @@
 .m3-product-card__title {
     margin: 0 0 var(--m3-spacing-s);
     font-size: 1.25rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--md-sys-color-on-surface);
     line-height: 1.4;
 }
@@ -78,7 +78,7 @@
 
 .m3-product-card__price {
     font-size: 1.4rem;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--md-sys-color-primary);
 }
 
