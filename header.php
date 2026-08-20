@@ -133,7 +133,7 @@ declare(strict_types=1);
                         <button type="button" class="m3-icon-button m3-search-mobile-close" id="m3-search-mobile-close" aria-label="検索を閉じる">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
-                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off" enterkeyhint="search">
+                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="m3-search-suggestions">
                         <div class="m3-search-actions-inline">
                             <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="キーワードをクリア"<?php echo get_search_query() ? '' : ' hidden'; ?>>
                                 <span class="material-symbols-outlined" aria-hidden="true">close</span>
@@ -145,6 +145,15 @@ declare(strict_types=1);
                                 <span class="material-symbols-outlined" aria-hidden="true">tune</span>
                             </button>
                         </div>
+                        <?php
+                        /*
+                         * 検索キーワードのサジェスト（Node Library / カテゴリ）の受け皿。
+                         * 中身は src/scripts/search-bar.js が REST（node/v1/search/suggest）から描画する。
+                         * `.m3-search-input-wrapper` の内側に置くのは、検索起動時に position:relative へ
+                         * 切り替わるこの要素が入力欄と同じ幅・同じ左端になるため。
+                         */
+                        ?>
+                        <div id="m3-search-suggestions" class="m3-suggestions-list m3-search-suggestions" role="listbox" aria-label="検索キーワードの候補"></div>
                     </div>
                     <button type="button" class="m3-icon-button m3-search-bar__toggle m3-tooltip-target" id="search-toggle" aria-label="検索" data-tooltip="検索">
                         <span class="material-symbols-outlined">search</span>

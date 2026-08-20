@@ -141,6 +141,7 @@ final class ThemeSupport {
 				'home_url'          => home_url( '/' ),
 				'all_articles_url'  => node_get_all_articles_url(),
 				'tag_search_url'      => rest_url( 'luminous-core-engine/v1/search/tags' ),
+				'search_suggest_url'  => rest_url( 'node/v1/search/suggest' ),
 				'result_search_url'   => rest_url( 'luminous-core-engine/v1/search/results' ),
 				'platform_search_url' => rest_url( 'luminous-core-engine/v1/search/platforms' ),
 			)

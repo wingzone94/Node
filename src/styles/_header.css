@@ -934,6 +934,41 @@
     color: var(--md-sys-color-primary);
 }
 
+/* --- ヘッダー検索のキーワード候補（Node Library / カテゴリ） --- */
+/* 見た目はタグ補完の `.m3-suggestions-list` をそのまま使い、
+   出所（ライブラリ / カテゴリ）だけ右端の小さなラベルで示す。 */
+.m3-search-suggestions {
+    /* 受け皿の .m3-search-input-wrapper が z-index:1001。その内側で確実に前面へ出す。 */
+    z-index: 1002;
+    text-align: left;
+}
+
+.m3-search-suggestion__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.m3-search-suggestion__source {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container-high);
+}
+
+@media (max-width: 600px) {
+    .m3-search-suggestion {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
 /* --- Mobile/Desktop Visibility --- */
 @media (min-width: 601px) {
     .m3-desktop-hidden {

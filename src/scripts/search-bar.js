@@ -32,6 +32,7 @@ export function initSearchBar() {
 
     const submitSearch = () => {
         if (!searchInput.value.trim()) return;
+        closeSuggestions();
         if (typeof searchForm?.requestSubmit === 'function') {
             searchForm.requestSubmit();
             return;
@@ -40,10 +41,141 @@ export function initSearchBar() {
     };
 
     const closeSearch = () => {
+        closeSuggestions();
         searchBar.classList.remove('is-active');
         header?.classList.remove('search-is-active');
         searchInput.blur();
     };
+
+    // --- 検索キーワードのサジェスト（Node Library / カテゴリ） ---
+    // 正式名称をうろ覚えでも目的の記事へ辿り着けるように、入力中の語で
+    // Node Library の項目名とカテゴリ名を引き、そのままキーワードとして流し込む。
+    // 詳細検索モーダルのタグ補完（#m3-tag-input）とは別の入力欄・別のエンドポイント。
+    const suggestionsBox = document.getElementById('m3-search-suggestions');
+    const SUGGEST_MIN_LENGTH = 2;
+    const SUGGEST_DEBOUNCE_MS = 250;
+    let suggestTimer;
+    let suggestController;
+    let activeSuggestion = -1;
+
+    const suggestionOptions = () => Array.from(suggestionsBox?.querySelectorAll('[role="option"]') || []);
+
+    function closeSuggestions() {
+        clearTimeout(suggestTimer);
+        suggestController?.abort();
+        suggestController = undefined;
+        suggestionsBox?.replaceChildren();
+        suggestionsBox?.classList.remove('is-active');
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.removeAttribute('aria-activedescendant');
+        activeSuggestion = -1;
+    }
+
+    const setActiveSuggestion = (index) => {
+        const options = suggestionOptions();
+        if (!options.length) return;
+
+        activeSuggestion = (index + options.length) % options.length;
+        options.forEach((option, optionIndex) => {
+            const isActive = optionIndex === activeSuggestion;
+            option.classList.toggle('is-highlighted', isActive);
+            option.setAttribute('aria-selected', String(isActive));
+        });
+        searchInput.setAttribute('aria-activedescendant', options[activeSuggestion].id);
+        options[activeSuggestion].scrollIntoView({ block: 'nearest' });
+    };
+
+    const applySuggestion = (keyword) => {
+        searchInput.value = keyword;
+        if (typeof window.nodeUpdateSearchClear === 'function') {
+            window.nodeUpdateSearchClear();
+        }
+        submitSearch();
+    };
+
+    const renderSuggestions = (items) => {
+        if (!suggestionsBox) return;
+
+        suggestionsBox.replaceChildren();
+        activeSuggestion = -1;
+        searchInput.removeAttribute('aria-activedescendant');
+
+        if (!items.length) {
+            suggestionsBox.classList.remove('is-active');
+            searchInput.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        items.forEach((item, index) => {
+            const option = document.createElement('button');
+            const icon = document.createElement('span');
+            const label = document.createElement('span');
+            const source = document.createElement('span');
+
+            option.type = 'button';
+            option.id = `m3-search-suggestion-${index}`;
+            option.className = 'm3-suggestion-item m3-search-suggestion';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+
+            icon.className = 'material-symbols-outlined';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = item.icon || 'search';
+
+            label.className = 'm3-search-suggestion__label';
+            label.textContent = item.keyword;
+
+            source.className = 'm3-search-suggestion__source';
+            source.textContent = item.sourceLabel || '';
+
+            option.append(icon, label, source);
+            // mousedown を使うのは、input の blur で候補が閉じる前に確定させるため。
+            option.addEventListener('mousedown', (event) => event.preventDefault());
+            option.addEventListener('click', (event) => {
+                event.stopPropagation();
+                applySuggestion(item.keyword);
+            });
+            suggestionsBox.append(option);
+        });
+
+        suggestionsBox.classList.add('is-active');
+        searchInput.setAttribute('aria-expanded', 'true');
+    };
+
+    const requestSuggestions = () => {
+        const query = searchInput.value.trim();
+
+        if (query.length < SUGGEST_MIN_LENGTH || !m3_ajax?.search_suggest_url) {
+            closeSuggestions();
+            return;
+        }
+
+        suggestController?.abort();
+        suggestController = new AbortController();
+        const url = new URL(m3_ajax.search_suggest_url, window.location.origin);
+        url.searchParams.set('q', query);
+
+        fetch(url, { signal: suggestController.signal, headers: { Accept: 'application/json' } })
+            .then(response => {
+                if (!response.ok) throw new Error(`Search suggest failed: ${response.status}`);
+                return response.json();
+            })
+            .then(items => {
+                if (query === searchInput.value.trim()) renderSuggestions(Array.isArray(items) ? items : []);
+            })
+            .catch(error => {
+                if (error.name !== 'AbortError') closeSuggestions();
+            });
+    };
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(suggestTimer);
+        suggestTimer = setTimeout(requestSuggestions, SUGGEST_DEBOUNCE_MS);
+    });
+    searchInput.addEventListener('blur', () => setTimeout(closeSuggestions, 150));
+    // クリアは header.php のインラインスクリプトが正本で、値を JS で空にするだけなので
+    // input イベントが飛ばない。候補が消えずに残るため、閉じるところだけ拾う（動作は重複しない）。
+    document.getElementById('m3-search-clear')?.addEventListener('click', () => closeSuggestions());
 
     // --- Search Bar Toggle ---
     searchToggle.addEventListener('click', () => {
@@ -62,13 +194,34 @@ export function initSearchBar() {
     document.getElementById('m3-search-mobile-close')?.addEventListener('click', closeSearch);
 
     searchInput.addEventListener('keydown', (e) => {
+        const options = suggestionOptions();
+
+        if (e.key === 'ArrowDown' && options.length) {
+            e.preventDefault();
+            setActiveSuggestion(activeSuggestion + 1);
+            return;
+        }
+        if (e.key === 'ArrowUp' && options.length) {
+            e.preventDefault();
+            setActiveSuggestion(activeSuggestion - 1);
+            return;
+        }
         if (e.key === 'Escape') {
             e.preventDefault();
+            // 候補が開いているときは候補だけ畳む。検索バーごと閉じると入力もやり直しになる。
+            if (options.length) {
+                closeSuggestions();
+                return;
+            }
             closeSearch();
             return;
         }
         if (e.key === 'Enter') {
             e.preventDefault();
+            if (activeSuggestion >= 0) {
+                options[activeSuggestion]?.click();
+                return;
+            }
             submitSearch();
         }
     });
