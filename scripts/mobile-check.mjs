@@ -191,6 +191,13 @@ async function run() {
 			console.log('\n[390x844] 検索キーワードのサジェスト');
 			const toggle = page.locator('#search-toggle');
 			if (await toggle.count()) {
+				// スクリーンショットでページが下へ動いており、ヘッダーが自動で隠れている。
+				// position: fixed なので scrollIntoView では戻せない。先頭へ戻して出し直す。
+				await page.evaluate(() => window.scrollTo(0, 0));
+				await page
+					.locator('.m3-header:not(.is-hidden)')
+					.waitFor({ state: 'attached', timeout: 5000 })
+					.catch(() => {});
 				await toggle.click();
 				await page.fill('#m3-search-input', 'ニュ');
 				await page.waitForTimeout(900); // 250ms デバウンス + REST 往復
@@ -200,7 +207,10 @@ async function run() {
 					const opts = [...box.querySelectorAll('[role="option"]')];
 					const input = document.getElementById('m3-search-input');
 					const br = box.getBoundingClientRect();
-					const ir = input.getBoundingClientRect();
+					// 揃える基準は素の <input> ではなく、見た目の検索欄。
+					// <input> は先頭のアイコンと末尾のクリアボタンのぶん内側に寄っている。
+					const field = input.closest('.m3-search-input-wrapper') || input;
+					const ir = field.getBoundingClientRect();
 					return {
 						exists: true,
 						active: box.classList.contains('is-active'),
@@ -226,7 +236,7 @@ async function run() {
 					check(s.active, 'ドロップダウンが開く', `候補 ${s.count} 件`);
 					check(s.expanded === 'true', 'aria-expanded が true');
 					check(!s.offscreen, 'ドロップダウンが画面外へ出ない');
-					check(s.alignedWithInput, '入力欄と左右が揃っている');
+					check(s.alignedWithInput, '検索欄と左右が揃っている');
 					check(s.minHeight >= MIN_TAP_TARGET, `候補のタップ領域が ${MIN_TAP_TARGET}px 以上`, `最小 ${s.minHeight}px`);
 					check(s.truncated.length === 0, '候補名が省略されていない', s.truncated.join(' / ') || 'なし');
 					await page.screenshot({ path: join(outputDir, 'search-suggest-390.png') });
