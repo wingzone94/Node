@@ -702,3 +702,110 @@ GSC の該当レポートを実際に開いて全URLを確認した（Chrome 経
 ### 24.3 結論
 
 11件中コード側の問題だったのは `/category/spotlight/` の1件のみで、§22 で解消済み。**404の2件・リダイレクトの10件は修正不要**。
+
+---
+
+## 25. Node 1.3.1 — トップの回遊 / 検索サジェスト / プライマリカテゴリ提案（2026-08-20 ユーザー指示）
+
+ユーザーからの指摘は3点。「目的の記事に辿り着くのが難しい」が共通する根で、
+入口（トップ）・探し方（検索）・見せ方（プライマリカテゴリ）の3面から潰す。
+
+### 25.1 無限スクロールの廃止
+
+**発覚**: 「無限スクロールを廃止したい」という指摘から実装箇所を特定。テーマ側には無く、
+同梱プラグイン [node-flow](plugins-embedded/node-flow/) の「ハイブリッド・スクローラー」が正体だった。
+
+* `is_home() || is_archive() || is_search()` で `assets/js/scroller.js` を読み込む
+* **`.m3-archive-pill-wrapper` を `display:none` にしてから** IntersectionObserver で
+  `node-flow/v1/posts` を叩き、`.m3-post-grid__container` の末尾へカードを追記していた
+* つまり「すべての記事を見る」「もっと見る」は**出ていたのに JS が隠していた**。
+  一覧が終わらないので、下部にあるはずの導線に一生届かない
+
+**変更**:
+
+* `plugins-embedded/node-flow/includes/Frontend/Scroller.php` と
+  `plugins-embedded/node-flow/assets/js/scroller.js` を削除。`Core/Plugin.php` は
+  起動するモジュールが無くなった（node-flow はフロントUXの入れ物として残す）。
+  プラグイン版を 1.2.0 → **1.3.0**、`production_plugins/node-flow.zip` も再生成
+* [inc/hooks.php](inc/hooks.php) に `node_disable_infinite_scroll()` を追加し、
+  `wp_enqueue_scripts` の優先度100で `node-flow-scroller` を dequeue + deregister。
+  **本番の node-flow は単体プラグインとして入っている可能性があり**、その場合は同梱版が
+  読み込まれない（[functions.php](functions.php) の埋め込みプラグインローダー）。
+  テーマだけを更新しても無限スクロールが残るのを避けるため、テーマ側にも落とし穴を置く
+
+**回帰**: `tests/node-flow-rest-test.php`（削除した Scroller の REST ホワイトリスト検証）を
+`tests/node-flow-scroller-removed-test.php` に差し替え。実装ファイルが復活していないこと、
+`Core/Plugin.php` が Scroller を起動しないこと、テーマ側の dequeue が効くことを見張る。
+
+### 25.2 トップページの表示数をモバイルで制限
+
+LATEST は §20 で 9件 → 6件にしたが、**6件は「3列 × 2段」を前提にした数**だった。
+`_layout-fixes.css` の `--featured` グリッドは **700px 以下で1列**になるので、
+モバイルでは 6件がそのまま縦に積み上がり、LATEST だけで画面数分のスクロールになっていた。
+
+* [index.php](index.php) に `$latest_mobile_limit = 3` を追加し、4件目以降のカードへ
+  `m3-latest-card--mobile-overflow` を付ける
+* [src/styles/_cards.css](src/styles/_cards.css) の `@media (max-width: 700px)` で畳む。
+  閾値がテーマ既定の 600px ではなく **700px** なのは、1列に落ちる幅に合わせたため
+* **`wp_is_mobile()` は使わない**。[template-parts/social-share.php](template-parts/social-share.php) に
+  同じ注意書きがあるとおり、キャッシュ済みHTMLとUAが食い違う
+
+**あわせて導線を1本に**: スクローラーが `.m3-archive-pill-wrapper` を隠していたため露見して
+いなかったが、廃止すると LATEST 直下の小さな「すべて見る」（`.m3-latest-see-all`）と
+下部のピル「すべての記事を見る」が**同じ行き先で二重**になる。押しやすい塗りのピルに集約し、
+テキストリンクと `_layout-fixes.css` のスタイルを削除した。ピルは
+`get_next_posts_link()` で出し分けると記事12件以下のサイトで導線が消えるため、
+**先頭ページでは常に出す**。
+
+### 25.3 検索キーワードのサジェスト（Node Library / カテゴリ）
+
+**狙い**: 「ゼルダの伝説 ティアーズ オブ ザ キングダム」を正確に打てなくても、
+2文字入れれば候補から選べる状態にする。
+
+* [inc/search-suggest.php](inc/search-suggest.php)（新規）が REST `node/v1/search/suggest?q=` を提供。
+  Node Library の項目名（公開中のみ）とカテゴリ名（`hide_empty`）を各5件まで返す
+* 1文字では候補がほぼ全件になり絞り込みにならないので、**2文字未満は空配列**
+* [src/scripts/search-bar.js](src/scripts/search-bar.js) の `initSearchBar()` に組み込み。
+  250ms デバウンス + AbortController、↑↓で移動・Enterで確定・Escで候補だけ閉じる。
+  確定すると入力欄にキーワードを入れて通常検索へ送る
+* 受け皿は [header.php](header.php) の `#m3-search-suggestions`。`.m3-search-input-wrapper` の
+  内側に置くのは、検索起動時に `position:relative` へ切り替わるこの要素が
+  入力欄と同じ幅・同じ左端になるため
+* 詳細検索モーダルのタグ補完（luminous-core-engine の `/search/tags`）とは**別物**。
+  あちらはタグ入力欄の補完で、こちらはヘッダー検索そのものの補完。見た目は
+  `.m3-suggestions-list` を共有し、出所（ライブラリ / カテゴリ）を右端のラベルで示す
+* アイコンは node-library のカード（`templates/card-library.php`）と同じ
+  `app` → `smartphone` / `game` → `sports_esports`
+
+**なぜテーマ側に置くか**: エンドポイントを luminous-core-engine に足すとプラグイン版の
+配布が必要になる。カテゴリと Node Library を引くだけでエンジンの検索条件には触らないので、
+テーマの `node/v1` 名前空間（[inc/blogcard.php](inc/blogcard.php) の maps-oembed と同じ）に置いた。
+
+### 25.4 プライマリカテゴリの提案
+
+**問題**: ゲーム・アプリ名のカテゴリは記事の主題そのものなのに、
+「レビュー」「ニュース」などの汎用カテゴリが先頭に来てパンくずとカテゴリラベルを取っていた。
+プライマリカテゴリの指定はもともとあるが、**指定し忘れに気づく機会が無い**。
+
+* [inc/meta-boxes.php](inc/meta-boxes.php) の `node_primary_category_meta_box_callback()` の末尾で、
+  記事のカテゴリ名と Node Library の項目名を突き合わせて提案を出す
+* 突き合わせは **前後の空白と英字の大小だけ**を潰した完全一致（`node_normalize_library_title()`）。
+  「ゼルダ」と「ゼルダの伝説」を同一視するような部分一致はしない。取りこぼすより誤提案の害が大きい
+* すでにプライマリ指定済みのカテゴリは提案しない
+* **「設定しない」を選んだら二度と提案しない**。判断を `_node_primary_category_suggest_dismissed`
+  （カテゴリIDの配列）に積む。記録しないと編集のたびに同じ提案が出て、ただの雑音になる
+* 提案はその場では投稿を書き換えず、セレクトを合わせるだけ。**保存して初めて確定**する
+* 同名でも別物のことがあるので、突き合わせた相手を開くリンクを添える
+
+**制約**: 編集中に追加したばかりのカテゴリは、既存のセレクト同様、一度保存するまで
+提案対象にならない（`get_the_category()` が保存済みの状態を見るため）。
+
+### 25.5 検証
+
+* `bun x vite build` 成功。`node scripts/verify-icon-classes.mjs` clean
+* PHP 構文チェック（`php -l`）: 変更した全PHPファイルで no syntax errors
+* PHPUnit は**この作業環境では未実行**（MySQL が無く WP テストスイートを起動できない）。
+  新規3ファイル（node-flow-scroller-removed / node-search-suggest /
+  node-primary-category-suggest）を含め、CI（`.github/workflows/tests.yml`）での確認が必要
+* `cybernode.local` での実機確認も未実施。**ZIP生成・バージョン引き上げは行っていない**
+  （AGENTS.md「Step 4: テスト確認後に ZIP 出力」に従い、リリース操作は検証後に分離）

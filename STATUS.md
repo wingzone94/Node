@@ -929,3 +929,73 @@ Chrome 経由で GSC の該当レポートを開き（読み取りのみ）、�
 `/sample-page/` はユーザーが削除済み。本番で 404、固定ページのサイトマップが 5件→4件になったことを実測。
 
 **GSC起因の残作業はゼロ**。リリース後に各レポートで「修正を検証」を押すだけ。
+
+---
+
+## Work Log: Node 1.3.1 — トップの回遊 / 検索サジェスト / プライマリカテゴリ提案（Claude Code） / 2026-08-20
+
+### 発端
+
+ユーザーから 1.3.1 の修正ポイントとして3点。添付の画面録画（Google Drive）は
+この作業環境からは再生できないため、**文面の指示のみを根拠に実装**している。
+
+1. トップページの表示数をモバイルで制限し、無限スクロールを廃止（目的の記事に辿り着けない）
+2. 検索キーワードをサジェストする機能を追加（Node Library、カテゴリ）
+3. Node Library に登録しているのと同一カテゴリがある場合、プライマリカテゴリに登録するか否かを提案
+
+### 実装
+
+詳細は NODE-1.3.md §25。要点のみ。
+
+* **無限スクロールの正体は同梱プラグイン node-flow のハイブリッド・スクローラー**だった。
+  `.m3-archive-pill-wrapper`（すべての記事を見る / もっと見る）を JS で隠してから
+  スクロール追記していたため、一覧が終わらず下部の導線に届かない状態だった。
+  Scroller とその JS を削除（node-flow 1.2.0 → 1.3.0、zip 再生成）。
+  **本番で node-flow が単体プラグインとして有効な場合は同梱版が読み込まれない**ので、
+  テーマ側 `inc/hooks.php` でも `node-flow-scroller` を dequeue + deregister する
+* トップの LATEST 6件を、**700px 以下（1列に落ちる幅）では先頭3件**に。
+  `wp_is_mobile()` はキャッシュとUAが食い違うので使わず、PHP でクラスを付けて CSS で畳む
+* スクローラー廃止でピルが復活し、LATEST 直下の「すべて見る」と二重になるため、
+  塗りのピル1本へ集約（`.m3-latest-see-all` と対応CSSを削除）
+* 検索サジェストは**テーマ側の新規 REST**（`node/v1/search/suggest`、`inc/search-suggest.php`）。
+  luminous-core-engine を触るとプラグイン配布が必要になるため
+* プライマリカテゴリ提案は完全一致（前後空白と英字大小のみ正規化）。
+  「設定しない」の判断は `_node_primary_category_suggest_dismissed` に積み、再提案しない
+
+### 変更ファイル
+
+* 新規: `inc/search-suggest.php`、`tests/node-search-suggest-test.php`、
+  `tests/node-primary-category-suggest-test.php`、`tests/node-flow-scroller-removed-test.php`
+* 変更: `index.php`、`header.php`、`functions.php`、`inc/hooks.php`、`inc/meta-boxes.php`、
+  `src/Setup/ThemeSupport.php`、`src/scripts/search-bar.js`、
+  `src/styles/_cards.css`、`src/styles/_header.css`、`src/styles/_layout-fixes.css`、
+  `plugins-embedded/node-flow/*`、`production_plugins/node-flow.zip`、
+  `CHANGELOG.md`、`NODE-1.3.md`
+* 削除: `plugins-embedded/node-flow/includes/Frontend/Scroller.php`、
+  `plugins-embedded/node-flow/assets/js/scroller.js`、`tests/node-flow-rest-test.php`
+
+### 検証
+
+* `bun x vite build` 成功（`assets/` 再生成済み）。`verify:icons` clean
+* 変更した全PHPファイルで `php -l` no syntax errors
+* **PHPUnit 未実行**: この環境に MySQL が無く WP テストスイートを起動できない。
+  新規テスト3ファイルを含め CI（`.github/workflows/tests.yml`）での確認が必要
+* **cybernode.local での実機確認 未実施**
+
+### 未実施（リリース境界）
+
+AGENTS.md「開発ルーチン Step 4: テスト確認後に ZIP 出力」に従い、以下は**行っていない**。
+
+* `style.css` の Version 引き上げ（1.3.0 のまま）
+* `build.json` の再生成
+* `node.zip` の再生成
+
+テスト環境での確認後、`HOW_TO_RELEASE.md` に従ってリリース操作として実行すること。
+CHANGELOG の見出しは `## [1.3.1] - 未リリース（開発中）` にしてあるので、
+リリース時に日付へ差し替える。
+
+### Status
+
+コード実装・ドキュメント更新は完了。ブランチ `claude/node-1-3-1-fixes-zfvcqm` に push 済み。
+残りは cybernode.local での実機確認（特にモバイル幅のトップ、検索サジェストの表示位置、
+投稿編集画面の提案UI）と、CI での PHPUnit グリーン確認。
