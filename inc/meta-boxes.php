@@ -49,6 +49,45 @@ if ( ! function_exists( 'node_meta_boxes_admin_assets' ) ) {
 
         // プライマリカテゴリのセレクト変更に連動して、継承説明文とピッカー既定色を即時更新
         var $select = $('#node_primary_category_select');
+
+        // Node Library と同名カテゴリの提案。「プライマリにする」でセレクトを合わせ、
+        // 「設定しない」でそのカテゴリを控えて次回から提案しないようにする。
+        // どちらも保存して初めて確定する（この場では投稿を書き換えない）。
+        var $suggest = $('#node-primary-category-suggest');
+        if ($suggest.length) {
+            var $dismissed = $('#node-primary-category-suggest-dismissed');
+
+            var pushDismissed = function (termId) {
+                var current = ($dismissed.val() || '').split(',').filter(Boolean);
+                if (current.indexOf(String(termId)) === -1) {
+                    current.push(String(termId));
+                }
+                $dismissed.val(current.join(','));
+            };
+
+            // 提案1件ぶん（説明の p とボタンの p）を畳む。全部さばけたら枠ごと隠す。
+            // hidden input は保存に必要なので枠を消さず hide にとどめる。
+            var dropRow = function ($button) {
+                $button.closest('p').prev('p').addBack().remove();
+                if (!$suggest.find('.node-primary-category-suggest__apply').length) {
+                    $suggest.hide();
+                }
+            };
+
+            $suggest.on('click', '.node-primary-category-suggest__apply', function () {
+                var termId = $(this).data('term-id');
+                if ($select.length) {
+                    $select.val(String(termId)).trigger('change');
+                }
+                dropRow($(this));
+            });
+
+            $suggest.on('click', '.node-primary-category-suggest__dismiss', function () {
+                pushDismissed($(this).data('term-id'));
+                dropRow($(this));
+            });
+        }
+
         var dataEl = document.getElementById('node-color-inherit-data');
         var descEl = document.getElementById('node-color-inherit-desc');
         if (!$select.length || !dataEl || !descEl) return;
@@ -153,6 +192,182 @@ if ( ! function_exists( 'node_primary_category_meta_box_callback' ) ) {
         echo '</select>';
         echo '<p class="description">パンくずとカテゴリラベルで優先表示するカテゴリを選択します。選択肢はこの記事に割り当て済みのカテゴリのみです。</p>';
         echo '<p class="description" style="color:#996800;">※ 編集中に追加したばかりのカテゴリは、一度保存するまでこの一覧に表示されません。</p>';
+
+        node_render_primary_category_library_suggestion($post, $selected);
+    }
+}
+
+if ( ! function_exists( 'node_normalize_library_title' ) ) {
+    /**
+     * Node Library 項目名とカテゴリ名を突き合わせるための正規化。
+     *
+     * 表記ゆれまでは吸収しない（「ゼルダ」と「ゼルダの伝説」は別物として扱う）。
+     * ここで潰すのは前後の空白と英字の大小だけ。取りこぼすより誤提案の方が害が大きい。
+     *
+     * @param string $title 比較したい文字列。
+     * @return string 正規化済みの文字列。
+     */
+    function node_normalize_library_title( $title ) {
+        return mb_strtolower( trim( (string) $title ) );
+    }
+}
+
+if ( ! function_exists( 'node_get_library_title_map' ) ) {
+    /**
+     * 公開中の Node Library 項目を「正規化済みタイトル => 項目」で返す。
+     *
+     * ライブラリは手作業で登録する一覧なので件数が少なく、全件取得で足りる。
+     * 呼ぶのは投稿編集画面のメタボックス描画時だけなので、都度引いてよい。
+     *
+     * @return array<string, array{id:int, title:string}> タイトルの索引。
+     */
+    function node_get_library_title_map() {
+        $map = array();
+
+        if ( ! post_type_exists( 'node_library' ) ) {
+            return $map;
+        }
+
+        $items = get_posts(
+            array(
+                'post_type'      => 'node_library',
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'orderby'        => 'title',
+                'order'          => 'ASC',
+                'no_found_rows'  => true,
+            )
+        );
+
+        foreach ( $items as $item ) {
+            $key = node_normalize_library_title( $item->post_title );
+            if ( '' === $key || isset( $map[ $key ] ) ) {
+                continue;
+            }
+            $map[ $key ] = array(
+                'id'    => (int) $item->ID,
+                'title' => $item->post_title,
+            );
+        }
+
+        return $map;
+    }
+}
+
+if ( ! function_exists( 'node_get_primary_category_library_matches' ) ) {
+    /**
+     * この記事のカテゴリのうち、Node Library に同名の項目があるものを返す。
+     *
+     * プライマリに指定済みのカテゴリと、編集者が一度「設定しない」を選んだカテゴリは
+     * 提案しない（同じ提案を毎回出さないため）。
+     *
+     * @param int $post_id  投稿ID。
+     * @param int $selected 現在のプライマリカテゴリID（未指定は0）。
+     * @return array<int, array{term:WP_Term, library:array{id:int, title:string}}> 提案候補。
+     */
+    function node_get_primary_category_library_matches( $post_id, $selected ) {
+        $library_map = node_get_library_title_map();
+        if ( empty( $library_map ) ) {
+            return array();
+        }
+
+        $dismissed = node_get_dismissed_primary_category_suggestions( $post_id );
+        $matches   = array();
+
+        foreach ( (array) get_the_category( $post_id ) as $category ) {
+            if ( ! $category instanceof WP_Term ) {
+                continue;
+            }
+            if ( (int) $category->term_id === (int) $selected ) {
+                continue;
+            }
+            if ( in_array( (int) $category->term_id, $dismissed, true ) ) {
+                continue;
+            }
+
+            $key = node_normalize_library_title( $category->name );
+            if ( isset( $library_map[ $key ] ) ) {
+                $matches[] = array(
+                    'term'    => $category,
+                    'library' => $library_map[ $key ],
+                );
+            }
+        }
+
+        return $matches;
+    }
+}
+
+if ( ! function_exists( 'node_get_dismissed_primary_category_suggestions' ) ) {
+    /**
+     * 「設定しない」と判断済みのカテゴリIDを返す。
+     *
+     * @param int $post_id 投稿ID。
+     * @return array<int, int> カテゴリIDの配列。
+     */
+    function node_get_dismissed_primary_category_suggestions( $post_id ) {
+        $stored = get_post_meta( $post_id, '_node_primary_category_suggest_dismissed', true );
+
+        if ( ! is_array( $stored ) ) {
+            return array();
+        }
+
+        return array_values( array_filter( array_map( 'intval', $stored ) ) );
+    }
+}
+
+if ( ! function_exists( 'node_render_primary_category_library_suggestion' ) ) {
+    /**
+     * Node Library と同名のカテゴリが付いている記事に、プライマリカテゴリ化を提案する。
+     *
+     * ゲーム・アプリ名のカテゴリは記事の主題そのものであることが多いのに、
+     * 「レビュー」「ニュース」などの汎用カテゴリが先頭に来てパンくずを取られていた。
+     * 押し付けにはせず、設定するか否かをその場で選べるようにする（1.3.1 ユーザー指示）。
+     *
+     * @param WP_Post $post     編集中の投稿。
+     * @param int     $selected 現在のプライマリカテゴリID（未指定は0）。
+     * @return void
+     */
+    function node_render_primary_category_library_suggestion( $post, $selected ) {
+        $matches = node_get_primary_category_library_matches( $post->ID, $selected );
+        if ( empty( $matches ) ) {
+            return;
+        }
+
+        echo '<div class="node-primary-category-suggest" id="node-primary-category-suggest" style="margin-top:12px;padding:10px 12px;border-left:4px solid #FF9900;background:#fff8ec;">';
+        echo '<p style="margin:0 0 8px;font-weight:600;">Node Library と同名のカテゴリがあります</p>';
+
+        foreach ( $matches as $match ) {
+            $term      = $match['term'];
+            $edit_link = get_edit_post_link( $match['library']['id'] );
+
+            echo '<p style="margin:0 0 8px;">';
+            printf(
+                '「%s」は Node Library に登録済みです。この記事のプライマリカテゴリにしますか？',
+                esc_html( $term->name )
+            );
+            // 同名でも別物ということはあるので、突き合わせた相手をその場で確認できるようにする。
+            if ( $edit_link ) {
+                printf(
+                    ' <a href="%s" target="_blank" rel="noopener">ライブラリ項目を確認</a>',
+                    esc_url( $edit_link )
+                );
+            }
+            echo '</p>';
+            echo '<p style="margin:0 0 8px;">';
+            printf(
+                '<button type="button" class="button button-primary node-primary-category-suggest__apply" data-term-id="%d">プライマリにする</button> ',
+                (int) $term->term_id
+            );
+            printf(
+                '<button type="button" class="button button-link node-primary-category-suggest__dismiss" data-term-id="%d">設定しない</button>',
+                (int) $term->term_id
+            );
+            echo '</p>';
+        }
+
+        echo '<input type="hidden" name="node_primary_category_suggest_dismissed" id="node-primary-category-suggest-dismissed" value="">';
+        echo '</div>';
     }
 }
 
@@ -293,6 +508,8 @@ if ( ! function_exists( 'node_save_primary_category_meta' ) ) {
         if ('post' !== get_post_type($post_id)) return;
         if (!current_user_can('edit_post', $post_id)) return;
 
+        node_save_dismissed_primary_category_suggestions($post_id);
+
         $selected = isset($_POST['node_primary_category']) ? absint($_POST['node_primary_category']) : 0;
 
         if (!$selected) {
@@ -311,6 +528,37 @@ if ( ! function_exists( 'node_save_primary_category_meta' ) ) {
     }
 }
 add_action('save_post', 'node_save_primary_category_meta');
+
+if ( ! function_exists( 'node_save_dismissed_primary_category_suggestions' ) ) {
+    /**
+     * 「設定しない」と判断されたカテゴリを記録する。
+     *
+     * 記録がないと同じ提案が編集のたびに出続けるため、判断そのものを残す。
+     * 既存の記録に追記していく（1回の編集で複数を却下してもよい）。
+     *
+     * @param int $post_id 投稿ID。
+     * @return void
+     */
+    function node_save_dismissed_primary_category_suggestions($post_id) {
+        if (!isset($_POST['node_primary_category_suggest_dismissed'])) {
+            return;
+        }
+
+        $raw = sanitize_text_field(wp_unslash($_POST['node_primary_category_suggest_dismissed']));
+        $new = array_values(array_filter(array_map('absint', explode(',', $raw))));
+
+        if (empty($new)) {
+            return;
+        }
+
+        $merged = array_values(array_unique(array_merge(
+            node_get_dismissed_primary_category_suggestions($post_id),
+            $new
+        )));
+
+        update_post_meta($post_id, '_node_primary_category_suggest_dismissed', $merged);
+    }
+}
 
 if ( ! function_exists( 'node_cleanup_primary_category_after_terms_change' ) ) {
     function node_cleanup_primary_category_after_terms_change($object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids) {
