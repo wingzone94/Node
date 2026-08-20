@@ -420,6 +420,45 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
             menu.removeAttribute('open');
         }));
 
+        // 畳まれた状態だと「ここからセクションへ飛べる」ことが伝わらない。
+        // 実機録画（2026-08-20）では35秒スクロールし続けて一度も開かれなかった。
+        // 最初のスクロールで一度だけ開いて中身を見せ、少し置いてから畳む。
+        // 毎回開くと押し付けになるので、セッション中は繰り返さない。
+        const PEEK_KEY = 'node-section-nav-peeked';
+        let peeked = true;
+        try {
+            peeked = sessionStorage.getItem(PEEK_KEY) === '1';
+        } catch (e) {
+            // プライベートモード等で sessionStorage が使えないときは黙って諦める。
+            // 「一度だけ」を保証できない以上、開かない方を選ぶ。
+        }
+
+        if (!peeked) {
+            let peekTimer = 0;
+            const cancelPeek = () => {
+                // 読み手が触ったら自動では畳まない。操作を上書きしない。
+                clearTimeout(peekTimer);
+                peekTimer = 0;
+            };
+
+            const peekOnce = () => {
+                if (nav.hidden || menu.open) return;
+                try {
+                    sessionStorage.setItem(PEEK_KEY, '1');
+                } catch (e) {}
+
+                menu.setAttribute('open', '');
+                nav.addEventListener('pointerdown', cancelPeek, { once: true });
+                nav.addEventListener('keydown', cancelPeek, { once: true });
+                peekTimer = setTimeout(() => {
+                    if (peekTimer) menu.removeAttribute('open');
+                    peekTimer = 0;
+                }, 3000);
+            };
+
+            addEventListener('scroll', peekOnce, { passive: true, once: true });
+        }
+
         addEventListener('scroll', scheduleUpdate, { passive: true });
         addEventListener('resize', scheduleUpdate, { passive: true });
         scheduleUpdate();

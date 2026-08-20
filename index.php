@@ -73,16 +73,60 @@ get_header();
             <?php endif; ?>
 
             <?php
+            // モバイルで畳むぶんのカードは <template> に退避する。inert なので
+            // DOM ノードにも画像リクエストにもならず、モバイルは費用を払わない。
+            // ページキャッシュはUA別に分かれていない（$wp_cache_mobile = 0）ため、
+            // wp_is_mobile() で出し分けると最初の訪問者の端末で全員分が固定される。
+            // 幅の判定はクライアント側に任せ、HTML自体は全員に同じものを配る。
+            $latest_overflow_markup = '';
+
             while (have_posts()) : the_post();
                 if ($is_first_page && $wp_query->current_post >= $latest_limit) {
                     break;
                 }
                 $card_class = ($is_first_page && $wp_query->current_post < $featured_card_limit) ? 'card-featured' : 'card-standard';
                 if ($is_first_page && $wp_query->current_post >= $latest_mobile_limit) {
+                    // 700px 超で差し込まれた後に幅を狭められた場合は、
+                    // _cards.css 側の `display: none` が従来どおり畳んでくれる。
                     $card_class .= ' m3-latest-card--mobile-overflow';
+
+                    ob_start();
+                    get_template_part('template-parts/card', null, ['card_class' => $card_class]);
+                    $latest_overflow_markup .= (string) ob_get_clean();
+                    continue;
                 }
                 get_template_part('template-parts/card', null, ['card_class' => $card_class]);
             endwhile;
+
+            if ('' !== $latest_overflow_markup) :
+                ?>
+                <template id="node-latest-overflow"><?php echo $latest_overflow_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- テンプレートパート由来 ?></template>
+                <script>
+                (function () {
+                    var tpl = document.getElementById('node-latest-overflow');
+                    if (!tpl || !tpl.content || !tpl.parentNode) { return; }
+                    var grid = tpl.parentNode;
+                    var mq = window.matchMedia('(min-width: 701px)');
+                    var inject = function () {
+                        if (!mq.matches || !tpl.parentNode) { return; }
+                        grid.insertBefore(tpl.content.cloneNode(true), tpl);
+                        tpl.parentNode.removeChild(tpl);
+                        if (mq.removeEventListener) { mq.removeEventListener('change', inject); }
+                        // card-animation.js の balanceGrid() は resize で端数を隠す。
+                        // 幅を広げた場合、差し込み前の3件で計算されて3件目が
+                        // display:none のまま残るので、揃ってから計算し直させる。
+                        if (document.readyState !== 'loading') {
+                            window.dispatchEvent(new Event('resize'));
+                        }
+                    };
+                    // DOMContentLoaded の card-animation.js より前に差し込む必要があるので、
+                    // パース中のこの場で同期実行する。
+                    inject();
+                    if (tpl.parentNode && mq.addEventListener) { mq.addEventListener('change', inject); }
+                })();
+                </script>
+                <?php
+            endif;
             ?>
             </div>
             </div>

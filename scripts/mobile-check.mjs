@@ -81,6 +81,12 @@ function collect() {
 		cardsVisible: cards.filter(visible).length,
 		overflowTotal: overflowCards.length,
 		overflowVisible: overflowCards.filter(visible).length,
+		// 4件目以降は <template> へ退避してあるので、モバイルでは DOM に出てこない。
+		// querySelectorAll は template の中身を拾わないため、content から数える。
+		overflowStashed: (() => {
+			const tpl = document.getElementById('node-latest-overflow');
+			return tpl && tpl.content ? tpl.content.querySelectorAll('.m3-card').length : 0;
+		})(),
 		hasCategorySection: !!document.querySelector('#categories.m3-category-nav'),
 		categorySectionVisible: (() => {
 			const el = document.querySelector('#categories.m3-category-nav');
@@ -163,9 +169,9 @@ async function run() {
 				`表示${d.cardsVisible} / 全${d.cardsTotal}`
 			);
 			check(
-				d.overflowTotal > 0 && d.overflowVisible === 0,
-				'4件目以降は畳まれている',
-				`overflow指定${d.overflowTotal} / 見えている${d.overflowVisible}`
+				d.overflowStashed > 0 && d.overflowTotal === 0 && d.overflowVisible === 0,
+				'4件目以降は DOM に出さず <template> へ退避している',
+				`退避${d.overflowStashed} / DOM${d.overflowTotal} / 見えている${d.overflowVisible}`
 			);
 			check(d.hasCategorySection && d.categorySectionVisible, 'CATEGORY セクションが出ている', `pill=${d.pillCount}`);
 			check(
