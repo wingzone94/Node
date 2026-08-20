@@ -40,15 +40,6 @@ body.front-page:not(.paged) .m3-surface--latest .m3-post-grid__container--featur
     }
 }
 
-.m3-latest-see-all {
-    margin-left: auto;
-    margin-top: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 700;
-}
-
 .m3-surface--articles.is-empty {
     display: none !important;
 }

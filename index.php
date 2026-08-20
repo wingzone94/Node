@@ -47,6 +47,12 @@ get_header();
         $featured_card_limit = 4;
         // ホームの LATEST は6件で表示を打ち切り、残りは「すべて見る」へ集約する。
         $latest_limit        = 6;
+        // モバイル（700px以下＝LATEST が1列になる幅）は6件だと LATEST だけで画面数分の
+        // 縦スクロールになり、目的の記事へ辿り着く前に一覧が終わらない（1.3.1 ユーザー指示）。
+        // 4件目以降はマークアップに残したまま _cards.css で畳み、
+        // 直下の「すべての記事を見る」へ集約する。
+        // UA判定（wp_is_mobile）はページキャッシュ済みHTMLと食い違うため使わない。
+        $latest_mobile_limit = 3;
         ?>
         <section<?php echo $is_first_page ? ' id="latest"' : ''; ?> class="l-card-grid m3-post-grid" aria-labelledby="<?php echo $is_first_page ? 'latest-title' : 'articles-title'; ?>">
             <?php if ($is_first_page) : ?>
@@ -65,35 +71,40 @@ get_header();
                     break;
                 }
                 $card_class = ($is_first_page && $wp_query->current_post < $featured_card_limit) ? 'card-featured' : 'card-standard';
+                if ($is_first_page && $wp_query->current_post >= $latest_mobile_limit) {
+                    $card_class .= ' m3-latest-card--mobile-overflow';
+                }
                 get_template_part('template-parts/card', null, ['card_class' => $card_class]);
             endwhile;
             ?>
-            <?php if ($is_first_page) : ?>
-                </div>
-                <a class="m3-latest-see-all m3-button m3-button--text" href="<?php echo esc_url(node_get_all_articles_url()); ?>">
-                    <span class="m3-latest-see-all__text">すべて見る</span>
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                </a>
-            <?php else : ?>
-                </div>
-            <?php endif; ?>
             </div>
-            <?php if (get_next_posts_link()) : ?>
+            </div>
+            <?php
+            /*
+             * 無限スクロール（Node Flow のハイブリッド・スクローラー）を廃止したため、
+             * これまでスクローラーが隠していたピルボタンが正本のページ送りに戻る。
+             * ホーム先頭ページでは LATEST 直下の小さな「すべて見る」テキストリンクと
+             * 行き先が同じで二重になるので、押しやすい塗りのピル1本に集約する。
+             * get_next_posts_link() で出し分けると記事が12件以下のサイトで導線が
+             * 消えてしまうため、先頭ページでは常に出す。
+             */
+            ?>
+            <?php if ($is_first_page) : ?>
                 <div class="m3-archive-pill-wrapper m3-section-spacing">
-                    <?php if ($is_first_page) : ?>
-                        <a href="<?php echo esc_url(node_get_all_articles_url()); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="全ての記事を見る">
-                            <span class="m3-archive-pill-button__text">すべての記事を見る</span>
-                            <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></div>
-                        </a>
-                    <?php else : ?>
-                        <?php
-                            $next_link = get_next_posts_page_link($wp_query->max_num_pages);
-                        ?>
-                        <a href="<?php echo esc_url($next_link); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="もっと見る">
-                            <span class="m3-archive-pill-button__text">もっと見る</span>
-                            <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></div>
-                        </a>
-                    <?php endif; ?>
+                    <a href="<?php echo esc_url(node_get_all_articles_url()); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="全ての記事を見る">
+                        <span class="m3-archive-pill-button__text">すべての記事を見る</span>
+                        <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></div>
+                    </a>
+                </div>
+            <?php elseif (get_next_posts_link()) : ?>
+                <div class="m3-archive-pill-wrapper m3-section-spacing">
+                    <?php
+                        $next_link = get_next_posts_page_link($wp_query->max_num_pages);
+                    ?>
+                    <a href="<?php echo esc_url($next_link); ?>" class="m3-archive-pill-button m3-ripple-host" aria-label="もっと見る">
+                        <span class="m3-archive-pill-button__text">もっと見る</span>
+                        <div class="m3-archive-pill-button__icon"><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></div>
+                    </a>
                 </div>
             <?php endif; ?>
         </section>

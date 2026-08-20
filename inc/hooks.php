@@ -160,6 +160,22 @@ function luminous_filter_card_meta_fields( array $fields, int $post_id ): array 
 function luminous_enqueue_plugin_scripts(): void {
 	do_action( 'luminous_enqueue_scripts' );
 }
+/**
+ * 無限スクロール（Node Flow のハイブリッド・スクローラー）を止める。
+ *
+ * トップ・アーカイブ・検索で `.m3-archive-pill-wrapper` のページ送りを隠し、
+ * スクロール末尾で次ページを追記していたため、モバイルでは一覧が終わらず
+ * 目的の記事へ辿り着けなかった（Node 1.3.1 ユーザー指示で廃止）。
+ *
+ * 同梱版 node-flow は 1.3.0 でスクローラー自体を削除したが、単体プラグインとして
+ * 旧版が有効なままの環境ではそちらが読み込まれるため、テーマ側でも確実に落とす。
+ */
+function node_disable_infinite_scroll(): void {
+	wp_dequeue_script( 'node-flow-scroller' );
+	wp_deregister_script( 'node-flow-scroller' );
+}
+add_action( 'wp_enqueue_scripts', 'node_disable_infinite_scroll', 100 );
+
 /* ==========================================================================
    6. Media & Lightbox Support
    ========================================================================== */

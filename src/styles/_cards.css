@@ -31,6 +31,19 @@
     border-radius: 0;
 }
 
+/* モバイルのトップページは LATEST を先頭3件で打ち切る（Node 1.3.1 ユーザー指示）。
+   700px 以下では LATEST が1列で積み上がるので（_layout-fixes.css の
+   `--featured` グリッド）、6件だと LATEST だけで画面数分の縦スクロールになり、
+   目的の記事へ辿り着く前に一覧が終わらない。4件目以降は index.php が
+   `.m3-latest-card--mobile-overflow` を付けて出しているので、ここで畳んで
+   直下の「すべての記事を見る」へ集約する。2列以上になる幅では 6件のまま。
+   閾値がテーマ既定の 600px ではなく 700px なのは、1列に落ちる幅に合わせるため。 */
+@media (max-width: 700px) {
+    .m3-latest-card--mobile-overflow {
+        display: none;
+    }
+}
+
 /* LATESTセクション専用のコンテナ設定 (Ver 0.7.0) */
 :is(.l-card-grid__items--featured, .m3-post-grid__container--featured) {
     display: grid;

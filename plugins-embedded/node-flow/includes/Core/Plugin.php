@@ -1,8 +1,6 @@
 <?php
 namespace Node\Flow\Core;
 
-use Node\Flow\Frontend\Scroller;
-
 class Plugin {
     private static $instance = null;
 
@@ -17,7 +15,13 @@ class Plugin {
         $this->init_modules();
     }
 
+    /**
+     * フロントエンドUXのモジュールを起動する。
+     *
+     * 1.3.0 でハイブリッド・スクローラー（無限スクロール）を削除したため、
+     * 現在起動するモジュールはない。ページ送りはテーマ側の
+     * `.m3-archive-pill-wrapper` / `.m3-pager` が正本。
+     */
     private function init_modules() {
-        Scroller::get_instance();
     }
 }
