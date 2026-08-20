@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-get_template_part('template-parts/ad', 'article');
+node_the_ad_template('article');
 ?>
     <footer class="m3-footer">
         <div class="m3-footer__main">

@@ -716,6 +716,32 @@ function node_the_ad_area($position) {
     echo '<div class="m3-ad-area m3-ad-area--' . esc_attr($position) . '">' . do_shortcode($ad_code) . '</div>';
 }
 
+/**
+ * template-parts/ad-{$slug}.php を、中身が実在するときだけ出力する。
+ *
+ * これらのテンプレートは「ここに AdSense のコードを貼る」用のひな形で、
+ * 貼る前は HTML コメントしか入っていない。それでも `.m3-ad-area` の
+ * 破線ボックス（min-height:120px）は描画されるため、未設定のサイトでは
+ * フッター直前に空の枠だけが残る。読者が記事一覧を読み終えて次の行き先を
+ * 探す位置にちょうど居座るので、回遊の妨げになる（2026-08-21 実機録画で確認）。
+ *
+ * オプション（node_the_ad_area）と違い、テンプレートに直接コードを
+ * 貼り付ける運用も残したいので、出力を捕まえてから中身の有無で判定する。
+ */
+function node_the_ad_template($slug) {
+    ob_start();
+    get_template_part('template-parts/ad', $slug);
+    $markup = (string) ob_get_clean();
+
+    // HTML コメントを除いて何も残らなければ、ひな形のままとみなして出力しない。
+    $content = preg_replace('/<!--.*?-->/s', '', $markup);
+    if (trim(wp_strip_all_tags((string) $content)) === '' && !preg_match('/<(ins|iframe|img|script|amp-ad)\b/i', (string) $content)) {
+        return;
+    }
+
+    echo $markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- テンプレート由来の広告タグ
+}
+
 /* ==========================================================================
    記事の文字数と読了目安ランクの取得
    ========================================================================== */
