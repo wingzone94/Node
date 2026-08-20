@@ -1,0 +1,90 @@
+/* --- CATEGORY（カテゴリから探す）--- */
+/* トップの回遊導線。SPOTLIGHT が塗りのピルなので、こちらは枠線ベースにして
+   「特集」と「通常カテゴリ」を見た目で区別する。色はカテゴリのテーマカラーを
+   左のドットと枠に流し込むだけに留め、面で塗らない。 */
+
+.m3-category-nav__header {
+    margin-bottom: 20px;
+    padding: 0;
+    border-bottom: none;
+}
+
+.m3-category-nav__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.m3-category-nav__item {
+    margin: 0;
+}
+
+.m3-category-nav__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.m3-category-nav__pill:hover,
+.m3-category-nav__pill:focus-visible {
+    border-color: var(--node-category-nav-color);
+    background: var(--md-sys-color-surface-container-highest);
+    transform: translateY(-2px);
+}
+
+.m3-category-nav__dot {
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--node-category-nav-color);
+}
+
+.m3-category-nav__name {
+    /* 長いカテゴリ名でもピルを1行に保つ。溢れる分は省略する。 */
+    max-width: 14em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.m3-category-nav__count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
+    font-variant-numeric: tabular-nums;
+}
+
+/* トップの LATEST / 記事一覧と同じく、この枠も四角に揃える
+   （.m3-surface の 40px 角丸だけが浮かないように）。 */
+.m3-category-nav.m3-surface {
+    border-radius: 0;
+}
+
+@media (max-width: 600px) {
+    .m3-category-nav__list {
+        gap: 8px;
+    }
+
+    .m3-category-nav__pill {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+    }
+
+    .m3-category-nav__name {
+        max-width: 10em;
+    }
+}

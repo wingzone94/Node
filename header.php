@@ -323,6 +323,12 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
                     </a>
                 </li>
                 <li>
+                    <a href="<?php echo esc_url( home_url( '/#categories' ) ); ?>" data-node-section="categories" data-node-section-icon="category">
+                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">category</span>
+                        <span class="m3-mobile-section-nav__item-label">CATEGORY</span>
+                    </a>
+                </li>
+                <li>
                     <a href="<?php echo esc_url( home_url( '/#latest' ) ); ?>" data-node-section="latest" data-node-section-icon="bolt">
                         <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">bolt</span>
                         <span class="m3-mobile-section-nav__item-label">LATEST</span>

@@ -205,7 +205,7 @@
         padding-top: var(--m3-spacing-m, 24px);
     }
 
-    :is(#headline, #spotlight, #latest) {
+    :is(#headline, #spotlight, #categories, #latest) {
 		scroll-margin-top: calc(112px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px));
     }
 }

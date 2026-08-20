@@ -368,6 +368,36 @@ function node_generate_m3_colors() {
 add_action('wp_head', 'node_generate_m3_colors');
 
 /**
+ * 回遊導線に出すカテゴリを、記事数の多い順に返す。
+ *
+ * トップの「カテゴリから探す」とフッターのカテゴリ欄が同じ並びを見るための共通取得。
+ * 「未分類」は行き先として意味を持たないので落とす。
+ *
+ * @param int $limit 取得件数の上限。
+ * @return array<int, WP_Term> カテゴリの配列（該当なしは空配列）。
+ */
+function node_get_navigation_categories( $limit = 12 ) {
+    $limit = max( 1, (int) $limit );
+
+    $args = array(
+        'taxonomy'   => 'category',
+        'hide_empty' => true,
+        'orderby'    => 'count',
+        'order'      => 'DESC',
+        'number'     => $limit,
+    );
+
+    $default_category = (int) get_option( 'default_category' );
+    if ( $default_category ) {
+        $args['exclude'] = array( $default_category );
+    }
+
+    $terms = get_terms( $args );
+
+    return is_wp_error( $terms ) ? array() : $terms;
+}
+
+/**
  * 表示用カテゴリから祖先カテゴリを除外する。
  * 例: SPOTLIGHT 親と BLEACH 子が両方付与されている場合、子のみ残す。
  *

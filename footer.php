@@ -44,6 +44,34 @@ get_template_part('template-parts/ad', 'article');
                     </div>
                 </div>
 
+                <?php
+                /*
+                 * カテゴリ列（1.3.1 ユーザー指示）。
+                 * トップ以外（記事・アーカイブ・検索結果）にはカテゴリで探す導線が
+                 * 一本も無く、記事を読み終わった読者の行き先がフッターの
+                 * 「このブログについて / プライバシーポリシー / お問い合わせ」しか
+                 * 無かった。全ページの末尾にカテゴリを置いて回遊先を作る。
+                 */
+                $node_footer_categories = function_exists( 'node_get_navigation_categories' )
+                    ? node_get_navigation_categories( NODE_CATEGORY_NAV_FOOTER_LIMIT )
+                    : array();
+                ?>
+                <?php if ( ! empty( $node_footer_categories ) ) : ?>
+                    <!-- Category Column -->
+                    <div class="m3-footer__col m3-footer__col--categories">
+                        <h3 class="m3-footer__title">カテゴリ</h3>
+                        <ul class="m3-footer__links">
+                            <?php foreach ( $node_footer_categories as $node_footer_category ) : ?>
+                                <li>
+                                    <a href="<?php echo esc_url( (string) get_category_link( $node_footer_category ) ); ?>">
+                                        <?php echo esc_html( $node_footer_category->name ); ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Nav Column -->
                 <div class="m3-footer__col m3-footer__col--nav">
                     <h3 class="m3-footer__title">ナビゲーション</h3>

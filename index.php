@@ -38,6 +38,13 @@ get_header();
         // HEADLINE（速報）: 横スクロール1段に固定し、LATEST をファーストビューへ引き上げる
         echo '<span id="headline" class="screen-reader-text" aria-hidden="true"></span>';
         get_template_part('template-parts/headline-carousel');
+
+        /*
+         * カテゴリから探す（1.3.1 ユーザー指示）。
+         * LATEST の「上」に置くのは、記事リストを最後まで送らないと回遊先に
+         * 出会えない状態そのものが問題だったため。ピルなので縦は数行で済む。
+         */
+        get_template_part('template-parts/category-nav');
     }
     ?>
 

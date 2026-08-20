@@ -800,12 +800,52 @@ LATEST は §20 で 9件 → 6件にしたが、**6件は「3列 × 2段」を�
 **制約**: 編集中に追加したばかりのカテゴリは、既存のセレクト同様、一度保存するまで
 提案対象にならない（`get_the_category()` が保存済みの状態を見るため）。
 
+### 25.6 回遊性（動画の実測を受けての追加対応）
+
+**動画で確認できた事実**（`ScreenRecording_08-20-2026 17-13-20`、35.76秒 / 296×640 の iPhone 実機）:
+
+* 0秒 トップ → 2秒 LATEST 開始 → 4秒 **8/19** → 12秒 **8/2** → 22秒 **7/9** → 28秒 **6/11** → 30秒 **5/28** → 32秒 フッター
+* **指を止めずに約30秒スクロールして、約3か月ぶんの記事をほぼ全部通過**していた
+* 32秒地点のフッターに **「すべての記事を見る」が存在しない**。§25.1 のとおりスクローラーが
+  `.m3-archive-pill-wrapper` を隠し、全ページ読み切るとローダーも自分で消えるため、
+  リストの終わりには何も残らなかった
+
+**それだけでは足りなかった点**: 無限スクロールを止めて件数を絞ると、トップは短くなるが
+**行ける先が減る**。動画を見直すと、そもそもサイト内に**カテゴリの一覧が一箇所も無い**。
+ヘッダーはロゴ・検索・テーマ切替のみ、フッターは「このブログについて / プライバシーポリシー /
+お問い合わせ」のみ。カード上のカテゴリバッジを踏む以外にカテゴリアーカイブへ行く手段が
+無かった（`register_nav_menus` の `primary` は登録されているだけで、どのテンプレートからも
+出力していない）。
+
+**変更**:
+
+* [inc/utilities.php](inc/utilities.php) に `node_get_navigation_categories()` を追加。
+  記事数の多い順・`hide_empty`・既定カテゴリ（未分類）除外。トップとフッターで同じ並びを見る
+* [template-parts/category-nav.php](template-parts/category-nav.php)（新規）が
+  `#categories` セクションを出す。**LATEST の「上」**に置いたのは、記事リストを最後まで
+  送らないと回遊先に出会えない状態そのものが問題だったため。ピルなので縦は数行で済む
+* 見た目は SPOTLIGHT（塗りのピル）と区別して**枠線ベース**。カテゴリ色は左のドットと
+  hover 時の枠線にだけ流し、面で塗らない（特集と通常カテゴリを取り違えないため）
+* [footer.php](footer.php) にカテゴリ列を追加し、`.m3-footer__grid` を 2列 → **3列**へ
+  （1100px 以下は2列でブランド列が全幅、900px 以下は従来どおり1列）。
+  トップ以外のページから唯一カテゴリへ辿れる入口になる
+* [header.php](header.php) のモバイル追従ナビへ `CATEGORY` を追加（4項目）。
+  スクロールスパイは `[data-node-section]` を総なめする実装なので、
+  `<section id="categories">` を置くだけで既存JSがそのまま拾う。
+  `_header.css` の `scroll-margin-top` にも `#categories` を追加
+
+**件数の根拠**: LATEST のカードは `card-featured` / `card-standard` に**CSSの差が無く**
+（`grep` で該当ルール0件）、高さは件数だけで決まる。296px 幅ではカード1枚が画面の
+2/3 前後を占めるので、モバイル3件で約2画面。SPOTLIGHT・HEADLINE・CATEGORY を足しても
+トップ全体で4画面程度に収まる。
+
 ### 25.5 検証
 
 * `bun x vite build` 成功。`node scripts/verify-icon-classes.mjs` clean
 * PHP 構文チェック（`php -l`）: 変更した全PHPファイルで no syntax errors
 * PHPUnit は**この作業環境では未実行**（MySQL が無く WP テストスイートを起動できない）。
-  新規3ファイル（node-flow-scroller-removed / node-search-suggest /
-  node-primary-category-suggest）を含め、CI（`.github/workflows/tests.yml`）での確認が必要
+  新規4ファイル（node-flow-scroller-removed / node-search-suggest /
+  node-primary-category-suggest / node-category-nav）を含め、
+  CI（`.github/workflows/tests.yml`）での確認が必要
 * `cybernode.local` での実機確認も未実施。**ZIP生成・バージョン引き上げは行っていない**
   （AGENTS.md「Step 4: テスト確認後に ZIP 出力」に従い、リリース操作は検証後に分離）
