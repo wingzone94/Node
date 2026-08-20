@@ -946,9 +946,16 @@
 .m3-search-suggestion__label {
     flex: 1;
     min-width: 0;
+    /* 1行省略にすると「ゼルダの伝説 ティアーズ オブ ザ キングダム」のような
+       正式名称が途中で切れ、どのタイトルの候補なのか判別できなくなる
+       （実測: 390px で4件中3件が省略されていた）。正式名称を出すのがこの機能の
+       目的なので2行までは折り返す。3行目以降だけ省略する。 */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 
 .m3-search-suggestion__source {

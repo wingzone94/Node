@@ -39,7 +39,10 @@
    直下の「すべての記事を見る」へ集約する。2列以上になる幅では 6件のまま。
    閾値がテーマ既定の 600px ではなく 700px なのは、1列に落ちる幅に合わせるため。 */
 @media (max-width: 700px) {
-    .m3-latest-card--mobile-overflow {
+    /* カード本体は下の `:is(.c-card, .m3-card) { display: flex }` が同じ詳細度(0,1,0)で
+       後ろに来るため、単独クラスでは負ける。カードのクラスと連結して(0,2,0)にし、
+       宣言順に依存せず確実に畳む。 */
+    :is(.c-card, .m3-card).m3-latest-card--mobile-overflow {
         display: none;
     }
 }

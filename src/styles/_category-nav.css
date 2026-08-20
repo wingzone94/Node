@@ -26,6 +26,8 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    /* 極端に長いカテゴリ名でも行から溢れさせない（横スクロールの発生を防ぐ）。 */
+    max-width: 100%;
     padding: 9px 16px;
     border-radius: 999px;
     border: 1px solid var(--md-sys-color-outline-variant);
@@ -80,11 +82,14 @@
     }
 
     .m3-category-nav__pill {
+        /* 指で押す導線なので iOS の推奨タップ領域 44px を下回らせない
+           （padding だけだと 35px しか出ず、実測で下回っていた）。 */
+        min-height: 44px;
         padding: 8px 14px;
         font-size: 0.9rem;
     }
 
-    .m3-category-nav__name {
-        max-width: 10em;
-    }
+    /* 名前はここで詰めない。「遊戯王マスターデュエル」のような長いカテゴリが
+       途中で切れると、ナビとして何のカテゴリか判別できなくなるため
+       （実測でこの1件だけ省略されていた）。溢れは pill 側の max-width で止める。 */
 }

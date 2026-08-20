@@ -839,6 +839,51 @@ LATEST は §20 で 9件 → 6件にしたが、**6件は「3列 × 2段」を�
 2/3 前後を占めるので、モバイル3件で約2画面。SPOTLIGHT・HEADLINE・CATEGORY を足しても
 トップ全体で4画面程度に収まる。
 
+### 25.7 Chromium（モバイル幅）での実測とそこで見つけた不具合
+
+WordPress 本体（wordpress.org は遮断）も MySQL も無いため実サイトは起動できない。
+代わりに **ビルド済みの `assets/css/style.css` に対して実マークアップを当てた検証ページ**を
+`scratch/devtools/` に組み、Chromium 141 を 390×844 / 360×640 / 700 / 701 / 900 / 1440 で
+走らせて計測した（`template-parts/category-nav.php` は実ファイルを include している）。
+
+**見つけた不具合（いずれも修正済み）**:
+
+1. **`.m3-latest-card--mobile-overflow` が効いていなかった（重大）**。
+   390px でもカード6件すべてが `display: flex` のままだった。原因は詳細度で、
+   `_cards.css` の `:is(.c-card, .m3-card) { display: flex }` が **同じ (0,1,0)** かつ
+   **後ろ**にあるため勝っていた。CDP の `CSS.getMatchedStylesForNode` で競合を確認し、
+   `:is(.c-card, .m3-card).m3-latest-card--mobile-overflow` へ変えて (0,2,0) にした。
+   単独クラスのままでは宣言順に依存して壊れるため、連結形が正しい。
+   * 修正前: 390px で 6件表示 / LATEST 2776px / ページ 6.39画面
+   * 修正後: 390px で 3件表示 / LATEST 1428px / **ページ 4.86画面**
+2. **カテゴリピルのタップ領域が 35px しかなかった**。iOS の推奨 44px を下回るので
+   `min-height: 44px` を入れた（≤600px）。
+3. **カテゴリ名がモバイルで省略されていた**。`max-width: 10em` により
+   「遊戯王マスターデュエル」だけが途中で切れていた。ナビとしてカテゴリを判別できなく
+   なるので上限を外し、代わりに `.m3-category-nav__pill { max-width: 100% }` で
+   行溢れ（横スクロール）を止めた。
+4. **検索サジェストの候補名が1行省略されていた**。390px で4件中3件が省略され、
+   「ゼルダの伝説 ティアーズ オ…」のように**どのタイトルか判別できなかった**。
+   正式名称を出すのがこの機能の目的なので `-webkit-line-clamp: 2` で2行まで折り返す。
+
+**問題なしを確認した項目**:
+
+* 700px で3件 / 701px で6件（境界が意図どおり `max-width` で閉じている）
+* 全幅で**横スクロールの発生なし**、画面外へはみ出す要素なし
+* 検索サジェストのドロップダウンは入力欄と left / right / width が一致（`position: absolute`
+  の包含ブロックが `.m3-search-input-wrapper` になっている）。`z-index: 1002`、
+  `max-height: 240px` + スクロール、候補の高さ48px以上
+* フッターは 1440px で3列、900px 以下で1列
+* トップの「すべての記事を見る」は全幅で表示される
+
+**この検証の限界**: PHP のロジック・WP のクエリ・JSの実挙動は検証できていない。
+CSS とレイアウトのみ。Material Symbols も `fonts.googleapis.com` が遮断されていて
+読めないため、アイコンは1文字ぶんの箱に固定する検証専用の shim を当てている。
+
+**残した観察（未修正）**: `.m3-archive-pill-wrapper` は `justify-content: flex-end` で、
+モバイルでも CTA が右端に寄る（390px で 270px 幅のピルが右寄せ）。アーカイブ側と
+共通のスタイルなので今回は触っていない。中央寄せにするかは要判断。
+
 ### 25.5 検証
 
 * `bun x vite build` 成功。`node scripts/verify-icon-classes.mjs` clean
