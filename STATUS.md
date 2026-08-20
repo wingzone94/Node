@@ -1025,3 +1025,20 @@ Drive・YouTube はどちらも組織のエグレスポリシーで遮断され�
 
 LATEST の件数はモバイル3件・その他6件のまま。カードの `card-featured` /
 `card-standard` に CSS の差が無く高さは件数だけで決まることを確認済み。
+
+### 追記（同日）: モバイル回帰チェックをスクリプト化
+
+Chromium での実測に使った検証ページは `scratch/` にしか無く、リポジトリには載らない。
+ローカル（cybernode.local）には本物の WordPress があるので、同じ判定を実サイトへ
+向けて回せる `scripts/mobile-check.mjs` を追加した。
+
+```bash
+bun run verify:mobile                              # 既定は http://cybernode.local
+bun scripts/mobile-check.mjs --base=http://...     # URL 指定
+```
+
+判定: 390px で LATEST 3件 / 境界 700=3件・701=6件 / カテゴリピルのタップ領域 44px /
+カテゴリ名が省略されていない / `node-flow` のスクリプトが読み込まれていない /
+横スクロール無し / フッター列数 / 検索サジェストの位置・タップ領域・省略の有無。
+検索サジェストは実データ依存のため、候補0件の環境では SKIP 扱いにしてある。
+失敗は exit 1 なのでリリースゲートに組み込める。

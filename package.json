@@ -9,7 +9,8 @@
     "build": "bun x vite build",
     "verify:icons": "node scripts/verify-icon-classes.mjs",
     "verify:routes": "bun scripts/route-check.mjs",
-    "verify:visual": "bun x playwright install chromium && bun scripts/visual-check.mjs"
+    "verify:visual": "bun x playwright install chromium && bun scripts/visual-check.mjs",
+    "verify:mobile": "bun x playwright install chromium && bun scripts/mobile-check.mjs"
   },
   "dependencies": {
     "colorthief": "^2.4.0",
