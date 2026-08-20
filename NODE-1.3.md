@@ -737,18 +737,46 @@ GSC の該当レポートを実際に開いて全URLを確認した（Chrome 経
 `tests/node-flow-scroller-removed-test.php` に差し替え。実装ファイルが復活していないこと、
 `Core/Plugin.php` が Scroller を起動しないこと、テーマ側の dequeue が効くことを見張る。
 
-### 25.2 トップページの表示数をモバイルで制限
+### 25.2 トップページの LATEST をモバイルでも6件のまま見渡せるようにする
 
 LATEST は §20 で 9件 → 6件にしたが、**6件は「3列 × 2段」を前提にした数**だった。
 `_layout-fixes.css` の `--featured` グリッドは **700px 以下で1列**になるので、
 モバイルでは 6件がそのまま縦に積み上がり、LATEST だけで画面数分のスクロールになっていた。
 
-* [index.php](index.php) に `$latest_mobile_limit = 3` を追加し、4件目以降のカードへ
-  `m3-latest-card--mobile-overflow` を付ける
-* [src/styles/_cards.css](src/styles/_cards.css) の `@media (max-width: 700px)` で畳む。
-  閾値がテーマ既定の 600px ではなく **700px** なのは、1列に落ちる幅に合わせたため
+**当初は件数を3件に削った**（4件目以降へ `m3-latest-card--mobile-overflow` を付けて
+`@media (max-width: 700px)` で畳む方式）。しかし 2026-08-21 のユーザー指示で
+**「件数は減らさず、デスクトップの読みやすさをモバイルでも実現する」**方針へ変更した。
+件数を削るのではなく密度を上げる。
+
+* [index.php](index.php) の表示数は `$latest_limit = 6` のみ。**幅による出し分けをしない**
+* [src/styles/_cards.css](src/styles/_cards.css) の `@media (max-width: 700px)` で
+  LATEST のカードを**横並びの行**にする。サムネイルは左に `clamp(88px, 27vw, 116px)`、
+  本文側は `min-width: 0`（これが無いと長いタイトルが行を押し広げて画面外へ出る）
+* **行の高さがアイキャッチの大きさに依存しない**のが要点。`.m3-card__visual` を
+  `align-self: stretch` にして画像側から高さを決めさせない。アイキャッチが大きい本番ほど効く
+* タイトルは `max-block-size: 2lh`。`-webkit-line-clamp` は Chromium が
+  `-webkit-box` を `flow-root` へ blockify するため効かない（[_title-autofit.css](src/styles/_title-autofit.css) と同じ理由）。
+  実際の詰め・省略は [title-autofit.js](src/scripts/title-autofit.js) が引き継ぐ
+* 書き手は一覧では全カード同じになりがちで走査の手がかりにならないため、行では隠して日付だけ残す
 * **`wp_is_mobile()` は使わない**。[template-parts/social-share.php](template-parts/social-share.php) に
-  同じ注意書きがあるとおり、キャッシュ済みHTMLとUAが食い違う
+  同じ注意書きがあるとおり、キャッシュ済みHTMLとUAが食い違う。
+  Super Cache のモバイル別キャッシュは無効（`$wp_cache_mobile = 0`）なので、
+  UAで分岐すると**最初の訪問者の端末で全員分のHTMLが固定される**
+
+**実測（cybernode.local / 390×844）**:
+
+| | LATEST 帯 | 「すべての記事を見る」まで |
+|---|---|---|
+| 縦積み6件 | 約3画面ぶん | 3.32画面 |
+| 横並び6件（現行） | **1.1画面ぶん** | 2.69画面 |
+| デスクトップ 1440 | 0.72画面ぶん | 2.17画面 |
+
+320 / 375 / 390 / 430 / 600 / 700 / 701 / 768 / 1024 / 1440 で
+横スクロールなし・JSエラーなしを確認。701px 以上は従来のグリッドのまま。
+
+**無限生成の禁則**: スクローラーを消しただけでは「今は出ていない」しか言えないので、
+[scripts/mobile-check.mjs](scripts/mobile-check.mjs) で実際に最下部まで送り、
+LATEST が 6件から増えないことを毎回検査する。
 
 **あわせて導線を1本に**: スクローラーが `.m3-archive-pill-wrapper` を隠していたため露見して
 いなかったが、廃止すると LATEST 直下の小さな「すべて見る」（`.m3-latest-see-all`）と
@@ -856,6 +884,9 @@ WordPress 本体（wordpress.org は遮断）も MySQL も無いため実サイ�
    単独クラスのままでは宣言順に依存して壊れるため、連結形が正しい。
    * 修正前: 390px で 6件表示 / LATEST 2776px / ページ 6.39画面
    * 修正後: 390px で 3件表示 / LATEST 1428px / **ページ 4.86画面**
+
+   なお 2026-08-21 に §25.2 のとおり方針が変わり、この畳み方（および
+   `m3-latest-card--mobile-overflow`）は撤去済み。現在は6件を横並びの行で見せる。
 2. **カテゴリピルのタップ領域が 35px しかなかった**。iOS の推奨 44px を下回るので
    `min-height: 44px` を入れた（≤600px）。
 3. **カテゴリ名がモバイルで省略されていた**。`max-width: 10em` により

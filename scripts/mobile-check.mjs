@@ -30,8 +30,7 @@ function cliOption(name) {
 const BASE = (cliOption('base') ?? process.env.NODE_VISUAL_BASE_URL ?? 'http://cybernode.local').replace(/\/$/, '');
 const EXECUTABLE = process.env.NODE_PW_EXECUTABLE || undefined;
 
-/** index.php の $latest_mobile_limit / $latest_limit と対応させる。 */
-const LATEST_MOBILE_LIMIT = 3;
+/** index.php の $latest_limit と対応させる。幅によらず同じ件数で打ち切る。 */
 const LATEST_LIMIT = 6;
 /** _cards.css / _category-nav.css のブレークポイント。 */
 const MOBILE_BREAKPOINT = 700;
@@ -62,7 +61,6 @@ function collect() {
 	};
 
 	const cards = [...document.querySelectorAll('.m3-post-grid__container--featured > .m3-card')];
-	const overflowCards = [...document.querySelectorAll('.m3-latest-card--mobile-overflow')];
 	const pills = [...document.querySelectorAll('.m3-category-nav__pill')];
 
 	const bleeding = [...document.querySelectorAll('body *')]
@@ -79,13 +77,14 @@ function collect() {
 	return {
 		cardsTotal: cards.length,
 		cardsVisible: cards.filter(visible).length,
-		overflowTotal: overflowCards.length,
-		overflowVisible: overflowCards.filter(visible).length,
-		// 4件目以降は <template> へ退避してあるので、モバイルでは DOM に出てこない。
-		// querySelectorAll は template の中身を拾わないため、content から数える。
-		overflowStashed: (() => {
-			const tpl = document.getElementById('node-latest-overflow');
-			return tpl && tpl.content ? tpl.content.querySelectorAll('.m3-card').length : 0;
+		// 6件ぶんの帯が何画面になるか。デスクトップ並みに一度で見渡せるかの指標。
+		cardHeights: cards.filter(visible).map((el) => Math.round(el.getBoundingClientRect().height)),
+		latestBandScreens: (() => {
+			const shown = cards.filter(visible);
+			if (!shown.length) return null;
+			const top = shown[0].getBoundingClientRect().top;
+			const bottom = shown[shown.length - 1].getBoundingClientRect().bottom;
+			return +((bottom - top) / window.innerHeight).toFixed(2);
 		})(),
 		hasCategorySection: !!document.querySelector('#categories.m3-category-nav'),
 		categorySectionVisible: (() => {
@@ -164,14 +163,16 @@ async function run() {
 			const d = await page.evaluate(collect);
 
 			check(
-				d.cardsVisible === LATEST_MOBILE_LIMIT,
-				`LATEST の表示は ${LATEST_MOBILE_LIMIT} 件`,
+				d.cardsVisible === LATEST_LIMIT,
+				`LATEST の表示は ${LATEST_LIMIT} 件`,
 				`表示${d.cardsVisible} / 全${d.cardsTotal}`
 			);
+			// 縦積みのカード6枚だと3画面ぶんになる。デスクトップは 0.7 画面ほどなので、
+			// モバイルでも 1.5 画面以内に収まっていれば「一度で見渡せる」と言える。
 			check(
-				d.overflowStashed > 0 && d.overflowTotal === 0 && d.overflowVisible === 0,
-				'4件目以降は DOM に出さず <template> へ退避している',
-				`退避${d.overflowStashed} / DOM${d.overflowTotal} / 見えている${d.overflowVisible}`
+				d.latestBandScreens !== null && d.latestBandScreens <= 1.5,
+				'LATEST 6件が一度で見渡せる長さに収まっている',
+				`${d.latestBandScreens} 画面ぶん / 行高 ${d.cardHeights.join(', ')}`
 			);
 			check(d.hasCategorySection && d.categorySectionVisible, 'CATEGORY セクションが出ている', `pill=${d.pillCount}`);
 			check(
@@ -188,6 +189,27 @@ async function run() {
 				console.log(`  INFO  読み込みに失敗したリソース ${resourceErrors.length} 件（テーマ外の可能性あり）: ${resourceErrors.slice(0, 2).join(' | ')}`);
 			}
 			console.log(`  INFO  ページ全体 ${d.pageHeight}px = ${d.screens} 画面ぶん / フッター ${d.footerColumns} 列 / フッターのカテゴリ ${d.footerCategoryLinks} 件`);
+
+			// --- 無限生成の禁則 -------------------------------------------
+			// スクローラーを消しただけでは「今は出ていない」しか言えない。
+			// 実際に最下部まで送っても LATEST が増えないことを確かめる。
+			{
+				const grown = await page.evaluate(async () => {
+					const count = () => document.querySelectorAll('.m3-post-grid__container--featured > .m3-card').length;
+					const before = count();
+					for (let i = 0; i < 6; i += 1) {
+						window.scrollTo(0, document.body.scrollHeight);
+						await new Promise((resolve) => setTimeout(resolve, 350));
+					}
+					window.scrollTo(0, 0);
+					return { before, after: count() };
+				});
+				check(
+					grown.after === grown.before && grown.after === LATEST_LIMIT,
+					'最下部まで送っても LATEST が増えない（無限生成の禁則）',
+					`送る前 ${grown.before} 件 / 送った後 ${grown.after} 件`
+				);
+			}
 
 			await page.screenshot({ path: join(outputDir, 'home-390-full.png'), fullPage: true });
 			const cat = page.locator('#categories');
@@ -256,7 +278,7 @@ async function run() {
 
 		// --- ブレークポイントの境界 ------------------------------------------
 		for (const [width, expected] of [
-			[MOBILE_BREAKPOINT, LATEST_MOBILE_LIMIT],
+			[MOBILE_BREAKPOINT, LATEST_LIMIT],
 			[MOBILE_BREAKPOINT + 1, LATEST_LIMIT],
 		]) {
 			const { context, page, jsErrors } = await openHome(browser, width, 900);
