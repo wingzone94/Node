@@ -199,11 +199,19 @@ final class ThemeSupport {
 
 		$handle = 'node-vite-' . sanitize_title( str_replace( array( '/', '_', '.' ), '-', $key ) );
 
+		/*
+		 * バージョンクエリを付けない。
+		 *
+		 * main.js は vendor チャンクを `./vendor.<hash>.js` と相対 import する。
+		 * ここで `?ver=` を足すと <script> タグ側だけ別 URL になり、ブラウザは
+		 * 同じチャンクを2回ダウンロードして2回評価する（実測 96KB の二重取得）。
+		 * Vite のファイル名は内容ハッシュ付きなので、キャッシュ破棄はファイル名が担う。
+		 */
 		wp_register_script(
 			$handle,
 			NODE_THEME_URI . '/assets/' . $file,
 			array(),
-			$file,
+			null,
 			true
 		);
 		wp_script_add_data( $handle, 'type', 'module' );
