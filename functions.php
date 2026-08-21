@@ -81,6 +81,7 @@ require_once NODE_THEME_DIR . '/inc/category-meta.php';
 require_once NODE_THEME_DIR . '/inc/ajax.php';
 require_once NODE_THEME_DIR . '/inc/spotlight.php';
 require_once NODE_THEME_DIR . '/inc/archive-helpers.php';
+require_once NODE_THEME_DIR . '/inc/icon-font.php';
 require_once NODE_THEME_DIR . '/inc/search-suggest.php';
 require_once NODE_THEME_DIR . '/inc/media.php';
 require_once NODE_THEME_DIR . '/inc/utilities.php';

@@ -39,9 +39,11 @@ declare(strict_types=1);
     <!-- High Performance Font Loading Pattern -->
     <!-- 本文フォント: 非同期ロード + swap (テキストのFOUTは許容) -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-    <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+    <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする。
+         使うアイコンだけを icon_names= で要求する（全アイコンだと 3,874KB）。一覧は inc/icon-font.php。 -->
+    <?php $node_icon_font_url = node_get_icon_font_url(); ?>
+    <link rel="preload" as="style" href="<?php echo esc_url( $node_icon_font_url ); ?>">
+    <link rel="stylesheet" href="<?php echo esc_url( $node_icon_font_url ); ?>">
     <!-- Adobe Fonts kit: edit at fonts.adobe.com to load DIN 2014 only -->
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
 
