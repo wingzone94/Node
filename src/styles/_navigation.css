@@ -351,6 +351,14 @@
     padding-right: 16px;
 }
 
+/* 上の margin-top は、同じ要素に付く .m3-section-spacing { margin-top: 0 } が
+   後から打ち消していて効いていなかった（実測 0px）。その結果ピルが LATEST 面の
+   下端に貼り付き、下側だけ 176px 空く不自然な位置になっていた。
+   クラスを連結して詳細度を上げ、一覧から離して独立したボタンに見せる。 */
+.m3-archive-pill-wrapper.m3-section-spacing {
+    margin-top: clamp(64px, 6vw, 88px);
+}
+
 .m3-archive-pill-button {
     display: inline-flex;
     align-items: center;
