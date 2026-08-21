@@ -31,89 +31,6 @@
     border-radius: 0;
 }
 
-/* モバイルの LATEST は、デスクトップと同じ6件を「横並びの行」で見せる
-   （2026-08-21 ユーザー指示）。縦積みのカード6枚だとアイキャッチのぶんだけ
-   伸びて LATEST だけで3画面ぶんになり、直下の「すべての記事を見る」まで遠い。
-   件数は削らず密度を上げて、6件を一度に見渡せるようにする。
-   700px は --featured グリッドが1列へ落ちる幅（下の auto-fill / 400px）。 */
-@media (max-width: 700px) {
-    .m3-surface--latest .m3-post-grid__container--featured {
-        gap: var(--m3-spacing-s);
-    }
-
-    .m3-surface--latest .m3-post-grid__container--featured > :is(.c-card, .m3-card) {
-        flex-direction: row;
-        align-items: stretch;
-        height: auto;
-        min-height: 0;
-    }
-
-    /* サムネイルは幅に追従させる。320px でも本文側が潰れない下限にしてある。 */
-    .m3-surface--latest .m3-post-grid__container--featured > :is(.c-card, .m3-card) > :is(.c-card__visual, .m3-card__visual) {
-        flex: 0 0 clamp(88px, 27vw, 116px);
-        width: clamp(88px, 27vw, 116px);
-        align-self: stretch;
-        overflow: hidden;
-    }
-
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__image-link, .m3-card__image-link) {
-        display: block;
-        height: 100%;
-    }
-
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__visual, .m3-card__visual) img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    /* min-width: 0 が無いと、長いタイトルが flex アイテムを押し広げて
-       サムネイルごと画面外へ出る。 */
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__content, .m3-card__content) {
-        min-width: 0;
-        justify-content: center;
-        padding: var(--m3-spacing-s) var(--m3-spacing-m) var(--m3-spacing-s) var(--m3-spacing-s);
-    }
-
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card--no-image, .m3-card--no-image) :is(.c-card__content, .m3-card__content) {
-        padding-inline-start: var(--m3-spacing-m);
-        padding-top: var(--m3-spacing-s);
-    }
-
-    /* 行の高さを揃えるため2行で切る。-webkit-line-clamp は Chromium が
-       blockify して効かないので、_title-autofit.css と同じ lh 指定にする。
-       実際の詰め・省略は title-autofit.js が引き継ぐ。 */
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__title, .m3-card__title) {
-        font-size: 0.95rem;
-        line-height: 1.45;
-        overflow: hidden;
-        max-block-size: 2lh;
-    }
-
-    /* カテゴリは折り返させない。折り返すと行ごとに高さが変わって走査しづらい。 */
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__topline, .m3-card__topline) {
-        margin-bottom: var(--m3-spacing-xs);
-    }
-
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__category-container, .m3-card__category-container) {
-        flex-wrap: nowrap;
-        overflow: hidden;
-        margin-bottom: 0;
-    }
-
-    /* 書き手は一覧では全カード同じになりがちで、走査の手がかりにならない。
-       行の高さを1行ぶん節約するため日付だけ残す。 */
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__writer, .m3-card__writer) {
-        display: none;
-    }
-
-    .m3-surface--latest .m3-post-grid__container--featured :is(.c-card__footer, .m3-card__footer) {
-        margin-top: var(--m3-spacing-xs);
-        padding-top: 0;
-        border-top: 0;
-    }
-}
-
 /* LATESTセクション専用のコンテナ設定 (Ver 0.7.0) */
 :is(.l-card-grid__items--featured, .m3-post-grid__container--featured) {
     display: grid;
@@ -159,7 +76,11 @@
     padding-top: 24px; /* Reset padding for list view */
 }
 
-@media (max-width: 768px) {
+/* 700px 以下は下の「一覧をコンパクトな行にする」が引き取るので、
+   ここは 280px のサムネイルが収まらない 701〜768px だけを受け持つ。
+   （以前は 768px 以下すべてで縦積みに戻していたため、アイキャッチ付きの
+   カードが1件あたり約436px になり、本番の全記事一覧は24件で約11画面あった） */
+@media (min-width: 701px) and (max-width: 768px) {
     :is(.l-card-grid__items, .m3-post-grid__container):is(.l-card-grid--list, .m3-post-grid--list) :is(.c-card, .m3-card) {
         flex-direction: column;
     }
@@ -636,4 +557,129 @@
 .m3-no-posts__text {
     color: var(--md-sys-color-on-surface-variant);
     margin-bottom: 32px;
+}
+
+/* ===========================================================================
+   モバイルの一覧はここで最後に上書きする。
+   上の --list 系ルールと詳細度が同じ (0,3,0) なので、宣言順で勝つよう末尾に置く。
+   =========================================================================== */
+
+/* モバイルの記事一覧は「横並びの行」で見せる（2026-08-21 ユーザー指示）。
+   件数は削らず密度を上げて、デスクトップと同じように一度で見渡せるようにする。
+
+   縦積みのカードはアイキャッチのぶんだけ伸びて 1件あたり約436px になり、
+   トップの LATEST 6件で約3画面、本番の全記事一覧（24件）では約11画面あった。
+   トップだけ直しても「すべての記事を見る」の行き先が同じ状態では意味がないので、
+   LATEST・全記事・カテゴリ/タグ/日付アーカイブ・検索結果すべてに同じ形を当てる
+   （どれも .m3-post-grid__container の中に article-card.php を並べている）。
+
+   700px は --featured グリッドが1列へ落ちる幅（下の auto-fill / 400px）。
+   セレクタを二重に書いて詳細度を (0,3,0) にしているのは、上の --list 系ルールと
+   同じ強さに揃えて宣言順で決めるため。 */
+@media (max-width: 700px) {
+    :is(.l-card-grid__items, .m3-post-grid__container):is(.l-card-grid__items, .m3-post-grid__container) {
+        gap: var(--m3-spacing-s);
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) > :is(.c-card, .m3-card):is(.c-card, .m3-card) {
+        flex-direction: row;
+        align-items: stretch;
+        height: auto;
+        min-height: 0;
+    }
+
+    /* サムネイルは幅に追従させる。320px でも本文側が潰れない下限にしてある。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) > :is(.c-card, .m3-card):is(.c-card, .m3-card) > :is(.c-card__visual, .m3-card__visual) {
+        flex: 0 0 clamp(88px, 27vw, 116px);
+        width: clamp(88px, 27vw, 116px);
+        align-self: stretch;
+        overflow: hidden;
+    }
+
+    /* --list 系は .m3-card__visual を `display: flex; align-items: center` にして
+       画像を縦中央へ置く。行にすると画像が伸びずに上下が空くので stretch に戻す。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__visual, .m3-card__visual) {
+        align-items: stretch;
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__image-link, .m3-card__image-link) {
+        display: block;
+        height: 100%;
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__visual, .m3-card__visual) img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* min-width: 0 が無いと、長いタイトルが flex アイテムを押し広げて
+       サムネイルごと画面外へ出る。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__content, .m3-card__content) {
+        min-width: 0;
+        justify-content: center;
+        padding: var(--m3-spacing-s) var(--m3-spacing-m) var(--m3-spacing-s) var(--m3-spacing-s);
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card--no-image, .m3-card--no-image) :is(.c-card__content, .m3-card__content) {
+        padding-inline-start: var(--m3-spacing-m);
+        padding-top: var(--m3-spacing-s);
+    }
+
+    /* 行の高さを揃えるため2行で切る。-webkit-line-clamp は Chromium が
+       blockify して効かないので、_title-autofit.css と同じ lh 指定にする。
+       実際の詰め・省略は title-autofit.js が引き継ぐ。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__title, .m3-card__title) {
+        font-size: 0.95rem;
+        line-height: 1.45;
+        overflow: hidden;
+        max-block-size: 2lh;
+    }
+
+    /* カテゴリは折り返させない。折り返すと行ごとに高さが変わって走査しづらい。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__topline, .m3-card__topline) {
+        margin-bottom: var(--m3-spacing-xs);
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__category-container, .m3-card__category-container) {
+        flex-wrap: nowrap;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    /* 実際に折り返すのは内側の .m3-article__category-group。
+       ここを止めないとカテゴリの多い記事だけ行が高くなり、高さが揃わない。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) .m3-article__category-group {
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+
+    /* チップ内で文字が折り返すと、チップ自体が2行ぶんの高さになる。
+       ただし縮まないままだと行から溢れ、カード端で切れて
+       「+N」バッジまで画面外へ出てしまう（320px で実測）。
+       チップ側を縮めて省略記号に逃がし、全部を行内へ収める。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) .m3-label--category {
+        flex: 0 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 「+N」は何件隠れているかを示す要は無いので、縮めずに必ず残す。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) .m3-label--category-more {
+        flex: 0 0 auto;
+    }
+
+    /* 書き手は一覧では全カード同じになりがちで、走査の手がかりにならない。
+       行の高さを1行ぶん節約するため日付だけ残す。 */
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__writer, .m3-card__writer) {
+        display: none;
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__footer, .m3-card__footer) {
+        margin-top: var(--m3-spacing-xs);
+        padding-top: 0;
+        border-top: 0;
+    }
 }
