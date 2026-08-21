@@ -59,13 +59,26 @@ async function inspectTextLayout(page) {
       '.article-content *',
     ].join(',');
 
+    /*
+     * 読み上げ専用テキスト（.screen-reader-text 等）は、意図的に 1px へ潰して
+     * clip / clip-path で隠す。見た目には存在しないのに「文字が横へ溢れている」
+     * と判定されてしまうので、目視の検査からは除く。
+     * WordPress 標準のページ送り見出し「投稿のページ送り」がこれに当たる。
+     */
+    function isVisuallyHidden(element, style, rect) {
+      if (element.closest('.screen-reader-text, .sr-only, .visually-hidden')) return true;
+      const clipped = style.clipPath === 'inset(50%)' || /rect\(\s*1px/.test(style.clip);
+      return clipped && rect.width <= 2 && rect.height <= 2;
+    }
+
     function isVisible(element, style, rect) {
       return (
         rect.width > 0 &&
         rect.height > 0 &&
         style.visibility !== 'hidden' &&
         style.display !== 'none' &&
-        Number(style.opacity) !== 0
+        Number(style.opacity) !== 0 &&
+        !isVisuallyHidden(element, style, rect)
       );
     }
 
