@@ -40,11 +40,11 @@ get_header();
         get_template_part('template-parts/headline-carousel');
 
         /*
-         * カテゴリから探す（1.3.1 ユーザー指示）。
-         * LATEST の「上」に置くのは、記事リストを最後まで送らないと回遊先に
-         * 出会えない状態そのものが問題だったため。ピルなので縦は数行で済む。
+         * トップの「CATEGORY / カテゴリから探す」は 2026-08-21 に取り下げた。
+         * テンプレート（template-parts/category-nav.php）と
+         * node_get_navigation_categories() は残してあるので、
+         * 戻すならこの行を復活させるだけでよい。
          */
-        get_template_part('template-parts/category-nav');
     }
     ?>
 

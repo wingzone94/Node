@@ -174,13 +174,9 @@ async function run() {
 				'LATEST 6件が一度で見渡せる長さに収まっている',
 				`${d.latestBandScreens} 画面ぶん / 行高 ${d.cardHeights.join(', ')}`
 			);
-			check(d.hasCategorySection && d.categorySectionVisible, 'CATEGORY セクションが出ている', `pill=${d.pillCount}`);
-			check(
-				d.pillMinHeight === null || d.pillMinHeight >= MIN_TAP_TARGET,
-				`カテゴリピルのタップ領域が ${MIN_TAP_TARGET}px 以上`,
-				`最小 ${d.pillMinHeight}px`
-			);
-			check(d.pillTruncated.length === 0, 'カテゴリ名が省略されていない', d.pillTruncated.join(' / ') || 'なし');
+			// トップの「カテゴリから探す」は 2026-08-21 に取り下げた。
+			// テンプレートは残っているので、うっかり復活していないかを見る。
+			check(!d.hasCategorySection, 'トップに CATEGORY セクションが出ていない', `pill=${d.pillCount}`);
 			check(d.archivePillVisible, '「すべての記事を見る」が出ている');
 			check(d.scrollerScripts.length === 0, '無限スクロールのスクリプトが読み込まれていない', d.scrollerScripts.join(', ') || 'なし');
 			check(!d.horizontalOverflow, '横スクロールが発生していない', d.bleeding.join(' | ') || '');
