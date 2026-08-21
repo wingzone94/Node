@@ -356,9 +356,34 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
         const links = [...nav.querySelectorAll('[data-node-section]')];
         if (!menu || !currentIcon || !currentLabel || !links.length) return;
 
+        // 閉じたことを覚える。以前はページを移るたびにナビが戻ってきていたので、
+        // 「閉じる」を押しても閉じたことにならなかった。
+        const DISMISS_KEY = 'node-section-nav-dismissed';
+        const PEEK_KEY = 'node-section-nav-peeked';
+        const readFlag = (key) => {
+            try {
+                return sessionStorage.getItem(key) === '1';
+            } catch (e) {
+                return false;
+            }
+        };
+        const writeFlag = (key) => {
+            try {
+                sessionStorage.setItem(key, '1');
+            } catch (e) {}
+        };
+
+        if (readFlag(DISMISS_KEY)) {
+            nav.hidden = true;
+            return;
+        }
+
         dismissButton?.addEventListener('click', () => {
             menu.removeAttribute('open');
             nav.hidden = true;
+            writeFlag(DISMISS_KEY);
+            // 閉じた人に初回peekを見せない。次のページで勝手に開くのは閉じる操作の否定になる。
+            writeFlag(PEEK_KEY);
         });
 
         const setCurrent = (link) => {
@@ -424,16 +449,17 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
         // 実機録画（2026-08-20）では35秒スクロールし続けて一度も開かれなかった。
         // 最初のスクロールで一度だけ開いて中身を見せ、少し置いてから畳む。
         // 毎回開くと押し付けになるので、セッション中は繰り返さない。
-        const PEEK_KEY = 'node-section-nav-peeked';
-        let peeked = true;
+        // sessionStorage が使えない環境（プライベートモード等）では readFlag が
+        // false を返すため、下の hasStorage で開くかどうかを決める。
+        // 「一度だけ」を保証できない以上、開かない方を選ぶ。
+        let hasStorage = false;
         try {
-            peeked = sessionStorage.getItem(PEEK_KEY) === '1';
-        } catch (e) {
-            // プライベートモード等で sessionStorage が使えないときは黙って諦める。
-            // 「一度だけ」を保証できない以上、開かない方を選ぶ。
-        }
+            sessionStorage.setItem('node-section-nav-probe', '1');
+            sessionStorage.removeItem('node-section-nav-probe');
+            hasStorage = true;
+        } catch (e) {}
 
-        if (!peeked) {
+        if (hasStorage && !readFlag(PEEK_KEY)) {
             let peekTimer = 0;
             const cancelPeek = () => {
                 // 読み手が触ったら自動では畳まない。操作を上書きしない。
@@ -443,9 +469,7 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
 
             const peekOnce = () => {
                 if (nav.hidden || menu.open) return;
-                try {
-                    sessionStorage.setItem(PEEK_KEY, '1');
-                } catch (e) {}
+                writeFlag(PEEK_KEY);
 
                 menu.setAttribute('open', '');
                 nav.addEventListener('pointerdown', cancelPeek, { once: true });

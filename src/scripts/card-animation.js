@@ -60,6 +60,16 @@ export const initCardAnimations = () => {
             });
         }
 
+        // 「動きを減らす」設定では出現アニメーションを行わない。
+        // テーマの他の箇所（_article.css ほか10ファイル）は CSS の
+        // prefers-reduced-motion で尊重しているが、ここは GSAP 製なので
+        // メディアクエリが効かず素通りしていた。
+        // 早期 return するので gsap.set による opacity: 0 も掛からず、
+        // カードは最初から見えたままになる（レイアウト調整は上で済ませている）。
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
         // 初期状態（高速化のため y移動を控えめに）
         gsap.set(cards, { 
             opacity: 0, 
