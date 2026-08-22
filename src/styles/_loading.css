@@ -3,8 +3,11 @@
 .m3-loading-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(255, 244, 229, 0.85); /* fallback warm surface */
+    /* R3: 0.85 では blur が見えなかった。読み込み中も下のコンテンツが「ぼやけて見える」のが
+       このオーバーレイの意図なので、削除せず透過を上げて実効あるガラスにする。 */
+    background: rgba(255, 244, 229, 0.72); /* fallback warm surface */
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     display: flex;
     flex-direction: column;
     align-items: center;

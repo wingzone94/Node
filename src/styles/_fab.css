@@ -57,9 +57,9 @@
     right: 24px;
     width: 320px;
     max-height: 50vh;
+    /* R3: 背景 98% ＝ ぼかす対象が無いので blur(25px) を削除した（GPU コストのみのルールだった）。
+       ガラスにするなら背景の透過を上げる方が先。ここは不透明なパネルとして扱う。 */
     background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 98%, transparent);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
     border-radius: var(--m3-radius-large);
     border: 1px solid var(--md-sys-color-outline-variant);
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);

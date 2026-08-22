@@ -182,6 +182,7 @@
     background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 55%, transparent);
     border: none;
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .m3-archive-header__desc p:first-child {

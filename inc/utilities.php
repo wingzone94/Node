@@ -330,6 +330,14 @@ function node_generate_m3_colors() {
     $article_on_accent_container_dark = node_get_readable_text_color($article_accent_container_dark);
     ?>
     <style id="m3-dynamic-colors">
+        /*
+         * ここに出すのは「PHP でしか決まらない動的トークン」だけに限る（R2 で整理）。
+         * surface / on-surface / surface-container-* / outline 系は色が固定なので
+         * 正本は src/styles/_variables.css。以前は両方に定義があり、
+         * このインラインが後勝ちで CSS 側を潰していたため、
+         * _variables.css を編集しても色が変わらないという状態になっていた。
+         * 静的な色をこのブロックへ戻さないこと。
+         */
         :root {
             --md-sys-color-primary: <?php echo esc_attr($seed_color); ?>;
             --md-sys-color-on-primary: <?php echo esc_attr($on_primary); ?>;
@@ -339,13 +347,6 @@ function node_generate_m3_colors() {
             --node-article-on-accent: <?php echo esc_attr($article_on_accent); ?>;
             --node-article-accent-container: <?php echo esc_attr($article_accent_container); ?>;
             --node-article-on-accent-container: <?php echo esc_attr($article_on_accent_container); ?>;
-            --md-sys-color-surface: #FFF4E5; /* Warm Orange Background */
-            --md-sys-color-on-surface: #2b1700;
-            --md-sys-color-surface-container-low: #ffffff;
-            --md-sys-color-surface-container: #ffe8d1;
-            --md-sys-color-surface-container-high: #f7ddc6;
-            --md-sys-color-outline: #857362;
-            --md-sys-color-outline-variant: #d6c2b1;
         }
         [data-theme="dark"] {
             --md-sys-color-primary: <?php echo esc_attr($seed_color_dark); ?>;
@@ -356,11 +357,6 @@ function node_generate_m3_colors() {
             --node-article-on-accent: <?php echo esc_attr($article_on_accent_dark); ?>;
             --node-article-accent-container: <?php echo esc_attr($article_accent_container_dark); ?>;
             --node-article-on-accent-container: <?php echo esc_attr($article_on_accent_container_dark); ?>;
-            --md-sys-color-surface: #1e1b16;
-            --md-sys-color-on-surface: #ebe0d9;
-            --md-sys-color-surface-container-low: #25221b;
-            --md-sys-color-surface-container: #2a2720;
-            --md-sys-color-surface-container-high: #322f28;
         }
     </style>
     <?php

@@ -53,10 +53,10 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* R3: 背景が完全不透明のため blur(10px) は一切描画に寄与していなかったので削除。 */
     background-color: var(--md-sys-color-surface-container);
     border: 1px solid var(--md-sys-color-outline-variant);
     box-shadow: var(--md-sys-elevation-level1);
-    backdrop-filter: blur(10px);
 }
 
 .m3-toc-sidebar__header {
