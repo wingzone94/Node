@@ -11,6 +11,7 @@
     "verify:routes": "bun scripts/route-check.mjs",
     "verify:visual": "bun x playwright install chromium && bun scripts/visual-check.mjs",
     "verify:mobile": "bun x playwright install chromium && bun scripts/mobile-check.mjs",
+    "verify:tokens": "bun x playwright install chromium && bun scripts/token-audit.mjs",
     "verify:icon-subset": "bun scripts/verify-icon-subset.mjs"
   },
   "dependencies": {

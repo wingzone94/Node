@@ -1042,3 +1042,84 @@ bun scripts/mobile-check.mjs --base=http://...     # URL 指定
 横スクロール無し / フッター列数 / 検索サジェストの位置・タップ領域・省略の有無。
 検索サジェストは実データ依存のため、候補0件の環境では SKIP 扱いにしてある。
 失敗は exit 1 なのでリリースゲートに組み込める。
+
+---
+
+## Work Log: Node 2.0 Preview 2 — デザイントークン欠落の調査（Claude Code / クラウド） / 2026-08-22
+
+### 発端
+
+Discord `#ご意見・ご感想` に、トップページ（iPhone / Safari）のスクリーンショット付きで
+「うそのグラスモーフィズム / 変なドロップシャドウ / デカすぎるピル型のタグ / 色 / カード」
+という指摘が挙がった。趣味の問題か実装の欠陥かを切り分けるため実測した。
+
+### 実測
+
+**5点中4点は趣味の問題ではなく実装バグ。根因は「宣言されているのに定義されていないトークン」ひとつ。**
+
+* `--m3-elevation-1`〜`-4` と `--md-sys-elevation-level1` が**どこにも未定義** → `box-shadow` 37 宣言が全無効。
+  `.m3-card` は通常も hover も影 `none` で、`transition: box-shadow 0.4s` は死んだコード。
+  一方 `.m3-spotlight-badge` は手打ちの影が生きているので、**ピルだけ浮いてカードが平ら＝階層が逆**。
+* `--md-sys-color-on-surface-variant` が**どこにも未定義**（94 箇所）→ 副文が本文色を継承し、カード内の強弱が消える。
+* `--md-sys-color-surface-container-highest` が light で欠落（35 箇所）。
+* `.m3-spotlight-badge` は高さ 45px / 文字 18.4px。直上の `.m3-headlines__title` は 14.4px ＝ **タグが見出しより大きい**。
+* `backdrop-filter` 11 ルールのうち実効ありは 4 のみ。`_toc-sidebar.css:59` は完全不透明の上に `blur(10px)`。
+* コントラスト: 白 on `#FF9900` = 2.14:1、オレンジ見出し on 白カード = 2.14:1（AA 4.5 に対して）。
+* **二重パレット**: `src/styles/_variables.css` の dark surface 値は `wp_head` のインライン
+  （`inc/utilities.php:332-365`）に後勝ちで上書きされ死んでいる。開発者が触る側が効かない。
+
+計測は `assets/css/style.css` ＋ 上記インライン相当を重ねた DOM を Chromium で `getComputedStyle`。
+**出荷 CSS だけを見ると誤診する**（`--md-sys-color-surface-container-high` と `--md-sys-color-outline` の
+light 値はインライン側にしか無い）ため、必ずランタイム込みで測ること。
+
+### 完了
+
+* `NODE-2.0-PREVIEW2.md` を追加。是正案を R1〜R6 に分割し、実施順とスコープ線引きまで記載。
+* `scripts/token-audit.mjs` と `bun run verify:tokens` を追加（下記）。
+* `NODE-2.0.md` の冒頭に従属文書へのポインタを1行追加。
+* **CSS / PHP / JS は一切変更していない。** 調査と資材のみ。
+
+### 検証スクリプト
+
+Chromium での実測に使った検証ページは scratchpad にしか無く、クラウドのコンテナごと消える。
+ローカル（cybernode.local）には本物の WordPress があるので、同じ判定を実サイトへ向けて回せる
+`scripts/token-audit.mjs` を追加した。R1〜R4 の受け入れ条件そのものになっている。
+
+```bash
+bun scripts/token-audit.mjs --static          # LocalWP 不要。出荷CSSの棚卸しだけ
+bun run verify:tokens                          # 既定は http://cybernode.local
+bun scripts/token-audit.mjs --base=http://...  # URL 指定
+```
+
+判定: 必須トークンが light/dark 両方で解決する / カードとヘッダーに影がある / hover で影が変化する /
+カードの副文がタイトルと別の色 / `backdrop-filter` の背景が実効ある透過（α < 0.85）/
+ピルがセクション見出しより小さくタップ領域 44px 以上。
+コントラストは R6 が未承認のため INFO 出力のみで FAIL にしない。失敗は exit 1。
+
+注意点:
+* **R1〜R4 実施前は FAIL するのが正常。** 故障ではない。
+* 静的モードは「どこかに定義があるか」しか見ない。ダークにだけ定義がありライトで欠けるものは
+  ライブモードが light/dark 両方を実測して捕まえる。
+* 静的モードはビルド済み `assets/css/style.css` を数えるので、`src/styles/` を直接 grep した数とは
+  1〜2件ずれる（現状 14 種類 / 149 宣言）。
+
+### 引き継ぎ（ローカルはここから）
+
+ブランチ `claude/opinion-issue-s27bup`。
+
+1. `git fetch origin claude/opinion-issue-s27bup && git checkout claude/opinion-issue-s27bup && bun install`
+2. `bun scripts/token-audit.mjs --static` で現状を確認（LocalWP 不要）
+3. 次の一手は **R1（elevation トークンの定義）を単独で**。37 箇所へ一斉に効くので他タスクと混ぜない
+   （AGENTS.md「1タスク1目的」）。影のトーンは **M3 標準の黒ベース**でユーザー確定済み。具体値は
+   `NODE-2.0-PREVIEW2.md` §7 R1 に記載。
+4. 検証は AGENTS.md「Step 2: ローカルテスト環境（cybernode.local）へデプロイ」の rsync 手順に従い、
+   `bun x vite build` → 同期 → `bun run verify:tokens` → 目視。
+5. 以降は `R4 → R2 → R3`。R5（手打ち影 185 箇所のトークン化）は Preview 3 送り。
+
+### リリース境界
+
+* **R6（コントラスト是正）は着手しないこと。** AGENTS.md の
+  「塗りつぶしピル・バッジ・チップの文字は白で維持」「コントラスト改善でも勝手に濃色へ変更しない」に該当する。
+  `NODE-2.0-PREVIEW2.md` には数値のみ記載してある。`NODE-2.0.md` §2.4 が「白固定をやめる」と定めているので、
+  2.0 のトーナルパレット導入とまとめて扱うのが整合する。ユーザー承認が要る。
+* 本作業では ZIP を生成していない。cybernode.local 検証も未実施（クラウド環境に LocalWP が無いため）。
