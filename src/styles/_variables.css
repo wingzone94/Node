@@ -29,12 +29,32 @@
     --m3-radius-large: 28px;
     --m3-radius-extra-large: 32px;
     --m3-radius-full: 1000px;
+
+    /* --- Material 3 Elevation (R1 / NODE-2.0-PREVIEW2.md §7)
+       M3 標準の黒ベース2段重ね。light / dark 共通で、面の色ではなく影で階層を出す。
+       これ以前は未定義のため box-shadow: var(--m3-elevation-*) が
+       invalid at computed-value time となり、37 宣言が全滅していた。 */
+    --m3-elevation-1: 0 1px 2px 0 rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+    --m3-elevation-2: 0 1px 2px 0 rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+    --m3-elevation-3: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px 0 rgba(0,0,0,.30);
+    --m3-elevation-4: 0 6px 10px 4px rgba(0,0,0,.15), 0 2px 3px 0 rgba(0,0,0,.30);
+    --md-sys-elevation-level1: var(--m3-elevation-1);
     
     /* --- Material 3 Surface Colors (Light) --- */
     --md-sys-color-surface: #FFF4E5; /* Warm Orange Background */
     --md-sys-color-on-surface: #2b1700;
+    /* R2: 副文・日付・抜粋を本文より弱く見せるトーン。
+       白カード 6.59:1 / クリーム地 6.06:1 / container-high 5.06:1 でいずれも AA。
+       未定義だった間は color 宣言が無効化され、親（本文色）を継承して階層が消えていた。 */
+    --md-sys-color-on-surface-variant: #6B5A4A;
     --md-sys-color-surface-container-low: #ffffff;
     --md-sys-color-surface-container: #ffe8d1;
+    /* R2: surface 系の正本をこのファイルへ一本化した（旧: inc/utilities.php のインライン）。
+       container-high と outline はインライン側にしか無く、CSS だけ見ると診断を誤る状態だった。 */
+    --md-sys-color-surface-container-high: #f7ddc6;
+    /* R2: light だけ欠けていた最上段。ladder の刻み（-8 -11 -11）を container-high から延長した。 */
+    --md-sys-color-surface-container-highest: #efd2bb;
+    --md-sys-color-outline: #857362;
     --md-sys-color-outline-variant: #d6c2b1;
 
     /* 見出しだけ Manrope、本文は Inter（2026-08-08 ユーザー決定）。
@@ -124,11 +144,15 @@
     --md-sys-color-on-primary-container: #ffdcbe;
     --md-sys-color-secondary-container: #59422c;
     --md-sys-color-on-secondary-container: #fedcbe;
-    --md-sys-color-surface: #1B1812; /* Deeper, richer dark brown */
-    --md-sys-color-on-surface: #F5EFEB; 
-    --md-sys-color-surface-container-low: #221F18;
-    --md-sys-color-surface-container: #2A261F;
-    --md-sys-color-surface-container-high: #322E26;
+    /* R2: ここの値は長らく inc/utilities.php のインラインに後勝ちで潰され「死んで」いた。
+       正本をこのファイルへ一本化するにあたり、実際に描画されていたインライン側の値へ
+       揃えてある（見た目を変えないための移設であり、色の変更ではない）。 */
+    --md-sys-color-surface: #1e1b16; /* Deeper, richer dark brown */
+    --md-sys-color-on-surface: #ebe0d9;
+    --md-sys-color-on-surface-variant: #D6C6B8;
+    --md-sys-color-surface-container-low: #25221b;
+    --md-sys-color-surface-container: #2a2720;
+    --md-sys-color-surface-container-high: #322f28;
     --md-sys-color-surface-container-highest: #3D372E;
     --md-sys-color-outline: #9F8E7D;
     --md-sys-color-outline-variant: #524437;

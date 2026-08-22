@@ -708,7 +708,7 @@
     padding: 4px 12px;
     border-radius: 100px;
     letter-spacing: 0.05em;
-    backdrop-filter: blur(4px);
+    /* R3: 単色の親の上に乗るピルで、ぼかす対象が存在しないため backdrop-filter を削除。 */
     border: 1px solid rgba(255, 153, 0, 0.2);
 }
 
@@ -796,13 +796,33 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 20px;
+    /* R4: 45px / 18.4px から M3 chip 相当（36px / 14.4px）へ。
+       9px + 18px + 9px = 36px。角丸はピルのまま維持する。 */
+    padding: 9px 16px;
     border-radius: var(--m3-radius-extra-large);
-    font-size: 1.15rem;
+    font-size: 0.9rem;
+    line-height: 1.25;
     font-weight: 700;
     text-decoration: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
+}
+
+/* R4: アイコンは 24px 固定だとピルの高さを一人で決めてしまうので 18px（M3 chip）。
+   トップ（.special-features）と特集一覧（.m3-archive-spotlight-pills）の両方に効かせる。
+   font-size だけ !important なのはカスケードレイヤーのため:
+   本ファイルは @layer components に入るが、Google Fonts の
+   `.material-symbols-outlined { font-size: 24px }` はレイヤー外で、
+   レイヤー外の通常宣言はレイヤー内のどんな特異度にも勝つ。
+   !important を付けたレイヤー内宣言だけがこれを上書きできる。
+   これを外すと箱 18px にグリフ 24px が入り overflow: hidden で欠ける。 */
+.m3-spotlight-badge > .material-symbols-outlined {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    overflow: hidden;
+    font-size: 18px !important;
+    line-height: 1;
 }
 
 .m3-spotlight-badge:hover {
@@ -2079,9 +2099,10 @@
 
 /* --- PhotoSwipe M3 Integration --- */
 .pswp__bg {
+    /* R3: opacity 0.95 で背後がほぼ見えず、全画面要素に blur(12px) を払うだけだったので削除。
+       ライトボックスは「ページを隠す」のが目的なので、透過を上げる方向は採らない。 */
     background: var(--md-sys-color-surface) !important;
     opacity: 0.95 !important;
-    backdrop-filter: blur(12px);
 }
 
 .pswp__img--placeholder {
