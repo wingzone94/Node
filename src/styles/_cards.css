@@ -278,13 +278,15 @@
     text-decoration: none;
     line-height: 1.2;
     border: none !important;
-    box-shadow: var(--m3-elevation-2);
-    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
+    /* 影は持たない（2026-08-23 ユーザー指示）。
+       カードが elevation を得た今、ピルにも影があるとカードの上にさらに浮いて見え、
+       階層が二重になる。ピルはカード面に貼り付いた札として扱う。
+       box-shadow を外したので transition からも落とした（両端が none で死ぬため）。 */
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .m3-label--category:hover {
     transform: translateY(-2px);
-    box-shadow: var(--m3-elevation-2);
 }
 
 .m3-label--category,
