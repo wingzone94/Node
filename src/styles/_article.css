@@ -1746,8 +1746,11 @@
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1.5;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    /* text-transform: uppercase は外した（2026-08-23）。
+       旧実装から引き継いだ指定だが、カテゴリ名（Made by Google（2026）、Node Library など）が
+       すべて大文字に潰れる。日本語には効かないので無害だと判断していたのは誤りだった。
+       letter-spacing はもともと大文字ラベル向けの値なので 0.05em → 0.02em に緩める。 */
+    letter-spacing: 0.02em;
 }
 
 /* min-width: 0 は「flex アイテムは内容の最小幅より小さくならない」既定を外すためのもの。
