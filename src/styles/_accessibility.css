@@ -1,9 +1,11 @@
 /* WCAG 2.2 AA contrast corrections for the brand-orange palette. */
 
 /* Keep #FF9900 as the brand/background color and use a darker orange for text. */
+/* .m3-breadcrumbs__item a / :hover はここから外した（2026-08-22）。
+   パンくずが塗り面のチップになり、その面の上では --md-sys-color-accent-text が
+   light で 4.16:1 と AA を割るため、この補正は目的を果たさなくなる。
+   色の正本は _article.css（components）側の .m3-breadcrumbs__item > a に移した。 */
 .m3-section-title,
-.m3-breadcrumbs__item a,
-.m3-breadcrumbs__item a:hover,
 .m3-modal__title-group .material-symbols-outlined,
 .m3-suggestion-item .material-symbols-outlined,
 .m3-search-section-label,

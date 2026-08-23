@@ -239,22 +239,27 @@
     outline-offset: 2px;
 }
 
-/* 枠を固定比にせず画像の縦横比そのままに合わせる。
-   16:9 に固定して contain すると、縦長・横長の画像で上下左右に帯（余白）が出るため。 */
+/* 枠は 16:9 固定。画像は cover で必ず枠いっぱいに敷き詰める（2026-08-22 ユーザー指示）。
+   以前は contain + 高さ auto にしていたが、carousel 表示では枠がカードの余り高さを取るため
+   画像の比率と一致せず、上下に余白が出ていた（実測 6.4px × 2）。
+   cover なら比率が合わない分は切り取られるだけで、余白は原理的に出ない。 */
 .c-headline-card__visual {
     position: relative;
     display: block;
     overflow: hidden;
     background: transparent;
+    aspect-ratio: 16 / 9;
 }
 
 .c-headline-card__image {
-    /* トリミングせず全体表示。高さは画像の比率に追従させるので帯が出ない。
-       極端に縦長の画像だけは上限で抑える（1枚がカード列を支配しないように）。 */
+    /* 枠に対して絶対配置で四辺を固定する。width/height 100% だけだと
+       親の高さが auto に解決される場面で潰れることがあるため。 */
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: auto;
-    max-height: 200px;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
     display: block;
 }
 
@@ -292,18 +297,10 @@
     padding: 12px;
 }
 
-/* 画像枠は残りの高さいっぱいを取り、画像はその中で天地中央。カードごとに
-   比率が違っても写真の周りに均等な余白ができるだけで、帯（別色の縞）は出ない。 */
+/* 画像枠は 16:9 のまま固定し、余り高さは本文側（.c-headline-card__body の flex: 1 1 auto）に
+   吸わせる。枠を伸縮させると比率が崩れ、cover でも枠自体が間延びしてしまう。 */
 .c-headline-carousel[data-view="carousel"] .c-headline-card__visual {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 0;
-}
-
-.c-headline-carousel[data-view="carousel"] .c-headline-card__image {
-    max-height: 100%;
+    flex: 0 0 auto;
 }
 
 /* 文章ブロックは下端へ寄せて、カード間でカテゴリ・タイトル・著者の行を揃える */
@@ -579,16 +576,10 @@
    空きスペース（字下げ）を作らずに済む。 */
 .c-headline-carousel[data-view="list"] .c-headline-card__visual {
     order: 9;
-    /* 幅は日付列を揃えるため固定枠。高さは画像の比率なりで帯を作らない */
+    /* 幅は日付列を揃えるため固定枠。高さは 16:9（96 × 54）で、中身は cover で埋める。
+       以前は width: auto + margin-inline: auto だったため、横幅の狭い画像で左右に余白が出ていた。 */
     flex: 0 0 96px;
     border-radius: var(--m3-radius-small);
-}
-
-.c-headline-carousel[data-view="list"] .c-headline-card__image {
-    max-height: 56px;
-    width: auto;
-    max-width: 100%;
-    margin-inline: auto;
 }
 
 /* リスト表示だけの仕様（2026-08-02 ユーザー指示）:

@@ -113,7 +113,11 @@ body.lf-theme .lf-article-header__title {
 	text-shadow: none;
 }
 
-/* 3-4. Metadata — 弱い。読み飛ばせること。 */
+/* 3-4. Metadata — 弱い。読み飛ばせること。
+   2026-08-22 ユーザー指示により、公開／更新の日時を塗り面（図形）の中に入れた。
+   面を与えるぶん強くなるので、「弱い」はサイズと文字色の側で維持する:
+   本文 13px → 12px、ラベルはさらに 0.9em、文字色は --lf-on-surface-secondary のまま
+   （--lc-on-surface へ上げない）、枠線も影も付けない。行の margin も変えない。 */
 body.lf-theme .lf-article-header__meta {
 	display: flex;
 	flex-wrap: wrap;
@@ -123,10 +127,20 @@ body.lf-theme .lf-article-header__meta {
 	color: var(--lf-on-surface-secondary);
 }
 
+/* 日時と執筆者。同じ行にある .lf-meta__chip（Library）と寸法を完全に揃え、
+   塗りの有無だけを「中立の情報 / アクセントのリンク」という意味の差にする。
+   透明な 1px 枠は、チップ側の実線 1px ぶんの高さ差（2px）を吸収するためのもの。
+   align-items: baseline はピル内でラベルと日付のベースラインを揃える指定なので残す。 */
 body.lf-theme .lf-meta__item {
 	display: inline-flex;
 	align-items: baseline;
 	gap: 0.4em;
+	padding: 0.25em 0.85em;
+	border: 1px solid transparent;
+	border-radius: var(--lf-shape-chip);
+	background: var(--lf-meta-fill);
+	font-size: var(--lf-text-2xs);
+	line-height: 1.6;
 	font-variant-numeric: tabular-nums;
 }
 
@@ -134,6 +148,13 @@ body.lf-theme .lf-meta__label {
 	font-size: var(--lf-text-2xs);
 	letter-spacing: 0.06em;
 	color: var(--lf-on-surface-muted);
+}
+
+/* 本文を 12px へ落とした結果ラベルと同寸になり階層が消えるので、記事ヘッダーの中でだけ
+   ラベルをもう一段小さくする。.lf-meta__label は page.php の「最終更新」でも使うため、
+   スコープを .lf-article-header__meta に必ず限定すること。 */
+body.lf-theme .lf-article-header__meta .lf-meta__label {
+	font-size: 0.9em;
 }
 
 /* チップ（分類・状態）はピルのまま維持する（§22）。 */

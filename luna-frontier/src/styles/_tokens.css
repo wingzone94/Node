@@ -111,6 +111,10 @@ body.lf-theme {
 	 * --------------------------------------------------------------- */
 	--lf-paper: var(--md-sys-color-surface-container-low, #ffffff);
 	--lf-paper-sunken: var(--lc-surface);
+	/* 記事ヘッダーのメタ行（公開 / 更新 / 執筆）を載せる面。
+	   背後は --lf-paper なので、light と dark で最適な段が違う（--lf-rule と同じ事情）。
+	   light は surface-container で対 paper 1.19、dark は最上段でも 1.35 にしかならない。 */
+	--lf-meta-fill: var(--md-sys-color-surface-container, #ffe8d1);
 	--lf-rule: color-mix(in srgb, var(--lc-outline) 60%, transparent);
 	--lf-rule-strong: var(--lc-outline);
 
@@ -144,6 +148,7 @@ body.lf-theme[data-theme="dark"],
 
 	--lf-paper: var(--md-sys-color-surface-container-low, #221f18);
 	--lf-paper-sunken: var(--md-sys-color-surface, #1b1812);
+	--lf-meta-fill: var(--md-sys-color-surface-container-highest, #3D372E);
 	--lf-rule: color-mix(in srgb, var(--lc-outline) 70%, transparent);
 }
 

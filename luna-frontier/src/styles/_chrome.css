@@ -191,6 +191,23 @@ body.lf-theme:has(.lf-topic-nav__group--spotlight) .special-features {
 		display: none;
 	}
 
+	/*
+	 * Topic Nav を消すと、固定ヘッダー（64px）の高さを引き受ける要素が居なくなる。
+	 * しかし :has(.lf-topic-nav) は display: none の要素にも一致するため、
+	 * 上の「clearance は Topic Nav が担う」補正（padding-top: --lf-space-m）だけが残り、
+	 * main がヘッダーの裏へ潜っていた（実測: main top=0 / パンくずは y=40〜66 で完全に不可視）。
+	 * モバイルではコンテンツ側でヘッダー高さを持ち直す。
+	 */
+	body.lf-theme:has(.lf-topic-nav) :is(.m3-home-layout, .m3-archive-layout, .m3-date-archive),
+	body.lf-theme:has(.lf-topic-nav) .article-view,
+	body.lf-theme:has(.lf-topic-nav) .site-main.m3-search-layout,
+	/* node_library の2テンプレートは main のクラス体系が別で、上の一覧に含まれない。
+	   デスクトップでは Topic Nav の margin が clearance を担うので padding は 0 のままでよい。 */
+	body.lf-theme:has(.lf-topic-nav) .site-main.node-library-single,
+	body.lf-theme:has(.lf-topic-nav) .site-main.node-library-archive {
+		padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + var(--lf-space-m));
+	}
+
 	body.lf-theme .lf-topic-nav__inner {
 		gap: var(--lf-space-2xs);
 	}
