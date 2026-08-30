@@ -32,18 +32,18 @@ ob_start();
 node_the_post_badges($post_id, 'compact');
 $badges_html = trim(ob_get_clean());
 
-// シリーズバナー: 画像ありは画像右上、画像なしはカテゴリ行右端に出す
+// シリーズバナー: アイキャッチに重ねず、カテゴリ行右端に出す（画像との衝突防止）
 $series_banner_html = '';
 if (function_exists('node_the_series_banner')) {
     ob_start();
-    node_the_series_banner($post_id, $has_image ? '' : 'm3-card__series-banner--no-image');
+    node_the_series_banner($post_id);
     $series_banner_html = trim(ob_get_clean());
 }
 
 $modified = function_exists('node_get_post_modified_display') ? node_get_post_modified_display($post_id) : null;
 
 $has_category = has_category('', $post_id);
-$has_topline_labels = ('' !== $badges_html) || (!$has_image && '' !== $series_banner_html);
+$has_topline_labels = ('' !== $badges_html) || ('' !== $series_banner_html);
 ?>
 <article id="post-<?php the_ID(); ?>" <?php post_class('m3-card c-card ' . $card_class . ($has_image ? ' m3-card--has-image c-card--has-image' : ' m3-card--no-image c-card--no-image')); ?>>
 
@@ -53,7 +53,6 @@ $has_topline_labels = ('' !== $badges_html) || (!$has_image && '' !== $series_ba
                 <?php echo $thumbnail; ?>
                 <div class="m3-card__image-gradient c-card__image-gradient"></div>
             </a>
-            <?php echo $series_banner_html; ?>
         </div>
     <?php endif; ?>
 
@@ -69,7 +68,7 @@ $has_topline_labels = ('' !== $badges_html) || (!$has_image && '' !== $series_ba
                 <?php if ($has_topline_labels) : ?>
                     <div class="m3-card__labels m3-card__labels--inline c-card__labels c-card__labels--inline">
                         <?php echo $badges_html; ?>
-                        <?php if (!$has_image) echo $series_banner_html; ?>
+                        <?php echo $series_banner_html; ?>
                     </div>
                 <?php endif; ?>
             </div>
