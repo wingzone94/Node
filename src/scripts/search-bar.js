@@ -32,6 +32,7 @@ export function initSearchBar() {
 
     const submitSearch = () => {
         if (!searchInput.value.trim()) return;
+        closeSuggestions();
         if (typeof searchForm?.requestSubmit === 'function') {
             searchForm.requestSubmit();
             return;
@@ -40,10 +41,153 @@ export function initSearchBar() {
     };
 
     const closeSearch = () => {
+        closeSuggestions();
         searchBar.classList.remove('is-active');
         header?.classList.remove('search-is-active');
         searchInput.blur();
     };
+
+    // --- Search keyword suggestions (Node Library / categories) ---
+    const suggestionsBox = document.getElementById('m3-search-suggestions');
+    const SUGGEST_MIN_LENGTH = 2;
+    const SUGGEST_DEBOUNCE_MS = 250;
+    let suggestTimer;
+    let suggestController;
+    let activeSuggestion = -1;
+
+    const suggestionOptions = () => Array.from(suggestionsBox?.querySelectorAll('[role="option"]') || []);
+
+    function updateSuggestionLayoutSpace(isOpen) {
+        document.body.classList.toggle('m3-search-suggestions-is-active', isOpen);
+
+        if (!isOpen || !suggestionsBox) {
+            document.documentElement.style.removeProperty('--m3-search-suggestions-space');
+            return;
+        }
+
+        const height = Math.ceil(suggestionsBox.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--m3-search-suggestions-space', `${height + 12}px`);
+    }
+
+    function closeSuggestions() {
+        clearTimeout(suggestTimer);
+        suggestController?.abort();
+        suggestController = undefined;
+        suggestionsBox?.replaceChildren();
+        suggestionsBox?.classList.remove('is-active');
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.removeAttribute('aria-activedescendant');
+        activeSuggestion = -1;
+        updateSuggestionLayoutSpace(false);
+    }
+
+    const setActiveSuggestion = (index) => {
+        const options = suggestionOptions();
+        if (!options.length) return;
+
+        activeSuggestion = (index + options.length) % options.length;
+        options.forEach((option, optionIndex) => {
+            const isActive = optionIndex === activeSuggestion;
+            option.classList.toggle('is-highlighted', isActive);
+            option.setAttribute('aria-selected', String(isActive));
+        });
+        searchInput.setAttribute('aria-activedescendant', options[activeSuggestion].id);
+        options[activeSuggestion].scrollIntoView({ block: 'nearest' });
+    };
+
+    const applySuggestion = (keyword) => {
+        searchInput.value = keyword;
+        if (typeof window.nodeUpdateSearchClear === 'function') {
+            window.nodeUpdateSearchClear();
+        }
+        submitSearch();
+    };
+
+    const renderSuggestions = (items) => {
+        if (!suggestionsBox) return;
+
+        suggestionsBox.replaceChildren();
+        activeSuggestion = -1;
+        searchInput.removeAttribute('aria-activedescendant');
+
+        if (!items.length) {
+            suggestionsBox.classList.remove('is-active');
+            searchInput.setAttribute('aria-expanded', 'false');
+            updateSuggestionLayoutSpace(false);
+            return;
+        }
+
+        items.forEach((item, index) => {
+            const option = document.createElement('button');
+            const icon = document.createElement('span');
+            const label = document.createElement('span');
+            const source = document.createElement('span');
+
+            option.type = 'button';
+            option.id = `m3-search-suggestion-${index}`;
+            option.className = 'm3-suggestion-item m3-search-suggestion';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+
+            icon.className = 'material-symbols-outlined';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = item.icon || 'search';
+
+            label.className = 'm3-search-suggestion__label';
+            label.textContent = item.keyword;
+
+            source.className = 'm3-search-suggestion__source';
+            source.textContent = item.sourceLabel || '';
+
+            option.append(icon, label, source);
+            option.addEventListener('mousedown', (event) => event.preventDefault());
+            option.addEventListener('click', (event) => {
+                event.stopPropagation();
+                applySuggestion(item.keyword);
+            });
+            suggestionsBox.append(option);
+        });
+
+        suggestionsBox.classList.add('is-active');
+        searchInput.setAttribute('aria-expanded', 'true');
+        updateSuggestionLayoutSpace(true);
+    };
+
+    const requestSuggestions = () => {
+        const query = searchInput.value.trim();
+
+        if (query.length < SUGGEST_MIN_LENGTH || !m3_ajax?.search_suggest_url) {
+            closeSuggestions();
+            return;
+        }
+
+        suggestController?.abort();
+        suggestController = new AbortController();
+        const url = new URL(m3_ajax.search_suggest_url, window.location.origin);
+        url.searchParams.set('q', query);
+
+        fetch(url, { signal: suggestController.signal, headers: { Accept: 'application/json' } })
+            .then(response => {
+                if (!response.ok) throw new Error(`Search suggest failed: ${response.status}`);
+                return response.json();
+            })
+            .then(items => {
+                if (query === searchInput.value.trim()) renderSuggestions(Array.isArray(items) ? items : []);
+            })
+            .catch(error => {
+                if (error.name !== 'AbortError') closeSuggestions();
+            });
+    };
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(suggestTimer);
+        suggestTimer = setTimeout(requestSuggestions, SUGGEST_DEBOUNCE_MS);
+    });
+    searchInput.addEventListener('blur', () => setTimeout(closeSuggestions, 150));
+    document.getElementById('m3-search-clear')?.addEventListener('click', closeSuggestions);
+    window.addEventListener('resize', () => {
+        if (suggestionsBox?.classList.contains('is-active')) updateSuggestionLayoutSpace(true);
+    }, { passive: true });
 
     // --- Search Bar Toggle ---
     searchToggle.addEventListener('click', () => {
@@ -62,13 +206,33 @@ export function initSearchBar() {
     document.getElementById('m3-search-mobile-close')?.addEventListener('click', closeSearch);
 
     searchInput.addEventListener('keydown', (e) => {
+        const options = suggestionOptions();
+
+        if (e.key === 'ArrowDown' && options.length) {
+            e.preventDefault();
+            setActiveSuggestion(activeSuggestion + 1);
+            return;
+        }
+        if (e.key === 'ArrowUp' && options.length) {
+            e.preventDefault();
+            setActiveSuggestion(activeSuggestion - 1);
+            return;
+        }
         if (e.key === 'Escape') {
             e.preventDefault();
+            if (options.length) {
+                closeSuggestions();
+                return;
+            }
             closeSearch();
             return;
         }
         if (e.key === 'Enter') {
             e.preventDefault();
+            if (activeSuggestion >= 0) {
+                options[activeSuggestion]?.click();
+                return;
+            }
             submitSearch();
         }
     });

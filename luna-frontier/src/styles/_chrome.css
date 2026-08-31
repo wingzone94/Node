@@ -45,6 +45,10 @@ body.lf-theme:has(.lf-topic-nav) .site-main.m3-search-layout {
 	padding-top: var(--lf-space-m);
 }
 
+body.lf-theme.search.m3-search-suggestions-is-active:has(.lf-topic-nav) .site-main.m3-archive-layout.m3-search-layout {
+	padding-top: calc(var(--lf-space-m) + var(--m3-search-suggestions-space, 0px));
+}
+
 body.lf-theme .lf-topic-nav__inner {
 	max-inline-size: var(--lf-content-max);
 	margin-inline: auto;

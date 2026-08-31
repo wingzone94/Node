@@ -937,6 +937,49 @@
     color: var(--md-sys-color-primary);
 }
 
+/* --- Header search keyword suggestions (Node Library / categories) --- */
+.m3-search-suggestions {
+    z-index: 1002;
+    text-align: left;
+}
+
+.m3-search-suggestion {
+    min-height: 52px;
+}
+
+.m3-search-suggestion__label {
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.m3-search-suggestion__source {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container-high);
+}
+
+@media (max-width: 600px) {
+    .m3-search-suggestions {
+        max-height: min(38dvh, 188px);
+    }
+
+    .m3-search-suggestion {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
 /* --- Mobile/Desktop Visibility --- */
 @media (min-width: 601px) {
     .m3-desktop-hidden {
