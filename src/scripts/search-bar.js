@@ -60,6 +60,18 @@ export function initSearchBar() {
 
     const suggestionOptions = () => Array.from(suggestionsBox?.querySelectorAll('[role="option"]') || []);
 
+    function updateSuggestionLayoutSpace(isOpen) {
+        document.body.classList.toggle('m3-search-suggestions-is-active', isOpen);
+
+        if (!isOpen || !suggestionsBox) {
+            document.documentElement.style.removeProperty('--m3-search-suggestions-space');
+            return;
+        }
+
+        const height = Math.ceil(suggestionsBox.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--m3-search-suggestions-space', `${height + 12}px`);
+    }
+
     function closeSuggestions() {
         clearTimeout(suggestTimer);
         suggestController?.abort();
@@ -69,6 +81,7 @@ export function initSearchBar() {
         searchInput.setAttribute('aria-expanded', 'false');
         searchInput.removeAttribute('aria-activedescendant');
         activeSuggestion = -1;
+        updateSuggestionLayoutSpace(false);
     }
 
     const setActiveSuggestion = (index) => {
@@ -103,6 +116,7 @@ export function initSearchBar() {
         if (!items.length) {
             suggestionsBox.classList.remove('is-active');
             searchInput.setAttribute('aria-expanded', 'false');
+            updateSuggestionLayoutSpace(false);
             return;
         }
 
@@ -140,6 +154,7 @@ export function initSearchBar() {
 
         suggestionsBox.classList.add('is-active');
         searchInput.setAttribute('aria-expanded', 'true');
+        updateSuggestionLayoutSpace(true);
     };
 
     const requestSuggestions = () => {
@@ -176,6 +191,9 @@ export function initSearchBar() {
     // クリアは header.php のインラインスクリプトが正本で、値を JS で空にするだけなので
     // input イベントが飛ばない。候補が消えずに残るため、閉じるところだけ拾う（動作は重複しない）。
     document.getElementById('m3-search-clear')?.addEventListener('click', () => closeSuggestions());
+    window.addEventListener('resize', () => {
+        if (suggestionsBox?.classList.contains('is-active')) updateSuggestionLayoutSpace(true);
+    }, { passive: true });
 
     // --- Search Bar Toggle ---
     searchToggle.addEventListener('click', () => {

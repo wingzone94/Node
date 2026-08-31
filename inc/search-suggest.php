@@ -23,6 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 1種別あたりの候補数。合計でも多すぎるとドロップダウンがスクロール前提になるため絞る。
  */
 const NODE_SEARCH_SUGGEST_PER_SOURCE = 5;
+const NODE_SEARCH_SUGGEST_LIMIT      = 6;
 
 /**
  * サジェスト用の REST ルートを登録する。
@@ -66,7 +67,7 @@ function node_search_suggest_response( WP_REST_Request $request ): WP_REST_Respo
 		node_get_category_keyword_suggestions( $query )
 	);
 
-	return rest_ensure_response( $suggestions );
+	return rest_ensure_response( node_merge_search_keyword_suggestions( $suggestions ) );
 }
 
 /**
@@ -144,4 +145,88 @@ function node_get_category_keyword_suggestions( string $query ): array {
 	}
 
 	return $suggestions;
+}
+
+/**
+ * 同じ表示名の候補を1項目にまとめる。
+ *
+ * Node Library とカテゴリは、たとえば "Minecraft" のように同じ名前を持つことがある。
+ * その場合は同じ検索キーワードとして扱い、候補行は1つだけ表示する。
+ *
+ * @param array<int, array<string, mixed>> $suggestions 候補。
+ * @return array<int, array<string, mixed>> 統合済み候補。
+ */
+function node_merge_search_keyword_suggestions( array $suggestions ): array {
+	$merged = array();
+	$order  = array();
+
+	foreach ( $suggestions as $suggestion ) {
+		$keyword = isset( $suggestion['keyword'] ) ? trim( (string) $suggestion['keyword'] ) : '';
+		if ( '' === $keyword ) {
+			continue;
+		}
+
+		$key    = node_search_suggest_keyword_key( $keyword );
+		$source = isset( $suggestion['source'] ) ? sanitize_key( (string) $suggestion['source'] ) : 'search';
+
+		if ( ! isset( $merged[ $key ] ) ) {
+			$merged[ $key ]             = $suggestion;
+			$merged[ $key ]['keyword']  = $keyword;
+			$merged[ $key ]['_sources'] = array();
+			$order[]                    = $key;
+		}
+
+		if ( ! in_array( $source, $merged[ $key ]['_sources'], true ) ) {
+			$merged[ $key ]['_sources'][] = $source;
+		}
+
+		if ( 'category' === $source && isset( $suggestion['count'] ) ) {
+			$merged[ $key ]['count'] = (int) $suggestion['count'];
+		}
+	}
+
+	$result = array();
+	foreach ( $order as $key ) {
+		$item    = $merged[ $key ];
+		$sources = $item['_sources'];
+		unset( $item['_sources'] );
+
+		$item['source']      = implode( '+', $sources );
+		$item['sourceLabel'] = node_search_suggest_source_label( $sources );
+		$result[]            = $item;
+
+		if ( count( $result ) >= NODE_SEARCH_SUGGEST_LIMIT ) {
+			break;
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * 候補の表示名を重複判定用に正規化する。
+ */
+function node_search_suggest_keyword_key( string $keyword ): string {
+	$key = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $keyword ) ) ?? $keyword );
+
+	return function_exists( 'mb_strtolower' ) ? mb_strtolower( $key, 'UTF-8' ) : strtolower( $key );
+}
+
+/**
+ * 統合した候補種別を短い表示ラベルにする。
+ *
+ * @param string[] $sources 候補種別。
+ */
+function node_search_suggest_source_label( array $sources ): string {
+	$labels = array();
+
+	if ( in_array( 'library', $sources, true ) ) {
+		$labels[] = 'ライブラリ';
+	}
+
+	if ( in_array( 'category', $sources, true ) ) {
+		$labels[] = 'カテゴリ';
+	}
+
+	return implode( ' / ', $labels );
 }
