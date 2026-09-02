@@ -181,6 +181,43 @@ add_action( 'wp_enqueue_scripts', 'node_disable_infinite_scroll', 100 );
    ========================================================================== */
 
 /**
+ * 投稿1880に誤って本文へ混入したスペック表CSSを除去する。
+ *
+ * 投稿本文ではCSSが <style> 要素ではなくテキストとして保存されているため、
+ * 表示前にそのブロックだけを取り除き、スタイルはテーマ側から適用する。
+ * 対象は当該投稿に限定し、他の記事本文は変更しない。
+ *
+ * @param string $content 投稿本文。
+ * @return string 修正後の投稿本文。
+ */
+function node_repair_post_1880_table_content( $content ) {
+    if ( ! is_singular( 'post' ) || 1880 !== get_queried_object_id() ) {
+        return $content;
+    }
+
+    $css_start   = strpos( $content, '.table-card {' );
+    $table_marker = '<div class="table-card">';
+    $table_start = false === $css_start ? false : strpos( $content, $table_marker, $css_start );
+
+    if ( false === $css_start || false === $table_start || $table_start <= $css_start ) {
+        return $content;
+    }
+
+    $leaked_css = substr( $content, $css_start, $table_start - $css_start );
+
+    if (
+        ! str_contains( $leaked_css, '.table-card h2 {' ) ||
+        ! str_contains( $leaked_css, '.table-card table {' ) ||
+        ! str_contains( $leaked_css, '@media (max-width: 600px)' )
+    ) {
+        return $content;
+    }
+
+    return substr( $content, 0, $css_start ) . substr( $content, $table_start );
+}
+add_filter( 'the_content', 'node_repair_post_1880_table_content', 9 );
+
+/**
  * 記事内の画像に自動的にメディアファイルへのリンクを付与する。
  * Lightbox プラグインを確実に動作させるためのフィルタ。
  *

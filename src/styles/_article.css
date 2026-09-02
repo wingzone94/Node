@@ -2677,6 +2677,55 @@
     min-width: 100%;
     table-layout: auto;
 }
+/* 投稿1880の裸のスペック表を、記事内CSSの誤混入に依存せず整形する。 */
+.m3-article__body .table-card {
+    max-width: 600px;
+    margin: var(--m3-spacing-l) auto;
+    background: var(--md-sys-color-surface-container-low, #ffffff);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    color: var(--md-sys-color-on-surface, #333333);
+}
+
+.m3-article__body .table-card > h2 {
+    margin: 0;
+    padding: 15px 0;
+    text-align: center;
+    background: #ffc400;
+    color: #111111;
+    font-weight: 700;
+}
+
+.m3-article__body .table-card table {
+    display: table;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    overflow: visible;
+    border-collapse: collapse;
+    margin-bottom: 0;
+    table-layout: auto;
+}
+
+.m3-article__body .table-card th,
+.m3-article__body .table-card td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eeeeee;
+    color: #333333;
+}
+
+.m3-article__body .table-card th {
+    width: 35%;
+    background: #fffdf0;
+    text-align: left;
+}
+
+.m3-article__body .table-card tr:last-child th,
+.m3-article__body .table-card tr:last-child td {
+    border-bottom: 0;
+}
+
 
 .m3-article__body img,
 .m3-article__body video,
@@ -2686,6 +2735,32 @@
 .m3-article__body object {
     max-width: 100%;
 }
+@media (max-width: 600px) {
+    .m3-article__body .table-card {
+        max-width: 100%;
+        margin-inline: 0;
+    }
+
+    .m3-article__body .table-card table {
+        display: block;
+        overflow: visible;
+    }
+
+    .m3-article__body .table-card tr {
+        display: block;
+    }
+
+    .m3-article__body .table-card th,
+    .m3-article__body .table-card td {
+        display: block;
+        width: 100%;
+    }
+
+    .m3-article__body .table-card th {
+        background: #fff9db;
+    }
+}
+
 
 .m3-article__body img,
 .m3-article__body video {
