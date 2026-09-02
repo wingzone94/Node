@@ -290,12 +290,12 @@ declare(strict_types=1);
 
         </div>
     </div>
-
-    <!-- Reading Progress Bar -->
-    <div id="m3-reading-progress" class="m3-header__progress-container">
-        <div class="m3-header__progress-bar"></div>
-    </div>
 </header>
+
+<!-- 読了ゲージは header の transform の外に置く。中にあると退避時にノッチの裏へ消える。 -->
+<div id="m3-reading-progress" class="m3-header__progress-container">
+    <div class="m3-header__progress-bar"></div>
+</div>
 
 <?php
 // 各リンク先の #headline / #spotlight / #latest は index.php が
@@ -448,6 +448,12 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
         // sessionStorage が使えない環境（プライベートモード等）では readFlag が
         // false を返すため、下の hasStorage で開くかどうかを決める。
         // 「一度だけ」を保証できない以上、開かない方を選ぶ。
+        //
+        // 2026-09-03: iOS Safari は読み込み直後にアドレスバー伸縮で scroll を飛ばす。
+        // 最初のイベントで開くと「初回閲覧から展開されたまま」になる。
+        // 実スクロール（80px超）でのみ一度開き、読み続けるスクロールでは畳む。
+        menu.removeAttribute('open');
+
         let hasStorage = false;
         try {
             sessionStorage.setItem('node-section-nav-probe', '1');
@@ -455,29 +461,62 @@ if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
             hasStorage = true;
         } catch (e) {}
 
-        if (hasStorage && !readFlag(PEEK_KEY)) {
-            let peekTimer = 0;
-            const cancelPeek = () => {
-                // 読み手が触ったら自動では畳まない。操作を上書きしない。
+        const PEEK_SCROLL_MIN = 80;
+        const CLOSE_SCROLL_DELTA = 24;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isMobileNavViewport = () => window.matchMedia('(max-width: 600px)').matches;
+        let startY = window.scrollY || window.pageYOffset || 0;
+        let holdY = startY;
+        let peekTimer = 0;
+
+        const captureStartY = () => {
+            if (menu.open || readFlag(PEEK_KEY)) return;
+            const y = window.scrollY || window.pageYOffset || 0;
+            if (Math.abs(y - startY) < PEEK_SCROLL_MIN) startY = y;
+        };
+        addEventListener('load', captureStartY, { once: true });
+        addEventListener('pageshow', captureStartY);
+
+        const closeMenu = () => {
+            if (peekTimer) {
                 clearTimeout(peekTimer);
                 peekTimer = 0;
-            };
+            }
+            if (menu.open) menu.removeAttribute('open');
+        };
 
-            const peekOnce = () => {
-                if (nav.hidden || menu.open) return;
+        menu.addEventListener('toggle', () => {
+            if (menu.open) {
+                holdY = window.scrollY || window.pageYOffset || 0;
+            } else if (peekTimer) {
+                clearTimeout(peekTimer);
+                peekTimer = 0;
+            }
+        });
+
+        const onScrollChrome = () => {
+            const y = window.scrollY || window.pageYOffset || 0;
+
+            if (menu.open) {
+                if (Math.abs(y - holdY) > CLOSE_SCROLL_DELTA) closeMenu();
+                return;
+            }
+
+            if (
+                hasStorage &&
+                !readFlag(PEEK_KEY) &&
+                !prefersReducedMotion &&
+                isMobileNavViewport() &&
+                !nav.hidden &&
+                Math.abs(y - startY) >= PEEK_SCROLL_MIN
+            ) {
                 writeFlag(PEEK_KEY);
-
                 menu.setAttribute('open', '');
-                nav.addEventListener('pointerdown', cancelPeek, { once: true });
-                nav.addEventListener('keydown', cancelPeek, { once: true });
-                peekTimer = setTimeout(() => {
-                    if (peekTimer) menu.removeAttribute('open');
-                    peekTimer = 0;
-                }, 3000);
-            };
+                peekTimer = setTimeout(closeMenu, 3000);
+            }
+        };
 
-            addEventListener('scroll', peekOnce, { passive: true, once: true });
-        }
+        addEventListener('scroll', onScrollChrome, { passive: true });
 
         addEventListener('scroll', scheduleUpdate, { passive: true });
         addEventListener('resize', scheduleUpdate, { passive: true });
