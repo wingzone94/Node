@@ -73,9 +73,12 @@
 	.m3-header.is-hidden ~ .m3-mobile-section-nav .m3-mobile-section-nav__inner {
 		transform: translate3d(
 			0,
-			calc(-64px - var(--safe-area-top) - var(--wp-admin-bar-offset, 0px)),
+			calc(-64px - var(--safe-area-top) - var(--wp-admin-bar-offset, 0px) - 100%),
 			0
 		);
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
 	}
 
     .m3-mobile-section-nav__menu {

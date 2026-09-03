@@ -671,3 +671,24 @@
         border-top: 0;
     }
 }
+
+
+/* 長いカテゴリ名がカード幅を占有しないよう、モバイルではピル幅を制限する。 */
+@media (max-width: 600px) {
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) :is(.c-card__category-container, .m3-card__category-container) {
+        min-inline-size: 0;
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) .m3-article__category-group {
+        min-inline-size: 0;
+        max-inline-size: 100%;
+        overflow: hidden;
+    }
+
+    :is(.l-card-grid__items, .m3-post-grid__container) :is(.c-card, .m3-card) .m3-label--category {
+        flex: 0 1 auto;
+        min-inline-size: 0;
+        max-inline-size: clamp(5rem, 26vw, 8rem);
+        padding-inline: 10px;
+    }
+}
