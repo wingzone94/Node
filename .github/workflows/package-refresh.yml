@@ -12,7 +12,8 @@ permissions:
 jobs:
   package:
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.conclusion != 'cancelled' &&
+      github.event.workflow_run.conclusion != 'timed_out' &&
       !contains(github.event.workflow_run.head_commit.message, '[package-refresh]')
     runs-on: ubuntu-latest
     steps:
