@@ -32,12 +32,27 @@ export function initSmartHeader() {
     // offsetTop / offsetHeight は transform の影響を受けないので、
     // ヘッダーが is-hidden で退避している最中でも「本来の下端」が取れる
     // （退避中の位置は CSS の .is-hidden ルールが引き続き受け持つ）。
+    // 退避時（.is-hidden）はヘッダーの上端＝セーフエリアの下へ置く。
+    // セーフエリアの実寸はヘッダー全体と中身（--inner は 64px 固定）の差で取る。
+    const headerInner = header.querySelector('.m3-header__inner');
     let lastGaugeTop = null;
+    let lastGaugeTopHidden = null;
     const syncGaugeTop = () => {
-        const value = `${Math.max(0, Math.round(header.offsetTop + header.offsetHeight - 4))}px`;
-        if (value === lastGaugeTop) return;
-        lastGaugeTop = value;
-        document.body.style.setProperty('--node-gauge-top', value);
+        const base = header.offsetTop;
+        const innerHeight = headerInner ? headerInner.offsetHeight : 64;
+        const safeArea = Math.max(0, header.offsetHeight - innerHeight);
+
+        const shown = `${Math.max(0, Math.round(base + header.offsetHeight - 4))}px`;
+        if (shown !== lastGaugeTop) {
+            lastGaugeTop = shown;
+            document.body.style.setProperty('--node-gauge-top', shown);
+        }
+
+        const hidden = `${Math.max(0, Math.round(base + safeArea))}px`;
+        if (hidden !== lastGaugeTopHidden) {
+            lastGaugeTopHidden = hidden;
+            document.body.style.setProperty('--node-gauge-top-hidden', hidden);
+        }
     };
 
     const updateHeader = () => {

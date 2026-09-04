@@ -1415,7 +1415,14 @@
    Dynamic Island / ステータスバーの裏）へ消え、
    「記事を読んでいるときにシークバーまで隠れる」になる。 */
 .m3-header.is-hidden ~ .m3-header__progress-container.is-visible {
-    top: calc(var(--wp-admin-bar-offset, 0px) + var(--safe-area-top, 0px));
+    /*
+     * 退避時も式ではなく実測値（--node-gauge-top-hidden）を使う。
+     * --wp-admin-bar-offset は「管理バーの高さ 46px」で固定なのに対し、
+     * モバイルの管理バーは position: absolute でスクロールと共に画面外へ出る。
+     * そのため退避時のゲージだけが本文の 46px 下に浮いていた
+     * （iOS Safari の実機録画で確認）。
+     */
+    top: var(--node-gauge-top-hidden, calc(var(--wp-admin-bar-offset, 0px) + var(--safe-area-top, 0px)));
 }
 
 .m3-header__progress-bar {
