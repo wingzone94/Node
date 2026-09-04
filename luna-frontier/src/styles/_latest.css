@@ -87,7 +87,8 @@ body.lf-theme .m3-card {
 /* アイキャッチ: 比率を固定して、行内で視線の高さを揃える。 */
 body.lf-theme .m3-card__visual {
 	position: relative;
-	aspect-ratio: 16 / 10;
+	flex: 0 0 auto;
+	aspect-ratio: 16 / 9;
 	overflow: clip;
 	background: var(--lf-paper-sunken);
 	border-radius: 0;
@@ -101,13 +102,15 @@ body.lf-theme .m3-card__image-link {
 body.lf-theme .m3-card__visual img {
 	inline-size: 100%;
 	block-size: 100%;
-	object-fit: cover;
+	/* 文字入り・縦長の画像も切らずに収める。余りは既存の紙面色で受ける。 */
+	object-fit: contain;
 	border-radius: 0;
-	transition: transform var(--lf-motion-emphasized) var(--lf-easing-emphasized);
+	transform: none;
 }
 
+/* 親テーマのホバー拡大も解除し、画像の端にある文字を常に見せる。 */
 body.lf-theme .m3-card:hover .m3-card__visual img {
-	transform: scale(1.04);
+	transform: none;
 }
 
 /* コンテンツ: タイトルは上、メタは下。余りはタイトル側に渡す。 */
@@ -116,7 +119,7 @@ body.lf-theme .m3-card__content {
 	flex-direction: column;
 	gap: var(--lf-space-2xs);
 	flex: 1 1 auto;
-	padding: var(--lf-space-xs) var(--lf-space-s) 0;
+	padding: var(--lf-space-xs) var(--lf-space-s) var(--lf-space-s);
 }
 
 body.lf-theme .m3-card__topline {
@@ -141,11 +144,12 @@ body.lf-theme .m3-card__title {
 	letter-spacing: -0.005em;
 	text-wrap: pretty;
 
-	/* 行数を揃えて、カードごとの高さのばらつきを抑える。 */
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 3;
-	overflow: hidden;
+	/* タイトル全文を読み、行の高さはグリッドと下寄せのフッターで揃える。 */
+	display: block;
+	-webkit-line-clamp: unset;
+	max-block-size: none;
+	overflow: visible;
+	overflow-wrap: anywhere;
 }
 
 body.lf-theme .m3-card__title a {
@@ -155,7 +159,7 @@ body.lf-theme .m3-card__title a {
 }
 
 body.lf-theme .m3-card:hover .m3-card__title a {
-	color: var(--lf-brand-text);
+	color: var(--lc-accent);
 }
 
 /*
@@ -171,7 +175,7 @@ body.lf-theme .m3-card--no-image::before {
 	content: "";
 	display: block;
 	flex: 0 0 auto;
-	aspect-ratio: 16 / 10;
+	aspect-ratio: 16 / 9;
 	border-block-end: 1px solid var(--lf-rule);
 	background:
 		repeating-linear-gradient(
@@ -215,11 +219,11 @@ body.lf-theme .m3-card__date {
 
 /* ホバーは影ではなく罫の色で示す（Paper Design）。 */
 body.lf-theme .m3-card:hover {
-	border-color: color-mix(in srgb, var(--lf-brand) 60%, transparent);
+	border-color: color-mix(in srgb, var(--lc-accent) 60%, transparent);
 }
 
 body.lf-theme .m3-card:focus-within {
-	border-color: var(--lf-brand);
+	border-color: var(--lc-accent);
 }
 
 /* ---------------------------------------------------------------------
@@ -232,13 +236,8 @@ body.lf-theme .m3-card:focus-within {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	body.lf-theme .m3-card__visual img,
 	body.lf-theme .m3-card__title a {
 		transition: none;
-	}
-
-	body.lf-theme .m3-card:hover .m3-card__visual img {
-		transform: none;
 	}
 }
 
