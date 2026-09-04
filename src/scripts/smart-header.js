@@ -24,10 +24,27 @@ export function initSmartHeader() {
         }
     };
 
+    // 読了ゲージ（.m3-header__progress-container）は fixed でヘッダーの外に
+    // 置かれているため、位置を計算式で合わせるとヘッダーとズレる余地が残る
+    // （管理バーの追従・iOS の env(safe-area-inset-top) の反映タイミング）。
+    // ヘッダーの実寸を測って渡し、CSS 側はそれを使う。
+    //
+    // offsetTop / offsetHeight は transform の影響を受けないので、
+    // ヘッダーが is-hidden で退避している最中でも「本来の下端」が取れる
+    // （退避中の位置は CSS の .is-hidden ルールが引き続き受け持つ）。
+    let lastGaugeTop = null;
+    const syncGaugeTop = () => {
+        const value = `${Math.max(0, Math.round(header.offsetTop + header.offsetHeight - 4))}px`;
+        if (value === lastGaugeTop) return;
+        lastGaugeTop = value;
+        document.body.style.setProperty('--node-gauge-top', value);
+    };
+
     const updateHeader = () => {
         const currentScrollY = window.scrollY || window.pageYOffset;
 
         syncAdminBarOffset();
+        syncGaugeTop();
 
         if (currentScrollY <= 80) {
             header.classList.remove('is-hidden');
@@ -54,4 +71,8 @@ export function initSmartHeader() {
         syncAdminBarOffset();
         window.addEventListener('resize', syncAdminBarOffset, { passive: true });
     }
+
+    syncGaugeTop();
+    window.addEventListener('resize', syncGaugeTop, { passive: true });
+    window.addEventListener('orientationchange', syncGaugeTop, { passive: true });
 }

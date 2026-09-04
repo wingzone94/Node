@@ -1365,9 +1365,27 @@
 .m3-search-hits-text { font-size: 1.1rem; font-weight: 700; color: var(--md-sys-color-on-surface); }
 .m3-search-hits-text strong { font-size: 1.4rem; font-weight: 700; color: var(--md-sys-color-primary); margin-right: 4px; }
 /* --- Reading Progress Bar --- */
+/*
+ * 位置は「ヘッダーの実寸の下端」に合わせる（--node-gauge-top）。
+ *
+ * 以前はヘッダーと同じ計算式を書き写して並べていた
+ * （--wp-admin-bar-offset + 64px + --safe-area-top）。式が一致していれば
+ * 揃うはずだが、実際にはモバイルでゲージだけがヘッダーの数十px下に取り残され、
+ * 本文の上に浮く事象が出ていた（本番 iOS Safari で報告・実測 46px）。
+ * 式の各項がヘッダーとゲージで同じ瞬間に同じ値になる保証が無いことが原因:
+ *   - --wp-admin-bar-offset: モバイルの管理バーは position: absolute で
+ *     スクロールと共に画面外へ出る。smart-header.js はヘッダーの top を
+ *     その「見えている下端」へ動かすが、変数は 46px のまま
+ *   - --safe-area-top: iOS Safari は URL バーの伸縮で env() が変化する。
+ *     ヘッダー（height）とゲージ（top）で反映のタイミングが揃わない
+ *
+ * 式を共有するのをやめ、smart-header.js が測ったヘッダーの下端を使う。
+ * これで原因が何であってもゲージはヘッダーに付いてくる。
+ * 変数が無い場合（JS 無効時）は従来の計算式へフォールバックする。
+ */
 .m3-header__progress-container {
     position: fixed;
-    top: calc(var(--wp-admin-bar-offset, 0px) + 64px + var(--safe-area-top) - 4px);
+    top: var(--node-gauge-top, calc(var(--wp-admin-bar-offset, 0px) + 64px + var(--safe-area-top) - 4px));
     left: 0;
     width: 100%;
     height: 4px;
@@ -1375,7 +1393,20 @@
     z-index: 1002;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.3s, top 0.35s cubic-bezier(0.2, 0, 0, 1);
+    /*
+     * top をトランジションさせない。
+     *
+     * top の値が var()/env() 由来で変わったとき、トランジションが張ってあると
+     * 変更が反映されず初期値のまま残る（実測: --node-gauge-top を
+     * 60px → 153px に変えても computed は 60px のまま。transition から top を
+     * 外した瞬間に追従した）。iOS Safari は URL バーの伸縮で
+     * env(safe-area-inset-top) が変わるため、読み込み時の値でゲージが固定され、
+     * ヘッダーが縮んだあとも数十px下に取り残されていた。
+     *
+     * 引き換えにヘッダー退避時の移動がアニメーションでなくなるが、
+     * 高さ 4px の線なので、位置が正しいことを優先する。
+     */
+    transition: opacity 0.3s;
 }
 .m3-header__progress-container.is-visible { opacity: 1; }
 
