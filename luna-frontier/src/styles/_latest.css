@@ -54,6 +54,137 @@ body.lf-theme .m3-section-title__sub {
 	color: var(--lf-on-surface-muted);
 }
 
+/* ---------------------------------------------------------------------
+ * HEADLINE: 大きな箱ではなく、薄い罫とカード密度でトップの入口を作る。
+ * --------------------------------------------------------------------- */
+body.lf-theme .c-headline-carousel.m3-surface {
+	background: transparent;
+	border-block: 1px solid var(--lf-rule);
+	border-inline: 0;
+	box-shadow: none;
+	padding: var(--lf-space-m) var(--lf-gutter);
+}
+
+body.lf-theme .c-headline-carousel__header {
+	margin-block-end: var(--lf-space-s);
+}
+
+body.lf-theme .c-headline-carousel__viewport {
+	margin-inline: 0;
+	padding-inline: 0;
+	padding-block: 0;
+}
+
+body.lf-theme .c-headline-carousel__track {
+	gap: var(--lf-space-xs);
+}
+
+body.lf-theme .c-headline-carousel__item {
+	flex-basis: clamp(14.75rem, 68vw, 17rem);
+}
+
+@media (min-width: 601px) {
+	body.lf-theme .c-headline-carousel__item {
+		flex-basis: clamp(15.25rem, 34vw, 17rem);
+	}
+}
+
+@media (min-width: 900px) {
+	body.lf-theme .c-headline-carousel__item {
+		flex-basis: clamp(15.5rem, 22vw, 17.5rem);
+	}
+}
+
+body.lf-theme .c-headline-card__link {
+	background: var(--lf-paper);
+	border-color: var(--lf-rule);
+	box-shadow: none;
+}
+
+body.lf-theme .c-headline-card__link:hover {
+	background: color-mix(in srgb, var(--lc-accent) 6%, var(--lf-paper));
+	border-color: color-mix(in srgb, var(--lc-accent) 58%, transparent);
+	transform: translateY(-1px);
+}
+
+body.lf-theme .c-headline-card__link:focus-visible {
+	outline: 3px solid var(--lc-accent);
+	outline-offset: 2px;
+}
+
+body.lf-theme .c-headline-card__visual {
+	background: var(--lf-paper-sunken);
+	border-block-end: 1px solid var(--lf-rule);
+}
+
+body.lf-theme .c-headline-card__body {
+	gap: var(--lf-space-2xs);
+	padding: var(--lf-space-xs);
+}
+
+body.lf-theme .c-headline-card__date,
+body.lf-theme .c-headline-card__author {
+	color: var(--lf-on-surface-muted);
+}
+
+body.lf-theme .c-headline-card__title {
+	font-family: var(--font-heading), sans-serif;
+	font-size: var(--lf-text-s);
+	font-weight: 700;
+	line-height: 1.45;
+	color: var(--lc-on-surface);
+}
+
+body.lf-theme .c-headline-carousel__views {
+	background: var(--lf-paper);
+	border-color: var(--lf-rule-strong);
+}
+
+body.lf-theme .c-headline-carousel__view {
+	color: var(--lf-on-surface-secondary);
+}
+
+body.lf-theme .c-headline-carousel__view:hover {
+	background: color-mix(in srgb, var(--lc-accent) 10%, transparent);
+	color: var(--lc-accent);
+}
+
+body.lf-theme .c-headline-carousel__view.is-active {
+	background: var(--lc-primary);
+	color: var(--lc-on-primary);
+}
+
+body.lf-theme .c-headline-carousel__button {
+	background: var(--lf-paper);
+	border-color: var(--lf-rule-strong);
+	color: var(--lc-on-surface);
+	box-shadow: 0 2px 8px color-mix(in srgb, #000000 20%, transparent);
+}
+
+body.lf-theme .c-headline-carousel__button:hover {
+	background: color-mix(in srgb, var(--lc-accent) 10%, var(--lf-paper));
+	border-color: var(--lc-accent);
+}
+
+body.lf-theme .c-headline-carousel[data-view="list"] .c-headline-carousel__item,
+body.lf-theme .c-headline-carousel[data-view="list"] .c-headline-carousel__item--no-image {
+	flex: 0 0 auto;
+}
+
+body.lf-theme .c-headline-carousel[data-view="list"] .c-headline-card,
+body.lf-theme .c-headline-carousel[data-view="list"] .c-headline-card__link {
+	block-size: auto;
+}
+
+body.lf-theme .c-headline-carousel[data-view="list"] .c-headline-card__link {
+	background: var(--lf-paper);
+	min-block-size: 4.5rem;
+}
+
+body.lf-theme .c-headline-carousel[data-view="list"] .c-headline-card__visual {
+	border-block-end: 0;
+}
+
 /* 「すべて見る」は装飾を抑えたテキストリンクにして、カードの邪魔をしない。 */
 body.lf-theme .m3-latest-see-all {
 	display: inline-flex;
