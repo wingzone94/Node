@@ -96,6 +96,9 @@ body.lf-theme .m3-card__visual {
 
 body.lf-theme .m3-card__image-link {
 	display: block;
+	/* 子画像の固有寸法で aspect-ratio の枠が押し広げられないようにする。 */
+	position: absolute;
+	inset: 0;
 	block-size: 100%;
 }
 
@@ -119,7 +122,24 @@ body.lf-theme .m3-card__content {
 	flex-direction: column;
 	gap: var(--lf-space-2xs);
 	flex: 1 1 auto;
+	min-inline-size: 0;
 	padding: var(--lf-space-xs) var(--lf-space-s) var(--lf-space-s);
+}
+
+/* 子テーマの縦積みカードに、親の横並びリスト用の幅を持ち込まない。 */
+body.lf-theme :is(.m3-post-grid--list, .m3-post-grid--2col-list) .m3-card__visual {
+	inline-size: 100%;
+}
+
+body.lf-theme :is(.m3-post-grid--list, .m3-post-grid--2col-list) .m3-card__content {
+	inline-size: auto;
+}
+
+/* important はレイヤー内が優先されるため、親と同じレイヤーで限定解除する。 */
+@layer components {
+	body.lf-theme .m3-post-grid--list .m3-card--no-image {
+		flex-direction: column !important;
+	}
 }
 
 body.lf-theme .m3-card__topline {
@@ -158,8 +178,13 @@ body.lf-theme .m3-card__title a {
 	transition: color var(--lf-motion-fast) var(--lf-easing-standard);
 }
 
-body.lf-theme .m3-card:hover .m3-card__title a {
+body.lf-theme .m3-card:hover .m3-card__title a,
+body.lf-theme .m3-card__title a:focus-visible {
 	color: var(--lc-accent);
+}
+
+body.lf-theme .m3-card__title a:focus-visible::after {
+	outline-color: var(--lc-accent);
 }
 
 /*
@@ -197,7 +222,7 @@ body.lf-theme .m3-card--no-image .m3-card__content {
 /* フッター: 下端に固定し、細い罫で区切る。 */
 body.lf-theme .m3-card__footer {
 	margin-block-start: auto;
-	padding: var(--lf-space-2xs) var(--lf-space-s);
+	padding: var(--lf-space-2xs) 0;
 	border-block-start: 1px solid var(--lf-rule);
 	display: flex;
 	align-items: center;
@@ -215,6 +240,14 @@ body.lf-theme .m3-card__date {
 
 body.lf-theme .m3-card__date {
 	font-variant-numeric: tabular-nums;
+}
+
+/* 拡大時も日付と著者名をカード内で折り返せるようにする。 */
+body.lf-theme .m3-card__writer,
+body.lf-theme .m3-card__date {
+	min-inline-size: 0;
+	white-space: normal;
+	overflow-wrap: anywhere;
 }
 
 /* ホバーは影ではなく罫の色で示す（Paper Design）。 */

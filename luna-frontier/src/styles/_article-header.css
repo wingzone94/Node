@@ -274,6 +274,7 @@ body.lf-theme .lf-article-header__reading .m3-reading-rank-chip {
 body.lf-theme .lf-article-header__reading .m3-reading-rank-chip__label {
 	color: inherit;
 	font-size: inherit;
+	white-space: inherit;
 }
 
 body.lf-theme .lf-article-header__reading .m3-reading-rank-chip__dot {
