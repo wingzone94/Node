@@ -117,8 +117,8 @@ body.lf-theme .lf-topic-nav__item {
 }
 
 body.lf-theme .lf-topic-nav__item--feature {
-	flex: 0 0 13rem;
-	max-inline-size: 13rem;
+	flex: 0 0 12.75rem;
+	max-inline-size: 12.75rem;
 }
 
 body.lf-theme .lf-topic-nav__eyebrow {

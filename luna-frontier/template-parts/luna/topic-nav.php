@@ -6,7 +6,7 @@ declare( strict_types=1 );
  *
  * ヘッダーの真下に置く、主要トピックと特集への導線。
  *
- * 編集部おすすめの棚に特集とトピックを統合。標準は特集3件を優先し、合計6件まで。
+ * 編集部おすすめの棚に特集とトピックを統合。標準は特集4件を優先し、合計6件まで。
  * 特集は専用メニューを優先し、未設定なら親テーマのSPOTLIGHTを使う。
  *
  * SPOTLIGHT はここへ統合したので、ホームの独立セクションは表示しない
@@ -96,7 +96,7 @@ if ( has_nav_menu( 'luna_topics' ) ) {
 }
 
 $lf_limit = max( 1, min( 6, (int) apply_filters( 'luna_frontier_recommendation_limit', 6 ) ) );
-$lf_feature_limit = max( 0, min( 3, $lf_limit, (int) apply_filters( 'luna_frontier_spotlight_limit', 3 ) ) );
+$lf_feature_limit = max( 0, min( 4, $lf_limit, (int) apply_filters( 'luna_frontier_spotlight_limit', 4 ) ) );
 $lf_spotlight = array();
 
 if ( has_nav_menu( 'luna_spotlight' ) ) {
