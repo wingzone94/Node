@@ -62,15 +62,6 @@ body.lf-theme .lf-topic-nav__inner {
 	scrollbar-width: thin;
 }
 
-/* ---- 左: おすすめ + SPOTLIGHT 特集 -------------------------------- */
-body.lf-theme .lf-topic-nav__group--spotlight {
-	display: flex;
-	align-items: center;
-	gap: var(--lf-space-2xs);
-	padding-inline-end: var(--lf-space-s);
-	border-inline-end: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #d6c2b1) 70%, transparent);
-}
-
 /* 「おすすめ」は特集群の見出し。ここだけブランドオレンジで塗る Expressive の見せ場（§19）。 */
 body.lf-theme .lf-topic-nav__pick {
 	display: inline-flex;
@@ -93,66 +84,25 @@ body.lf-theme .lf-topic-nav__pick .material-symbols-outlined {
 	font-size: 1.15em;
 }
 
-body.lf-theme .lf-topic-nav__features {
-	display: flex;
-	align-items: center;
-	gap: var(--lf-space-3xs);
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-body.lf-theme .lf-topic-nav__features a {
-	display: inline-flex;
-	align-items: center;
-	min-block-size: 2.25rem;
-	padding: 0.3em 0.9em;
-	border: 1px solid color-mix(in srgb, var(--lf-brand) 45%, transparent);
-	border-radius: var(--lf-shape-pill);
-	font-size: var(--lf-text-2xs);
-	font-weight: 600;
-	color: var(--lf-brand-text);
-	text-decoration: none;
-	white-space: nowrap;
-	transition: background-color var(--lf-motion-fast) var(--lf-easing-standard);
-}
-
-body.lf-theme .lf-topic-nav__features a:hover {
-	background: color-mix(in srgb, var(--lf-brand) 12%, transparent);
-}
-
-/* ---- 右: おすすめ + トピック（アイコンの下にラベル） ---------------- */
-body.lf-theme .lf-topic-nav__group--topics {
+/* 特集とトピックを同じ棚へまとめ、少数時は内容幅に収める。 */
+body.lf-theme .lf-topic-nav__group--recommendations {
 	display: flex;
 	align-items: center;
 	gap: var(--lf-space-2xs);
 	flex: 0 0 auto;
-	min-inline-size: 0;
+	inline-size: max-content;
+	max-inline-size: none;
 	padding-inline: var(--lf-space-3xs);
-	border-radius: var(--lf-shape-pill);
+	border-radius: var(--lf-shape-action);
 	background: color-mix(in srgb, var(--lf-paper) 88%, transparent);
 	box-shadow: inset 0 0 0 1px var(--lf-rule);
 }
 
-/*
- * 右側の「編集部おすすめ」はグループの見出し。
- * カテゴリチップと同じ塗りのオレンジピルにする（2026-08-09 ユーザー指示）。
- * 塗りピルの文字は既存仕様どおり白のまま。
- */
-body.lf-theme .lf-topic-nav__pick--editors {
-	flex: 0 0 auto;
-	background: var(--lf-brand);
-	border: 0;
-	color: #ffffff;
-}
-
 body.lf-theme .lf-topic-nav__list {
-	display: grid;
-	grid-auto-flow: column;
-	grid-auto-columns: 5.5rem;
+	display: flex;
 	align-items: stretch;
 	gap: var(--lf-space-2xs);
-	flex: 0 0 auto;
+	flex: 1 1 auto;
 	inline-size: max-content;
 	min-inline-size: 0;
 	list-style: none;
@@ -161,13 +111,31 @@ body.lf-theme .lf-topic-nav__list {
 	white-space: normal;
 }
 
+body.lf-theme .lf-topic-nav__item {
+	flex: 0 0 5.5rem;
+	min-inline-size: 0;
+}
+
+body.lf-theme .lf-topic-nav__item--feature {
+	flex: 0 0 13rem;
+	max-inline-size: 13rem;
+}
+
+body.lf-theme .lf-topic-nav__eyebrow {
+	color: var(--lf-brand-text);
+	font-size: 0.625rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+}
+
 body.lf-theme .lf-topic-nav__list > li > a {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: 0.15rem;
-	inline-size: 5.5rem;
+	inline-size: 100%;
+	block-size: 100%;
 	min-inline-size: 0;
 	min-block-size: 3.25rem;
 	padding: 0.35rem 0.5rem;
@@ -189,9 +157,13 @@ body.lf-theme .lf-topic-nav__icon {
 }
 
 body.lf-theme .lf-topic-nav__label {
-	line-height: 1.2;
+	line-height: 1.3;
+	text-align: center;
+	text-wrap: balance;
+	overflow-wrap: anywhere;
 }
 
+body.lf-theme .lf-topic-nav__list > li > a:focus-visible,
 body.lf-theme .lf-topic-nav__list > li > a:hover,
 body.lf-theme .lf-topic-nav__list > li.is-current > a {
 	color: var(--lf-brand-text);
@@ -225,32 +197,6 @@ body.lf-theme:has(.lf-topic-nav__group--spotlight) .special-features {
 	body.lf-theme:has(.lf-topic-nav) .site-main.node-library-single,
 	body.lf-theme:has(.lf-topic-nav) .site-main.node-library-archive {
 		padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + var(--lf-space-m));
-	}
-
-	body.lf-theme .lf-topic-nav__inner {
-		gap: var(--lf-space-2xs);
-	}
-
-	/*
-	 * 狭い画面では特集ピル（BLEACH特集 …）が横幅を食い切ってしまい、
-	 * 主役であるトピックがスクロールの外へ追い出される。
-	 * 「おすすめ」ピル自体が特集一覧へのリンクなので、ここへ集約する。
-	 */
-	body.lf-theme .lf-topic-nav__features {
-		display: none;
-	}
-
-	body.lf-theme .lf-topic-nav__group--spotlight {
-		padding-inline-end: var(--lf-space-2xs);
-	}
-
-	body.lf-theme .lf-topic-nav__list > li > a {
-		min-inline-size: 4rem;
-		min-block-size: 3.25rem;
-	}
-
-	body.lf-theme .lf-topic-nav__icon {
-		font-size: 1.35rem;
 	}
 }
 
