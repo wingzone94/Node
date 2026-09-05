@@ -126,6 +126,8 @@ body.lf-theme .lf-topic-nav__group--topics {
 	display: flex;
 	align-items: center;
 	gap: var(--lf-space-2xs);
+	flex: 1 1 18rem;
+	min-inline-size: 0;
 }
 
 /*
@@ -134,19 +136,24 @@ body.lf-theme .lf-topic-nav__group--topics {
  * 塗りピルの文字は既存仕様どおり白のまま。
  */
 body.lf-theme .lf-topic-nav__pick--editors {
+	flex: 0 0 auto;
 	background: var(--lf-brand);
 	border: 0;
 	color: #ffffff;
 }
 
 body.lf-theme .lf-topic-nav__list {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.75rem), 1fr));
 	align-items: stretch;
 	gap: var(--lf-space-2xs);
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	inline-size: 100%;
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	white-space: nowrap;
+	white-space: normal;
 }
 
 body.lf-theme .lf-topic-nav__list > li > a {
@@ -155,7 +162,8 @@ body.lf-theme .lf-topic-nav__list > li > a {
 	align-items: center;
 	justify-content: center;
 	gap: 0.15rem;
-	min-inline-size: 4.5rem;
+	inline-size: 100%;
+	min-inline-size: 0;
 	min-block-size: 3.5rem;
 	padding: 0.35rem 0.5rem;
 	font-family: var(--font-ui), sans-serif;
