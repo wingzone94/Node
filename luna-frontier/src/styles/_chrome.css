@@ -54,8 +54,9 @@ body.lf-theme .lf-topic-nav__inner {
 	margin-inline: auto;
 	padding-inline: var(--lf-gutter);
 	display: flex;
+	flex-direction: column;
 	align-items: stretch;
-	gap: var(--lf-space-s);
+	gap: var(--lf-space-3xs);
 	/* 項目が多いときは横スクロールで逃がす。ページ全体は横に伸ばさない（§65）。 */
 	overflow-x: auto;
 	overscroll-behavior-inline: contain;
@@ -90,8 +91,11 @@ body.lf-theme .lf-topic-nav__group--recommendations {
 	align-items: center;
 	gap: var(--lf-space-2xs);
 	flex: 0 0 auto;
-	inline-size: max-content;
-	max-inline-size: none;
+	inline-size: 100%;
+	min-inline-size: 0;
+	max-inline-size: 100%;
+	overflow-x: auto;
+	overscroll-behavior-inline: contain;
 	padding-inline: var(--lf-space-3xs);
 	border-radius: var(--lf-shape-action);
 	background: color-mix(in srgb, var(--lf-paper) 88%, transparent);
@@ -177,26 +181,46 @@ body.lf-theme:has(.lf-topic-nav__group--spotlight) .special-features {
 	display: none;
 }
 
+/* 両行を全幅で保ち、スクロールは各行の中だけに限定する。 */
+body.lf-theme .lf-topic-nav__categories {
+	display: flex;
+	align-items: center;
+	gap: var(--lf-space-xs);
+	min-inline-size: 0;
+	overflow-x: auto;
+	overscroll-behavior-inline: contain;
+	padding-block: 0.25rem;
+}
+
+body.lf-theme .lf-topic-nav__category-heading {
+	flex: 0 0 auto;
+	font-size: var(--lf-text-2xs);
+	color: var(--lf-on-surface-secondary);
+}
+
+body.lf-theme .lf-topic-nav__categories .lf-topic-nav__item {
+	flex: 0 0 auto;
+}
+
+body.lf-theme .lf-topic-nav__categories a {
+	min-block-size: 2.75rem;
+	padding-inline: 0.75rem;
+}
+
 @media (max-width: 599px) {
-	body.lf-theme .lf-topic-nav {
-		display: none;
+	body.lf-theme .lf-topic-nav__group--recommendations {
+		flex-direction: column;
+		align-items: flex-start;
+		padding-block: 0.35rem;
 	}
 
-	/*
-	 * Topic Nav を消すと、固定ヘッダー（64px）の高さを引き受ける要素が居なくなる。
-	 * しかし :has(.lf-topic-nav) は display: none の要素にも一致するため、
-	 * 上の「clearance は Topic Nav が担う」補正（padding-top: --lf-space-m）だけが残り、
-	 * main がヘッダーの裏へ潜っていた（実測: main top=0 / パンくずは y=40〜66 で完全に不可視）。
-	 * モバイルではコンテンツ側でヘッダー高さを持ち直す。
-	 */
-	body.lf-theme:has(.lf-topic-nav) :is(.m3-home-layout, .m3-archive-layout, .m3-date-archive),
-	body.lf-theme:has(.lf-topic-nav) .article-view,
-	body.lf-theme:has(.lf-topic-nav) .site-main.m3-search-layout,
-	/* node_library の2テンプレートは main のクラス体系が別で、上の一覧に含まれない。
-	   デスクトップでは Topic Nav の margin が clearance を担うので padding は 0 のままでよい。 */
-	body.lf-theme:has(.lf-topic-nav) .site-main.node-library-single,
-	body.lf-theme:has(.lf-topic-nav) .site-main.node-library-archive {
-		padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + var(--lf-space-m));
+	body.lf-theme .lf-topic-nav__group--recommendations > .lf-topic-nav__list {
+		inline-size: 100%;
+		overflow-x: auto;
+	}
+
+	body.lf-theme .lf-topic-nav__item--feature {
+		flex-basis: 10.5rem;
 	}
 }
 

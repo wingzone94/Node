@@ -6,7 +6,7 @@ declare( strict_types=1 );
  *
  * ヘッダーの真下に置く、主要トピックと特集への導線。
  *
- * 編集部おすすめの棚に特集とトピックを統合。標準は特集4件を優先し、合計6件まで。
+ * 編集部おすすめは特集最大4件。常設カテゴリは独立した行で全件表示。
  * 特集は専用メニューを優先し、未設定なら親テーマのSPOTLIGHTを使う。
  *
  * SPOTLIGHT はここへ統合したので、ホームの独立セクションは表示しない
@@ -136,24 +136,25 @@ foreach ( $lf_spotlight as $lf_feature ) {
 	);
 	++$lf_feature_count;
 }
+// 常設カテゴリは特集の件数に左右されない独立した行に置く。
+$lf_categories = array();
+$lf_topic_seen = array();
 foreach ( $lf_topics as $lf_topic ) {
 	$lf_url = esc_url_raw( $lf_topic['url'] );
 	$lf_key = untrailingslashit( $lf_url );
-	if ( count( $lf_recommendations ) >= $lf_limit ) {
-		break;
-	}
-	if ( '' === $lf_url || isset( $lf_seen[ $lf_key ] ) ) {
+	if ( '' === $lf_url || isset( $lf_topic_seen[ $lf_key ] ) ) {
 		continue;
 	}
-	$lf_seen[ $lf_key ] = true;
-	$lf_recommendations[] = array_merge( $lf_topic, array( 'url' => $lf_url, 'feature' => false ) );
+	$lf_topic_seen[ $lf_key ] = true;
+	$lf_categories[] = array_merge( $lf_topic, array( 'url' => $lf_url ) );
 }
-if ( empty( $lf_recommendations ) ) {
+if ( empty( $lf_recommendations ) && empty( $lf_categories ) ) {
 	return;
 }
 ?>
-<nav class="lf-topic-nav" aria-label="編集部おすすめ">
+<nav class="lf-topic-nav" aria-label="特集とカテゴリ">
 	<div class="lf-topic-nav__inner">
+		<?php if ( $lf_recommendations ) : ?>
 		<div class="lf-topic-nav__group lf-topic-nav__group--recommendations<?php echo $lf_feature_count ? ' lf-topic-nav__group--spotlight' : ''; ?>">
 			<span class="lf-topic-nav__pick lf-topic-nav__pick--editors">編集部おすすめ</span>
 			<ul class="lf-topic-nav__list">
@@ -171,5 +172,20 @@ if ( empty( $lf_recommendations ) ) {
 				<?php endforeach; ?>
 			</ul>
 		</div>
+		<?php endif; ?>
+		<?php if ( $lf_categories ) : ?>
+		<div class="lf-topic-nav__categories">
+			<span class="lf-topic-nav__category-heading">カテゴリ</span>
+			<ul class="lf-topic-nav__list">
+				<?php foreach ( $lf_categories as $lf_item ) : ?>
+					<li class="lf-topic-nav__item<?php echo $lf_item['current'] ? ' is-current' : ''; ?>">
+						<a href="<?php echo esc_url( $lf_item['url'] ); ?>"<?php echo $lf_item['current'] ? ' aria-current="page"' : ''; ?>>
+							<span class="lf-topic-nav__label"><?php echo esc_html( $lf_item['label'] ); ?></span>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+		<?php endif; ?>
 	</div>
 </nav>
