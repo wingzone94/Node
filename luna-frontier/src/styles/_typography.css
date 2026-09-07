@@ -100,8 +100,7 @@ body.lf-theme .m3-article__body h6 {
  *
  * - 文字色はブランドオレンジで統一する（2026-08-09 ユーザー指示）。
  *   #FF9900 そのままは白地で 2.1:1 しか出ないため、同色相の暗いトーンを使う。
- * - ラインは全て見出しテキストの「上」に置く横線。
- *   階層は線の長さと太さで表し、H2 > H3 > H4 の順に短くしていく。
+ * - 章を区切る H2 だけに上罫を置く。H3 / H4 はサイズ・太さ・余白で区別する。
  */
 body.lf-theme .m3-article__body h2,
 body.lf-theme .m3-article__body h3,
@@ -110,9 +109,7 @@ body.lf-theme .m3-article__body h4:not(.m3-blogcard__title) {
 	position: relative;
 }
 
-body.lf-theme .m3-article__body h2::before,
-body.lf-theme .m3-article__body h3::before,
-body.lf-theme .m3-article__body h4:not(.m3-blogcard__title)::before {
+body.lf-theme .m3-article__body h2::before {
 	content: "";
 	position: absolute;
 	inset-block-start: 0;
@@ -139,26 +136,22 @@ body.lf-theme .m3-article__body h2::before {
 	inset-block-start: -1px;
 }
 
-/* H3: 中区切り。全幅の罫は持たず、アクセントを一段短くする。 */
+/* H3: 中区切り。線を重ねず、見出しの大きさと余白で示す。 */
 body.lf-theme .m3-article__body h3 {
-	--lf-heading-rule-length: 2.5rem;
-
 	font-size: var(--lf-text-xl);
 	font-weight: 700;
 	margin: var(--lf-space-xl) 0 var(--lf-space-s);
-	padding-block-start: var(--lf-space-2xs);
+	padding-block-start: 0;
 	padding-inline-start: 0;
 	border-inline-start: 0;
 }
 
-/* H4: 最小のアクセント。ここまでが「線を持つ見出し」。 */
+/* H4: 小区切り。本文と近い距離を保つ。 */
 body.lf-theme .m3-article__body h4:not(.m3-blogcard__title) {
-	--lf-heading-rule-length: 1.25rem;
-
 	font-size: var(--lf-text-l);
 	font-weight: 700;
 	margin: var(--lf-space-l) 0 var(--lf-space-2xs);
-	padding-block-start: var(--lf-space-3xs);
+	padding-block-start: 0;
 }
 
 body.lf-theme .m3-article__body h5 {
@@ -186,9 +179,10 @@ body.lf-theme .m3-article__body h5 + h6 {
 	margin-block-start: var(--lf-space-s);
 }
 
-/* h2 直後の h3 は罫の直下に来るため、横線の二重出しを弱める。 */
-body.lf-theme .m3-article__body h2 + h3::before {
-	background: color-mix(in srgb, var(--lf-brand) 55%, transparent);
+/* 親テーマ由来の装飾も解除し、章見出しに強調を集める。 */
+body.lf-theme .m3-article__body h3::before,
+body.lf-theme .m3-article__body h4:not(.m3-blogcard__title)::before {
+	content: none;
 }
 
 /* H5 / H6 は線を持たない（§35: H4 以下は装飾を増やしすぎない）。 */

@@ -169,6 +169,7 @@ function luna_frontier_register_menus(): void {
 	register_nav_menus(
 		array(
 			'luna_topics' => __( 'トピック（Luna Frontier）', 'luna-frontier' ),
+			'luna_spotlight' => __( 'SPOTLIGHT（Luna Frontier）', 'luna-frontier' ),
 		)
 	);
 }
