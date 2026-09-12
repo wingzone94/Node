@@ -197,9 +197,334 @@ function setupTitleAutoFit() {
   });
 }
 
+const ARTICLE_HEADING_SELECTOR = 'h2, h3, h4, h5, h6';
+const HEADING_EXCLUDE_SELECTOR = [
+  '#m3-sticky-toc',
+  '#m3-inline-toc',
+  '#comments',
+  '#comments-section',
+  '.m3-post-comment-toc',
+  '.m3-blogcard',
+  '.m3-card',
+  '.c-card',
+  '.lf-reading-aside',
+].join(', ');
+
+const DESKTOP_TOC_MEDIA = '(min-width: 1024px)';
+const ASIDE_TOC_FLASH_MS = 1400;
+
+function isSinglePostView() {
+  return document.body.classList.contains('single')
+    || document.body.classList.contains('single-post');
+}
+
+function findAsideTocLink(targetId) {
+  if (!targetId) return null;
+
+  return Array.from(document.querySelectorAll('.lf-aside-block--toc .lf-toc__link')).find((link) => {
+    const href = link.getAttribute('href') || '';
+    return href === `#${targetId}` || link.hash.slice(1) === targetId;
+  }) || null;
+}
+
+function revealAsideTocForHeading(heading) {
+  const tocBlock = document.querySelector('.lf-aside-block--toc');
+  if (!tocBlock) return;
+
+  tocBlock.classList.add('is-lf-revealed');
+
+  document.querySelectorAll('.lf-aside-block--toc .lf-toc__link').forEach((tocLink) => {
+    tocLink.classList.remove('is-current', 'lf-toc__link--flash');
+    tocLink.removeAttribute('aria-current');
+  });
+
+  const link = findAsideTocLink(heading?.id);
+  if (!link) return;
+
+  link.classList.add('is-current', 'lf-toc__link--flash');
+  link.setAttribute('aria-current', 'location');
+
+  const linkRect = link.getBoundingClientRect();
+  const blockRect = tocBlock.getBoundingClientRect();
+  tocBlock.scrollTop += linkRect.top - blockRect.top - (blockRect.height / 2) + (linkRect.height / 2);
+
+  window.clearTimeout(Number(link.dataset.lfTocFlashTimer || 0));
+  const timer = window.setTimeout(() => {
+    link.classList.remove('lf-toc__link--flash');
+    delete link.dataset.lfTocFlashTimer;
+  }, ASIDE_TOC_FLASH_MS);
+  link.dataset.lfTocFlashTimer = String(timer);
+}
+
+/* ---------------------------------------------------------------------
+ * 目次の縦ライン
+ *
+ * 項目ごとの border を出し入れすると、現在地が移るたびに線が消えて別の
+ * 場所に現れる。1 本のマーカーを滑り下ろす形に変え、移動中だけ薄くする。
+ * 位置と高さは CSS 変数で渡す（描画は _article-layout.css の .lf-toc::after）。
+ * --------------------------------------------------------------------- */
+function moveTocMarker(list, link) {
+  if (!list) return;
+
+  if (!link) {
+    list.style.setProperty('--lf-toc-marker-opacity', '0');
+    return;
+  }
+
+  const top = link.offsetTop;
+  const height = link.offsetHeight;
+  const previous = list.dataset.lfMarkerTop;
+
+  list.style.setProperty('--lf-toc-marker-top', `${top}px`);
+  list.style.setProperty('--lf-toc-marker-height', `${height}px`);
+
+  // 初回は移動が無いので、そのまま出す。
+  if (previous === undefined) {
+    list.style.setProperty('--lf-toc-marker-opacity', '1');
+    list.dataset.lfMarkerTop = String(top);
+    return;
+  }
+
+  if (previous !== String(top)) {
+    // 一度薄くしてから戻す。位置の遷移と同じ長さなので、滑りながら
+    // 消えて、着く頃に戻って見える。
+    list.style.setProperty('--lf-toc-marker-opacity', '0.35');
+    window.clearTimeout(Number(list.dataset.lfMarkerTimer || 0));
+    const timer = window.setTimeout(() => {
+      list.style.setProperty('--lf-toc-marker-opacity', '1');
+      delete list.dataset.lfMarkerTimer;
+    }, 60);
+    list.dataset.lfMarkerTimer = String(timer);
+  } else {
+    list.style.setProperty('--lf-toc-marker-opacity', '1');
+  }
+
+  list.dataset.lfMarkerTop = String(top);
+}
+
+function markCurrentTocLink(list, targetId) {
+  if (!list) return null;
+
+  let current = null;
+  list.querySelectorAll('.lf-toc__link').forEach((link) => {
+    const isCurrent = link.hash.slice(1) === targetId;
+    link.classList.toggle('is-current', isCurrent);
+    if (isCurrent) {
+      link.setAttribute('aria-current', 'location');
+      current = link;
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+
+  moveTocMarker(list, current);
+  return current;
+}
+
+/* ---------------------------------------------------------------------
+ * 見出し横の目次（PC）
+ *
+ * 右カラムの Contents は記事の先頭で止まるので、下の方を読んでいるときに
+ * 全体のどこにいるか確かめるには視線を大きく戻す必要があった。
+ * 見出しにカーソルを乗せているあいだ、同じ目次をその行の真横に出す。
+ * --------------------------------------------------------------------- */
+const HEADING_TOC_MIN_WIDTH = 260;
+const HEADING_TOC_GAP = 24;
+const HEADING_TOC_CLOSE_MS = 220;
+
+function buildHeadingTocPanel(sourceToc) {
+  const panel = document.createElement('div');
+  panel.className = 'lf-heading-toc';
+  panel.hidden = false;
+
+  const title = document.createElement('p');
+  title.className = 'lf-heading-toc__title lf-system-label';
+  title.textContent = 'Contents';
+  panel.append(title);
+
+  const list = sourceToc.cloneNode(true);
+  // 複製なので、元の目次と id / 現在地の状態を共有しない。
+  list.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+  list.querySelectorAll('.lf-toc__link').forEach((link) => {
+    link.classList.remove('is-current', 'lf-toc__link--flash');
+    link.removeAttribute('aria-current');
+  });
+  panel.append(list);
+
+  return { panel, list };
+}
+
+function setupHeadingTocAccess() {
+  if (!isSinglePostView()) return;
+
+  const article = document.querySelector('.m3-article__body');
+  const sourceToc = document.querySelector('.lf-aside-block--toc .lf-toc');
+  if (!article) return;
+
+  const media = window.matchMedia(DESKTOP_TOC_MEDIA);
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+  const headingFromEvent = (event) => {
+    if (!media.matches) return null;
+
+    const heading = event.target.closest(ARTICLE_HEADING_SELECTOR);
+    if (!heading || !article.contains(heading) || heading.closest(HEADING_EXCLUDE_SELECTOR)) return null;
+
+    return heading;
+  };
+
+  // ダブルクリックは従来どおり右カラムの目次を光らせる（タッチでも効く）。
+  article.addEventListener('dblclick', (event) => {
+    const heading = headingFromEvent(event);
+    if (!heading) return;
+
+    event.preventDefault();
+    revealAsideTocForHeading(heading);
+  });
+
+  if (!sourceToc || !sourceToc.querySelector('.lf-toc__link')) return;
+
+  const { panel, list } = buildHeadingTocPanel(sourceToc);
+  // 見出しの座標を基準に置くので、position: relative な祖先へ入れる。
+  const host = article.offsetParent instanceof HTMLElement ? article.offsetParent : document.body;
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  host.append(panel);
+
+  let closeTimer = 0;
+  let openFor = null;
+
+  // 出す場所は右カラムと同じ帯なので、開いているあいだは右カラムの
+  // Contents を退かせる。同じ目次が 2 つ重なって見えるのを避ける。
+  const asideBlock = document.querySelector('.lf-aside-block--toc');
+
+  const close = () => {
+    panel.classList.remove('is-open');
+    asideBlock?.classList.remove('is-lf-toc-relocated');
+    openFor = null;
+  };
+
+  const scheduleClose = () => {
+    window.clearTimeout(closeTimer);
+    closeTimer = window.setTimeout(close, HEADING_TOC_CLOSE_MS);
+  };
+
+  const open = (heading) => {
+    window.clearTimeout(closeTimer);
+    if (openFor === heading) return;
+
+    const hostRect = host.getBoundingClientRect();
+    const headingRect = heading.getBoundingClientRect();
+
+    /*
+     * 本文の右隣に置く。右に入りきらない画面では本文の左隣へ回し、
+     * どちらも足りなければ出さない（本文の上に被せて読書を邪魔しない）。
+     */
+    const articleRect = article.getBoundingClientRect();
+    const spaceRight = window.innerWidth - articleRect.right - HEADING_TOC_GAP;
+    const spaceLeft = articleRect.left - HEADING_TOC_GAP;
+
+    let width;
+    let left;
+    if (spaceRight >= HEADING_TOC_MIN_WIDTH) {
+      width = Math.min(320, spaceRight - 8);
+      left = articleRect.right + HEADING_TOC_GAP - hostRect.left;
+    } else if (spaceLeft >= HEADING_TOC_MIN_WIDTH) {
+      width = Math.min(320, spaceLeft - 8);
+      left = articleRect.left - HEADING_TOC_GAP - width - hostRect.left;
+    } else {
+      close();
+      return;
+    }
+
+    panel.style.setProperty('--lf-heading-toc-width', `${Math.round(width)}px`);
+    panel.style.setProperty('--lf-heading-toc-left', `${Math.round(left)}px`);
+    // 見出しの上端に揃える。scrollY を足すのは host が通常フローにあるため。
+    panel.style.setProperty('--lf-heading-toc-top', `${Math.round(headingRect.top - hostRect.top)}px`);
+
+    markCurrentTocLink(list, heading.id);
+    panel.classList.add('is-open');
+    // パネルが右カラムに重なるときだけ退かせる（左に出た場合は重ならない）。
+    const overlapsAside = Boolean(asideBlock)
+      && left + width > asideBlock.getBoundingClientRect().left - hostRect.left;
+    asideBlock?.classList.toggle('is-lf-toc-relocated', overlapsAside);
+    openFor = heading;
+  };
+
+  if (finePointer.matches) {
+    article.addEventListener('mouseover', (event) => {
+      const heading = headingFromEvent(event);
+      if (!heading || heading.contains(event.relatedTarget)) return;
+
+      heading.classList.add('is-lf-toc-anchor');
+      open(heading);
+    });
+
+    article.addEventListener('mouseout', (event) => {
+      const heading = headingFromEvent(event);
+      if (!heading || heading.contains(event.relatedTarget)) return;
+      if (panel.contains(event.relatedTarget)) return;
+
+      scheduleClose();
+    });
+
+    // パネルへカーソルが移ったら閉じない。目次を辿れるようにする。
+    panel.addEventListener('mouseenter', () => window.clearTimeout(closeTimer));
+    panel.addEventListener('mouseleave', scheduleClose);
+  }
+
+  // スクロールで位置が合わなくなるので、そのときは畳む。
+  window.addEventListener('scroll', () => {
+    if (openFor) close();
+  }, { passive: true });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && openFor) close();
+  });
+}
+
+/* ---------------------------------------------------------------------
+ * 右カラム目次の現在地を、読んでいる見出しに合わせて動かす。
+ * 縦ラインはここから moveTocMarker() 経由で滑る。
+ * --------------------------------------------------------------------- */
+function setupAsideTocProgress() {
+  if (!isSinglePostView()) return;
+
+  const list = document.querySelector('.lf-aside-block--toc .lf-toc');
+  const article = document.querySelector('.m3-article__body');
+  if (!list || !article) return;
+
+  const headings = Array.from(list.querySelectorAll('.lf-toc__link'))
+    .map((link) => ({ link, heading: document.getElementById(link.hash.slice(1)) }))
+    .filter((entry) => entry.heading);
+
+  if (!headings.length) return;
+
+  let frame = 0;
+  const update = () => {
+    frame = 0;
+    // 画面の上 1/3 を通過した最後の見出しを現在地とする。
+    const marker = window.innerHeight / 3;
+    let current = headings[0];
+    for (const entry of headings) {
+      if (entry.heading.getBoundingClientRect().top <= marker) current = entry;
+    }
+    markCurrentTocLink(list, current.heading.id);
+  };
+
+  const schedule = () => {
+    if (!frame) frame = window.requestAnimationFrame(update);
+  };
+
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule, { passive: true });
+  update();
+}
+
 function init() {
   setupFootnoteRelocation();
   setupTitleAutoFit();
+  setupHeadingTocAccess();
+  setupAsideTocProgress();
 }
 
 if (document.readyState === 'loading') {

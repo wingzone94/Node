@@ -61,9 +61,20 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
         $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
         // 保存値は `<モデルID>@<思考量>` 形式。一覧はモデルIDのみのため分解して照合する
         $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
-        $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
+        // Pro など無料枠で使えないモデルは一覧に出さない（選んでも必ず 429 になるため）
+        $models = class_exists('Node_AI_Fact_Check_Models') ? Node_AI_Fact_Check_Models::usable_options($user_id) : [];
         
         $is_gemini = ! function_exists( 'node_ai_core' ) || 'gemini' === node_ai_core()->get_provider_id();
+
+        // ファクトチェックのモデルは「設定 → Node AI」の方針（既定は自動・無料枠）で決まる。
+        // ここのプルダウンは要約・校正など他機能の既定モデルとして保存される
+        if ( $is_gemini && class_exists( 'Node_AI_Fact_Check_Models' ) ) {
+            $fc_model = Node_AI_Fact_Check_Models::select();
+            echo '<p class="description">ファクトチェックには無料枠のモデルを自動選択して使います（現在: <code>'
+                . esc_html( is_wp_error( $fc_model ) ? '利用可能なモデルなし' : $fc_model )
+                . '</code>）。変更は「設定 → Node AI」から行えます。</p>';
+        }
+
         if ( $is_gemini && ! empty( $models ) ) {
             echo '<p><strong>使用モデル:</strong><br>';
             echo '<select id="node_ai_gemini_model_fact_check" style="width:100%;">';
@@ -125,10 +136,12 @@ function node_ai_render_fact_check_meta_box( WP_Post $post ): void {
 
 		function renderSources(sources) {
 			if (!sources || !sources.length) return '';
-			var html = '<div class="node-fact-check__sources"><p><strong>参照元 (Google Search)</strong></p><ul class="node-fact-check__sources-list">';
+			var html = '<div class="node-fact-check__sources"><p><strong>参照元</strong></p><ul class="node-fact-check__sources-list">';
 			sources.forEach(function(source) {
 				var title = source.title || source.url;
-				html += '<li><a href="' + $('<div>').text(source.url).html() + '" target="_blank" rel="noopener noreferrer">' + $('<div>').text(title).html() + '</a></li>';
+				html += '<li><a href="' + $('<div>').text(source.url).html() + '" target="_blank" rel="noopener noreferrer">' + $('<div>').text(title).html() + '</a>'
+					+ (source.official ? ' <span class="node-fact-check__sources-official">（公式）</span>' : '')
+					+ '</li>';
 			});
 			html += '</ul></div>';
 			return html;

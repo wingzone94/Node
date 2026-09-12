@@ -874,6 +874,7 @@
     position: relative;
     width: 100%;
     height: auto;
+    aspect-ratio: var(--node-hero-media-ratio, 16 / 9);
     /* 見切れ解消: 記事ごとの自然なアスペクト比で全体表示。
        レターボックス（サイドパネル）は使わないため背景色は持たせない。 */
     overflow: hidden;
@@ -1214,6 +1215,12 @@
 .m3-article__body h4:not(.m3-blogcard__title) { font-size: 1.25rem; border-bottom-width: 2px; }
 .m3-article__body h5 { font-size: 1.1rem; border-bottom-width: 2px; opacity: 0.85; }
 .m3-article__body h6 { font-size: 1rem; border-bottom-width: 2px; opacity: 0.75; }
+
+@media (max-width: 599px) {
+    .m3-article__body h1 { font-size: 1.75rem; }
+    .m3-article__body h2 { font-size: 1.5rem; }
+    .m3-article__body h3 { font-size: 1.3rem; }
+}
 
 .m3-article__body li {
     line-height: 1.6;
@@ -1882,8 +1889,7 @@
 .m3-label--category-more {
     font-size: 11px;
     font-weight: 800;
-    /* カード・シングルとも文字色は常に白（動的アクセントの明暗に追従させない） */
-    color: #ffffff;
+    color: var(--node-article-on-accent, #2b1700);
     background: var(--node-article-accent, #FF9900);
     padding: 2px 8px;
     border-radius: 6px;
@@ -1923,8 +1929,8 @@
 .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:hover,
 .m3-article__category-group:not(.is-card) .m3-label--category.is-secondary:focus-visible {
     background-color: var(--md-sys-color-surface-container-low, #ffffff) !important;
-    color: color-mix(in srgb, var(--category-color, #FF9900) 72%, black) !important;
-    border: 1.5px solid color-mix(in srgb, var(--category-color, #FF9900) 60%, black) !important;
+    color: color-mix(in srgb, var(--category-color, #FF9900) 58%, black) !important;
+    border: 1.5px solid color-mix(in srgb, var(--category-color, #FF9900) 54%, black) !important;
     border-radius: 999px;
     box-shadow: none;
 }
@@ -2021,26 +2027,26 @@
     background: #FF9900 !important;
     border: none !important;
     border-radius: 100px;
-    color: #FFFFFF !important;
+    color: #2b1700 !important;
     font-weight: 700;
     font-size: 0.9rem;
     letter-spacing: 0.03em;
     overflow: hidden;
-    box-shadow: 0 6px 20px rgba(255, 153, 0, 0.4);
-    animation: aiDisclosureEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    box-shadow: 0 2px 8px rgba(43, 23, 0, 0.14);
+    animation: none;
     cursor: default;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    text-shadow: none;
 }
 
 .m3-article__ai-disclosure-expressive .material-symbols-outlined {
-    color: #ffffff !important;
+    color: #2b1700 !important;
 }
 
 [data-theme="dark"] .m3-article__ai-disclosure-expressive {
     background: #FF9900 !important;
     border: none !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 6px 25px rgba(255, 153, 0, 0.5);
+    color: #2b1700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
 }
 
 .m3-ai-disclosure__glow {
@@ -2052,13 +2058,13 @@
     background: radial-gradient(circle at center, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
     opacity: 0;
     transform: scale(0.5);
-    animation: aiDisclosureGlow 6s infinite alternate;
+    animation: none;
     pointer-events: none;
 }
 
 .m3-ai-disclosure__icon {
     font-size: 18px !important;
-    animation: aiIconPulse 2.5s infinite ease-in-out;
+    animation: none;
 }
 
 @keyframes aiDisclosureEntrance {

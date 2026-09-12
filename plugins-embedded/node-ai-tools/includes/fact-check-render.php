@@ -142,11 +142,16 @@ if ( ! function_exists( 'node_ai_render_fact_check_sources' ) ) {
 
 		$class = 'front' === $context ? 'm3-fact-check__sources' : 'node-fact-check__sources';
 		echo '<div class="' . esc_attr( $class ) . '">';
-		echo '<p class="' . esc_attr( $class ) . '-label"><strong>' . esc_html__( '参照元 (Google Search)', 'node-ai-tools' ) . '</strong></p>';
+		// 出典は Google 検索由来とは限らない（記事内リンク・自動発見した公式ページも入る）
+		echo '<p class="' . esc_attr( $class ) . '-label"><strong>' . esc_html__( '参照元', 'node-ai-tools' ) . '</strong></p>';
 		echo '<ul class="' . esc_attr( $class ) . '-list">';
 		foreach ( $sources as $source ) {
 			$title = ! empty( $source['title'] ) ? $source['title'] : $source['url'];
-			echo '<li><a href="' . esc_url( $source['url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $title ) . '</a></li>';
+			echo '<li><a href="' . esc_url( $source['url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $title ) . '</a>';
+			if ( ! empty( $source['official'] ) ) {
+				echo ' <span class="' . esc_attr( $class ) . '-official">' . esc_html__( '（公式）', 'node-ai-tools' ) . '</span>';
+			}
+			echo '</li>';
 		}
 		echo '</ul></div>';
 	}
@@ -176,8 +181,21 @@ if ( ! function_exists( 'node_ai_render_fact_check_results' ) ) {
 			echo '<p class="node-fact-check__grounded"><small>' . esc_html__( 'Luminous Core ガイドライン参照済み', 'node-ai-tools' ) . '</small></p>';
 		}
 
+		// 実行時刻と使用モデルは、どちらか片方しか無い保存データでも表示できるようにする
+		$meta_parts = array();
 		if ( ! empty( $data['checked_at'] ) ) {
-			echo '<p class="node-fact-check__meta"><small>最終チェック: ' . esc_html( (string) $data['checked_at'] ) . '</small></p>';
+			$meta_parts[] = '最終チェック: ' . (string) $data['checked_at'];
+		}
+		if ( ! empty( $data['model'] ) ) {
+			$meta_parts[] = 'モデル: ' . (string) $data['model'];
+		}
+		if ( ! empty( $meta_parts ) ) {
+			echo '<p class="node-fact-check__meta"><small>' . esc_html( implode( ' / ', $meta_parts ) ) . '</small></p>';
+		}
+
+		// 検索なしで実行した・利用枠に達した等の実行条件は、判定の読み方に影響するため必ず出す。
+		foreach ( (array) ( $data['notices'] ?? array() ) as $notice ) {
+			echo '<p class="node-fact-check__notice"><small>' . esc_html( (string) $notice ) . '</small></p>';
 		}
 
 		echo '<ul class="node-fact-check__claims">';
@@ -192,6 +210,9 @@ if ( ! function_exists( 'node_ai_render_fact_check_results' ) ) {
 			echo '<p class="node-fact-check__claim-meta">';
 			echo '<span class="node-fact-check__status">' . esc_html( $status_text ) . '</span>';
 			echo ' / 確信度: ' . esc_html( (string) ( $claim['confidence'] ?? '' ) );
+			if ( 'opinion' === (string) ( $claim['claim_type'] ?? '' ) ) {
+				echo ' / ' . esc_html__( '筆者の感想（事実判定の対象外）', 'node-ai-tools' );
+			}
 			echo '</p>';
 			if ( ! empty( $claim['note'] ) ) {
 				echo '<p class="node-fact-check__claim-note">' . esc_html( (string) $claim['note'] ) . '</p>';
@@ -240,7 +261,7 @@ if ( ! function_exists( 'node_ai_render_fact_check_front' ) ) {
 			</summary>
 			<div class="m3-fact-check__body">
 				<p class="m3-fact-check__disclaimer">
-					<?php esc_html_e( 'AI と Google Search による参考情報です。これは確認箇所の抽出支援であり、編集者が確認済みの内容を含みますが、最終的な正確性は原文・公式情報をご確認ください。', 'node-ai-tools' ); ?>
+					<?php esc_html_e( 'AI と公開情報（公式サイト・検索結果）による参考情報です。これは確認箇所の抽出支援であり、編集者が確認済みの内容を含みますが、最終的な正確性は原文・公式情報をご確認ください。', 'node-ai-tools' ); ?>
 				</p>
 				<?php if ( ! empty( $data['summary'] ) ) : ?>
 					<p class="m3-fact-check__overview"><?php echo esc_html( (string) $data['summary'] ); ?></p>

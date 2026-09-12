@@ -244,6 +244,10 @@ function setupCarousel(section) {
         update();
     };
 
+    const scheduleRefresh = () => {
+        window.requestAnimationFrame(refresh);
+    };
+
     // --- 表示切替（カード ⇄ リスト） ---
     const viewButtons = section.querySelectorAll('[data-headline-view]');
     const applyView = mode => {
@@ -278,6 +282,22 @@ function setupCarousel(section) {
     } else {
         window.addEventListener('resize', refresh);
     }
+
+    if ('MutationObserver' in window) {
+        const track = viewport.querySelector('.c-headline-carousel__track');
+        if (track) {
+            new MutationObserver(scheduleRefresh).observe(track, {
+                childList: true,
+                subtree: true
+            });
+        }
+    }
+
+    viewport.querySelectorAll('img').forEach(image => {
+        if (image.complete) return;
+        image.addEventListener('load', scheduleRefresh, { once: true });
+        image.addEventListener('error', scheduleRefresh, { once: true });
+    });
 
     refresh();
 

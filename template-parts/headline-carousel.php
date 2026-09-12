@@ -10,17 +10,30 @@ declare(strict_types=1);
  * @package Node
  */
 
-$news_cat = get_term_by( 'name', 'ニュース', 'category' );
+$headline_ids = function_exists( 'node_get_headline_post_ids' ) ? node_get_headline_post_ids( 5 ) : array();
 
-$headline_args = array(
-	// ニュースは最大5件（2026-08-01 ユーザー指示）。増やすと横スクロールが長くなり、
-	// トップの回遊がニュースに偏る。
-	'posts_per_page'      => 5,
-	'ignore_sticky_posts' => true,
-	'no_found_rows'       => true,
-);
-if ( $news_cat ) {
-	$headline_args['cat'] = $news_cat->term_id;
+if ( empty( $headline_ids ) ) {
+	$news_cat      = get_term_by( 'name', 'ニュース', 'category' );
+	$headline_args = array(
+		// ニュースは最大5件（2026-08-01 ユーザー指示）。増やすと横スクロールが長くなり、
+		// トップの回遊がニュースに偏る。
+		'posts_per_page'      => 5,
+		'ignore_sticky_posts' => true,
+		'no_found_rows'       => true,
+	);
+	if ( $news_cat ) {
+		$headline_args['cat'] = $news_cat->term_id;
+	}
+} else {
+	$headline_args = array(
+		'post_type'           => 'post',
+		'post_status'         => 'publish',
+		'posts_per_page'      => count( $headline_ids ),
+		'post__in'            => $headline_ids,
+		'orderby'             => 'post__in',
+		'ignore_sticky_posts' => true,
+		'no_found_rows'       => true,
+	);
 }
 
 $headline_query = new WP_Query( $headline_args );

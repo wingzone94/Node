@@ -7,14 +7,17 @@
  * - 階層は影ではなく面と罫で出す。
  * - Container Queries を使い、カード自身の幅で変形させる（Viewport で分岐しない）。
  *
- * Home / Archive の「カードごとに記事の seed 色をまとう」Spectrum 化は、
- * カード 1 枚ごとの色出力（= 一覧の全記事ぶんの seed 解決）が必要で、
- * 一覧のクエリ・キャッシュ・パフォーマンスに影響が出る。§76 に従って 2.1 へ送り、
- * ここでは Paper Design と Container Queries までを入れる。
+ * Phase 5 でカードごとの seed accent を追加済み。
+ * 一覧を多色の広告面にせず、Paper Design / Container Queries を土台に、
+ * M3 の color role として罫・focus・弱い面だけを記事 seed へ寄せる。
  */
 
 body.lf-theme .m3-card,
 body.lf-theme .c-card {
+	--lf-card-current-accent: var(--lf-card-accent, var(--lf-brand-text));
+	--lf-card-current-outline: var(--lf-card-outline, var(--lf-rule));
+	--lf-card-current-surface: var(--lf-card-surface, var(--lf-paper-sunken));
+
 	border-radius: var(--lf-shape-paper);
 	background: var(--lf-paper);
 	border: 1px solid var(--lf-rule);
@@ -25,10 +28,36 @@ body.lf-theme .c-card {
 		transform var(--lf-motion-base) var(--lf-easing-standard);
 }
 
+body.lf-theme[data-theme="dark"] .lf-card-spectrum,
+[data-theme="dark"] body.lf-theme .lf-card-spectrum {
+	--lf-card-current-accent: var(--lf-card-accent-dark, var(--lf-brand-text));
+	--lf-card-current-outline: var(--lf-card-outline-dark, var(--lf-rule));
+	--lf-card-current-surface: var(--lf-card-surface-dark, var(--lf-paper-sunken));
+}
+
+/*
+ * Phase 5 Spectrum accent.
+ * 一覧は多色の広告面にせず、M3 の color role として罫・focus・弱い面だけを
+ * 記事 seed に寄せる。カテゴリチップの固有色は Wayfinding として維持する。
+ */
+body.lf-theme .lf-card-spectrum {
+	border-color: color-mix(in srgb, var(--lf-card-current-outline) 70%, transparent);
+}
+
+body.lf-theme .lf-card-spectrum .m3-card__visual,
+body.lf-theme .lf-card-spectrum.m3-card--no-image::before {
+	background-color: color-mix(in srgb, var(--lf-card-current-surface) 70%, var(--lf-paper));
+}
+
 body.lf-theme .m3-card:hover,
 body.lf-theme .c-card:hover {
 	border-color: var(--lf-rule-strong);
 	box-shadow: none;
+}
+
+body.lf-theme .lf-card-spectrum:hover,
+body.lf-theme .lf-card-spectrum:focus-within {
+	border-color: var(--lf-card-current-accent);
 }
 
 /* カード内のサムネイルも紙に合わせて四角にする。 */
@@ -39,7 +68,7 @@ body.lf-theme .m3-card :is(img, .m3-card__image, .c-card__image) {
 /* カテゴリチップ・状態チップはピルのまま（§22）。
    カテゴリ色は Wayfinding なので触らない（§39）。 */
 body.lf-theme .m3-card :is(.m3-card__category, .m3-category-badge, .m3-chip) {
-	border-radius: var(--lf-shape-chip);
+	border-radius: var(--lf-shape-full);
 }
 
 body.lf-theme .m3-card__title,

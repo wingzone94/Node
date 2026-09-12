@@ -37,9 +37,13 @@ class Node_AI_Fact_Check_Test extends WP_UnitTestCase {
 			'post_title'   => 'Test Fact Check Post',
 			'post_content' => 'This is a test content for fact checking.',
 		) );
+
+		// 再試行の待機はテストでは行わない（挙動は回数で検証する）
+		add_filter( 'node_ai_fc_retry_wait', '__return_zero' );
 	}
 
 	public function tear_down() {
+		remove_filter( 'node_ai_fc_retry_wait', '__return_zero' );
 		parent::tear_down();
 	}
 
@@ -147,11 +151,12 @@ class Node_AI_Fact_Check_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', array( $this, 'mock_gemini_api_429' ), 10 );
 
 		$this->assertWPError( $result );
-		// 検索併用の 429 は「検索が使えない」と判定される（ファクトチェックは検索が前提のため）
+		// 429 は無料枠の候補を順に試したうえで安全に中止する（有料モデルへは切り替えない）
 		$this->assertContains(
 			$result->get_error_code(),
-			array( 'gemini_quota_exceeded', 'gemini_grounding_unavailable' )
+			array( 'gemini_quota_exceeded', 'ai_quota', 'node_ai_fc_exhausted', 'node_ai_fc_no_model' )
 		);
+		$this->assertStringNotContainsString( 'pro', (string) $result->get_error_message() );
 	}
 	
 	/**
@@ -166,7 +171,11 @@ class Node_AI_Fact_Check_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', array( $this, 'mock_gemini_api_503' ), 10 );
 
 		$this->assertWPError( $result );
-		$this->assertEquals( 'gemini_model_unavailable', $result->get_error_code() );
+		// Core 経由になったためコードは正規化される（元コードは data.original_code に残る）
+		$this->assertContains(
+			$result->get_error_code(),
+			array( 'gemini_model_unavailable', 'ai_unavailable' )
+		);
 	}
 	
 	/**
@@ -181,7 +190,10 @@ class Node_AI_Fact_Check_Test extends WP_UnitTestCase {
 		remove_filter( 'pre_http_request', array( $this, 'mock_gemini_api_timeout' ), 10 );
 
 		$this->assertWPError( $result );
-		$this->assertEquals( 'gemini_timeout', $result->get_error_code() );
+		$this->assertContains(
+			$result->get_error_code(),
+			array( 'gemini_timeout', 'ai_timeout' )
+		);
 	}
 
 	/**
@@ -407,29 +419,32 @@ class Node_AI_Fact_Check_Test extends WP_UnitTestCase {
 	}
 
 
-	// --- 1.3: 検索が使えないモデルでは黙って実行せず中止する ---
+	// --- 2.0: 検索が使えないときは中止せず、検索なしで続行して確信度を下げる ---
+	//
+	// 1.3 では「検索が使えないなら中止」していたが、それだと検索枠が尽きただけで
+	// ファクトチェック自体が止まってしまう。Google 検索は必須条件にしない方針へ変更した
+	// （検索なしで実行したことは結果に記録され、断定は避けられる）。
 
-	public function test_fact_check_aborts_when_grounding_is_unavailable() {
+	public function test_fact_check_continues_without_grounding_when_search_quota_is_gone() {
 		$this->grounded_calls = 0;
 		$this->plain_calls    = 0;
-
-		update_user_meta( $this->user_id, 'node_gemini_model', 'gemini-3.5-flash' );
 
 		add_filter( 'pre_http_request', array( $this, 'mock_grounding_quota_exhausted' ), 10, 3 );
 		$api    = new Node_Gemini_API();
 		$result = $api->fact_check( 'テスト本文', 'テストタイトル' );
 		remove_filter( 'pre_http_request', array( $this, 'mock_grounding_quota_exhausted' ), 10 );
 
-		// 検索なしでの再実行はしない（黙って精度が落ちるのを防ぐ）
-		$this->assertSame( 1, $this->grounded_calls );
-		$this->assertSame( 0, $this->plain_calls );
+		$this->assertNotWPError( $result );
 
-		$this->assertWPError( $result );
-		$this->assertSame( 'gemini_grounding_unavailable', $result->get_error_code() );
-		$this->assertStringContainsString( '検索', $result->get_error_message() );
-		// モデルを使えないものと決めつけず、再試行を促す文言であること
-		$this->assertStringContainsString( '時間をおく', $result->get_error_message() );
+		// 検索つきで一度試し、429 だったので検索なしへ落として続行している
+		$this->assertGreaterThanOrEqual( 1, $this->grounded_calls );
+		$this->assertGreaterThanOrEqual( 1, $this->plain_calls );
 
+		$this->assertFalse( $result['context']['grounded'] );
+		$this->assertNotEmpty( $result['context']['notices'] );
+
+		// 有料モデルへは切り替えていない
+		$this->assertStringNotContainsString( 'pro', (string) $result['context']['model'] );
 	}
 
 	public $grounded_calls = 0;

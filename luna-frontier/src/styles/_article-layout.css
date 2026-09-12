@@ -69,10 +69,64 @@ body.lf-theme .lf-aside-list__item a {
 		border-color var(--lf-motion-fast) var(--lf-easing-standard);
 }
 
-body.lf-theme .lf-toc__link:hover,
 body.lf-theme .lf-aside-list__item a:hover {
 	color: var(--lc-accent);
 	border-inline-start-color: var(--lc-accent);
+}
+
+/* ---------------------------------------------------------------------
+ * 目次の縦ライン
+ *
+ * 以前は項目ごとに border-inline-start を出し入れしていたので、現在地が
+ * 移るたびに線が「消えて、別の場所に現れる」跳び方をしていた。
+ *
+ * 1 本のマーカーに変えて、現在地へ滑り下りるようにする。移動中は薄くなり、
+ * 着いてから戻る（--lf-toc-marker-opacity を JS が一度 0 にして次のフレームで
+ * 戻すことで、透明度と位置の遷移が同時に走る）。
+ * 位置と高さは JS が --lf-toc-marker-top / --lf-toc-marker-height に書く。
+ * --------------------------------------------------------------------- */
+body.lf-theme .lf-toc {
+	position: relative;
+}
+
+/* 全項目に通る薄いレール。現在地が無いときも目次の範囲が分かる。 */
+body.lf-theme .lf-toc::before {
+	content: "";
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	inline-size: 2px;
+	background: var(--lf-rule);
+}
+
+/* 現在地のマーカー。JS が値を入れるまでは出さない。 */
+body.lf-theme .lf-toc::after {
+	content: "";
+	position: absolute;
+	inset-inline-start: 0;
+	inline-size: 2px;
+	top: var(--lf-toc-marker-top, 0px);
+	block-size: var(--lf-toc-marker-height, 0px);
+	background: var(--lc-accent);
+	opacity: var(--lf-toc-marker-opacity, 0);
+	transition: top var(--lf-motion-emphasized) var(--lf-easing-standard),
+		block-size var(--lf-motion-emphasized) var(--lf-easing-standard),
+		opacity var(--lf-motion-emphasized) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-toc__link:hover {
+	color: var(--lc-accent);
+}
+
+body.lf-theme .lf-toc__link.is-current {
+	color: var(--lc-on-surface);
+	font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.lf-theme .lf-toc::after {
+		transition: none;
+	}
 }
 
 /* 見出しレベルでインデントを付け、階層を読み取れるようにする。 */
@@ -93,7 +147,7 @@ body.lf-theme .lf-aside-list--inline .lf-aside-list__item a {
 	border-inline-start: 0;
 	padding: 0.2em 0.8em;
 	border: 1px solid var(--lf-rule-strong);
-	border-radius: var(--lf-shape-chip);
+	border-radius: var(--lf-shape-full);
 	font-size: var(--lf-text-2xs);
 }
 
@@ -130,12 +184,17 @@ body.lf-theme .lf-aside-list--inline .lf-aside-list__item a {
 		min-inline-size: 0;
 	}
 
+	body.lf-theme.single-post .m3-article > .lf-article-header {
+		grid-column: 1;
+	}
+
 	body.lf-theme.single-post .m3-article > .m3-article__body {
 		grid-column: 1;
 	}
 
 	body.lf-theme.single-post .m3-article > .lf-reading-aside {
 		grid-column: 2;
+		grid-row: 2;
 		margin-block: 0;
 	}
 

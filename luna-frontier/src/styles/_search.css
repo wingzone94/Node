@@ -97,19 +97,25 @@ body.lf-theme .lf-search-form__submit {
 	color: var(--lc-on-primary);
 	background: var(--lc-primary);
 	border: 0;
-	border-radius: var(--lf-shape-pill);
+	border-radius: var(--lf-shape-full);
 	padding: 0.7em 1.6em;
 	min-block-size: 2.75rem;
 	cursor: pointer;
-	transition: filter var(--lf-motion-base) var(--lf-easing-emphasized),
+	transition: background-color var(--lf-motion-base) var(--lf-easing-emphasized),
 		transform var(--lf-motion-fast) var(--lf-easing-standard);
 }
 
+/*
+ * 塗りボタンの反応は filter: brightness() ではなく、on-color を重ねる
+ * M3 の state layer で出す。brightness は seed が暗いほど効きが弱くなり、
+ * 記事の色によって手応えが変わってしまう（他のボタンとも濃さが揃わない）。
+ */
 body.lf-theme .lf-search-form__submit:hover {
-	filter: brightness(1.06);
+	background: color-mix(in srgb, var(--lc-on-primary) var(--lf-state-hover), var(--lc-primary));
 }
 
 body.lf-theme .lf-search-form__submit:active {
+	background: color-mix(in srgb, var(--lc-on-primary) var(--lf-state-pressed), var(--lc-primary));
 	transform: scale(0.98);
 }
 
@@ -193,7 +199,7 @@ body.lf-theme .lf-choice {
 	gap: 0.45em;
 	padding: 0.45em 0.9em;
 	border: 1px solid var(--lf-rule-strong);
-	border-radius: var(--lf-shape-chip);
+	border-radius: var(--lf-shape-full);
 	font-size: var(--lf-text-2xs);
 	color: var(--lf-on-surface-secondary);
 	cursor: pointer;

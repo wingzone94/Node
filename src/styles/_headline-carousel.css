@@ -691,11 +691,6 @@
 }
 
 @media (max-width: 600px) {
-    /* スマホは指スワイプで足りるためナビボタンは出さない */
-    .c-headline-carousel__nav {
-        display: none;
-    }
-
     /* _layout-fixes.css のモバイル見出しは nowrap で、そのままだと「速報」が
        箱の外へはみ出して切替ボタンに重なりタップできない。HEADLINE だけ
        見出しを一段小さくして1行に収める（セクションの高さは増やさない）。 */
@@ -705,6 +700,23 @@
 
     .c-headline-carousel__actions {
         gap: 6px;
+    }
+
+    .c-headline-carousel__button {
+        width: 36px;
+        height: 36px;
+    }
+
+    .c-headline-carousel__button--prev {
+        inset-inline-start: 0;
+    }
+
+    .c-headline-carousel__button--next {
+        inset-inline-end: 0;
+    }
+
+    .c-headline-carousel__button .material-symbols-outlined {
+        font-size: 20px;
     }
 
     .c-headline-card__title {

@@ -39,9 +39,11 @@ declare(strict_types=1);
     <!-- High Performance Font Loading Pattern -->
     <!-- 本文フォント: 非同期ロード + swap (テキストのFOUTは許容) -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-    <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+    <!-- アイコンフォント: display=block + レンダーブロッキングで、グリフ到着前にリガチャ文字が出ないようにする。
+         使うアイコンだけを icon_names= で要求する（全アイコンだと 3,874KB）。一覧は inc/icon-font.php。 -->
+    <?php $node_icon_font_url = node_get_icon_font_url(); ?>
+    <link rel="preload" as="style" href="<?php echo esc_url( $node_icon_font_url ); ?>">
+    <link rel="stylesheet" href="<?php echo esc_url( $node_icon_font_url ); ?>">
     <!-- Adobe Fonts kit: edit at fonts.adobe.com to load DIN 2014 only -->
     <link rel="stylesheet" href="https://use.typekit.net/xzl0lmg.css">
 
@@ -133,7 +135,7 @@ declare(strict_types=1);
                         <button type="button" class="m3-icon-button m3-search-mobile-close" id="m3-search-mobile-close" aria-label="検索を閉じる">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
-                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off" enterkeyhint="search">
+                        <input type="search" class="m3-search-bar__input" id="m3-search-input" placeholder="検索..." value="<?php echo esc_attr( get_search_query() ); ?>" name="s" autocomplete="off" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="m3-search-suggestions">
                         <div class="m3-search-actions-inline">
                             <button type="button" class="m3-icon-button m3-search-clear" id="m3-search-clear" aria-label="キーワードをクリア"<?php echo get_search_query() ? '' : ' hidden'; ?>>
                                 <span class="material-symbols-outlined" aria-hidden="true">close</span>
@@ -145,6 +147,7 @@ declare(strict_types=1);
                                 <span class="material-symbols-outlined" aria-hidden="true">tune</span>
                             </button>
                         </div>
+                        <div id="m3-search-suggestions" class="m3-suggestions-list m3-search-suggestions" role="listbox" aria-label="検索キーワードの候補"></div>
                     </div>
                     <button type="button" class="m3-icon-button m3-search-bar__toggle m3-tooltip-target" id="search-toggle" aria-label="検索" data-tooltip="検索">
                         <span class="material-symbols-outlined">search</span>
@@ -285,139 +288,6 @@ declare(strict_types=1);
         <div class="m3-header__progress-bar"></div>
     </div>
 </header>
-
-<?php
-// 各リンク先の #headline / #spotlight / #latest は index.php が
-// 「ホームの1ページ目」でしか出力しない。単一記事やアーカイブでは
-// 飛び先が無いうえレールの分だけ本文が押し下がるので、同じ条件で出す。
-if ( ( is_home() || is_front_page() ) && ! is_paged() ) :
-?>
-<nav class="m3-mobile-section-nav" aria-label="ホームの主要セクション">
-    <div class="m3-mobile-section-nav__inner">
-        <details class="m3-mobile-section-nav__menu">
-            <summary class="m3-mobile-section-nav__trigger">
-                <span class="material-symbols-outlined m3-mobile-section-nav__current-icon" aria-hidden="true">campaign</span>
-                <span class="m3-mobile-section-nav__current-label">HEADLINE</span>
-                <span class="material-symbols-outlined m3-mobile-section-nav__arrow" aria-hidden="true">expand_more</span>
-            </summary>
-            <ul class="m3-mobile-section-nav__list">
-                <li>
-                    <a href="<?php echo esc_url( home_url( '/#headline' ) ); ?>" data-node-section="headline" data-node-section-icon="campaign">
-                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">campaign</span>
-                        <span class="m3-mobile-section-nav__item-label">HEADLINE</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo esc_url( home_url( '/#spotlight' ) ); ?>" data-node-section="spotlight" data-node-section-icon="local_fire_department">
-                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">local_fire_department</span>
-                        <span class="m3-mobile-section-nav__item-label">SPOTLIGHT</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo esc_url( home_url( '/#latest' ) ); ?>" data-node-section="latest" data-node-section-icon="bolt">
-                        <span class="material-symbols-outlined m3-mobile-section-nav__item-icon" aria-hidden="true">bolt</span>
-                        <span class="m3-mobile-section-nav__item-label">LATEST</span>
-                    </a>
-                </li>
-            </ul>
-        </details>
-        <button type="button" class="m3-mobile-section-nav__dismiss" aria-label="セクションナビゲーションを閉じる">
-            <span class="material-symbols-outlined" aria-hidden="true">close</span>
-        </button>
-    </div>
-</nav>
-
-<script>
-(() => {
-    const initMobileSectionNav = () => {
-        const nav = document.querySelector('.m3-mobile-section-nav');
-        if (!nav) return;
-
-        const menu = nav.querySelector('.m3-mobile-section-nav__menu');
-        const rail = nav.querySelector('.m3-mobile-section-nav__inner') || nav;
-        const currentIcon = nav.querySelector('.m3-mobile-section-nav__current-icon');
-        const currentLabel = nav.querySelector('.m3-mobile-section-nav__current-label');
-        const dismissButton = nav.querySelector('.m3-mobile-section-nav__dismiss');
-        const links = [...nav.querySelectorAll('[data-node-section]')];
-        if (!menu || !currentIcon || !currentLabel || !links.length) return;
-
-        dismissButton?.addEventListener('click', () => {
-            menu.removeAttribute('open');
-            nav.hidden = true;
-        });
-
-        const setCurrent = (link) => {
-            if (!link) return;
-            currentIcon.textContent = link.dataset.nodeSectionIcon || 'label';
-            currentLabel.textContent = link.querySelector('.m3-mobile-section-nav__item-label')?.textContent || '';
-            links.forEach((item) => {
-                item.classList.toggle('is-current', item === link);
-                if (item === link) item.setAttribute('aria-current', 'location');
-                else item.removeAttribute('aria-current');
-            });
-        };
-
-        const currentPath = location.pathname.replace(/\/+$/, '') || '/';
-        const samePageSections = links.map((link) => {
-            const url = new URL(link.href, location.href);
-            const path = url.pathname.replace(/\/+$/, '') || '/';
-            if (path !== currentPath || !url.hash) return null;
-
-            const anchor = document.querySelector(url.hash);
-            if (!anchor) return null;
-            const section = anchor.matches('section') ? anchor : anchor.nextElementSibling;
-            return section ? { link, anchor, section } : null;
-        }).filter(Boolean);
-
-        const pathMatch = links.find((link) => {
-            const url = new URL(link.href, location.href);
-            return !url.hash && (url.pathname.replace(/\/+$/, '') || '/') === currentPath;
-        });
-        setCurrent(pathMatch || samePageSections[0]?.link || links[0]);
-
-        let frame = 0;
-        const updateCurrentSection = () => {
-            frame = 0;
-            if (!samePageSections.length) return;
-
-            const anchorOffset = Math.max(...samePageSections.map((candidate) => (
-                parseFloat(getComputedStyle(candidate.anchor).scrollMarginTop) || 0
-            )));
-            const marker = Math.max(rail.getBoundingClientRect().bottom + 16, anchorOffset + 1);
-            const positionedSections = samePageSections.map((candidate) => ({
-                ...candidate,
-                top: candidate.anchor.getBoundingClientRect().top,
-            }));
-            const passedSections = positionedSections.filter((candidate) => candidate.top <= marker);
-            const active = (passedSections.length ? passedSections : positionedSections).reduce((closest, candidate) => {
-                if (passedSections.length) return candidate.top > closest.top ? candidate : closest;
-                return candidate.top < closest.top ? candidate : closest;
-            });
-            setCurrent(active.link);
-        };
-
-        const scheduleUpdate = () => {
-            if (!frame) frame = requestAnimationFrame(updateCurrentSection);
-        };
-
-        links.forEach((link) => link.addEventListener('click', () => {
-            setCurrent(link);
-            menu.removeAttribute('open');
-        }));
-
-        addEventListener('scroll', scheduleUpdate, { passive: true });
-        addEventListener('resize', scheduleUpdate, { passive: true });
-        scheduleUpdate();
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMobileSectionNav, { once: true });
-    } else {
-        initMobileSectionNav();
-    }
-})();
-</script>
-<?php endif; ?>
 
 <!-- 3. Portal Components (Fixed/Overlay Elements) -->
 

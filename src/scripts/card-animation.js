@@ -36,7 +36,37 @@ const balanceGrid = (container) => {
     });
 };
 
+const initCardLinkFallback = () => {
+    document.querySelectorAll('.m3-card[data-card-url], .c-card[data-card-url]').forEach((card) => {
+        if (card.dataset.cardLinkReady === 'true') return;
+
+        card.dataset.cardLinkReady = 'true';
+        card.addEventListener('click', (event) => {
+            if (
+                event.defaultPrevented ||
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+            ) {
+                return;
+            }
+
+            const interactive = event.target.closest('a, button, input, select, textarea, summary, [role="button"], [data-no-card-link]');
+            if (interactive) return;
+
+            const url = card.dataset.cardUrl;
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+};
+
 export const initCardAnimations = () => {
+    initCardLinkFallback();
+
     if (typeof gsap === 'undefined') return;
 
     const gridContainers = document.querySelectorAll('.m3-post-grid__container');
@@ -60,8 +90,35 @@ export const initCardAnimations = () => {
             });
         }
 
+        // 「動きを減らす」設定では出現アニメーションを行わない。
+        // テーマの他の箇所（_article.css ほか10ファイル）は CSS の
+        // prefers-reduced-motion で尊重しているが、ここは GSAP 製なので
+        // メディアクエリが効かず素通りしていた。
+        // 早期 return するので gsap.set による opacity: 0 も掛からず、
+        // カードは最初から見えたままになる（レイアウト調整は上で済ませている）。
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
+        /*
+         * 最初から画面内にあるカードはアニメーションさせない。
+         *
+         * これらは読み込み直後の見え方そのもの（多くの場合 LCP 要素）で、
+         * opacity: 0 から始めるとスタッガー（0.05s 刻み）のぶんだけ
+         * 「何も無い画面」が続く。実測 375×812 のトップでは、ファーストビューの
+         * カードが数百 ms のあいだ真っ白のままだった。
+         * 出現の演出は「スクロールして新しく現れる」ものにだけ意味があるので、
+         * 初期表示ぶんは最初から見えている状態に置く。
+         */
+        const belowFold = Array.from(cards).filter((card) => {
+            const rect = card.getBoundingClientRect();
+            return !(rect.bottom > 0 && rect.top < window.innerHeight);
+        });
+
+        if (belowFold.length === 0) return;
+
         // 初期状態（高速化のため y移動を控えめに）
-        gsap.set(cards, { 
+        gsap.set(belowFold, {
             opacity: 0, 
             y: 40,
             scale: 0.95
@@ -94,7 +151,7 @@ export const initCardAnimations = () => {
             }
         }, observerOptions);
 
-        cards.forEach(card => observer.observe(card));
+        belowFold.forEach(card => observer.observe(card));
     }
 };
 

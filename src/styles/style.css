@@ -21,6 +21,7 @@
 
 /* Page and content surfaces */
 @import './_spotlight.css' layer(components);
+@import './_hot-posts.css' layer(components);
 @import './_headline-carousel.css' layer(components);
 @import './_archive.css' layer(components);
 @import './_notice.css' layer(components);

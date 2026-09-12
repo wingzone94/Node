@@ -35,6 +35,8 @@ get_header();
             </section>
         <?php endif;
 
+        get_template_part('template-parts/hot-posts');
+
         // HEADLINE（速報）: 横スクロール1段に固定し、LATEST をファーストビューへ引き上げる
         echo '<span id="headline" class="screen-reader-text" aria-hidden="true"></span>';
         get_template_part('template-parts/headline-carousel');

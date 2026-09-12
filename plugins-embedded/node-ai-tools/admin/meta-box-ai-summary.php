@@ -25,7 +25,10 @@ function node_ai_render_summary_meta_box($post) {
     $current_model = function_exists('node_get_user_gemini_model') ? node_get_user_gemini_model($user_id) : '';
         // 保存値は `<モデルID>@<思考量>` 形式。一覧はモデルIDのみのため分解して照合する
         $current_model = function_exists('node_split_gemini_model') ? node_split_gemini_model($current_model)['model'] : $current_model;
-    $models = function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [];
+    // 実際に使えるモデルだけを出す（Pro / Preview / 提供終了 / 一時的に利用不可のものは除外）
+    $models = class_exists('Node_AI_Fact_Check_Models')
+        ? Node_AI_Fact_Check_Models::usable_options($user_id)
+        : ( function_exists('node_get_gemini_model_options_for_user') ? node_get_gemini_model_options_for_user($user_id) : [] );
     
     $is_gemini = ! function_exists( 'node_ai_core' ) || 'gemini' === node_ai_core()->get_provider_id();
     if ( $is_gemini && ! empty( $models ) ) {

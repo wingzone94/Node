@@ -38,19 +38,45 @@ body.lf-theme {
 	/* ---------------------------------------------------------------
 	 * Shape tokens（指示書 §20〜§22）
 	 * Paper は四角、Action は必要に応じて丸い。
+	 *
+	 * 2.0 専用の M3 shape scale を body.lf-theme に閉じて定義する。
+	 * 親テーマ Node 1.3 へは流さない（2026-08-23 ユーザー指示: 2.0 のみに絞る）。
+	 *
+	 * 旧 --lf-shape-chip / --lf-shape-pill は同じ 1000px の二重定義だった。
+	 * 片方だけ変えると不整合になるので --lf-shape-full へ一本化した。
 	 * --------------------------------------------------------------- */
-	--lf-shape-paper: 0;
-	--lf-shape-paper-inner: 2px;
-	--lf-shape-surface: 4px;
-	--lf-shape-dialog: 16px;
-	--lf-shape-action: 8px;
-	--lf-shape-chip: 1000px;
-	--lf-shape-pill: 1000px;
+	--md-sys-shape-corner-none: 0;
+	--md-sys-shape-corner-extra-small: 4px;
+	--md-sys-shape-corner-small: 8px;
+	--md-sys-shape-corner-medium: 12px;
+	--md-sys-shape-corner-large: 16px;
+	--md-sys-shape-corner-extra-large: 28px;
+	--md-sys-shape-corner-full: 1000px;
+
+	--lf-shape-paper: var(--md-sys-shape-corner-none);
+	--lf-shape-paper-inner: 2px; /* M3 スケール外。本文中の画像を紙に馴染ませる最小の丸み */
+	--lf-shape-surface: var(--md-sys-shape-corner-extra-small);
+	--lf-shape-action: var(--md-sys-shape-corner-small);
+	--lf-shape-dialog: var(--md-sys-shape-corner-large);
+	--lf-shape-full: var(--md-sys-shape-corner-full);
 
 	/* ---------------------------------------------------------------
 	 * Spacing scale
 	 * rem 基準。ブラウザの文字サイズ設定と 200% zoom に素直に追従させる。
+	 *
+	 * 親テーマの --m3-spacing-* は px のまま残す。Luna 2.0 ではここで
+	 * 同名トークンを rem へ上書きし、親 CSS が子テーマ画面で使う余白だけを
+	 * 文字サイズ設定へ追従させる。ルート 16px では計算値が完全一致するので
+	 * 既定表示は 1px も動かない。
 	 * --------------------------------------------------------------- */
+	--m3-spacing-xs: 0.25rem;   /* 4px */
+	--m3-spacing-s: 0.5rem;     /* 8px */
+	--m3-spacing-m: 1rem;       /* 16px */
+	--m3-spacing-l: 1.5rem;     /* 24px */
+	--m3-spacing-xl: 2rem;      /* 32px */
+	--m3-spacing-xxl: 3rem;     /* 48px */
+	--m3-spacing-xxxl: 4rem;    /* 64px */
+
 	--lf-space-3xs: 0.25rem;
 	--lf-space-2xs: 0.5rem;
 	--lf-space-xs: 0.75rem;
@@ -104,6 +130,12 @@ body.lf-theme {
 	 * --------------------------------------------------------------- */
 	--lf-brand: #ff9900;
 	--lf-brand-text: #935400;
+	/* --lf-on-brand : --lf-brand を「面」に使ったとき、その上に載せる文字色。
+	   #FF9900 は tone 72 相当の明るい色なので、白を載せると 2.14:1 にしかならない
+	   （--lf-brand-text の注記と同じ事情が、前景と背景を入れ替えて再発する）。
+	   同色相の暗いトーンを載せて 8.01:1 を確保する。ブランドオレンジ自体は変えない。
+	   ブランド色は light / dark で固定なので、この on-color も両スキーム共通。 */
+	--lf-on-brand: #2b1700;
 	--lc-outline: var(--md-sys-color-outline-variant, #d6c2b1);
 
 	/* ---------------------------------------------------------------
@@ -128,6 +160,68 @@ body.lf-theme {
 	--lf-on-surface-muted: color-mix(in srgb, var(--lc-on-surface) 76%, transparent);
 
 	/* ---------------------------------------------------------------
+	 * 未定義だった M3 role を埋める
+	 *
+	 * 親テーマは M3 の 35 role のうち 18 しか定義していないが、CSS 側は
+	 * 未定義の role を fallback 無しで 25 箇所参照している。CSS 変数が
+	 * 未定義だと var() は invalid at computed-value time になり、その宣言
+	 * ごと落ちる（--m3-elevation-* や --md-sys-color-on-surface-variant で
+	 * 過去に起きたのと同じ壊れ方）。
+	 *
+	 * 実測で確認した実害の例:
+	 *   .m3-sticky-toc の background が完全に消え、追従 TOC が透明な板に
+	 *   なっていた（--md-sys-color-tertiary-container が未定義のため
+	 *   color-mix() が無効化され、background ショートハンドごと落ちる）。
+	 *
+	 * 親テーマで直すと Node 1.3（本番稼働中）の見た目が広範に変わるため、
+	 * ここでは body.lf-theme に閉じて定義する。親テーマ側は別タスク。
+	 *
+	 * 値は brand の色相 H=64.6 を基準に OKLCH でトーンを取り、
+	 * tertiary は M3 の作法どおり +60°（H=124.6）へ回した。
+	 * error 系は M3 baseline の標準値をそのまま使う。
+	 * on-color は全て対になる面に対して 4.5:1 以上を実測で確認済み。
+	 * --------------------------------------------------------------- */
+	--md-sys-color-tertiary: #617929;              /* on-tertiary 4.79:1 / 白地 4.91:1 */
+	--md-sys-color-on-tertiary: #f9fef0;
+	--md-sys-color-tertiary-container: #ddebc7;
+	--md-sys-color-on-tertiary-container: #212e00; /* 対 container 11.53:1 */
+
+	--md-sys-color-error: #b3261e;                 /* M3 baseline。白文字で 6.54:1 */
+	--md-sys-color-on-error: #ffffff;
+	--md-sys-color-error-container: #f9dedc;
+	--md-sys-color-on-error-container: #410e0b;    /* 対 container 12.77:1 */
+
+	/* on-surface-variant (#6B5A4A) は定義済みなのに、その相手の面が無かった。 */
+	--md-sys-color-surface-variant: #f1e4d7;       /* on-surface-variant 5.28:1 */
+	--md-sys-color-surface-container-lowest: #ffffff;
+	--md-sys-color-surface-container-low-rgb: 255, 255, 255;
+
+	--md-sys-color-inverse-surface: #2d2823;
+	--md-sys-color-inverse-on-surface: #f4ede6;    /* 対 inverse-surface 12.58:1 */
+
+	/* ---------------------------------------------------------------
+	 * State layer（M3 system token の別名）
+	 *
+	 * M3 の hover / focus / pressed / dragged の不透明度を Luna 2.0 の
+	 * スコープに閉じて定義する。親テーマ Node 1.3 には追加しない。
+	 * 統一前は 12% / 12% / 10% / filter: brightness(1.06) と 4 通りに
+	 * 分かれていて、同じ「hover」でも手応えが揃っていなかった。
+	 *
+	 * 使い方: 面の色を第 2 引数に、その面の on-color を第 1 引数に置く。
+	 *   background: color-mix(in srgb,
+	 *       var(--lc-on-primary) var(--lf-state-hover),
+	 *       var(--lc-primary));
+	 * --------------------------------------------------------------- */
+	--md-sys-state-hover-opacity: 0.08;
+	--md-sys-state-focus-opacity: 0.10;
+	--md-sys-state-pressed-opacity: 0.10;
+	--md-sys-state-dragged-opacity: 0.16;
+
+	--lf-state-hover: calc(var(--md-sys-state-hover-opacity) * 100%);
+	--lf-state-focus: calc(var(--md-sys-state-focus-opacity) * 100%);
+	--lf-state-pressed: calc(var(--md-sys-state-pressed-opacity) * 100%);
+
+	/* ---------------------------------------------------------------
 	 * Motion（指示書 §48）
 	 * --------------------------------------------------------------- */
 	--lf-motion-fast: 120ms;
@@ -150,6 +244,25 @@ body.lf-theme[data-theme="dark"],
 	--lf-paper-sunken: var(--md-sys-color-surface, #1b1812);
 	--lf-meta-fill: var(--md-sys-color-surface-container-highest, #3D372E);
 	--lf-rule: color-mix(in srgb, var(--lc-outline) 70%, transparent);
+
+	/* 上で埋めた role の dark 側。単純反転はせず、面と on-color のトーンを
+	   個別に選ぶ（§42）。こちらも全ペアで 4.5:1 以上を実測確認済み。 */
+	--md-sys-color-tertiary: #abc282;
+	--md-sys-color-on-tertiary: #212e00;
+	--md-sys-color-tertiary-container: #3a491c;
+	--md-sys-color-on-tertiary-container: #d5e6ba;
+
+	--md-sys-color-error: #f2b8b5;
+	--md-sys-color-on-error: #601410;
+	--md-sys-color-error-container: #8c1d18;
+	--md-sys-color-on-error-container: #f9dedc;
+
+	--md-sys-color-surface-variant: #342c26;
+	--md-sys-color-surface-container-lowest: #100b07;
+	--md-sys-color-surface-container-low-rgb: 37, 34, 27;
+
+	--md-sys-color-inverse-surface: #eee6e0;
+	--md-sys-color-inverse-on-surface: #26201b;
 }
 
 @media (prefers-reduced-motion: reduce) {

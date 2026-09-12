@@ -15,7 +15,7 @@ declare( strict_types=1 );
  * @package LunaFrontier
  */
 
-get_template_part( 'template-parts/ad', 'article' );
+node_the_ad_template( 'article' );
 ?>
 	<footer class="m3-footer lf-footer">
 		<div class="m3-footer__main lf-footer__main">

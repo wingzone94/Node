@@ -180,9 +180,77 @@ global $wp_query;
 				?>
 			</div>
 		<?php else : ?>
+			<?php
+			/*
+			 * 0 件は「行き止まりに来た人」を扱う画面。
+			 * 404 は中央揃えで検索欄と行動ボタン 3 つを持っているのに、こちらは
+			 * 見出しと 1 文だけでリンクもボタンも 0 個、下に 496px の空白が続いて
+			 * いた（実測）。同じ状態を 2 つの基準で作らないよう、404 と同じ部品で
+			 * 次の行き先を用意する。
+			 *
+			 * 候補カテゴリは「実際に記事が付いているもの」を投稿数順で出す。
+			 * 空のカテゴリを勧めると二重の行き止まりになるため hide_empty を使う。
+			 */
+			$lf_suggested = get_terms(
+				array(
+					'taxonomy'   => 'category',
+					'hide_empty' => true,
+					'orderby'    => 'count',
+					'order'      => 'DESC',
+					'number'     => 8,
+				)
+			);
+
+			/*
+			 * 同名のカテゴリが複数ある（「Nintendo Switch」が id 25 と 28 に
+			 * 分かれている等）ため、名前で重複を落としてから 4 件に絞る。
+			 * 同じ名前のチップが並ぶと、行き先が違うことが読み手に伝わらない。
+			 */
+			if ( ! is_wp_error( $lf_suggested ) && $lf_suggested ) {
+				$lf_seen  = array();
+				$lf_uniq  = array();
+
+				foreach ( $lf_suggested as $lf_term ) {
+					$lf_key = mb_strtolower( $lf_term->name );
+
+					if ( isset( $lf_seen[ $lf_key ] ) ) {
+						continue;
+					}
+
+					$lf_seen[ $lf_key ] = true;
+					$lf_uniq[]          = $lf_term;
+
+					if ( count( $lf_uniq ) >= 4 ) {
+						break;
+					}
+				}
+
+				$lf_suggested = $lf_uniq;
+			}
+			?>
 			<div class="lf-no-results">
 				<h2 class="lf-no-results__title"><?php esc_html_e( '見つかりませんでした', 'luna-frontier' ); ?></h2>
 				<p class="lf-no-results__text"><?php esc_html_e( '条件に一致する記事がありません。キーワードを短くするか、詳細条件を外して試してください。', 'luna-frontier' ); ?></p>
+
+				<?php if ( ! is_wp_error( $lf_suggested ) && $lf_suggested ) : ?>
+					<div class="lf-no-results__suggest">
+						<span class="lf-no-results__suggest-label"><?php esc_html_e( 'よく読まれているカテゴリ', 'luna-frontier' ); ?></span>
+						<div class="lf-no-results__chips">
+							<?php foreach ( $lf_suggested as $lf_term ) : ?>
+								<a class="lf-no-results__chip" href="<?php echo esc_url( get_category_link( $lf_term->term_id ) ); ?>">
+									<?php echo esc_html( $lf_term->name ); ?>
+								</a>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( function_exists( 'node_get_all_articles_url' ) ) : ?>
+					<a class="m3-button m3-button--filled lf-no-results__action" href="<?php echo esc_url( node_get_all_articles_url() ); ?>">
+						<span class="material-symbols-outlined" aria-hidden="true">article</span>
+						<?php esc_html_e( '記事一覧を見る', 'luna-frontier' ); ?>
+					</a>
+				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 	</div>

@@ -65,15 +65,49 @@ class Node_Gemini_API {
             'google_search_grounding' => false,
             'return_metadata' => false,
             'timeout' => 45,
+            // 呼び出し側がモデルを固定したい場合（ファクトチェックの無料枠自動選択など）。
+            'model' => '',
+            // Gemini 3 系の thinkingLevel（low / medium / high）。空なら指定しない。
+            'thinking_level' => '',
         ]);
 
         $user_id = get_current_user_id();
-        if ( function_exists( 'node_get_user_gemini_model' ) && $user_id > 0 ) {
+        if ( '' !== trim( (string) $options['model'] ) ) {
+            // 明示指定（ファクトチェックは無料枠のモデルを自動選択して渡す）
+            $model_name = trim( (string) $options['model'] );
+        } elseif ( function_exists( 'node_get_user_gemini_model' ) && $user_id > 0 ) {
             $model_name = node_get_user_gemini_model( $user_id );
+        } elseif ( function_exists( 'node_get_default_gemini_model' ) ) {
+            $model_name = node_get_default_gemini_model();
         } else {
-            $model_name = function_exists( 'node_get_default_gemini_model' )
-                ? node_get_default_gemini_model()
-                : 'gemini-3.5-flash';
+            // テーマ側のモデル管理が無い環境でも、特定世代のモデルIDへ固定しない。
+            $selected   = class_exists( 'Node_AI_Fact_Check_Models' ) ? Node_AI_Fact_Check_Models::select() : '';
+            $model_name = ( is_string( $selected ) && '' !== $selected ) ? $selected : '';
+        }
+
+        // 保存済みモデルが提供終了・上限中・（許可なしの）Pro なら、使えるモデルへ置き換える。
+        // 選択肢から消えた古い設定が user_meta に残っていても、必ず失敗する呼び出しにはしない
+        if ( '' === trim( (string) $options['model'] ) && class_exists( 'Node_AI_Fact_Check_Models' ) ) {
+            // 保存値は `<モデルID>@high` 形式のことがあるため、モデルID部分で判定する
+            $candidate = (string) preg_replace( '/@(?:high|low)$/i', '', (string) $model_name );
+
+            if ( Node_AI_Fact_Check_Models::is_known_unusable( $candidate ) ) {
+                $replacement = Node_AI_Fact_Check_Models::select();
+
+                if ( is_string( $replacement ) && '' !== $replacement ) {
+                    // 思考量の指定は保存値のものを引き継ぐ
+                    $suffix     = preg_match( '/@(high|low)$/i', (string) $model_name, $mt ) ? '@' . strtolower( $mt[1] ) : '';
+                    $model_name = $replacement . $suffix;
+                }
+            }
+        }
+
+        if ( '' === trim( (string) $model_name ) ) {
+            return new WP_Error(
+                'gemini_no_model',
+                '利用できる Gemini モデルを特定できなかったため、実行を中止しました。',
+                array( 'status' => 503 )
+            );
         }
         
         // `<モデルID>@high` / `@low` は思考量（thinkingLevel）つき仮想ID。実IDと思考量に分解する
@@ -136,6 +170,12 @@ class Node_Gemini_API {
             ]
         ];
 
+        // 明示指定（low / medium / high）が来ていれば、そちらを使う。
+        $explicit_level = strtolower( trim( (string) $options['thinking_level'] ) );
+        if ( in_array( $explicit_level, array( 'minimal', 'low', 'medium', 'high' ), true ) ) {
+            $thinking_level = $explicit_level;
+        }
+
         if ( '' !== $thinking_level ) {
             $payload['generationConfig']['thinkingConfig'] = array( 'thinkingLevel' => $thinking_level );
         }
@@ -179,7 +219,22 @@ class Node_Gemini_API {
                 ? node_gemini_format_api_error($status, $data, $body)
                 : ('Gemini API エラー (HTTP ' . $status . ')');
             $code = (429 === $status) ? 'gemini_quota_exceeded' : ((503 === $status) ? 'gemini_model_unavailable' : 'gemini_api_error');
-            return new WP_Error($code, $message, ['status' => $status]);
+
+            // 呼び出し側（ファクトチェックの再試行制御）が Retry-After を尊重できるようにする。
+            $retry_after = (int) wp_remote_retrieve_header( $response, 'retry-after' );
+            if ( $retry_after <= 0 && function_exists( 'node_gemini_extract_retry_seconds' ) ) {
+                $retry_after = (int) node_gemini_extract_retry_seconds( $data );
+            }
+
+            return new WP_Error(
+                $code,
+                $message,
+                array(
+                    'status'      => $status,
+                    'retry_after' => $retry_after,
+                    'model'       => $model_name,
+                )
+            );
         }
 
         $parts         = $data['candidates'][0]['content']['parts'] ?? null;
@@ -275,101 +330,18 @@ class Node_Gemini_API {
 
     /**
      * 記事本文のファクトチェック（編集者向け・要手動確認）
+     *
+     * 実処理は Node_AI_Fact_Check_Runner（基礎前提の先行検証 → 主張の検証 →
+     * PHP 側での判定正規化）に委譲する。ここは後方互換のための入口。
+     *
+     * @return array{text: string, grounding: array, guidelines_used: bool}|WP_Error
      */
     public function fact_check( string $content, string $title = '' ): array|WP_Error {
-        $guidelines_block = '';
-        $guidelines_used  = false;
-
-        if ( function_exists( 'node_ai_fetch_guidelines' ) ) {
-            $guidelines = node_ai_fetch_guidelines();
-            if ( is_string( $guidelines ) && '' !== $guidelines ) {
-                $guidelines_used  = true;
-                $guidelines_block = "\n\n【Luminous Core 運営ガイドライン（Google ドキュメント）】\n" . $guidelines;
-            }
+        if ( ! class_exists( 'Node_AI_Fact_Check_Runner' ) ) {
+            return new WP_Error( 'fact_check_unavailable', 'ファクトチェック処理を読み込めませんでした。' );
         }
 
-        $system_prompt = 'あなたはテクニカルブログ「Luminous Core」のファクトチェック補助アシスタントです。
-Google Search の検索結果を参照し、記事内の事実関係に関わる主張を抽出して検証してください。
-これは確認箇所の抽出支援であり、真偽の最終判定はしないことに留意してください。最終判断は必ず人間の編集者が行います。
-
-【創作・二次創作の扱い】
-記事に「フィクション」「二次創作」「架空」等の断り書きがある場合、登場人物の発言・作中設定は
-現実の主張ではなく虚構表現です。これを現実の事実誤りとして断定しないでください。
-ただし、現実の事実として読まれると誤解・炎上・法的リスクを招く記述（差別的主張、
-科学的に否定された言説、領土・歴史に関する断定など）は、作中表現であっても見逃さず、
-status を uncertain とし、note の冒頭に「作中の虚構表現。ただし事実として読まれると問題」と明記してください。
-あわせて、提供される Luminous Core 運営ガイドラインに照らし、コンプライアンス違反の可能性がある記述も指摘してください。
-ガイドライン違反は status を uncertain または likely_incorrect とし、note に該当ルールを簡潔に記載してください。
-以下の JSON 形式のみで回答してください。
-・Markdown のコードブロック（```json ... ```）は絶対に使わず、生の中括弧 { } から始まる純粋な JSON のみを出力してください。
-・推測で断定せず、不確実な場合は status を uncertain または unverifiable にしてください。
-・最大 8 件の主張に絞ってください。
-・note には検索結果・ガイドラインに基づく根拠・確認方法・注意点を簡潔に書いてください。
-
-{
-  "summary": "全体所見（2〜3文、日本語）",
-  "overall_risk": "low または medium または high",
-  "claims": [
-    {
-      "claim": "記事中の主張（原文に近い形）",
-      "status": "correct / likely_correct / uncertain / likely_incorrect / unverifiable のいずれか。correct=信頼できる情報源で裏付けが取れた、likely_correct=概ね正しいが出典未確認や細部に幅がある、uncertain=要確認、likely_incorrect=誤りの可能性が高い、unverifiable=検証できない",
-      "confidence": "high / medium / low のいずれか",
-      "note": "根拠・補足（日本語）"
-    }
-  ]
-}' . $guidelines_block;
-
-        $prompt = '以下の記事をファクトチェックしてください。可能な限り Google Search の情報を参照してください。';
-        if ( ! empty( $title ) ) {
-            $prompt .= "\n\n【タイトル】\n" . $title;
-        }
-        $prompt .= "\n\n【本文】\n" . mb_substr( $content, 0, 8000 );
-
-        $options = array(
-            'system_instruction'        => $system_prompt,
-            'response_mime_type'      => 'text/plain',
-            'temperature'             => 0.2,
-            // 思考モデルは maxOutputTokens を思考にも消費するため、
-            // JSON が途中で切れないよう長めに確保する
-            'max_tokens'              => 8192,
-            'google_search_grounding' => true,
-            'return_metadata'         => true,
-            'timeout'                 => 60,
-        );
-
-        // 実行に使われるモデル（エラー文言と検索可否の判定に使う）
-        $model_used = function_exists( 'node_get_user_gemini_model' ) && get_current_user_id() > 0
-            ? node_get_user_gemini_model( get_current_user_id() )
-            : ( function_exists( 'node_get_default_gemini_model' ) ? node_get_default_gemini_model() : '' );
-        $model_used = function_exists( 'node_split_gemini_model' )
-            ? node_split_gemini_model( $model_used )['model']
-            : $model_used;
-
-        $result = $this->generate_content( $prompt, $options );
-
-        // 検索併用の枠が切れているとき、検索なしで実行すると
-        // 最新情報を裏取りできないまま「成功」した結果が出てしまう。
-        // 黙って精度を落とさないため、フォールバックはせず中止して理由を伝える
-        if ( is_wp_error( $result ) && 'gemini_quota_exceeded' === $result->get_error_code() ) {
-            return new WP_Error(
-                'gemini_grounding_unavailable',
-                sprintf(
-                    '%s は Google 検索併用の利用枠に達したため、ファクトチェックを中止しました。検索なしで実行すると最新情報を裏取りできないため、あえて実行していません。時間をおくか、別のモデルでお試しください。',
-                    $model_used
-                ),
-                array( 'status' => 429 )
-            );
-        }
-
-        if ( is_wp_error( $result ) ) {
-            return $result;
-        }
-
-        return array(
-            'text'            => (string) ( $result['text'] ?? '' ),
-            'grounding'       => is_array( $result['grounding'] ?? null ) ? $result['grounding'] : array(),
-            'guidelines_used' => $guidelines_used,
-        );
+        return Node_AI_Fact_Check_Runner::run( $content, $title, get_current_user_id(), 0 );
     }
 
     /**

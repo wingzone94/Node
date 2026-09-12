@@ -26,10 +26,28 @@ declare(strict_types=1);
     ?>
 
     <?php if ($has_thumb) : ?>
-        <div class="m3-article__featured-image">
+        <?php
+        $thumbnail_id          = get_post_thumbnail_id($current_post_id);
+        $image_data            = $thumbnail_id ? wp_get_attachment_image_src($thumbnail_id, 'full') : false;
+        $featured_media_style  = '';
+        $featured_image_width  = 0;
+        $featured_image_height = 0;
+
+        if ($image_data) {
+            $featured_image_width  = (int) ($image_data[1] ?? 0);
+            $featured_image_height = (int) ($image_data[2] ?? 0);
+
+            if ($featured_image_width > 0 && $featured_image_height > 0) {
+                $featured_media_style = sprintf(
+                    ' style="--node-hero-media-ratio: %1$d / %2$d;"',
+                    $featured_image_width,
+                    $featured_image_height
+                );
+            }
+        }
+        ?>
+        <div class="m3-article__featured-image"<?php echo $featured_media_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- integers only. ?>>
             <?php
-            $thumbnail_id = get_post_thumbnail_id($current_post_id);
-            $image_data   = wp_get_attachment_image_src($thumbnail_id, 'full');
             if ($image_data) :
                 $image_url    = $image_data[0];
                 $image_alt    = get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true) ?: get_the_title();
@@ -37,6 +55,8 @@ declare(strict_types=1);
                 <img src="<?php echo esc_url($image_url); ?>"
                      alt="<?php echo esc_attr($image_alt); ?>"
                      class="m3-article__featured-img"
+                     width="<?php echo esc_attr((string) $featured_image_width); ?>"
+                     height="<?php echo esc_attr((string) $featured_image_height); ?>"
                      loading="eager" fetchpriority="high" decoding="sync">
             <?php endif; ?>
             <div class="m3-article__featured-gradient"></div>

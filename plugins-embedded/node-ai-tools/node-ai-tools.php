@@ -55,6 +55,12 @@ final class Node_AI_Tools {
 		require_once NODE_AI_DIR . 'includes/providers/class-provider-qwen.php';
 		require_once NODE_AI_DIR . 'includes/providers/class-provider-ollama.php';
 		require_once NODE_AI_DIR . 'includes/class-ai-core.php';
+		// ファクトチェック（無料枠モデル選択・根拠取得・判定の正規化・実行本体）
+		require_once NODE_AI_DIR . 'includes/class-fact-check-models.php';
+		require_once NODE_AI_DIR . 'includes/class-fact-check-sources.php';
+		require_once NODE_AI_DIR . 'includes/class-fact-check-discovery.php';
+		require_once NODE_AI_DIR . 'includes/fact-check-verdict.php';
+		require_once NODE_AI_DIR . 'includes/class-fact-check-runner.php';
 		require_once NODE_AI_DIR . 'includes/fact-check-render.php';
 		require_once NODE_AI_DIR . 'includes/ajax-handlers.php';
 		require_once NODE_AI_DIR . 'includes/auto-check.php';
@@ -93,6 +99,13 @@ final class Node_AI_Tools {
         add_action( 'wp_after_insert_post', 'node_ai_maybe_schedule_alt_generation', 25, 2 );
         add_action( 'node_ai_auto_alt', 'node_ai_run_auto_alt' );
 
+        // Gemini のモデル一覧を日次で自動更新する（新しい Flash が出たら自動で追従するため）
+        add_action( 'init', [ $this, 'schedule_model_refresh' ] );
+        add_action( 'node_ai_fc_refresh_models', array( 'Node_AI_Fact_Check_Models', 'refresh_catalog' ) );
+
+        // 検索なしで実行された暫定結果を、枠が回復してから取り直す
+        add_action( 'node_ai_fc_recheck_degraded', 'node_ai_fc_run_degraded_recheck' );
+
         // ファクトチェックの自動実行（下書き保存時に予約 → cron 実行）。
         // 公開はブロックしない（未実施なら公開直前に警告を出す「推奨」運用）
         add_action( 'wp_after_insert_post', 'node_ai_maybe_schedule_fact_check', 20, 2 );
@@ -114,6 +127,20 @@ final class Node_AI_Tools {
             add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
         }
 	}
+
+    /**
+     * モデル一覧の日次更新を予約する（未予約のときだけ）。
+     */
+    public function schedule_model_refresh(): void {
+        if ( false === wp_next_scheduled( 'node_ai_fc_refresh_models' ) ) {
+            wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'node_ai_fc_refresh_models' );
+        }
+
+        // 無料枠のリセット後に回るよう、モデル更新とは別の時間帯に置く
+        if ( false === wp_next_scheduled( 'node_ai_fc_recheck_degraded' ) ) {
+            wp_schedule_event( time() + 3 * HOUR_IN_SECONDS, 'daily', 'node_ai_fc_recheck_degraded' );
+        }
+    }
 
     /**
      * ブロックエディタ右ペインのパネルから編集する post meta を REST に公開する。
@@ -196,7 +223,8 @@ final class Node_AI_Tools {
                 'statusLabels'    => function_exists( 'node_ai_fact_check_status_labels' ) ? node_ai_fact_check_status_labels() : array(),
                 'riskLabels'      => function_exists( 'node_ai_fact_check_risk_labels' ) ? node_ai_fact_check_risk_labels() : array(),
                 'providerId'      => $provider_id,
-                'models'          => 'gemini' === $provider_id && function_exists( 'node_get_gemini_model_options_for_user' ) ? node_get_gemini_model_options_for_user( $user_id ) : array(),
+                // Pro など無料枠で使えないモデルは出さない（選んでも必ず 429 になるため）
+                'models'          => 'gemini' === $provider_id ? Node_AI_Fact_Check_Models::usable_options( $user_id ) : array(),
                 'currentModel'    => $selection['model'],
                 'thinkingLevels'  => 'gemini' === $provider_id && function_exists( 'node_gemini_thinking_levels' ) ? node_gemini_thinking_levels() : array(),
                 'currentThinking' => $selection['thinking'],
@@ -347,3 +375,13 @@ function node_ai_core_init(): void {
 	Node_AI_Tools::instance();
 }
 add_action( 'plugins_loaded', 'node_ai_core_init' );
+
+/**
+ * 無効化時に自前の定期実行を掃除する（ハンドラのないイベントを残さない）。
+ */
+function node_ai_clear_scheduled_events(): void {
+	foreach ( array( 'node_ai_fc_refresh_models', 'node_ai_fc_recheck_degraded' ) as $hook ) {
+		wp_clear_scheduled_hook( $hook );
+	}
+}
+register_deactivation_hook( __FILE__, 'node_ai_clear_scheduled_events' );

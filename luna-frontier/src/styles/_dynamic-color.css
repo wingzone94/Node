@@ -46,9 +46,7 @@ body.lf-theme .entry-content a:not([class]):hover {
  * --------------------------------------------------------------------- */
 body.lf-theme .lf-toc__link[aria-current],
 body.lf-theme .lf-toc__link.is-current {
-	color: var(--lc-accent);
 	border-inline-start-color: var(--lc-accent);
-	font-weight: 700;
 }
 
 /* ---------------------------------------------------------------------
@@ -64,7 +62,7 @@ body.lf-theme .lf-toc__link.is-current {
  * --------------------------------------------------------------------- */
 body.lf-theme :is(header.m3-header, .site-header, footer.m3-footer, .site-footer) {
 	--lc-primary: var(--md-sys-color-primary, #ff9900);
-	--lc-on-primary: var(--md-sys-color-on-primary, #ffffff);
+	--lc-on-primary: var(--md-sys-color-on-primary, #2b1700);
 	--lc-accent: var(--md-sys-color-accent-text, #935400);
 	--lc-surface: var(--md-sys-color-surface, #fff4e5);
 	--lc-on-surface: var(--md-sys-color-on-surface, #2b1700);

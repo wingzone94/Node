@@ -22,6 +22,8 @@ define( 'LUNA_FRONTIER_CODENAME', 'SkyAlow' );
 
 require_once LUNA_FRONTIER_DIR . '/inc/dynamic-color.php';
 require_once LUNA_FRONTIER_DIR . '/inc/reading-aside.php';
+require_once LUNA_FRONTIER_DIR . '/inc/category-label.php';
+require_once LUNA_FRONTIER_DIR . '/inc/writer-avatar.php';
 
 /**
  * 子テーマ自身のバージョン（style.css の Version）。

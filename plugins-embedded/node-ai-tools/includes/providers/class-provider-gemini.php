@@ -13,8 +13,20 @@ class Node_AI_Provider_Gemini implements Node_AI_Provider {
 
 	private int $user_id;
 
+	/**
+	 * 呼び出し側が指定したモデル（ファクトチェックの無料枠自動選択）。
+	 */
+	private string $model_override = '';
+
 	public function __construct( ?int $user_id = null ) {
 		$this->user_id = $user_id ?? get_current_user_id();
+	}
+
+	/**
+	 * 使用モデルを明示指定する（利用履歴の記録にも反映される）。
+	 */
+	public function set_model_override( string $model ): void {
+		$this->model_override = trim( $model );
 	}
 
 	public function generate( string $prompt, array $options = array() ) {
@@ -68,10 +80,20 @@ class Node_AI_Provider_Gemini implements Node_AI_Provider {
 	}
 
 	public function get_model(): string {
+		if ( '' !== $this->model_override ) {
+			return $this->model_override;
+		}
 		if ( function_exists( 'node_get_user_gemini_model' ) && $this->user_id > 0 ) {
 			return node_get_user_gemini_model( $this->user_id );
 		}
-		return function_exists( 'node_get_default_gemini_model' ) ? node_get_default_gemini_model() : 'gemini-3.5-flash';
+		if ( function_exists( 'node_get_default_gemini_model' ) ) {
+			return node_get_default_gemini_model();
+		}
+
+		// テーマ側のモデル管理が無い場合も特定世代へ固定しない。
+		$selected = class_exists( 'Node_AI_Fact_Check_Models' ) ? Node_AI_Fact_Check_Models::select() : '';
+
+		return ( is_string( $selected ) && '' !== $selected ) ? $selected : '';
 	}
 
 	/**

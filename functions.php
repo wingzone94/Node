@@ -76,7 +76,9 @@ require_once NODE_THEME_DIR . '/inc/meta-boxes.php';
 require_once NODE_THEME_DIR . '/inc/category-meta.php';
 require_once NODE_THEME_DIR . '/inc/ajax.php';
 require_once NODE_THEME_DIR . '/inc/spotlight.php';
+require_once NODE_THEME_DIR . '/inc/hot-posts.php';
 require_once NODE_THEME_DIR . '/inc/archive-helpers.php';
+require_once NODE_THEME_DIR . '/inc/search-suggest.php';
 require_once NODE_THEME_DIR . '/inc/media.php';
 require_once NODE_THEME_DIR . '/inc/utilities.php';
 require_once NODE_THEME_DIR . '/inc/gemini-helper.php';
@@ -92,6 +94,7 @@ require_once NODE_THEME_DIR . '/inc/blogcard-store.php';
 require_once NODE_THEME_DIR . '/inc/blogcard.php';
 require_once NODE_THEME_DIR . '/inc/maintenance.php';
 require_once NODE_THEME_DIR . '/inc/print.php';
+require_once NODE_THEME_DIR . '/inc/icon-font.php';
 
 /**
  * -------------------------------------------------------
@@ -110,6 +113,7 @@ $embedded_plugins = [
 	'node-seo-tools/node-seo-tools.php'     => 'node_seo_tools_init',
 	'node-series/node-series.php'           => 'node_series_init',
 	'node-connect/node-connect.php'         => 'node_connect_init',
+	'node-image-compressor/node-image-compressor.php' => 'node_image_compressor_init',
 ];
 
 // 単体プラグインとして導入済みのものは、そちらを優先して同梱版を読み込まない。

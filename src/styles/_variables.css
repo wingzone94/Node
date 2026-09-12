@@ -17,12 +17,12 @@
 :root {
     /* --- Material 3 Palette (Light) --- */
     --md-sys-color-primary: #FF9900;
-    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-on-primary: #2b1700;
     --md-sys-color-accent-text: #935400;
     --md-sys-color-primary-container: #fedcbe;
     --md-sys-color-on-primary-container: #2b1700;
     --md-sys-color-secondary: #FF9900;
-    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-on-secondary: #2b1700;
     --md-sys-color-secondary-container: #fedcbe;
     --m3-radius-small: 12px;
     --m3-radius-medium: 16px;

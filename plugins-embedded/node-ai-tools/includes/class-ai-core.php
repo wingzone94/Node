@@ -114,92 +114,20 @@ final class Node_AI_Core {
 	}
 
 	/**
-	 * ファクトチェック（確認箇所の抽出支援。既存と同一のJSON契約）
+	 * ファクトチェック（確認箇所の抽出支援）
 	 *
-	 * @return array{text: string, grounding: array, guidelines_used: bool}|WP_Error
+	 * 判定の中身は Node_AI_Fact_Check_Runner が担当する。
+	 * ここでモデル内部知識を前提にした一発プロンプトを組んでいたのが、
+	 * 「未発表」等の古い知識による連鎖誤判定の原因だったため、実装を分離した。
+	 *
+	 * @return array{text: string, grounding: array, guidelines_used: bool, context: array}|WP_Error
 	 */
 	public function fact_check( string $content, string $title = '', int $user_id = 0, int $post_id = 0 ) {
-		$provider_id = $this->get_provider_id();
-
-		$guidelines_block = '';
-		$guidelines_used  = false;
-		if ( function_exists( 'node_ai_fetch_guidelines' ) ) {
-			$guidelines = node_ai_fetch_guidelines();
-			if ( is_string( $guidelines ) && '' !== $guidelines ) {
-				$guidelines_used  = true;
-				$guidelines_block = "\n\n【Luminous Core 運営ガイドライン（Google ドキュメント）】\n" . $guidelines;
-			}
+		if ( ! class_exists( 'Node_AI_Fact_Check_Runner' ) ) {
+			return new WP_Error( 'fact_check_unavailable', 'ファクトチェック処理を読み込めませんでした。' );
 		}
 
-		$use_grounding = ( 'gemini' === $provider_id );
-
-		$search_line = $use_grounding
-			? 'Google Search の検索結果を参照し、記事内の事実関係に関わる主張を抽出して検証してください。'
-			: '記事内の事実関係に関わる主張を抽出し、あなたの知識の範囲で確認が必要な箇所を指摘してください。知識が不確かな主張は無理に判定せず status を unverifiable にしてください。';
-
-		$system = 'あなたはテクニカルブログ「Luminous Core」のファクトチェック補助アシスタントです。
-' . $search_line . '
-これは確認箇所の抽出支援であり、真偽の最終判定はしないことに留意してください。最終判断は必ず人間の編集者が行います。
-あわせて、提供される Luminous Core 運営ガイドラインに照らし、コンプライアンス違反の可能性がある記述も指摘してください。
-ガイドライン違反は status を uncertain または likely_incorrect とし、note に該当ルールを簡潔に記載してください。
-以下の JSON 形式のみで回答してください。
-・Markdown のコードブロック（```json ... ```）は絶対に使わず、生の中括弧 { } から始まる純粋な JSON のみを出力してください。
-・推測で断定せず、不確実な場合は status を uncertain または unverifiable にしてください。
-・最大 8 件の主張に絞ってください。
-・note には根拠・確認方法・注意点を簡潔に書いてください。
-
-{
-  "summary": "全体所見（2〜3文、日本語）",
-  "overall_risk": "low または medium または high",
-  "claims": [
-    {
-      "claim": "記事中の主張（原文に近い形）",
-      "status": "correct / likely_correct / uncertain / likely_incorrect / unverifiable のいずれか。correct=信頼できる情報源で裏付けが取れた、likely_correct=概ね正しいが出典未確認や細部に幅がある、uncertain=要確認、likely_incorrect=誤りの可能性が高い、unverifiable=検証できない",
-      "confidence": "high / medium / low のいずれか",
-      "note": "根拠・補足（日本語）"
-    }
-  ]
-}' . $guidelines_block;
-
-		$prompt = '以下の記事をファクトチェックしてください。';
-		if ( '' !== $title ) {
-			$prompt .= "\n\n【タイトル】\n" . $title;
-		}
-		$prompt .= "\n\n【本文】\n" . mb_substr( $content, 0, 8000 );
-
-		$result = $this->generate(
-			'fact_check',
-			$prompt,
-			array(
-				'system_instruction'      => $system,
-				'json'                    => true,
-				'temperature'             => 0.2,
-				'max_tokens'              => 4096,
-				'timeout'                 => 90,
-				'google_search_grounding' => $use_grounding,
-				'return_metadata'         => true,
-			),
-			$user_id,
-			$post_id
-		);
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		// return_metadata 非対応プロバイダーが文字列を返した場合も吸収する
-		if ( is_string( $result ) ) {
-			$result = array(
-				'text'      => $result,
-				'grounding' => array(),
-			);
-		}
-
-		return array(
-			'text'            => (string) ( $result['text'] ?? '' ),
-			'grounding'       => is_array( $result['grounding'] ?? null ) ? $result['grounding'] : array(),
-			'guidelines_used' => $guidelines_used,
-		);
+		return Node_AI_Fact_Check_Runner::run( $content, $title, $user_id, $post_id );
 	}
 
 	/**
@@ -331,6 +259,12 @@ type は次のいずれかを厳密に使うこと:
 			return $provider;
 		}
 
+		// 呼び出し側がモデルを指定した場合（ファクトチェックの無料枠自動選択）は
+		// 利用履歴にもそのモデルを残す。
+		if ( ! empty( $options['model'] ) && method_exists( $provider, 'set_model_override' ) ) {
+			$provider->set_model_override( (string) $options['model'] );
+		}
+
 		$result = $provider->generate( $prompt, $options );
 
 		if ( is_wp_error( $result ) ) {
@@ -367,10 +301,18 @@ type は次のいずれかを厳密に使うこと:
 
 		$normalized_code = $map[ $code ] ?? ( 0 === strpos( $code, 'ai_' ) ? $code : 'ai_error' );
 
+		$data = (array) $error->get_error_data();
+
 		return new WP_Error(
 			$normalized_code,
 			$error->get_error_message(),
-			array( 'original_code' => $code )
+			array(
+				'original_code' => $code,
+				// 再試行制御（429 の待機・モデルのフォールバック）に必要な情報は落とさない。
+				'status'        => (int) ( $data['status'] ?? 0 ),
+				'retry_after'   => (int) ( $data['retry_after'] ?? 0 ),
+				'model'         => (string) ( $data['model'] ?? '' ),
+			)
 		);
 	}
 

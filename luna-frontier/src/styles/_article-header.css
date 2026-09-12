@@ -6,6 +6,11 @@
  * Paper（四角）で、階層は spacing / rule / typography で作る。
  */
 
+/*
+ * 記事ヘッダーの Paper。
+ * Dynamic Color はリンク・CTA・一覧カードの補助アクセントに限定し、
+ * single の記事タイトル面は本文と同じ neutral surface に揃える。
+ */
 body.lf-theme .lf-article-header {
 	background: var(--lf-paper);
 	border-block: 1px solid var(--lf-rule);
@@ -20,60 +25,27 @@ body.lf-theme .lf-article-header {
  * 「読む前の情報」なので Title より強くしない＝高さは抑える。
  * ただし切り抜かず画像全体を見せる（2026-08-09 ユーザー指示）。
  *
- * --lf-media-ratio / --lf-media-max は hero.php が画像の実寸から算出して渡す。
- *   - ratio を枠に持たせることで、読み込み前から高さが確定して CLS が出ない
- *   - 上限を超えるときだけ object-fit: contain で自動的に縮小される（切れない）
- * メタデータが取れない場合は変数のフォールバック値で従来どおり動く。
+ * 枠側で縦横比や高さを固定せず、画像の width / height 属性からブラウザが
+ * 自然比率を算出する。これにより画像形式や比率に関係なく全体を表示し、
+ * contain 用の余白や cover による切り抜きを作らない。
  */
 body.lf-theme .lf-article-header__media {
 	position: relative;
 	margin: 0;
-	background: var(--lf-paper-sunken);
-
-	display: flex;
-	align-items: center;
-	justify-content: center;
-
-	/* 枠は必ず本文幅いっぱい。縮めない（縮めると左右に大きな余白が出る）。 */
+	display: block;
 	inline-size: 100%;
-	aspect-ratio: var(--lf-media-ratio, 16 / 9);
-	max-block-size: var(--lf-media-max, min(78vh, 46rem));
 	overflow: clip;
 }
 
-/*
- * 上限に当たって左右が余るとき（正方形・縦長の画像）用の背景。
- * 同じ画像をぼかして敷き、単色の空白ではなく「額装」として見せる。
- * 画像が枠を満たす場合は前面の img に完全に隠れるので見えない。
- */
-body.lf-theme .lf-article-header__media::before {
-	content: "";
-	position: absolute;
-	inset: 0;
-	background-image: var(--lf-media-backdrop, none);
-	background-size: cover;
-	background-position: center;
-	filter: blur(28px) saturate(1.25);
-	transform: scale(1.2);
-	opacity: 0.55;
-}
-
 body.lf-theme .lf-article-header__image {
-	position: relative;
 	display: block;
-	inline-size: auto;
+	inline-size: 100%;
 	block-size: auto;
 	max-inline-size: 100%;
-	max-block-size: 100%;
-	/* 枠に入り切らない場合だけ縮小する。cover と違い切り取らない。 */
+	max-block-size: none;
 	object-fit: contain;
+	object-position: center;
 	border-radius: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	body.lf-theme .lf-article-header__media::before {
-		transform: none;
-	}
 }
 
 body.lf-theme .lf-article-header__inner {
@@ -99,9 +71,9 @@ body.lf-theme .lf-article-header__eyebrow:empty {
 body.lf-theme .lf-article-header__title {
 	margin: 0;
 	font-family: var(--font-heading), sans-serif;
-	font-size: var(--lf-text-3xl);
+	font-size: var(--md-sys-typescale-display-large-size);
 	font-weight: 800;
-	line-height: var(--lf-leading-tight);
+	line-height: var(--md-sys-typescale-display-large-line-height);
 	letter-spacing: -0.015em;
 	font-feature-settings: "palt" 1;
 	color: var(--lc-on-surface);
@@ -130,18 +102,40 @@ body.lf-theme .lf-article-header__meta {
 /* 日時と執筆者。同じ行にある .lf-meta__chip（Library）と寸法を完全に揃え、
    塗りの有無だけを「中立の情報 / アクセントのリンク」という意味の差にする。
    透明な 1px 枠は、チップ側の実線 1px ぶんの高さ差（2px）を吸収するためのもの。
-   align-items: baseline はピル内でラベルと日付のベースラインを揃える指定なので残す。 */
+   アイコンを入れる項目は中央揃えにして、ピル内の縦位置を安定させる。 */
 body.lf-theme .lf-meta__item {
 	display: inline-flex;
-	align-items: baseline;
+	align-items: center;
 	gap: 0.4em;
 	padding: 0.25em 0.85em;
 	border: 1px solid transparent;
-	border-radius: var(--lf-shape-chip);
+	border-radius: var(--lf-shape-full);
 	background: var(--lf-meta-fill);
 	font-size: var(--lf-text-2xs);
 	line-height: 1.6;
 	font-variant-numeric: tabular-nums;
+}
+
+body.lf-theme .lf-meta__icon {
+	font-size: 1.1em;
+	line-height: 1;
+	color: var(--lf-on-surface-muted);
+}
+
+body.lf-theme .lf-meta__item--link {
+	color: var(--lf-on-surface-secondary);
+	text-decoration: none;
+	transition: background-color var(--lf-motion-fast) var(--lf-easing-standard),
+		color var(--lf-motion-fast) var(--lf-easing-standard);
+}
+
+body.lf-theme .lf-meta__item--link:hover {
+	background: color-mix(in srgb, var(--lc-accent) var(--lf-state-hover), transparent);
+	color: var(--lc-accent);
+}
+
+body.lf-theme .lf-meta__item--link:hover .lf-meta__icon {
+	color: var(--lc-accent);
 }
 
 body.lf-theme .lf-meta__label {
@@ -164,7 +158,7 @@ body.lf-theme .lf-meta__chip {
 	gap: 0.5em;
 	padding: 0.25em 0.85em;
 	border: 1px solid var(--lf-rule-strong);
-	border-radius: var(--lf-shape-chip);
+	border-radius: var(--lf-shape-full);
 	font-size: var(--lf-text-2xs);
 	font-weight: 600;
 	line-height: 1.6;
@@ -184,7 +178,11 @@ body.lf-theme .lf-meta__chip--link {
 }
 
 body.lf-theme .lf-meta__chip--link:hover {
-	background: color-mix(in srgb, var(--lc-accent) 10%, transparent);
+	background: color-mix(in srgb, var(--lc-accent) var(--lf-state-hover), transparent);
+}
+
+body.lf-theme .lf-meta__chip--link:active {
+	background: color-mix(in srgb, var(--lc-accent) var(--lf-state-pressed), transparent);
 }
 
 /* =====================================================================
@@ -503,7 +501,7 @@ body.lf-theme .m3-article__body {
 body.lf-theme .lf-article-header__disclosure :is(.m3-label--ai, .m3-label--sponsor) {
 	padding-inline: 1.1em;
 	padding-block: 0.4em;
-	border-radius: var(--lf-shape-pill);
+	border-radius: var(--lf-shape-full);
 	font-size: var(--lf-text-2xs);
 	line-height: 1.5;
 	letter-spacing: 0.02em;

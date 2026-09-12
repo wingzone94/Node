@@ -173,6 +173,34 @@ function luminous_enqueue_plugin_scripts(): void {
  */
 add_filter( 'the_content', 'luminous_auto_image_lightbox_link', 20 );
 
+function luminous_should_auto_lightbox_image( string $image_url ): bool {
+    $image_url = trim( $image_url );
+    if ( '' === $image_url ) {
+        return false;
+    }
+
+    $site_host  = wp_parse_url( home_url(), PHP_URL_HOST );
+    $image_host = wp_parse_url( $image_url, PHP_URL_HOST );
+
+    if ( is_string( $image_host ) && is_string( $site_host ) && strtolower( $image_host ) !== strtolower( $site_host ) ) {
+        return false;
+    }
+
+    if ( '' === (string) $image_host && ! str_starts_with( $image_url, '/' ) ) {
+        return false;
+    }
+
+    $uploads = wp_upload_dir( null, false );
+    $baseurl = isset( $uploads['baseurl'] ) ? (string) $uploads['baseurl'] : '';
+    $basepath = wp_parse_url( $baseurl, PHP_URL_PATH );
+    $image_path = wp_parse_url( $image_url, PHP_URL_PATH );
+
+    return is_string( $basepath )
+        && '' !== $basepath
+        && is_string( $image_path )
+        && str_starts_with( $image_path, trailingslashit( $basepath ) );
+}
+
 function luminous_auto_image_lightbox_link( $content ) {
     if ( ! is_singular() ) return $content;
 
@@ -190,6 +218,10 @@ function luminous_auto_image_lightbox_link( $content ) {
     // まだリンクされていない画像をラップ
     $img_pattern = '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i';
     $content = preg_replace_callback($img_pattern, function($matches) {
+        if ( ! luminous_should_auto_lightbox_image( html_entity_decode( $matches[1], ENT_QUOTES, get_bloginfo( 'charset' ) ) ) ) {
+            return $matches[0];
+        }
+
         return '<a href="' . esc_url($matches[1]) . '" class="m3-lightbox-link">' . $matches[0] . '</a>';
     }, $content);
 

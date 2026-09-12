@@ -241,6 +241,8 @@ if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
         $result = $core->fact_check( $content, $post->post_title, get_current_user_id(), $post_id );
 
         if ( is_wp_error( $result ) ) {
+            // 応答が届かなかった場合でも後から原因を追えるよう、失敗理由を記事に残す
+            update_post_meta( $post_id, '_node_ai_fact_check_error', sanitize_text_field( $result->get_error_message() ) );
             node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'fact_check', $result->get_error_message() );
             wp_send_json_error( array( 'message' => $result->get_error_message() ) );
         }
@@ -248,6 +250,7 @@ if ( ! function_exists( 'node_ai_ajax_fact_check' ) ) {
         // 整形・保存は自動実行（cron）と共通の処理を使う（includes/auto-check.php）
         $payload = node_ai_store_fact_check_result( $post_id, $result );
         if ( is_wp_error( $payload ) ) {
+            update_post_meta( $post_id, '_node_ai_fact_check_error', sanitize_text_field( $payload->get_error_message() ) );
             node_ai_dispatch_connect_event( 'ai_failed', $post_id, 'fact_check', $payload->get_error_message() );
             wp_send_json_error( array( 'message' => $payload->get_error_message() ) );
         }

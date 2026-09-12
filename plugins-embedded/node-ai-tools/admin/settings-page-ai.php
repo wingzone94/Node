@@ -88,6 +88,87 @@ add_action(
 			)
 		);
 
+		// --- ファクトチェックのモデル選択（Free Tier Max） ---
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Models::MODE_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					return 'manual' === (string) $value ? 'manual' : 'auto';
+				},
+			)
+		);
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Models::MANUAL_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					$value = trim( (string) $value );
+
+					return preg_match( '/^gemini-[a-z0-9][a-z0-9.-]*$/i', $value ) ? $value : '';
+				},
+			)
+		);
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Models::ALLOW_PAID_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					return '1' === (string) $value ? '1' : '0';
+				},
+			)
+		);
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Runner::GROUNDING_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					$value = (string) $value;
+
+					return in_array( $value, array( 'always', 'required', 'off' ), true ) ? $value : 'always';
+				},
+			)
+		);
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Discovery::ENABLED_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					return '1' === (string) $value ? '1' : '0';
+				},
+			)
+		);
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Sources::OFFICIAL_HOSTS_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					$hosts = array();
+
+					foreach ( preg_split( '/[\r\n,]+/', (string) $value ) ?: array() as $line ) {
+						$host = strtolower( trim( (string) $line ) );
+						$host = (string) preg_replace( '#^https?://#', '', $host );
+						$host = trim( explode( '/', $host )[0] );
+
+						if ( '' !== $host && preg_match( '/^[a-z0-9.-]+\.[a-z]{2,}$/', $host ) ) {
+							$hosts[] = $host;
+						}
+					}
+
+					return implode( "\n", array_unique( $hosts ) );
+				},
+			)
+		);
+		register_setting(
+			'node_ai_group',
+			Node_AI_Fact_Check_Sources::ENABLED_OPTION,
+			array(
+				'sanitize_callback' => static function ( $value ): string {
+					return '1' === (string) $value ? '1' : '0';
+				},
+			)
+		);
+
 		// --- Qwen (OpenAI Compatible) ---
 		register_setting(
 			'node_ai_group',
@@ -215,6 +296,22 @@ add_action(
 );
 
 add_action(
+	'admin_post_node_ai_refresh_fc_models',
+	static function (): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		check_admin_referer( 'node_ai_refresh_fc_models' );
+
+		Node_AI_Fact_Check_Models::clear_cache();
+		Node_AI_Fact_Check_Models::fetch_catalog( true, get_current_user_id() );
+
+		wp_safe_redirect( wp_get_referer() ?: admin_url( 'options-general.php?page=node-ai' ) );
+		exit;
+	}
+);
+
+add_action(
 	'admin_post_node_ai_clear_usage',
 	static function (): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -326,6 +423,13 @@ function node_ai_render_settings_page(): void {
 						</tr>
 					</table>
 				</details>
+
+				<h3>ファクトチェックのモデル（無料枠優先）</h3>
+				<p class="description">
+					ファクトチェックは Gemini API の無料枠だけで完結するように動きます。
+					有料モデルや有料機能へ自動で切り替えることはありません。
+				</p>
+				<?php node_ai_render_fact_check_model_fields(); ?>
 			</div>
 
 			<!-- Qwen -->
@@ -485,5 +589,167 @@ function node_ai_render_settings_page(): void {
 		} );
 	} )();
 	</script>
+	<?php
+}
+
+/**
+ * ファクトチェック用モデル設定の描画（現在のモデル・候補・更新日時）。
+ */
+function node_ai_render_fact_check_model_fields(): void {
+	$status     = Node_AI_Fact_Check_Models::status();
+	$candidates = (array) $status['candidates'];
+	$selected   = (string) $status['selected'];
+	$catalog    = (array) $status['catalog'];
+	?>
+	<table class="form-table" role="presentation">
+		<tr>
+			<th scope="row">モデルの選び方</th>
+			<td>
+				<p>
+					<label>
+						<input type="radio" name="<?php echo esc_attr( Node_AI_Fact_Check_Models::MODE_OPTION ); ?>" value="auto" <?php checked( 'auto', (string) $status['mode'] ); ?> />
+						自動（無料枠推奨）— そのとき利用できる最新の無料 Flash を選びます
+					</label>
+				</p>
+				<p>
+					<label>
+						<input type="radio" name="<?php echo esc_attr( Node_AI_Fact_Check_Models::MODE_OPTION ); ?>" value="manual" <?php checked( 'manual', (string) $status['mode'] ); ?> />
+						手動 — 下のモデルを固定で使います
+					</label>
+				</p>
+				<p>
+					<select name="<?php echo esc_attr( Node_AI_Fact_Check_Models::MANUAL_OPTION ); ?>">
+						<option value="">（未指定）</option>
+						<?php
+						$manual = (string) get_option( Node_AI_Fact_Check_Models::MANUAL_OPTION, '' );
+						foreach ( $candidates as $id ) {
+							$label = (string) ( $catalog[ $id ]['label'] ?? $id );
+							printf(
+								'<option value="%s" %s>%s（%s）</option>',
+								esc_attr( (string) $id ),
+								selected( $manual, (string) $id, false ),
+								esc_html( $label ),
+								esc_html( (string) $id )
+							);
+						}
+						?>
+					</select>
+				</p>
+				<p>
+					<label>
+						<input type="hidden" name="<?php echo esc_attr( Node_AI_Fact_Check_Models::ALLOW_PAID_OPTION ); ?>" value="0" />
+						<input type="checkbox" name="<?php echo esc_attr( Node_AI_Fact_Check_Models::ALLOW_PAID_OPTION ); ?>" value="1" <?php checked( ! empty( $status['allow_paid'] ) ); ?> />
+						無料枠以外のモデル（有料・Preview 等）の使用を許可する
+					</label>
+					<br />
+					<span class="description">既定はオフです。オフの間は、無料枠と確認できたモデル以外は使いません。</span>
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row">現在の状態</th>
+			<td>
+				<?php if ( '' !== $selected ) : ?>
+					<p style="margin-top:0;">
+						使用中: <code><?php echo esc_html( $selected ); ?></code>
+						（<?php echo esc_html( (string) ( $catalog[ $selected ]['label'] ?? $selected ) ); ?> /
+						<?php echo esc_html( Node_AI_Fact_Check_Models::classify( $selected ) ); ?> /
+						version <?php echo esc_html( (string) ( $catalog[ $selected ]['version'] ?? '不明' ) ); ?> /
+						思考量 <?php echo Node_AI_Fact_Check_Models::supports_thinking( $selected ) ? '対応' : '非対応'; ?>）
+					</p>
+				<?php else : ?>
+					<p style="margin-top:0;color:#d63638;"><?php echo esc_html( (string) $status['error'] ); ?></p>
+				<?php endif; ?>
+				<p>
+					モード: <strong><?php echo 'auto' === (string) $status['mode'] ? '自動（無料枠推奨）' : '手動'; ?></strong> ／
+					フォールバック候補: <code><?php echo esc_html( implode( ' → ', array_map( 'strval', $candidates ) ) ); ?></code>
+				</p>
+				<p>
+					モデル一覧の取得: <?php echo ! empty( $status['from_api'] ) ? 'Gemini Models API' : '静的候補（API 未取得）'; ?>
+					<?php if ( ! empty( $status['fetched_at'] ) ) : ?>
+						／ 最終更新: <?php echo esc_html( wp_date( 'Y-m-d H:i', (int) $status['fetched_at'] ) ); ?>
+					<?php endif; ?>
+				</p>
+				<?php if ( ! empty( $status['retired'] ) ) : ?>
+					<p>提供終了として除外中: <code><?php echo esc_html( implode( ', ', array_map( 'strval', (array) $status['retired'] ) ) ); ?></code></p>
+				<?php endif; ?>
+				<p>
+					今月の Google 検索（グラウンディング）実行: <strong><?php echo esc_html( (string) Node_AI_Fact_Check_Runner::grounding_usage() ); ?></strong>
+					/ <?php echo esc_html( (string) Node_AI_Fact_Check_Runner::grounding_cap() ); ?> 回（自主上限）
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row">Google 検索の参照</th>
+			<td>
+				<?php $search_policy = Node_AI_Fact_Check_Runner::search_policy(); ?>
+				<p>
+					<label>
+						<input type="radio" name="<?php echo esc_attr( Node_AI_Fact_Check_Runner::GROUNDING_OPTION ); ?>" value="always" <?php checked( 'always', $search_policy ); ?> />
+						常に検索つきで実行する（推奨）— 最新の無料 Flash から順に検索つきで試します
+					</label>
+					<br />
+					<span class="description">
+						どのモデルでも検索が使えなかったときだけ、検索なしの暫定結果を保存し（確信度を下げ、断定は避けます）、枠が回復した翌日に自動で取り直します。
+					</span>
+				</p>
+				<p>
+					<label>
+						<input type="radio" name="<?php echo esc_attr( Node_AI_Fact_Check_Runner::GROUNDING_OPTION ); ?>" value="required" <?php checked( 'required', $search_policy ); ?> />
+						検索つきで実行できないときは中止する（暫定結果を残さない）
+					</label>
+				</p>
+				<p>
+					<label>
+						<input type="radio" name="<?php echo esc_attr( Node_AI_Fact_Check_Runner::GROUNDING_OPTION ); ?>" value="off" <?php checked( 'off', $search_policy ); ?> />
+						使用しない
+					</label>
+				</p>
+				<p>
+					<input type="hidden" name="<?php echo esc_attr( Node_AI_Fact_Check_Sources::ENABLED_OPTION ); ?>" value="0" />
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( Node_AI_Fact_Check_Sources::ENABLED_OPTION ); ?>" value="1" <?php checked( Node_AI_Fact_Check_Sources::is_enabled() ); ?> />
+						記事本文中の公式ページを取得して検証の根拠に使う（robots.txt を尊重し、最大3件まで）
+					</label>
+				</p>
+				<p>
+					<input type="hidden" name="<?php echo esc_attr( Node_AI_Fact_Check_Discovery::ENABLED_OPTION ); ?>" value="0" />
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( Node_AI_Fact_Check_Discovery::ENABLED_OPTION ); ?>" value="1" <?php checked( Node_AI_Fact_Check_Discovery::is_enabled() ); ?> />
+						記事に公式リンクが無い場合、主題（製品名・企業名）から公式サイトを自動で探す
+					</label>
+					<br />
+					<span class="description">
+						Wikidata の「公式ウェブサイト」情報から公式サイトの所在を引き、そのページ本文だけを根拠にします（無料・APIキー不要）。
+						検索エンジンのスクレイピングは行いません。公式と確認できなかったページは根拠に加えません。
+					</span>
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<th scope="row">公式（一次情報）ドメイン</th>
+			<td>
+				<textarea name="<?php echo esc_attr( Node_AI_Fact_Check_Sources::OFFICIAL_HOSTS_OPTION ); ?>" rows="4" class="large-text code" placeholder="nintendo.co.jp&#10;example.com"><?php echo esc_textarea( (string) get_option( Node_AI_Fact_Check_Sources::OFFICIAL_HOSTS_OPTION, '' ) ); ?></textarea>
+				<p class="description">
+					1行に1ドメイン。サブドメインは自動で同一扱いになります（<code>support.example.com</code> も <code>example.com</code> として公式）。<br />
+					下のプリセットに含まれるドメインは、ここに書かなくても最初から公式として扱われます。報道機関（NewsMediaOrganization）は一次情報として扱いません。
+				</p>
+				<details>
+					<summary>プリセット（最初から公式として扱うドメイン <?php echo esc_html( (string) count( Node_AI_Fact_Check_Sources::preset_official_hosts() ) ); ?> 件）</summary>
+					<p class="description" style="margin-top:8px;">
+						<?php echo esc_html( implode( '  /  ', Node_AI_Fact_Check_Sources::preset_official_hosts() ) ); ?>
+					</p>
+					<p class="description">
+						この一覧はプラグインに内蔵されています。増減させたい場合は上の欄へ追記するか、<code>node_ai_fc_preset_official_hosts</code> フィルタで差し替えてください。
+					</p>
+				</details>
+			</td>
+		</tr>
+	</table>
+	<p>
+		<a class="button button-secondary" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=node_ai_refresh_fc_models' ), 'node_ai_refresh_fc_models' ) ); ?>">
+			モデル情報を今すぐ更新
+		</a>
+	</p>
 	<?php
 }

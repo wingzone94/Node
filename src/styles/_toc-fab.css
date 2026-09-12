@@ -62,19 +62,18 @@ body.is-active-toc .m3-action-stack .m3-fab:not(#m3-toc-trigger) {
 
 /* ===== Floating TOC (Expressive) ===== */
 
-/* 追従目次はプライマリカテゴリ由来の動的カラー（--md-sys-color-primary-*）に
- * 同期させず、常にデフォルトのブランド配色（#FF9900系）を使う。
- * 値は inc/utilities.php node_generate_m3_colors() のデフォルトシード算出結果と同一。 */
+/* 追従目次はヘッダー/フッターのブランド色ではなく、記事領域の操作として
+ * neutral surface と記事アクセントの active indicator に寄せる。 */
 #m3-sticky-toc {
-    --toc-primary: #FF9900;
-    --toc-primary-container: #ffe0b3;
-    --toc-on-primary-container: #2b1700;
+    --toc-primary: color-mix(in srgb, var(--node-article-accent, #FF9900) 48%, var(--md-sys-color-on-surface));
+    --toc-primary-container: color-mix(in srgb, var(--node-article-accent-container, #fedcbe) 44%, var(--md-sys-color-surface-container-high));
+    --toc-on-primary-container: var(--md-sys-color-on-surface);
 }
 
 [data-theme="dark"] #m3-sticky-toc {
-    --toc-primary: #ffb85d;
-    --toc-primary-container: #86550c;
-    --toc-on-primary-container: #ffffff;
+    --toc-primary: color-mix(in srgb, var(--node-article-accent, #ffb85d) 62%, var(--md-sys-color-on-surface));
+    --toc-primary-container: color-mix(in srgb, var(--node-article-accent-container, #6a3c00) 34%, var(--md-sys-color-surface-container-highest));
+    --toc-on-primary-container: var(--md-sys-color-on-surface);
 }
 
 #m3-sticky-toc {
@@ -534,13 +533,15 @@ body.is-active-toc #m3-sticky-toc {
 
 /* ===== Sticky FAB Production Color Lock ===== */
 .m3-action-stack .m3-fab {
-    background-color: #FF9900 !important;
-    color: #ffffff !important;
+    background-color: var(--md-sys-color-surface-container-low) !important;
+    color: color-mix(in srgb, var(--node-article-accent, #FF9900) 42%, var(--md-sys-color-on-surface)) !important;
+    border: 1px solid color-mix(in srgb, var(--node-article-accent, #FF9900) 34%, var(--md-sys-color-outline-variant)) !important;
+    box-shadow: var(--m3-elevation-2);
 }
 
 .m3-action-stack .m3-fab:hover {
-    background-color: #e68a00 !important;
-    box-shadow: var(--m3-elevation-4);
+    background-color: color-mix(in srgb, var(--node-article-accent-container, #fedcbe) 24%, var(--md-sys-color-surface-container-low)) !important;
+    box-shadow: var(--m3-elevation-2);
     filter: none;
     transform: scale(1);
 }
@@ -550,8 +551,8 @@ body.is-active-toc #m3-sticky-toc {
 }
 
 .m3-action-stack .m3-fab-label-top {
-    background: #FF9900;
-    color: #ffffff;
+    background: var(--md-sys-color-inverse-surface, #2d2823);
+    color: var(--md-sys-color-inverse-on-surface, #f4ede6);
 }
 
 .m3-action-stack .m3-fab-label-top::after {

@@ -78,6 +78,10 @@ body.admin-bar .m3-header {
     padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + 12px);
 }
 
+body.search.m3-search-suggestions-is-active .site-main.m3-archive-layout.m3-search-layout {
+    padding-top: calc(64px + var(--safe-area-top) + var(--wp-admin-bar-offset, 0px) + var(--m3-search-suggestions-space, 0px));
+}
+
 @media screen and (max-width: 600px) {
     .m3-home-layout,
     .m3-archive-layout,

@@ -46,6 +46,12 @@
 		unverifiable: { icon: 'dashicons-editor-help', color: '#787c82', label: '事実確認' },
 	};
 
+	// 主張の種別（fact 以外はラベルを変えて、事実判定の対象かどうかを分かるようにする）
+	var CLAIM_TYPE_LABELS = {
+		opinion: '筆者の感想',
+		premise: '前提の確認',
+	};
+
 	// 校正の指摘種別
 	var PROOF_KINDS = {
 		typo: { icon: 'dashicons-editor-spellcheck', color: '#d63638', label: '誤字・脱字' },
@@ -101,7 +107,8 @@
 			merged.push( {
 				source: 'fact',
 				kind: kind,
-				kindLabel: kind.label,
+				// 筆者の感想は事実判定の対象外。カード上でも事実確認と区別する
+				kindLabel: CLAIM_TYPE_LABELS[ claim.claim_type ] || kind.label,
 				verdict: statusLabels[ status ] || status,
 				body: claim.claim || '',
 				suggestion: '',
@@ -355,6 +362,47 @@
 		);
 	}
 
+	/**
+	 * 実行条件（使用モデル・Google 検索の有無・自動参照した公式サイト等）を表示する。
+	 *
+	 * 検索なしで実行された結果を、検索ありの結果と同じ重みで読まれないようにするための表示。
+	 *
+	 * @param {Object} fact ファクトチェック結果。
+	 * @return {Object|null} 要素。
+	 */
+	function renderRunContext( fact ) {
+		if ( ! fact ) {
+			return null;
+		}
+
+		var notices = fact.notices || [];
+		var parts = [];
+
+		if ( fact.model ) {
+			parts.push( 'モデル: ' + fact.model );
+		}
+		parts.push( fact.grounded ? 'Google 検索: 参照あり' : 'Google 検索: なし' );
+
+		return el(
+			'div',
+			{ style: { margin: '0 0 6px' } },
+			el(
+				'p',
+				{ style: { margin: 0, fontSize: '11px', color: '#646970' } },
+				parts.join( ' / ' )
+			),
+			notices.length
+				? el(
+						'ul',
+						{ style: { margin: '2px 0 0', paddingLeft: '1.1rem', fontSize: '11px', color: '#646970' } },
+						notices.map( function ( notice, index ) {
+							return el( 'li', { key: index }, notice );
+						} )
+				  )
+				: null
+		);
+	}
+
 	function renderSources( sources ) {
 		if ( ! sources || ! sources.length ) {
 			return null;
@@ -366,7 +414,7 @@
 			el(
 				'p',
 				{ style: { margin: '0 0 4px', fontWeight: 600, fontSize: '12px' } },
-				'参照元 (Google Search)'
+				'参照元'
 			),
 			el(
 				'ul',
@@ -379,7 +427,15 @@
 							'a',
 							{ href: source.url, target: '_blank', rel: 'noopener noreferrer' },
 							source.title || source.url
-						)
+						),
+						// 一次情報かどうかは判定の重みが変わるため明示する
+						source.official
+							? el(
+									'span',
+									{ style: { marginLeft: '4px', color: '#007017', fontWeight: 700 } },
+									'（公式）'
+							  )
+							: null
 					);
 				} )
 			)
@@ -411,6 +467,15 @@
 		if ( fact ) {
 			var risk = fact.overall_risk || 'medium';
 			lines.push( '- リスク: ' + ( riskLabels[ risk ] || risk ) );
+
+			if ( fact.model ) {
+				lines.push( '- 使用モデル: ' + fact.model );
+			}
+			lines.push( '- Google 検索: ' + ( fact.grounded ? '参照あり' : 'なし' ) );
+
+			( fact.notices || [] ).forEach( function ( notice ) {
+				lines.push( '- 実行条件: ' + notice );
+			} );
 		}
 
 		lines.push( '' );
@@ -463,230 +528,7 @@
 
 		var sources = ( fact && fact.sources ) || [];
 		if ( sources.length ) {
-			lines.push( '## 参照元 (Google Search)' );
-			lines.push( '' );
-			sources.forEach( function ( source ) {
-				lines.push( '- [' + ( source.title || source.url ) + '](' + source.url + ')' );
-			} );
-			lines.push( '' );
-		}
-
-		lines.push( '---' );
-		lines.push( '' );
-		lines.push(
-			'このファイルは Node テーマの記事チェックが出力したものです。確認箇所の抽出支援であり、真偽の最終判定と修正の採否は人間の編集者が行います。'
-		);
-
-		return lines.join( '\n' );
-	}
-
-	function ArticleCheckPanel() {
-		var postId = useSelect( function ( select ) {
-			return select( 'core/editor' ).getCurrentPostId();
-		}, [] );
-
-		var content = useSelect( function ( select ) {
-			return select( 'core/editor' ).getEditedPostAttribute( 'content' ) || '';
-		}, [] );
-
-		var postMeta = useSelect( function ( select ) {
-			var editor = select( 'core/editor' );
-			var meta = editor.getEditedPostAttribute( 'meta' ) || {};
-
-			// 脚注は本文ではなく post meta に入るため、別途取り出さないとAIに渡らない
-			var footnotes = [];
-			if ( 'string' === typeof meta.footnotes && meta.footnotes ) {
-				try {
-					footnotes = JSON.parse( meta.footnotes ) || [];
-				} catch ( e ) {
-					footnotes = [];
-				}
-			}
-
-			return {
-				title: editor.getEditedPostAttribute( 'title' ) || '',
-				url: editor.getPermalink ? editor.getPermalink() || '' : '',
-				slug: editor.getEditedPostAttribute( 'slug' ) || '',
-				excerpt: editor.getEditedPostAttribute( 'excerpt' ) || '',
-				footnotes: footnotes,
-			};
-		}, [] );
-
-		var approved = useSelect( function ( select ) {
-			var meta = select( 'core/editor' ).getEditedPostAttribute( 'meta' ) || {};
-			return '1' === meta[ APPROVED_META ];
-		}, [] );
-
-		// フロー表示用の状態（保存 → ファクトチェック → 公開）
-		var flowState = useSelect( function ( select ) {
-			var editor = select( 'core/editor' );
-			var status = editor.getEditedPostAttribute( 'status' ) || 'auto-draft';
-
-			return {
-				saved: 'auto-draft' !== status && !! editor.getCurrentPostId(),
-				published: 'publish' === status || 'future' === status || 'private' === status,
-				scheduled: 'future' === status,
-			};
-		}, [] );
-
-		var editPost = useDispatch( 'core/editor' ).editPost;
-
-		var factState = useState( factSettings.data || null );
-		var factResults = factState[ 0 ];
-		var setFactResults = factState[ 1 ];
-
-		var proofState = useState( proofSettings.data || null );
-		var proofResults = proofState[ 0 ];
-		var setProofResults = proofState[ 1 ];
-
-		var modelState = useState( factSettings.currentModel || '' );
-		var model = modelState[ 0 ];
-		var setModel = modelState[ 1 ];
-
-		var thinkingState = useState( factSettings.currentThinking || '' );
-		var thinking = thinkingState[ 0 ];
-		var setThinking = thinkingState[ 1 ];
-
-		var statusState = useState( null );
-		var status = statusState[ 0 ];
-		var setStatus = statusState[ 1 ];
-
-		// '' | 'fact' | 'proof'
-		var busyState = useState( '' );
-		var busy = busyState[ 0 ];
-		var setBusy = busyState[ 1 ];
-
-		var statusLabels = factSettings.statusLabels || {};
-		var riskLabels = factSettings.riskLabels || {};
-
-		var modelOptions = Object.keys( factSettings.models || {} ).map( function ( id ) {
-			return { value: id, label: factSettings.models[ id ] };
-		} );
-
-		var thinkingOptions = Object.keys( factSettings.thinkingLevels || {} ).map( function ( level ) {
-			return { value: level, label: factSettings.thinkingLevels[ level ] };
-		} );
-
-		var supportsThinking = ( factSettings.thinkingModels || [] ).indexOf( model ) !== -1;
-
-		function setApproved( next ) {
-			var meta = {};
-			meta[ APPROVED_META ] = next ? '1' : '';
-			editPost( { meta: meta } );
-		}
-
-		function post( which, action, nonce, extra, onSuccess ) {
-			setBusy( which );
-			setStatus( {
-				type: 'info',
-				text: ( 'fact' === which ? '検証中' : '校正中' ) + '... (しばらくお待ちください)',
-			} );
-
-			var body = new window.FormData();
-			body.append( 'action', action );
-			body.append( 'post_id', postId );
-			body.append( 'nonce', nonce || '' );
-
-			Object.keys( extra ).forEach( function ( key ) {
-				body.append( key, extra[ key ] );
-			} );
-
-			window
-				.fetch( factSettings.ajaxUrl, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: body,
-				} )
-				.then( function ( response ) {
-					return response.json();
-				} )
-				.then( function ( json ) {
-					setBusy( '' );
-
-					if ( json && json.success ) {
-						onSuccess( json.data );
-						setStatus( { type: 'success', text: '完了' } );
-						return;
-					}
-
-					setStatus( {
-						type: 'error',
-						text:
-							'エラー: ' +
-							( json && json.data && json.data.message ? json.data.message : '不明' ),
-					} );
-				} )
-				.catch( function () {
-					setBusy( '' );
-					setStatus( { type: 'error', text: '通信エラーが発生しました。' } );
-				} );
-		}
-
-		function runFactCheck() {
-			post(
-				'fact',
-				'node_ai_fact_check',
-				factSettings.nonce,
-				{
-					// 保存形式は `<モデルID>@<思考量>`（1.2 系と互換）
-					gemini_model:
-						factSettings.providerId === 'gemini'
-							? ( model && supportsThinking && thinking ? model + '@' + thinking : model )
-							: '',
-				},
-				function ( data ) {
-					setFactResults( data );
-					// サーバー側で承認フラグがリセットされるためエディタ状態も揃える
-					setApproved( false );
-				}
-			);
-		}
-
-		function runProofread() {
-			post(
-				'proof',
-				'node_ai_proofread',
-				proofSettings.nonce,
-				{ content: content },
-				setProofResults
-			);
-		}
-
-		var issues = mergeIssues( fact, proof, statusLabels );
-
-		if ( issues.length ) {
-			lines.push( '## 指摘一覧' );
-			lines.push( '' );
-			lines.push( '| # | 観点 | 判定 | 対象 | 修正案 | 補足 |' );
-			lines.push( '| --- | --- | --- | --- | --- | --- |' );
-
-			issues.forEach( function ( issue, index ) {
-				lines.push(
-					'| ' +
-						( index + 1 ) +
-						' | ' +
-						cell( issue.kindLabel ) +
-						' | ' +
-						cell( issue.verdict ) +
-						' | ' +
-						cell( issue.body ) +
-						' | ' +
-						cell( issue.suggestion ) +
-						' | ' +
-						cell( issue.note || issue.meta ) +
-						' |'
-				);
-			} );
-
-			lines.push( '' );
-		} else {
-			lines.push( '指摘はありませんでした。' );
-			lines.push( '' );
-		}
-
-		var sources = ( fact && fact.sources ) || [];
-		if ( sources.length ) {
-			lines.push( '## 参照元 (Google Search)' );
+			lines.push( '## 参照元' );
 			lines.push( '' );
 			sources.forEach( function ( source ) {
 				lines.push( '- [' + ( source.title || source.url ) + '](' + source.url + ')' );
@@ -914,7 +756,7 @@
 				'p',
 				{ style: { fontSize: '12px', color: '#646970', marginTop: 0 } },
 				factSettings.providerId === 'gemini'
-					? '事実関係（Google Search 参照）と日本語表現をまとめて点検します。確認箇所の抽出支援であり、最終判断は編集者が行います。'
+					? '事実関係（公式サイト・検索結果を参照）と日本語表現をまとめて点検します。確認箇所の抽出支援であり、最終判断は編集者が行います。'
 					: '事実関係と日本語表現をまとめて点検します。確認箇所の抽出支援であり、最終判断は編集者が行います。'
 			),
 			factSettings.hasKey
@@ -1005,6 +847,8 @@
 									riskLabels[ risk ] || risk
 							  )
 							: null,
+						// 実行条件（使用モデル・検索の有無）は判定の読み方に効くので必ず出す
+						renderRunContext( factResults ),
 						factResults && factResults.summary
 							? el(
 									'p',

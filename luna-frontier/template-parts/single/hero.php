@@ -57,50 +57,7 @@ if ( ! $lf_library instanceof WP_Post || 'node_library' !== $lf_library->post_ty
 <header class="lf-article-header<?php echo $lf_has_thumb ? ' lf-article-header--has-media' : ''; ?>">
 
 	<?php if ( $lf_has_thumb ) : ?>
-		<?php
-		/*
-		 * アイキャッチは切り抜かず、画像全体を表示する。
-		 *
-		 * 画像の実寸（添付ファイルのメタデータ）から縦横比を読み、
-		 *   - 縦横比をそのまま枠に渡して読み込み時のガタつき（CLS）を防ぐ
-		 *   - 縦長ほど高さの上限を緩め、横長は低く抑える
-		 * という形で「入り切らないときだけ自動で縮小」させる。
-		 * 上限に当たった場合も CSS 側は object-fit: contain なので切れない。
-		 */
-		$lf_thumb_id  = (int) get_post_thumbnail_id( $lf_post_id );
-		$lf_thumb_src = $lf_thumb_id ? wp_get_attachment_image_src( $lf_thumb_id, 'large' ) : false;
-		$lf_media_style = '';
-
-		if ( is_array( $lf_thumb_src ) && ! empty( $lf_thumb_src[1] ) && ! empty( $lf_thumb_src[2] ) ) {
-			$lf_w     = (int) $lf_thumb_src[1];
-			$lf_h     = (int) $lf_thumb_src[2];
-			$lf_ratio = $lf_w / max( 1, $lf_h );
-
-			/*
-			 * 高さの上限。横長は「本文幅いっぱいに置いても収まる」高さを許して
-			 * 左右に余白が出ないようにし、正方形・縦長は伸びすぎないよう抑える。
-			 */
-			if ( $lf_ratio >= 1.2 ) {
-				$lf_max = 'min(78vh, 46rem)';   // 横長・バナー系
-			} elseif ( $lf_ratio >= 0.9 ) {
-				$lf_max = 'min(70vh, 34rem)';   // ほぼ正方形
-			} else {
-				$lf_max = 'min(70vh, 32rem)';   // 縦長
-			}
-
-			// 上限に当たって左右が余る場合の背景（同じ画像をぼかして敷く）。
-			$lf_backdrop = esc_url( (string) $lf_thumb_src[0] );
-
-			$lf_media_style = sprintf(
-				' style="--lf-media-ratio: %1$d / %2$d; --lf-media-max: %3$s; --lf-media-backdrop: url(&quot;%4$s&quot;);"',
-				$lf_w,
-				$lf_h,
-				$lf_max,
-				$lf_backdrop
-			);
-		}
-		?>
-		<div class="lf-article-header__media"<?php echo $lf_media_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- 直上で整数と固定文字列のみから組み立てている。 ?>>
+		<div class="lf-article-header__media">
 			<?php
 			the_post_thumbnail(
 				'large',
@@ -127,21 +84,34 @@ if ( ! $lf_library instanceof WP_Post || 'node_library' !== $lf_library->post_ty
 		<?php // 3. Published / Updated ＋ 4. 最小限のメタ ?>
 		<div class="lf-article-header__meta">
 			<time class="lf-meta__item" datetime="<?php echo esc_attr( $lf_published ); ?>">
-				<span class="lf-meta__label">公開</span>
+				<span class="material-symbols-outlined lf-meta__icon" aria-hidden="true">calendar_today</span>
+				<span class="screen-reader-text">公開日</span>
 				<?php echo esc_html( get_the_date( '', $lf_post_id ) ); ?>
 			</time>
 
 			<?php if ( $lf_has_update ) : ?>
 				<time class="lf-meta__item" datetime="<?php echo esc_attr( $lf_modified ); ?>">
-					<span class="lf-meta__label">更新</span>
+					<span class="material-symbols-outlined lf-meta__icon" aria-hidden="true">update</span>
+					<span class="screen-reader-text">更新日</span>
 					<?php echo esc_html( get_the_modified_date( '', $lf_post_id ) ); ?>
 				</time>
 			<?php endif; ?>
 
-			<?php $lf_author = trim( (string) get_the_author() ); ?>
-			<?php if ( '' !== $lf_author ) : ?>
+			<?php
+			$lf_author_id  = (int) get_the_author_meta( 'ID' );
+			$lf_author     = trim( (string) get_the_author() );
+			$lf_author_url = $lf_author_id ? get_author_posts_url( $lf_author_id ) : '';
+			?>
+			<?php if ( '' !== $lf_author && '' !== $lf_author_url ) : ?>
+				<a class="lf-meta__item lf-meta__item--author lf-meta__item--link" href="<?php echo esc_url( $lf_author_url ); ?>" rel="author" aria-label="<?php echo esc_attr( sprintf( '%sの記事一覧へ', $lf_author ) ); ?>">
+					<span class="material-symbols-outlined lf-meta__icon" aria-hidden="true">person</span>
+					<span class="screen-reader-text">執筆者</span>
+					<?php echo esc_html( $lf_author ); ?>
+				</a>
+			<?php elseif ( '' !== $lf_author ) : ?>
 				<span class="lf-meta__item lf-meta__item--author">
-					<span class="lf-meta__label">執筆</span>
+					<span class="material-symbols-outlined lf-meta__icon" aria-hidden="true">person</span>
+					<span class="screen-reader-text">執筆者</span>
 					<?php echo esc_html( $lf_author ); ?>
 				</span>
 			<?php endif; ?>

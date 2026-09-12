@@ -18,6 +18,7 @@
  */
 
 @import "./_tokens.css";
+@import "./_surface.css";
 @import "./_typography.css";
 @import "./_paper.css";
 @import "./_article-header.css";
@@ -27,4 +28,8 @@
 @import "./_cards.css";
 @import "./_latest.css";
 @import "./_search.css";
+@import "./_writer-avatar.css";
+@import "./_heading-toc.css";
+@import "./_notice.css";
+@import "./_polish.css";
 @import "./_dynamic-color.css";
