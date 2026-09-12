@@ -8,6 +8,16 @@
 Material Design 3 (Expressive) の哲学を WordPress テーマに昇華させた、次世代のクリエイティブ・プラットフォーム。  
 README は導入と運用ガイドに集中し、リリース履歴は `CHANGELOG.md` に集約します。
 
+## Luna Frontier 2.0 Preview
+
+Luna Frontierは、Luminous Coreの次期デザインを検証するNodeの子テーマです。現在の最新版は **2.0.0-preview.3** です。Preview版は安定版の `master` 更新チャンネルとは分離して配布します。
+
+- **Preview 1（2026.08.16）**: 編集メディア向けのトップページ、四角いPaper表現、Manrope見出し、モバイルセクションナビを導入した初回公開版。
+- **Preview 2（2026.08.22）**: Material 3トークン、記事・パンくず・目次・FABの階層、モバイル表示、ZIP検査とCIを整備した基盤更新版。
+- **Preview 3（2026.09.12）**: 記事ヘッダー、著者・カテゴリ・検索、カード配色、HOT枠を更新し、Node AI ToolsとNode Image Compressorを同梱した最新版。
+
+Preview 3の配布物、導入方法、検証結果は [Luna Frontier 2.0 Preview 3 リリースノート](./docs/preview-3-release.md) を参照してください。各版の詳細は [CHANGELOG.md](./CHANGELOG.md) に記録しています。現時点のLunaは `Template: node` に依存し、スタンドアロン化はまだ含みません。
+
 ## 主な機能
 - **Material You 動的カラー:** アイキャッチ画像やカテゴリ設定からテーマカラーを自動生成。
 - **シリーズ（連載）:** 複数記事を連載としてまとめ、目次・前後ナビ・カード上のバナー（現在回/全話数）を自動表示。

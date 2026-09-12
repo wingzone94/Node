@@ -38,6 +38,6 @@ Lunaは現時点では `Template: node` に依存します。スタンドアロ�
 
 ## 公開先
 
-予定ブランチ: `luna-frontier-2.0-skyalow`。予定タグ: `luna-frontier-v2.0.0-preview.3`。
+配布ブランチ: `luna-frontier-2.0-skyalow`。タグ: `luna-frontier-v2.0.0-preview.3`。
 
-GitHubへの書き込みは次のターンに実施する。安定版の `master` 更新チャンネルと本番サイトには、この準備作業では反映していない。
+安定版の `master` 更新チャンネルと本番サイトには反映しない。
